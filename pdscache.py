@@ -1,0 +1,836 @@
+import os
+import time
+import pylibmc
+import random
+
+################################################################################
+################################################################################
+################################################################################
+
+class PdsCache(object):
+
+        pass
+
+################################################################################
+################################################################################
+################################################################################
+
+class DictionaryCache(PdsCache):
+
+    def __init__(self, lifetime=86400, limit=1000, logger=None):
+        """Constructor.
+
+        Input:
+            lifetime        default lifetime in seconds; 0 for no expiration.
+                            Can be a constant or a function; if the latter, then
+                            the default lifetime must be returned by this call:
+                                lifetime(value)
+            limit           limit on the number of items in the cache. Permanent
+                            objects do not count against this limit.
+        """
+
+        self.dict = {}              # returns (value, expiration) by key
+        self.keys = set()           # set of non-permanent keys
+
+        if type(lifetime).__name__ == 'function':
+            self.lifetime_func = lifetime
+            self.lifetime = None
+        else:
+            self.lifetime = lifetime
+            self.lifetime_func = None
+
+        self.limit = limit
+        self.slop = max(20, self.limit/10)
+        self.logger = logger
+
+        self.pauses = 0
+
+    def _trim(self):
+        """Trim the dictionary if it is too big."""
+
+        if len(self.keys) > self.limit + self.slop:
+            expirations = [(self.dict[k][1], k) for k in self.keys if
+                            self.dict[k][0] > 0]
+            expirations.sort()
+            pairs = expirations[:-self.limit]
+            for (_, key) in pairs:
+                del self.dict[key]
+                self.keys.remove(key)
+
+            if self.logger:
+                self.logger.debug('%d items trimmed from DictionaryCache' %
+                                  len(pairs))
+
+    def _trim_if_necessary(self):
+        if self.pauses == 0:
+            self._trim()
+
+    def flush(self):
+        """Flush any buffered items. Not used for DictionaryCache."""
+        return
+
+    def block(self):
+        """Block any process from touching the cache. Not used by
+        DictionaryCache."""
+        return
+
+    def unblock(self, flush=True):
+        """Un-block processes from touching the cache. Not used by
+        DictionaryCache."""
+        return
+
+    def is_blocked(self):
+        """Status of blocking. Not used by DictionaryCache."""
+        return False
+
+    def pause(self):
+        """Increment the pause count. Trimming will resume when the count
+        returns to zero."""
+        self.pauses += 1
+        if self.pauses == 1 and self.logger:
+            self.logger.debug('DictionaryCache trimming paused')
+
+    @property
+    def is_paused(self):
+        """Report on status of automatic trimming."""
+        return self.pause > 0
+
+    def resume(self):
+        """Decrement the pause count. Trimming will resume when the count
+        returns to zero."""
+
+        if self.pauses > 0:
+            self.pauses -= 1
+
+        if self.pauses == 0:
+            self._trim()
+            if self.logger:
+                self.logger.debug('DictionaryCache trimming resumed')
+
+    def __contains__(self, key):
+        """Enable the "in" operator."""
+        return (key in self.dict)
+
+    def __len__(self):
+        """Enable len() operator."""
+
+        return len(self.dict)
+
+    ######## Get methods
+
+    def get(self, key):
+        """Return the value associated with a key. Return None if the key is
+        missing."""
+
+        if key not in self.dict:
+            return None
+
+        (value, expiration) = self.dict[key]
+
+        if expiration is None:
+            return value
+
+        if expiration < time.time():
+            del self[key]
+            return None
+
+        return value
+
+    def __getitem__(self, key):
+        """Enable dictionary syntax. Raise KeyError if the key is missing."""
+
+        value = self.get(key)
+        if value is None:
+            raise KeyError
+
+        return value
+
+    def get_multi(self, keys):
+        """Return a dictionary of multiple values based on a list of keys.
+        Missing keys do not appear in the returned dictionary."""
+
+        mydict = {}
+        for key in keys:
+            value = self[key]
+            if value is not None:
+                mydict[key] = value
+
+        return mydict
+
+    def get_local(self, key):
+        """Return the value associated with a key, only using the local dict."""
+
+        return self.get(key)
+
+    ######## Set methods
+
+    def set(self, key, value, lifetime=None, pause=False):
+        """Set the value associated with a key.
+
+        lifetime    the lifetime of this item in seconds; 0 for no expiration;
+                    None to use the default lifetime.
+        pause       True to postpone any trim operation.
+        """
+
+        # Determine the expiration time
+        if lifetime is None:
+            if self.lifetime:
+                lifetime = self.lifetime
+            else:
+                lifetime = self.lifetime_func(value)
+
+        if lifetime == 0:
+            expiration = None
+        else:
+            expiration = time.time() + lifetime
+
+        # Save in the dictionary
+        self.dict[key] = (value, expiration)
+        if expiration:
+            self.keys.add(key)
+
+        # Trim if necessary
+        if not pause:
+            self._trim_if_necessary()
+
+    def __setitem__(self, key, value):
+        """Enable dictionary syntax."""
+
+        self.set(key, value)
+
+    def set_multi(self, mydict, lifetime=0, pause=False):
+        """Set multiple values at one time based on a dictionary."""
+
+        for (key, value) in mydict.iteritems():
+            self.set(key, value, lifetime, pause=True)
+
+        if not pause:
+            self._trim_if_necessary()
+
+        return []
+
+    def set_local(self, key, value, lifetime=None):
+        """Just like set() but always goes to the local dictionary without
+        touching the cache."""
+
+        return self.set(key, value, lifetime=lifetime)
+
+    ######## Delete methods
+
+    def delete(self, key):
+        """Delete one key. Return true if it was deleted, false otherwise."""
+
+        if key in self.dict:
+            del self.dict[key]
+            return True
+
+        return False
+
+    def __delitem__(self, key):
+        """Enable the "del" operator. Raise KeyError if the key is absent."""
+
+        if key in self.dict:
+            del self.dict[key]
+            return
+
+        raise KeyError(key)
+
+    def delete_multi(self, keys):
+        """Delete multiple items based on a list of keys. Keys not found in
+        the cache are ignored. Returns True if all keys were deleted."""
+
+        status = True
+        for key in keys:
+            if key in self.dict:
+                del self.dict[key]
+            else:
+                status = False
+
+        return status
+
+    def clear(self, ok=True):
+        """Clear all concents of the cache."""
+
+        self.dict.clear()
+        self.keys = set()
+
+################################################################################
+################################################################################
+################################################################################
+
+class MemcachedCache(PdsCache):
+
+    def __init__(self, port=11211, lifetime=86400, localsize=10, localtime=60,
+                                   logger=None):
+        """Constructor.
+
+        Input:
+            port            port number for the memcache, which must already
+                            have been established. Alternatively, the absolute
+                            path to a Unix socket.
+            lifetime        default lifetime in seconds; 0 for no expiration.
+                            Can be a constant or a function; if the latter, then
+                            the default lifetime must be returned by
+                                lifetime[self]
+            localsize       number of items to accumulate in a buffer before it
+                            is flushed to the memcache.
+            localtime       limits on the number of seconds an item should
+                            remain in the buffer before it is flushed to the
+                            memcache.
+        """
+
+        self.port = port
+
+        if type(port) == str:
+            self.mc = pylibmc.Client([port], binary=True)
+        else:
+            self.mc = pylibmc.Client(['127.0.0.1:%d' % port], binary=True)
+
+        self.local_value_by_key = {}
+        self.local_keys_by_time = {}
+        self.local_time_by_key = {}
+
+        if type(lifetime).__name__ == 'function':
+            self.lifetime_func = lifetime
+            self.lifetime = None
+        else:
+            self.lifetime = int(lifetime + 0.999)
+            self.lifetime_func = None
+
+        self.localsize = localsize
+        self.localtime = localtime
+        self.flushtime = 0.
+        self.pauses = 0
+
+        self.logger = logger
+
+        # Test the cache with a random key so as not to clobber existing keys
+        while True:
+            key = str(random.randint(0,10**40))
+            if key in self.mc: continue
+
+            self.mc[key] = 1
+            del self.mc[key]
+            break
+
+        # Save the ID of this process
+        self.pid = os.getpid()
+
+        # Initialize as unblocked
+        if len(self) == 0:
+            self.mc.set('$OK_PID', 0, time=0)
+
+    MIN_POS_LONG = 2**63
+    MAX_NEG_LONG = -1 - 2**63
+
+    @staticmethod
+    def undo_long(value):
+        if type(value) == long:
+            if (value > MemcachedCache.MAX_NEG_LONG and
+                value < MemcachedCache.MIN_POS_LONG):
+                    value = int(value)
+        else:
+            try:
+                d = value.__dict__
+                for (k,v) in d.iteritems():
+                    if type(v) == long:
+                        d[k] = MemcachedCache.undo_long(v)
+            except AttributeError:
+                pass
+
+        return value
+
+    def block(self):
+        """Block any other process from touching the cache."""
+
+        if self.is_blocked(): return
+
+        self.mc.set('$OK_PID', self.pid, time=300)
+        if self.logger:
+            self.logger.info('Process %d ' % self.pid +
+                             'blocked MemcachedCache [%s]' % self.port)
+
+    def unblock(self, flush=True):
+        """Remove block preventing processes from touching the cache."""
+
+        test_pid = self.mc.get('$OK_PID')
+        if test_pid == 0:
+            if self.logger:
+                self.logger.warn('Process %d is unable to unblock ' % self.pid +
+                                 'MemcachedCache [%s]; ' % self.port +
+                                 'Cache is already unblocked')
+                return
+
+        if test_pid != self.pid:
+            if self.logger:
+                self.logger.warn('Process %d is unable to unblock ' % self.pid +
+                                 'MemcachedCache [%s]; ' % self.port +
+                                 'Cache is blocked by process %d' % test_pid)
+                return
+    
+        if flush:
+            self.flush()
+
+        if self.logger:
+            self.logger.info('Process %d removed block of ' % self.pid +
+                             'MemcachedCache [%s] ' % self.port)
+                             
+
+        self.mc.set('$OK_PID', 0, time=0)
+
+    def is_blocked(self):
+        """Status of blocking."""
+        test_pid = self.mc.get('$OK_PID')
+        if test_pid in (0, self.pid):
+            return False
+        else:
+            return True
+
+    def pause(self):
+        """Increment the pause count. Flushing will resume when the count
+        returns to zero."""
+        self.pauses += 1
+
+        if self.pauses == 1 and self.logger:
+            self.logger.debug('Process %d paused flushing of ' % self.pid +
+                              'MemcachedCache [%s]' % self.port)
+
+    @property
+    def is_paused(self):
+        """Report on status of automatic flushing."""
+        return self.pause > 0
+
+    def resume(self):
+        """Decrement the pause count. Flushing will resume when the count
+        returns to zero."""
+
+        if self.pauses > 0:
+            self.pauses -= 1
+
+        if self.pauses == 0:
+            if self.logger:
+                self.logger.debug('Process %d resumed flushing of ' % self.pid +
+                                  'MemcachedCache [%s]' % self.port)
+            self._flush_if_necessary()
+
+    def __contains__(self, key):
+        """Enable the "in" operator."""
+
+        if key in self.local_value_by_key: return True
+
+        block_was_logged = False
+        while self.is_blocked():
+            if not block_was_logged and self.logger:
+                self.logger.info('Process %d blocked at contains()' % self.pid +
+                                  ' for MemcachedCache [%s]' % self.port)
+                block_was_logged = True
+            time.sleep(0.5 * (1. + random.random()))  # A random short delay
+
+        if block_was_logged and self.logger:
+            self.logger.info('Process %d unblocked at contains() ' % self.pid +
+                             'for MemcachedCache [%s]' % self.port)
+
+        return key in self.mc
+
+    def __len__(self):
+        """Enable len() operator."""
+
+        items = self.len_mc()
+
+        for key in self.local_value_by_key:
+            if key not in self.mc:
+                items += 1
+
+        return items
+
+    def len_mc(self):
+        return int(self.mc.get_stats()[0][1]['curr_items'])
+
+    ######## Flush methods
+
+    def flush(self, wait=False):
+        """Flush any buffered items into the cache."""
+
+        # Nothing to do if local cache is empty
+        if len(self.local_value_by_key) == 0:
+            return
+
+        # Wait for a block to clear if necessary
+        if self.is_blocked():
+          if wait:
+            block_was_logged = False
+            while self.is_blocked():
+                if not block_was_logged and self.logger:
+                    self.logger.info('Process %d blocked at ' % self.pid +
+                                     'flush() on MemcacheCache [%s]' %
+                                     self.port)
+                    block_was_logged = True
+                time.sleep(0.5 * (1. + random.random()))  # A random short delay
+
+            if block_was_logged and self.logger:
+                self.logger.info('Process %d unblocked at ' % self.pid +
+                                 'flush() on MemcacheCache [%s]' % self.port)
+          else:
+            return
+
+        # Cache items grouped by lifetime
+        for lifetime in self.local_keys_by_time:
+
+            # Save tuples (value, lifetime)
+            mydict = {k:(self.local_value_by_key[k],lifetime) for
+                                        k in self.local_keys_by_time[lifetime]}
+
+            # Update to memcache
+            failures = []
+            try:
+                self.mc.set_multi(mydict, time=lifetime)
+            except pylibmc.TooBig:  # comes up with big HTML pages
+                for (k,v) in mydict.iteritems():
+                    try:
+                        self.mc.set(k, v, time=lifetime)
+                    except pylibmc.TooBig:
+                        if self.logger:
+                            self.logger.warn('TooBig error; deleted', k)
+                            failures.append(k)
+
+            except pylibmc.Error as e:
+                if self.logger:
+                    self.logger.exception(e)
+
+                keys = mydict.keys()
+                if self.logger:
+                    keys.sort()
+                    for key in keys:
+                        self.logger.error('Failure to flush; deleted', key)
+
+                failures += keys
+
+        if self.logger:
+            count = len(self.local_keys_by_time) - len(failures)
+            if count == 1:
+                noun = 'item'
+            else:
+                noun = 'items'
+            self.logger.debug(('Proces %d flushed ' % self.pid +
+                               '%d %s to ' % (count, noun) +
+                               'MemcachedCache [%s]; ' % self.port +
+                               'current size is %d' % self.len_mc()))
+            if failures:
+                count = len(failures)
+                if count == 1:
+                    noun = 'item'
+                else:
+                    noun = 'items'
+                self.logger.warn('Process %d unable to flush ' % self.pid +
+                                 '%d %s to ' % (count, noun) +
+                                 'MemcachedCache [%s]' % self.port)
+
+        # Clear internal dictionaries
+        self.local_time_by_key.clear()
+        self.local_value_by_key.clear()
+        self.local_keys_by_time.clear()
+
+    def _flush_if_necessary(self):
+        if self.pauses > 0: return
+
+        if (len(self.local_value_by_key) > self.localsize or
+            time.time() > self.flushtime):
+                self.flush(wait=False)
+
+    ######## Get methods
+
+    def get(self, key):
+        """Return the value associated with a key. Return None if the key is
+        missing."""
+
+        # Return from local cache if found
+        if key in self.local_value_by_key:
+            return self.local_value_by_key[key]
+
+        # Otherwise, go to memcache but wait for block
+        key_and_ok = ['$OK_PID', key]
+        mydict = self.mc.get_multi(key_and_ok)
+        block_was_logged = False
+        while '$OK_PID' not in mydict or mydict['$OK_PID'] not in (0, self.pid):
+            if not block_was_logged and self.logger:
+                self.logger.info('Process %d blocked at get() ' % self.pid +
+                                 'from MemcacheCache [%s]' % self.port)
+                block_was_logged = True
+            time.sleep(0.5 * (1. + random.random()))  # A random short delay
+            mydict = self.mc.get_multi(key_and_ok)
+
+        if block_was_logged and self.logger:
+            self.logger.info('Process %d unblocked at get() ' % self.pid +
+                             'from MemcacheCache [%s]' % self.port)
+
+        # Return value from memcache if found
+        if key in mydict:
+            result = mydict[key]
+            return MemcachedCache.undo_long(result[0])
+
+        return None
+
+    def __getitem__(self, key):
+        """Enable dictionary syntax. Raise KeyError if the key is missing."""
+
+        value = self.get(key)
+        if value is None:
+            raise KeyError(key)
+
+        return value
+
+    def get_multi(self, keys):
+        """Return a dictionary of multiple values based on a list or set of
+        keys. Missing keys do not appear in the returned dictionary."""
+
+        # Separate keys into local and non-local
+        keys = set(keys)
+        local_keys = set(self.local_value_by_key.keys()) & keys
+        nonlocal_keys = keys - local_keys
+
+        # Retrieve non-local keys if any
+        if nonlocal_keys:
+            keys_and_ok = ['$OK_PID'] + nonlocal_keys
+            block_was_logged = False
+            mydict = self.mc.get_multi(keys_and_ok)
+            while ('$OK_PID' not in mydict or
+                   mydict['$OK_PID'] not in (0, self.pid)):
+
+                if not block_was_logged and self.logger:
+                    self.logger.info('Process %d blocked at ' % self.pid +
+                                     'get_multi() from ' +
+                                     'MemcacheCache [%s]' % self.port)
+                    block_was_logged = True
+                time.sleep(0.5 * (1. + random.random()))  # A random short delay
+                mydict = self.mc.get_multi(keys_and_ok)
+
+            if block_was_logged and self.logger:
+                self.logger.info('Process %d unblocked at ' % self.pid +
+                                 'get_multi() from ' +
+                                 'MemcacheCache [%s]' % self.port)
+
+            for (key,tuple) in mydict.iteritems():
+                mydict[key] = MemcachedCache.undo_longs(tuple[0])
+        else:
+            mydict = {}
+
+        # Retrieve local keys if any
+        for key in local_keys:
+            mydict[key] = self.local_value_by_key[key]
+
+        return mydict
+
+    def get_local(self, key):
+        """Return the value associated with a key, only using the local dict."""
+
+        # Return from local cache if found
+        if key in self.local_value_by_key:
+            return self.local_value_by_key[key]
+
+        return None
+
+    ######## Set methods
+
+    def set(self, key, value, lifetime=None, pause=False):
+        """Set a single value. Preserve a previously-defined lifetime (and reset
+        the clock) if lifetime is None."""
+
+        if (lifetime is None) and (key not in self.local_time_by_key):
+            try:
+                (_, lifetime) = self.mc[key]
+            except KeyError:
+                pass
+
+        self.set_local(key, value, lifetime)
+
+        if not pause:
+            self._flush_if_necessary()
+
+        return True
+
+    def __setitem__(self, key, value):
+        """Enable dictionary syntax."""
+
+        _ = self.set(key, value, lifetime=None)
+
+    def set_multi(self, mydict, lifetime=None, pause=False):
+        """Set multiple values at one time based on a dictionary. Preserve a
+        previously-defined lifetime (and reset the clock) if lifetime is None.
+        """
+
+        # If lifetime is None, preserve lifetimes of items already cached
+        if lifetime is None:
+            local_keys = set(self.local_value_by_key.keys()) & keys
+            nonlocal_keys = keys - local_keys
+            if nonlocal_keys:
+                nonlocal_dict = self.mc.get_multi(nonlocal_keys)
+                for (key, tuple) in nonlocal_dict:
+                    lifetime = tuple[1]
+                    self.local_time_by_key[key] = lifetime
+
+        # Save or update values in local cache
+        for (key, value) in mydict.iteritems():
+            self.set_local(key, value, lifetime)   # this resets the clock
+
+        if not pause:
+            self._flush_if_necessary()
+
+        return []
+
+    def set_local(self, key, value, lifetime=None):
+        """Set or update a single value in the local cache. If lifetime is None,
+        it preserves the lifetime of any value already in the local cache. The
+        nonlocal cache is not checked."""
+
+        # If the local cache is empty, start the timer
+        if len(self.local_value_by_key) == 0:
+            self.flushtime = time.time() + self.localtime
+
+        # Save the value
+        self.local_value_by_key[key] = value
+
+        # Determine the lifetime
+        if lifetime is None:
+            try:
+                lifetime = self.local_time_by_key[key]
+            except KeyError:
+                if self.lifetime:
+                    lifetime = self.lifetime
+                else:
+                    lifetime = int(self.lifetime_func(value) + 0.999)
+
+        # Remove an outdated key from the lifetime-to-keys dictionary
+        try:
+            prev_lifetime = self.local_time_by_key[key]
+            if prev_lifetime != lifetime:
+                self.local_keys_by_time[prev_lifetime].remove(key)
+                if len(self.local_keys_by_time[prev_lifetime]) == 0:
+                    del self.local_keys_by_time[prev_lifetime]
+        except (KeyError, ValueError):
+            pass
+
+        # Insert the key into the lifetime-to-keys dictionary
+        if lifetime not in self.local_keys_by_time:
+            self.local_keys_by_time[lifetime] = [key]
+        elif key not in self.local_keys_by_time[lifetime]:
+            self.local_keys_by_time[lifetime].append(key)
+
+        # Insert the key into the key-to-lifetime dictionary
+        self.local_time_by_key[key] = lifetime
+
+    ######## Delete methods
+
+    def delete(self, key):
+        """Delete one key. Return true if it was deleted, false otherwise."""
+
+        block_was_logged = False
+        while self.is_blocked():
+            if not block_was_logged and self.logger:
+                self.logger.info('Process %d blocked at delete() ' % self.pid +
+                                 'from MemcacheCache [%s]' % self.port)
+                block_was_logged = True
+            time.sleep(0.5 * (1. + random.random()))  # A random short delay
+
+        if block_was_logged and self.logger:
+            self.logger.info('Process %d unblocked at delete() ' % self.pid +
+                             'from MemcacheCache [%s]' % self.port)
+
+        status1 = self.mc.delete(key)
+        status2 = self._delete_local(key)
+        return status1 or status2
+
+    def __delitem__(self, key):
+        """Enable the "del" operator. Raise KeyError if the key is absent."""
+
+        status = self.delete(key)
+        if status:
+            return
+
+        raise KeyError(key)
+
+    def delete_multi(self, keys):
+        """Delete multiple items based on a list of keys. Keys not found in
+        the cache are ignored. Returns True if all keys were deleted."""
+
+        # Wait for block
+        block_was_logged = False
+        while self.is_blocked():
+            if not block_was_logged and self.logger:
+                self.logger.info('Process %d blocked at ' % self.pid +
+                                 'delete_multi() from ' +
+                                 'MemcacheCache [%s]' % self.port)
+                block_was_logged = True
+            time.sleep(0.5 * (1. + random.random()))  # A random short delay
+
+        if block_was_logged and self.logger:
+            self.logger.info('Process %d unblocked at ' % self.pid +
+                             'delete_multi() from ' +
+                             'MemcacheCache [%s]' % self.port)
+
+        # Delete whatever we can from the nonlocal cache
+        _ = self.mc.del_multi(keys)
+
+        # Save the current length
+        prev_len = len(self)
+
+        # Delete whatever we can from the local cache
+        for key in keys:
+            _ = self._del_local(key)
+
+        count = len(self) - prev_len
+        return (count == len(keys))
+
+    def _delete_local(key):
+        """Delete a single key from the local cache, if present. The nonlocal
+        cache is not checked. Return True if deleted, False otherwise."""
+
+        if key in self.local_time_by_key:
+            del self.local_value_by_key[key]
+
+            lifetime = self.local_time_by_key[key]
+            self.local_keys_by_time[lifetime].remove(key)
+            if len(self.local_keys_by_time[lifetime]) == 0:
+                del self.local_keys_by_time[lifetime]
+
+            del self.local_time_by_key[key]
+
+            return True
+
+        return False
+
+    def clear(self, block=False):
+        """Clear all concents of the cache."""
+
+        block_was_logged = False
+        while self.is_blocked():
+            if not block_was_logged and self.logger:
+                self.logger.info('Process %d blocked at clear() ' % self.pid +
+                                 'of MemcacheCache [%s]' % self.port)
+                block_was_logged = True
+            time.sleep(0.5 * (1. + random.random()))  # A random short delay
+
+        if block_was_logged and self.logger:
+            self.logger.info('Process %d unblocked at clear() ' % self.pid +
+                             'of MemcacheCache [%s]' % self.port)
+
+        self.mc.delete('$OK_PID')
+        self.mc.flush_all()
+
+        self.local_value_by_key.clear()
+        self.local_keys_by_time.clear()
+        self.local_time_by_key.clear()
+
+        if block:
+            self.mc.set('$OK_PID', self.pid, time=0)
+            if self.logger:
+              self.logger.info('Process %d completed clear() of ' % self.pid +
+                               'MemcacheCache [%s] ' % self.port +
+                               'but continues to block')
+
+        else:
+            self.mc.set('$OK_PID', 0, time=0)
+
+            if self.logger:
+              self.logger.info('Process %d completed clear() of ' % self.pid +
+                               'MemcacheCache [%s]')
+
