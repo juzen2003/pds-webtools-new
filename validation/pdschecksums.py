@@ -592,7 +592,6 @@ if __name__ == '__main__':
                     else:
                         basename += '_%s.tar.gz' % pdsdir.voltype_[:-1]
 
-                    print 11110, os.path.join(dir, basename)
                     newpaths = glob.glob(os.path.join(dir, basename))
                     if len(newpaths) == 0:
                         raise
@@ -627,7 +626,6 @@ if __name__ == '__main__':
                                  pdsf.logical_path)
 
             else:
-                print pdsf.__dict__
                 pdsdir = pdsf.parent()
                 if pdsf.is_volume_file():
                     # Checksum one archive file
