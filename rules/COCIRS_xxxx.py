@@ -200,6 +200,9 @@ description_and_icon_by_dict = translator.TranslatorByDict({
     'COCIRS_1xxx/COCIRS_1610': ('Cassini CIRS Saturn data 2016-10-01 to 2016-10-31 (SC clock 1853989587-1856639252)', 'VOLUME'),
     'COCIRS_1xxx/COCIRS_1611': ('Cassini CIRS Saturn data 2016-11-01 to 2016-11-30 (SC clock 1856667988-1859235608)', 'VOLUME'),
     'COCIRS_1xxx/COCIRS_1612': ('Cassini CIRS Saturn data 2016-12-01 to 2016-12-31 (SC clock 1859259987-1861909652)', 'VOLUME'),
+    'COCIRS_1xxx/COCIRS_1701': ('Cassini CIRS Saturn data 2017-01-01 to 2017-01-31 (SC clock 1861938388-1864588117)', 'VOLUME'),
+    'COCIRS_1xxx/COCIRS_1702': ('Cassini CIRS Saturn data 2017-02-01 to 2017-02-28 (SC clock 1864616787-1867007316)', 'VOLUME'),
+    'COCIRS_1xxx/COCIRS_1703': ('Cassini CIRS Saturn data 2017-03-01 to 2017-03-31 (SC clock 1867036052-1869685715)', 'VOLUME'),
 
     'COCIRS_5xxx/COCIRS_5401': ('Cassini CIRS data, reformatted, 2004-01-13 to 2004-01-24 (SC clock 1452654168-1453621646)', 'VOLUME'),
     'COCIRS_5xxx/COCIRS_5402': ('Cassini CIRS data, reformatted, 2004-02-05 to 2004-02-28 (SC clock 1454690839-1456686298)', 'VOLUME'),
