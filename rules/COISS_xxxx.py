@@ -158,6 +158,8 @@ description_and_icon_by_dict = translator.TranslatorByDict({
     'COISS_2xxx/COISS_2107': ('Cassini ISS Saturn images 2016-08-31 to 2016-09-27 (SC clock 1851331524-1853706504)', 'VOLUME'),
     'COISS_2xxx/COISS_2108': ('Cassini ISS Saturn images 2016-10-01 to 2016-12-07 (SC clock 1854009318-1859794656)', 'VOLUME'),
     'COISS_2xxx/COISS_2109': ('Cassini ISS Saturn images 2016-12-07 to 2016-12-31 (SC clock 1859795917-1861911431)', 'VOLUME'),
+    'COISS_2xxx/COISS_2110': ('Cassini ISS Saturn images 2017-01-01 to 2017-02-17 (SC clock 1861975118-1866071080)', 'VOLUME'),
+    'COISS_2xxx/COISS_2111': ('Cassini ISS Saturn images 2017-02-18 to 2017-03-31 (SC clock 1866071296-1869659532)', 'VOLUME'),
 
     'COISS_3xxx'           : ('Cassini cartographic maps',                       'VOLDIR'),
     'COISS_3xxx_v1'        : ('Cassini cartographic maps, superseded releases',  'VOLDIR'),
