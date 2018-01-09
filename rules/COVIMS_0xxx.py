@@ -103,6 +103,9 @@ description_and_icon_by_dict = translator.TranslatorByDict({
     'COVIMS_0xxx/COVIMS_0084': ('Cassini VIMS near IR image cubes 2016-10-01 to 2016-11-03 (SC clock 1854009215-1856896440)', 'VOLUME'),
     'COVIMS_0xxx/COVIMS_0085': ('Cassini VIMS near IR image cubes 2016-11-04 to 2016-12-26 (SC clock 1856977062-1861436124)', 'VOLUME'),
     'COVIMS_0xxx/COVIMS_0086': ('Cassini VIMS near IR image cubes 2016-12-26 to 2016-12-31 (SC clock 1861464723-1861918752)', 'VOLUME'),
+    'COVIMS_0xxx/COVIMS_0087': ('Cassini VIMS near IR image cubes 2017-01-01 to 2017-02-06 (SC clock 1861976049-1865100518)', 'VOLUME'),
+    'COVIMS_0xxx/COVIMS_0088': ('Cassini VIMS near IR image cubes 2017-02-06 to 2017-03-06 (SC clock 1865112812-1867530683)', 'VOLUME'),
+    'COVIMS_0xxx/COVIMS_0089': ('Cassini VIMS near IR image cubes 2017-03-07 to 2017-03-31 (SC clock 1867544439-1869662881)', 'VOLUME'),
 }, key_from_path)
 
 description_and_icon_by_regex = translator.TranslatorByRegex([
