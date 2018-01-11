@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 ################################################################################
-# revalidate.py
+# re-validate.py
 #
 # Syntax:
-#   revalidate.py path [path ...]
+#   re-validate.py path [path ...]
 # 
 # Enter the --help option to see more information.
 ################################################################################
@@ -13,6 +13,8 @@ import os
 import glob
 import argparse
 import datetime
+import socket
+from smtplib import SMTP
 
 import pdslogger
 import pdsfile
@@ -22,8 +24,9 @@ import pdsinfoshelf
 import pdslinkshelf
 import pdsdependency
 
-LOGNAME = 'pds.validation.revalidate'
+LOGNAME = 'pds.validation.re-validate'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
+SERVER = 'list.seti.org'
 
 ################################################################################
 # Function to validate one volume
@@ -144,9 +147,8 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
                 tests_performed += 1
                 logger.close()
 
-    except (Exception, KeyboardInterrupt) as e:
+    except Exception as e:
         logger.exception(e)
-        raise
 
     finally:
         if tests_performed == 1:
@@ -154,7 +156,9 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
         else:
             logger.info('%d revalidation tests performed' % tests_performed,
                         pdsdir.abspath)
-        logger.close()
+        errors = logger.close()[1]
+
+    return (logfile, errors)
 
 ################################################################################
 # Log and volume management for batch mode
@@ -177,12 +181,12 @@ def get_log_info(logfile):
 
     start_time = parts[0].rstrip()
     if parts[1].strip() != LOGNAME:
-        raise ValueError('Not a revalidate log file')
+        raise ValueError('Not a re-validate log file')
 
     abspath = parts[-1].strip().split(' ')[-1]
 
     if len(recs) < 1:
-        raise ValueError('Not a revalidate log file')
+        raise ValueError('Not a re-validate log file')
 
     if 'Last modification' not in recs[1]:
         raise ValueError('Missing modification time')
@@ -290,13 +294,26 @@ def find_modified_volumes(holdings_info, log_info):
 
     return (modified_holdings, current_log_info)
 
+def send_email(to_addr, message):
+    smtp = SMTP()
+    smtp.connect(SERVER, 25)
+    from_addr = "PDS Administrator <pds-admin@seti.org>"
+    subject = "Revalidate report from " + socket.gethostname()
+    date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+    msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" \
+        % (from_addr, to_addr, subject, date, message)
+
+    smtp.sendmail(from_addr, to_addr, msg)
+    smtp.quit()
+
 ################################################################################
 # Executable program
 ################################################################################
 
 # Set up parser
 parser = argparse.ArgumentParser(
-    description='revalidate: Perform various validation tasks on an online '   +
+    description='re-validate: Perform various validation tasks on an online '   +
                 'volume or volumes.')
 
 parser.add_argument('volume', nargs='*', type=str,
@@ -304,15 +321,15 @@ parser.add_argument('volume', nargs='*', type=str,
 
 parser.add_argument('--log', '-l', type=str, default='',
                     help='Directory for the log files. If not specified, log ' +
-                         'files are written to the "revalidate" subdirectory ' +
+                         'files are written to the "re-validate" subdirectory '+
                          'of the path defined by environoment variable '       +
                          '"%s". ' % LOGROOT_ENV                                +
                          'If this is undefined, logs are written to the '      +
-                         '"Logs/revalidate" subdirectory of the current '      +
+                         '"Logs/re-validate" subdirectory of the current '     +
                          'working directory.')
 
 parser.add_argument('--subdirectory', '-s', type=str, default='',
-                    help='Optional subdirectory below "revalidate" in which '  +
+                    help='Optional subdirectory below "re-validate" in which ' +
                          'write the log file. This can be used to organize '   +
                          'the results of different validation options.')
 
@@ -333,6 +350,10 @@ parser.add_argument('--minutes', type=int, default=60,
 parser.add_argument('--batch-status',  action='store_true',
                     help='Prints a summary of what the program would do now '  +
                          'if run in batch mode.')
+
+parser.add_argument('--email',  type=str, default='',
+                    help='Email address to which to send a repport when a '    +
+                         'batch job is completed.')
 
 parser.add_argument('--quiet', '-q', action='store_true',
                     help='Do not log to the terminal.')
@@ -443,9 +464,9 @@ if namespace.log:
     log_root = namespace.log
 else:
     try:
-        log_path_ = os.path.join(os.environ[LOGROOT_ENV], 'revalidate/')
+        log_path_ = os.path.join(os.environ[LOGROOT_ENV], 're-validate/')
     except KeyError:
-        log_path_ = 'Logs/revalidate/'
+        log_path_ = 'Logs/re-validate/'
 
 if namespace.subdirectory:
     subdirectory_ = namespace.subdirectory.rstrip('/') + '/'
@@ -509,7 +530,7 @@ if not namespace.batch and not namespace.batch_status:
     try:
         # For each volume...
         for pdsdir in pdsdirs:
-            validate_one_volume(pdsdir, voltypes, tests, namespace, logger)
+            _ = validate_one_volume(pdsdir, voltypes, tests, namespace, logger)
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
@@ -557,40 +578,62 @@ else:
 
     # Print info in trial run mode
     if namespace.batch_status:
-        fmt = '%4d %11s/%-11s modified %s, never re-validated'
+        fmt = '%4d %20s/%-11s  modified %s, never validated'
         line_number = 0
         for (abspath, date) in modified_holdings:
             pdsdir = pdsfile.PdsFile.from_abspath(abspath)
             line_number += 1
-            print fmt % (line_number, pdsdir.volset_[:-1], pdsdir.volname,
+            print fmt % (line_number, pdsdir.volset_, pdsdir.volname,
                          date[:10])
 
-        fmt ='%4d  %11s/%-11s  modified %s, last re-validated %s, duration %s%s'
+        fmt ='%4d  %20s%-11s  modified %s, last validated %s, duration %s%s'
         for info in current_logs:
             (start, elapsed, date, abspath, had_error, had_fatal) = info
             pdsdir = pdsfile.PdsFile.from_abspath(abspath)
             error_text = ', error logged' if had_error else ''
             line_number += 1
-            print fmt % (line_number, pdsdir.volset_[:-1], pdsdir.volname,
+            print fmt % (line_number, pdsdir.volset_, pdsdir.volname,
                          date[:10], start[:10], elapsed[:-7], error_text)
 
         sys.exit()
 
     # Start batch processing
-    abspaths = [p[0] for p in modified_holdings] + [p[3] for p in current_logs]
+    # info = (abspath, mod_date, prev_validation, had_errors)
+    info = [(p[0], p[1], None, False) for p in modified_holdings] + \
+           [(p[3], p[2], p[0], p[4]) for p in current_logs]
     start = datetime.datetime.now()
+
+    batch_message = []
+    batch_message.append('Batch re-validate started at %s\n' %
+                         start.strftime("%Y-%m-%d %H:%M:%S"))
+    print batch_message[0]
 
     # Main loop
     logger.open(' '.join(sys.argv))
     try:
         # For each volume...
-        for abspath in abspaths:
+        for (abspath, mod_date, prev_validation, had_errors) in info:
             pdsdir = pdsfile.PdsFile.from_abspath(abspath)
-            print '***** %s/%s' % (pdsdir.volset, pdsdir.volname)
-            validate_one_volume(pdsdir, voltypes, tests, namespace, logger)
+            if prev_validation is None:
+                ps = 'never validated'
+            else:
+                ps = 'last validated %s' % prev_validation[:10]
+            string = '%20s%-11s  modified %s, %s' % \
+                     (pdsdir.volset_, pdsdir.volname, mod_date[:10], ps)
+            print string
+            batch_message.append(string)
+
+            (logfile,
+             errors) = validate_one_volume(pdsdir, voltypes, tests, namespace,
+                                           logger)
+            if errors:
+                string = '***** Errors = %d; log = %s' % (errors, logfile)
+                print string
+                batch_message.append(string)
 
             now = datetime.datetime.now()
-            if (now - start).seconds > namespace.minutes*60: break
+            if (now - start).seconds > namespace.minutes*60:
+                break
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
@@ -600,8 +643,17 @@ else:
         (fatal, errors, warnings, tests) = logger.close()
         status = 1 if (fatal or errors) else 0
 
-    print
-    print '***** Task terminated after %d minutes', (now - start).minutes
+        now = datetime.datetime.now()
+        batch_message.append('\nTimeout at %s after %d minutes' %
+                                     (now.strftime("%Y-%m-%d %H:%M:%S"),
+                                     (now - start).seconds//60))
+        print batch_message[-1]
+
+        print '---------------'
+        print '\n'.join(batch_message)
+
+        if namespace.email:
+            send_email(namespace.email, '\n'.join(batch_message))
 
     sys.exit(status)
 
