@@ -298,7 +298,7 @@ def send_email(to_addr, message):
     smtp = SMTP()
     smtp.connect(SERVER, 25)
     from_addr = "PDS Administrator <pds-admin@seti.org>"
-    subject = "Revalidate report from " + socket.gethostname()
+    subject = "Re-validate report from " + socket.gethostname()
     date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" \
@@ -578,7 +578,7 @@ else:
 
     # Print info in trial run mode
     if namespace.batch_status:
-        fmt = '%4d %20s/%-11s  modified %s, never validated'
+        fmt = '%4d %20s/%-11s  modified %s, not previously validated'
         line_number = 0
         for (abspath, date) in modified_holdings:
             pdsdir = pdsfile.PdsFile.from_abspath(abspath)
@@ -615,7 +615,7 @@ else:
         for (abspath, mod_date, prev_validation, had_errors) in info:
             pdsdir = pdsfile.PdsFile.from_abspath(abspath)
             if prev_validation is None:
-                ps = 'never validated'
+                ps = 'not previously validated'
             else:
                 ps = 'last validated %s' % prev_validation[:10]
             string = '%20s%-11s  modified %s, %s' % \
