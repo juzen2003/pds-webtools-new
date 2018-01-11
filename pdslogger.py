@@ -69,6 +69,12 @@ DEFAULT_LIMITS_BY_NAME = {
     'invisible':   -1,
     'exception':   -1,
     'header'   :   -1,
+
+    # The override flag allows limits to be changed at each open.
+    # If override is set to False, subsequent attempts to increase a limit
+    # during a call to open() will be ignored; attempts to lower a limit will
+    # be respected.
+    'override': True
 }
 
 # Cache of names vs. PdsLoggers
@@ -259,6 +265,9 @@ class PdsLogger(object):
         self.level_tags = DEFAULT_LEVEL_TAGS.copy()
         self.default_limits_by_name = DEFAULT_LIMITS_BY_NAME.copy()
 
+        if 'override' in limits:
+            self.default_limits_by_name['override'] = limits['override']
+
         for (name, level) in self.level_by_name.iteritems():
             if level not in self.level_tags:
                 self.level_tags[level] = name.upper()
@@ -391,7 +400,7 @@ class PdsLogger(object):
             raise ValueError('Maximum logging hierarchy depth has been reached')
             sys.exit(1)
 
-        if abspath: title = title + ': ' + abspath
+        if abspath: title += ': ' + self.logpath(abspath)
         self.titles.append(title)
 
         time = datetime.datetime.now()
@@ -406,13 +415,27 @@ class PdsLogger(object):
         else:
             self.local_handlers.append(None)
 
+        # Set the level-specific limits
         if self.limits_by_name:
             self.limits_by_name.append(self.limits_by_name[-1].copy())
         else:
             self.limits_by_name.append(self.default_limits_by_name.copy())
 
+        override = self.limits_by_name[-1]['override']
         for (name, limit) in limits.iteritems():
-            self.limits_by_name[-1][name] = limit
+            if name == 'override':
+                self.limits_by_name[-1][name] &= limit
+            elif override:
+                self.limits_by_name[-1][name] = limit
+            else:
+                # Only a decrease is allowed
+                if limit < 0: continue
+
+                current_limit = self.limits_by_name[-1][name]
+                if current_limit < 0:
+                    self.limits_by_name[-1][name] = limit
+                else:
+                    self.limits_by_name[-1][name] = min(limit, current_limit)
 
         zeros = {}
         for name in self.level_by_name:
@@ -440,7 +463,7 @@ class PdsLogger(object):
         message = message to print;
         abspath = absolute path of the relevant file, if any;
         force = True to force message reporting even if the relevant limit has
-            been reached.
+                been reached.
         """
 
         # Determine the status
@@ -518,13 +541,15 @@ class PdsLogger(object):
             suppressed = self.suppressed_by_level[-1][level]
             if count + suppressed == 0: continue
 
-            plural = '' if count == 1 else 's'
             tag = self.level_tags[level].rstrip()
             if suppressed == 0:
+                plural = '' if count == 1 else 's'
                 message = '%d %s message%s' % (count, tag, plural)
             else:
+                unsuppressed = count - suppressed
+                plural = '' if unsuppressed == 1 else 's'
                 message = '%d %s message%s reported of %d total' % \
-                          (count - suppressed, tag, plural, count)
+                          (unsuppressed, tag, plural, count)
 
             self.logger.log(max(level, self.level_by_name['header']),
                             '%s | %s %s|%s| %s | %s' %
@@ -629,7 +654,7 @@ class PdsLogger(object):
         """Log an Exception or KeyboardInterrupt."""
 
         if type(e) == KeyboardInterrupt:
-            self.logger.log('Interrupted by user')
+            self.logger.fatal('Interrupted by user')
             raise e
 
         (etype, value, tb) = sys.exc_info()
