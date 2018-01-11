@@ -168,13 +168,25 @@ def get_log_info(logfile):
     with open(logfile) as f:
         recs = f.readlines()
 
+    if not recs:
+        raise ValueError('Empty log file: ' + logfile)
+
     parts = recs[0].split('|')
+    if len(parts) < 2:
+        raise ValueError('Empty log file: ' + logfile)
+
     start_time = parts[0].rstrip()
-    assert parts[1].strip() == LOGNAME, 'Not a revalidate log file'
+    if parts[1].strip() != LOGNAME:
+        raise ValueError('Not a revalidate log file')
 
     abspath = parts[-1].strip().split(' ')[-1]
 
-    assert 'Last modification' in recs[1], 'Missing modification time'
+    if len(recs) < 1:
+        raise ValueError('Not a revalidate log file')
+
+    if 'Last modification' not in recs[1]:
+        raise ValueError('Missing modification time')
+
     modtime = recs[1].split('modification:')[-1].strip()
 
     error = False
@@ -205,7 +217,7 @@ def get_all_log_info(logroot):
             try:
                 info = get_log_info(logfile)
             except Exception as e:
-                if not isinstance(e, AssertionError):
+                if not isinstance(e, ValueError):
                     print logfile, e
                 continue
 
@@ -235,7 +247,7 @@ def get_volume_info(holdings):
     """Return a list of tuples (volume abspath, modtime) for every volume in
     the given holdings directory."""
 
-    path = os.path.join(holdings, 'volumes/*_*x*/*_*')
+    path = os.path.join(holdings, 'volumes/*_*/*_*')
     abspaths = glob.glob(path)
 
     info_list = []
@@ -287,7 +299,7 @@ parser = argparse.ArgumentParser(
     description='revalidate: Perform various validation tasks on an online '   +
                 'volume or volumes.')
 
-parser.add_argument('volume', nargs='?', type=str,
+parser.add_argument('volume', nargs='*', type=str,
                     help='Paths to volumes or volume sets for validation.')
 
 parser.add_argument('--log', '-l', type=str, default='',
@@ -550,7 +562,8 @@ else:
         for (abspath, date) in modified_holdings:
             pdsdir = pdsfile.PdsFile.from_abspath(abspath)
             line_number += 1
-            print fmt % (line_number, pdsdir.volset, pdsdir.volname, date[:10])
+            print fmt % (line_number, pdsdir.volset_[:-1], pdsdir.volname,
+                         date[:10])
 
         fmt ='%4d  %11s/%-11s  modified %s, last re-validated %s, duration %s%s'
         for info in current_logs:
@@ -558,8 +571,8 @@ else:
             pdsdir = pdsfile.PdsFile.from_abspath(abspath)
             error_text = ', error logged' if had_error else ''
             line_number += 1
-            print fmt % (line_number, pdsdir.volset, pdsdir.volname, date[:10],
-                         start[:10], elapsed[:-7], error_text)
+            print fmt % (line_number, pdsdir.volset_[:-1], pdsdir.volname,
+                         date[:10], start[:10], elapsed[:-7], error_text)
 
         sys.exit()
 
