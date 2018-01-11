@@ -178,7 +178,7 @@ def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
                 if ext not in ('.LBL', '.CAT', '.TXT', '.SFD'): continue
                 islabel = (ext == '.LBL')
 
-                tuples = read_links(abspath, files)
+                tuples = read_links(abspath, files, logger=logger)
 
                 # Identify all files that might be labeled by this file
                 if ext == '.LBL':
@@ -704,7 +704,7 @@ if __name__ == '__main__':
                              '"Logs" subdirectory of the current working '     +
                              'directory.')
 
-    parser.add_argument('--quiet', '-q', default=False, action='store_true',
+    parser.add_argument('--quiet', '-q', action='store_true',
                         help='Do not also log to the terminal.')
 
     # Parse and validate the command line

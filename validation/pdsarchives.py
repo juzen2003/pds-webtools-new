@@ -341,7 +341,7 @@ if __name__ == '__main__':
                              '"Logs" subdirectory of the current working '     +
                              'directory.')
 
-    parser.add_argument('--quiet', '-q', default=False, action='store_true',
+    parser.add_argument('--quiet', '-q', action='store_true',
                         help='Do not also log to the terminal.')
 
     # Parse and validate the command line

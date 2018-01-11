@@ -89,7 +89,7 @@ def generate_checksums(pdsdir, selection=None, oldpairs=[], regardless=True,
                 if regardless and selection:
                     md5 = hashfile(abspath)
                     newtuples.append((abspath, md5, file))
-                    logger.normal('Selected MD5 = %s' % md5, abspath)
+                    logger.normal('Selected MD5=%s' % md5, abspath)
 
                 elif abspath in md5_dict:
                     newtuples.append((abspath, md5_dict[abspath], file))
@@ -98,7 +98,7 @@ def generate_checksums(pdsdir, selection=None, oldpairs=[], regardless=True,
                 else:
                     md5 = hashfile(abspath)
                     newtuples.append((abspath, md5, file))
-                    logger.normal('MD5 = %s' % md5, abspath)
+                    logger.normal('MD5=%s' % md5, abspath)
 
         if selection:
             if len(newtuples) == 0:
@@ -534,7 +534,7 @@ if __name__ == '__main__':
                              '"Logs" subdirectory of the current working '     +
                              'directory.')
 
-    parser.add_argument('--quiet', '-q', default=False, action='store_true',
+    parser.add_argument('--quiet', '-q', action='store_true',
                         help='Do not also log to the terminal.')
 
     # Parse and validate the command line

@@ -98,7 +98,7 @@ class PdsDependency(object):
         PdsDependency.MODTIME_DICT = {}
 
     @staticmethod
-    def get_modtime(abspath):
+    def get_modtime(abspath, logger):
         """Return the Unix-style modification time for a file, recursively for
         a directory. Cache results for directories."""
 
@@ -114,20 +114,14 @@ class PdsDependency(object):
             absfile = os.path.join(abspath, file)
 
             if file == '.DS_Store':     # log .DS_Store files; ignore dates
-                logger = pdslogger.PdsLogger.get_logger(LOGNAME)
                 logger.ds_store('.DS_Store ignored', absfile)
                 continue
 
             if '/._' in absfile:        # log dot-underscore files; ignore dates
-                logger = pdslogger.PdsLogger.get_logger(LOGNAME)
                 logger.dot_underscore('._* file ignored', absfile)
                 continue
 
-#             elif '/.' in absfile:           # log invisible files/dirs
-#                 logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-#                 logger.invisible('Invisible file', absfile)
-
-            modtime = max(modtime, PdsDependency.get_modtime(absfile))
+            modtime = max(modtime, PdsDependency.get_modtime(absfile, logger))
 
         PdsDependency.MODTIME_DICT[abspath] = modtime
         return modtime
@@ -160,8 +154,8 @@ class PdsDependency(object):
 
             else:
               for sub in self.sublist:
-                logger.open('%s >> %s' % (self.regex_pattern[1:-1], sub))
-                logger.set_limit('normal', limit)
+                logger.open('%s >> %s' % (self.regex_pattern[1:-1], sub),
+                            limits={'normal': limit})
                 try:
 
                     for abspath in abspaths:
@@ -179,9 +173,11 @@ class PdsDependency(object):
                             continue
 
                         if self.newer and check_newer:
-                            source_modtime = PdsDependency.get_modtime(abspath)
+                            source_modtime = PdsDependency.get_modtime(abspath,
+                                                                       logger)
                             requirement_modtime = \
-                                            PdsDependency.get_modtime(absreq)
+                                            PdsDependency.get_modtime(absreq,
+                                                                      logger)
 
                             if requirement_modtime < source_modtime:
                                 logger.error('File out of date', absreq)
@@ -545,7 +541,7 @@ def test(pdsdir, logger=None):
 
     path = pdsdir.abspath
     for suite in TESTS.all(path):
-        _ = PdsDependency.test_suite(suite, path)
+        _ = PdsDependency.test_suite(suite, path, logger=logger)
 
 ################################################################################
 ################################################################################
@@ -570,7 +566,7 @@ if __name__ == '__main__':
                              '"Logs" subdirectory of the current working '     +
                              'directory.')
 
-    parser.add_argument('--quiet', '-q', default=False, action='store_true',
+    parser.add_argument('--quiet', '-q', action='store_true',
                         help='Do not also log to the terminal.')
 
     # Parse and validate the command line
@@ -626,7 +622,7 @@ if __name__ == '__main__':
             LOGGER.info('Log file', logfile)
             LOGGER.replace_root(pdsdir.root_)
             try:
-                test(pdsdir)
+                test(pdsdir, logger=LOGGER)
 
             except (Exception, KeyboardInterrupt) as e:
                 LOGGER.exception(e)

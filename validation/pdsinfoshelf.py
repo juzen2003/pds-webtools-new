@@ -92,7 +92,7 @@ def generate_infodict(pdsdir, selection, old_infodict={},
                 except Exception:
                     logger.error('Preview size not found', abspath)
 
-        logger.normal('File info generated', abspath, force=True)
+        logger.normal('File info generated', abspath)
         info = (bytes, children, modtime, checksum, size)
         infodict[abspath] = info
 
@@ -259,17 +259,14 @@ def load_infodict(pdsdir, logger=None):
 
 ################################################################################
 
-def validate_infodict(dirpath, dirdict, shelfdict,
+def validate_infodict(pdsdir, dirdict, shelfdict,
                                limits={'normal': 0}, logger=None):
-
-    dirpath = os.path.abspath(dirpath)
-    pdsdir = pdsfile.PdsFile.from_abspath(dirpath)
 
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
         logger.replace_root(pdsdir.root_)
 
-    logger.open('Validating file info for', dirpath, limits=limits)
+    logger.open('Validating file info for', pdsdir.abspath, limits=limits)
 
     try:
         keys = dirdict.keys()
@@ -420,7 +417,7 @@ def reinitialize(pdsdir, selection, logger=None):
 
 def validate(pdsdir, selection, logger=None):
 
-    shelf_infodict = load_infodict(infofile, logger=logger)
+    shelf_infodict = load_infodict(pdsdir, logger=logger)
     dir_infodict = generate_infodict(pdsdir, selection, logger=logger)
 
     # Validate
@@ -535,7 +532,7 @@ if __name__ == '__main__':
                              '"Logs" subdirectory of the current working '     +
                              'directory.')
 
-    parser.add_argument('--quiet', '-q', default=False, action='store_true',
+    parser.add_argument('--quiet', '-q', action='store_true',
                         help='Do not also log to the terminal.')
 
 
