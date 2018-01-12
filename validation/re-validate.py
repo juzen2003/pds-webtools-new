@@ -43,7 +43,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
     path_handler = pdslogger.file_handler(logfile)
 
     logger.blankline()
-    logger.open('Revalidate ' + pdsdir.abspath, handler=path_handler)
+    logger.open('Re-validate ' + pdsdir.abspath, handler=path_handler)
     try:
 
         logger.info('Last modification', pdsdir.date)
@@ -59,7 +59,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
 
             temp_pdsdir = pdsfile.PdsFile.from_abspath(abspath)
             if namespace.checksums and not namespace.targz_only:
-                logger.open('Checksum validatation for', abspath)
+                logger.open('Checksum re-validatation for', abspath)
                 try:
                     pdschecksums.validate(temp_pdsdir, None, logger)
                 finally:
@@ -67,7 +67,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
                     logger.close()
 
             if namespace.archives and not namespace.targz_only:
-                logger.open('Archive validatation for', abspath)
+                logger.open('Archive re-validatation for', abspath)
                 try:
                     pdsarchives.validate(temp_pdsdir, logger)
                 finally:
@@ -78,7 +78,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
         if checksums and targz:
             for voltype in voltypes:
                 abspath = pdsdir.abspath.replace('/volumes/',
-                                               '/archives-' + voltype + '/')
+                                                 '/archives-' + voltype + '/')
                 abspath += '*.tar.gz'
                 abspath = glob.glob(abspath)
                 if not abspath: continue
@@ -87,7 +87,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
 
                 (prefix, basename) = os.path.split(abspath)
                 temp_pdsdir = pdsfile.PdsFile.from_abspath(prefix)
-                logger.open('Checksum validatation for', abspath)
+                logger.open('Checksum re-validatation for', abspath)
                 try:
                     pdschecksums.validate(temp_pdsdir, basename, logger)
                 finally:
@@ -102,7 +102,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
 
             temp_pdsdir = pdsfile.PdsFile.from_abspath(abspath)
             if namespace.infoshelves and not namespace.targz_only:
-                logger.open('Infoshelf validatation for', abspath)
+                logger.open('Infoshelf re-validatation for', abspath)
                 try:
                     pdsinfoshelf.validate(temp_pdsdir, None, logger)
                 finally:
@@ -111,7 +111,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
 
             if (namespace.linkshelves and not namespace.targz_only and
                 voltype in ('volumes', 'calibrated', 'metadata')):
-                    logger.open('Linkshelf validatation for', abspath)
+                    logger.open('Linkshelf re-validatation for', abspath)
                     try:
                         pdslinkshelf.validate(temp_pdsdir, logger)
                     finally:
@@ -122,7 +122,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
         if namespace.infoshelves and targz:
             for voltype in voltypes:
                 abspath = pdsdir.abspath.replace('/volumes/',
-                                               '/archives-' + voltype + '/')
+                                                 '/archives-' + voltype + '/')
                 abspath += '*.tar.gz'
                 abspath = glob.glob(abspath)
                 if not abspath: continue
@@ -131,7 +131,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
 
                 (prefix, basename) = os.path.split(abspath)
                 temp_pdsdir = pdsfile.PdsFile.from_abspath(prefix)
-                logger.open('Infoshelf validatation for', abspath)
+                logger.open('Infoshelf re-validatation for', abspath)
                 try:
                     pdsinfoshelf.validate(temp_pdsdir, basename, logger)
                 finally:
@@ -140,7 +140,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
 
         # Dependencies
         if namespace.dependencies and not namespace.targz_only:
-            logger.open('Dependency test for', abspath)
+            logger.open('Dependency re-validation for', abspath)
             try:
                 pdsdependency.test(pdsdir, logger)
             finally:
@@ -152,9 +152,9 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
 
     finally:
         if tests_performed == 1:
-            logger.info('1 revalidation test performed', pdsdir.abspath)
+            logger.info('1 re-validation test performed', pdsdir.abspath)
         else:
-            logger.info('%d revalidation tests performed' % tests_performed,
+            logger.info('%d re-validation tests performed' % tests_performed,
                         pdsdir.abspath)
         (fatal, errors, warnings, tests) = logger.close()
 
