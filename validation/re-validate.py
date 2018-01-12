@@ -468,12 +468,13 @@ else:
     except KeyError:
         log_path_ = 'Logs/re-validate/'
 
+namespace.log = log_path_
+
 if namespace.subdirectory:
     subdirectory_ = namespace.subdirectory.rstrip('/') + '/'
 else:
     subdirectory_ = ''
 
-namespace.log = log_path_
 namespace.subdirectory = subdirectory_
 
 # Initialize logger
