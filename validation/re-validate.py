@@ -646,7 +646,7 @@ else:
         now = datetime.datetime.now()
         batch_message.append('\nTimeout at %s after %d minutes' %
                                      (now.strftime("%Y-%m-%d %H:%M:%S"),
-                                     (now - start).seconds//60))
+                                     int((now - start).seconds/60. + 0.5)))
         print batch_message[-1]
 
         print '---------------'
