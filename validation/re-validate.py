@@ -156,9 +156,9 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
         else:
             logger.info('%d revalidation tests performed' % tests_performed,
                         pdsdir.abspath)
-        errors = logger.close()[1]
+        (fatal, errors, warnings, tests) = logger.close()
 
-    return (logfile, errors)
+    return (logfile, fatal, errors)
 
 ################################################################################
 # Log and volume management for batch mode
@@ -624,9 +624,21 @@ else:
             batch_message.append(string)
 
             (logfile,
-             errors) = validate_one_volume(pdsdir, voltypes, tests, namespace,
-                                           logger)
-            if errors:
+             fatal, errors) = validate_one_volume(pdsdir, voltypes, tests,
+                                                  namespace, logger)
+            if fatal or errors:
+                stringlist = ['***** ']
+                if fatal:
+                    stringlist += ['Fatal = ', str(fatal), '; ']
+                if errors:
+                    stringlist += ['Errors = ', str(errors), '; ']
+                stringlist.append(logfile)
+                string = ''.join(stringlist)
+
+                print string
+                batch_message.append(string)
+
+            elif errors:
                 string = '***** Errors = %d; log = %s' % (errors, logfile)
                 print string
                 batch_message.append(string)
