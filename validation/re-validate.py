@@ -470,7 +470,6 @@ else:
 
 if namespace.subdirectory:
     subdirectory_ = namespace.subdirectory.rstrip('/') + '/'
-    log_path_ += subdirectory_
 else:
     subdirectory_ = ''
 
