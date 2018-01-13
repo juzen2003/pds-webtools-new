@@ -30,6 +30,7 @@ description_and_icon_by_dict = translator.TranslatorByDict({
     'NHxxLO_xxxx_v1.1'       : ('New Horizons LORRI image collection (2008)',                                        'VOLDIR'),
     'NHxxLO_xxxx_v2'         : ('New Horizons LORRI image collection (2009)',                                        'VOLDIR'),
     'NHxxLO_xxxx_v3'         : ('New Horizons LORRI image collection (2014)',                                        'VOLDIR'),
+    'NHxxLO_xxxx_v4'         : ('New Horizons LORRI image collection (2016)',                                        'VOLDIR'),
     'NHxxLO_xxxx/NHJULO_1001': ('New Horizons raw LORRI images, Jupiter flyby, 2007-01-08 to 2015-07-15',            'VOLUME'),
     'NHxxLO_xxxx/NHJULO_2001': ('New Horizons calibrated LORRI images, Jupiter flyby, 2007-01-08 to 2015-07-15',     'VOLUME'),
     'NHxxLO_xxxx/NHLALO_1001': ('New Horizons raw LORRI images, cruise to Jupiter, 2006-02-24 to 2015-07-15',        'VOLUME'),
@@ -41,6 +42,7 @@ description_and_icon_by_dict = translator.TranslatorByDict({
 
     'NHxxMV_xxxx'            : ('New Horizons MVIC image collection (2016-2017)',                                    'VOLDIR'),
     'NHxxMV_xxxx_v1'         : ('New Horizons MVIC image collection (2008)',                                         'VOLDIR'),
+    'NHxxMV_xxxx_v2'         : ('New Horizons MVIC image collection (2016)',                                         'VOLDIR'),
     'NHxxMV_xxxx/NHJUMV_1001': ('New Horizons raw MVIC images, Jupiter flyby, 2007-01-08 to 2015-07-15',             'VOLUME'),
     'NHxxMV_xxxx/NHJUMV_2001': ('New Horizons calibrated MVIC images, Jupiter flyby, 2007-01-08 to 2015-07-15',      'VOLUME'),
     'NHxxMV_xxxx/NHLAMV_1001': ('New Horizons raw MVIC images, cruise to Jupiter, 2006-02-24 to 2015-07-15',         'VOLUME'),
