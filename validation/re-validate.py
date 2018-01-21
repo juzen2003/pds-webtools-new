@@ -26,7 +26,13 @@ import pdsdependency
 
 LOGNAME = 'pds.validation.re-validate'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
+
 SERVER = 'list.seti.org'
+FROM_ADDR = "PDS Administrator <pds-admin@seti.org>"
+REPORT_SUBJ = "Re-validate report from " + socket.gethostname()
+REPORT_SUBJ_W_ERRORS = "Re-validate report with ERRORs from " + \
+                                              socket.gethostname()
+ERROR_REPORT_SUBJ = "Re-validate ERROR report from " + socket.gethostname()
 
 ################################################################################
 # Function to validate one volume
@@ -294,17 +300,22 @@ def find_modified_volumes(holdings_info, log_info):
 
     return (modified_holdings, current_log_info)
 
-def send_email(to_addr, message):
+def send_email(to_addr, subject, message):
     smtp = SMTP()
     smtp.connect(SERVER, 25)
-    from_addr = "PDS Administrator <pds-admin@seti.org>"
-    subject = "Re-validate report from " + socket.gethostname()
     date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
-    msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" \
-        % (from_addr, to_addr, subject, date, message)
+    if type(to_addr) == str:
+        to_addr = [to_addr]
 
-    smtp.sendmail(from_addr, to_addr, msg)
+    to_addr_in_msg = ','.join(to_addr)
+
+    msg = ("From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" \
+           % (FROM_ADDR, to_addr_in_msg, subject, date, message))
+
+    for addr in to_addr:
+        smtp.sendmail(FROM_ADDR, addr, msg)
+
     smtp.quit()
 
 ################################################################################
@@ -313,17 +324,18 @@ def send_email(to_addr, message):
 
 # Set up parser
 parser = argparse.ArgumentParser(
-    description='re-validate: Perform various validation tasks on an online '   +
+    description='re-validate: Perform various validation tasks on an online '  +
                 'volume or volumes.')
 
 parser.add_argument('volume', nargs='*', type=str,
                     help='Paths to volumes or volume sets for validation.')
 
 parser.add_argument('--log', '-l', type=str, default='',
-                    help='Directory for the log files. If not specified, log ' +
-                         'files are written to the "re-validate" subdirectory '+
-                         'of the path defined by environoment variable '       +
-                         '"%s". ' % LOGROOT_ENV                                +
+                    help='Root directory for the log files. Log files are '    +
+                         'written to the "re-validate" subdirectory of this '  +
+                         'directory. If not specified, logs are written to '   +
+                         '"re-validate" subdirectory of the path defined by '  +
+                         'environoment variable "%s". ' % LOGROOT_ENV          +
                          'If this is undefined, logs are written to the '      +
                          '"Logs/re-validate" subdirectory of the current '     +
                          'working directory.')
@@ -351,9 +363,17 @@ parser.add_argument('--batch-status',  action='store_true',
                     help='Prints a summary of what the program would do now '  +
                          'if run in batch mode.')
 
-parser.add_argument('--email',  type=str, default='',
-                    help='Email address to which to send a repport when a '    +
-                         'batch job is completed.')
+parser.add_argument('--email', type=str, action='append', default=[],
+                    metavar='ADDR',
+                    help='Email address to which to send a report when a '     +
+                         'batch job completes. Repeat for multiple recipients.')
+
+parser.add_argument('--error-email',  type=str, action='append', default=[],
+                    metavar='ADDR',
+                    help='Email address to which to send an error report '     +
+                         'when a batch job completes. If no errors are '       +
+                         'found, no message is sent. Repeat for multiple '     +
+                         'recipients.')
 
 parser.add_argument('--quiet', '-q', action='store_true',
                     help='Do not log to the terminal.')
@@ -430,8 +450,8 @@ infoshelves  = namespace.info
 linkshelves  = namespace.links
 dependencies = namespace.dependencies
 
-if namespace.full or (checksums + archives + infoshelves + linkshelves +
-                      dependencies) == 0:
+if namespace.full or not (checksums or archives or infoshelves or linkshelves or
+                          dependencies):
     checksums    = True
     archives     = True
     infoshelves  = True
@@ -461,14 +481,14 @@ if namespace.targz_only: tests = ['checksums (tar.gz only)']
 
 # Define the logging directory
 if namespace.log:
-    log_root = namespace.log
+    log_root_ = namespace.log.rstrip('/') + '/'
 else:
     try:
-        log_path_ = os.path.join(os.environ[LOGROOT_ENV], 're-validate/')
+        log_root_ = os.environ[LOGROOT_ENV].rstrip('/') + '/'
     except KeyError:
-        log_path_ = 'Logs/re-validate/'
+        log_root_ = 'Logs/'
 
-namespace.log = log_path_
+namespace.log = log_root_ + 're-validate/'
 
 if namespace.subdirectory:
     subdirectory_ = namespace.subdirectory.rstrip('/') + '/'
@@ -478,17 +498,17 @@ else:
 namespace.subdirectory = subdirectory_
 
 # Initialize logger
-pdsfile.PdsFile.set_log_root(log_path_)
+pdsfile.PdsFile.set_log_root(namespace.log)
 new_limits = {'info':10, 'normal':10, 'override':False}
 logger = pdslogger.PdsLogger(LOGNAME, limits=new_limits)
 
 if not namespace.quiet:
     logger.add_handler(pdslogger.stdout_handler)
 
-warning_handler = pdslogger.warning_handler(log_path_)
+warning_handler = pdslogger.warning_handler(namespace.log)
 logger.add_handler(warning_handler)
 
-error_handler = pdslogger.error_handler(log_path_)
+error_handler = pdslogger.error_handler(namespace.log)
 logger.add_handler(error_handler)
 
 ########################################
@@ -603,14 +623,16 @@ else:
            [(p[3], p[2], p[0], p[4]) for p in current_logs]
     start = datetime.datetime.now()
 
-    batch_message = []
-    batch_message.append('Batch re-validate started at %s\n' %
-                         start.strftime("%Y-%m-%d %H:%M:%S"))
-    print batch_message[0]
+    batch_messages = []
+    error_messages = []
+    batch_prefix = ('Batch re-validate started at %s\n' %
+                    start.strftime("%Y-%m-%d %H:%M:%S"))
+    print batch_prefix
 
     # Main loop
     logger.open(' '.join(sys.argv))
     try:
+
         # For each volume...
         for (abspath, mod_date, prev_validation, had_errors) in info:
             pdsdir = pdsfile.PdsFile.from_abspath(abspath)
@@ -618,14 +640,14 @@ else:
                 ps = 'not previously validated'
             else:
                 ps = 'last validated %s' % prev_validation[:10]
-            string = '%20s%-11s  modified %s, %s' % \
-                     (pdsdir.volset_, pdsdir.volname, mod_date[:10], ps)
-            print string
-            batch_message.append(string)
+            batch_message = '%20s%-11s  modified %s, %s' % \
+                            (pdsdir.volset_, pdsdir.volname, mod_date[:10], ps)
+            print batch_message
 
             (logfile,
              fatal, errors) = validate_one_volume(pdsdir, voltypes, tests,
                                                   namespace, logger)
+            error_message = ''
             if fatal or errors:
                 stringlist = ['***** ']
                 if fatal:
@@ -633,15 +655,17 @@ else:
                 if errors:
                     stringlist += ['Errors = ', str(errors), '; ']
                 stringlist.append(logfile)
-                string = ''.join(stringlist)
+                error_message = ''.join(stringlist)
 
-                print string
-                batch_message.append(string)
+                print error_message
 
-            elif errors:
-                string = '***** Errors = %d; log = %s' % (errors, logfile)
-                print string
-                batch_message.append(string)
+            batch_messages.append(batch_message)
+
+            if error_message:
+                batch_messages.append(error_message)
+
+                error_messages.append(batch_message)
+                error_messages.append(error_message)
 
             now = datetime.datetime.now()
             if (now - start).seconds > namespace.minutes*60:
@@ -656,16 +680,24 @@ else:
         status = 1 if (fatal or errors) else 0
 
         now = datetime.datetime.now()
-        batch_message.append('\nTimeout at %s after %d minutes' %
-                                     (now.strftime("%Y-%m-%d %H:%M:%S"),
-                                     int((now - start).seconds/60. + 0.5)))
-        print batch_message[-1]
-
-        print '---------------'
-        print '\n'.join(batch_message)
+        batch_suffix = ('\nTimeout at %s after %d minutes' %
+                         (now.strftime("%Y-%m-%d %H:%M:%S"),
+                         int((now - start).seconds/60. + 0.5)))
+        print batch_suffix
 
         if namespace.email:
-            send_email(namespace.email, '\n'.join(batch_message))
+            if error_messages:
+                subj = REPORT_SUBJ_W_ERRORS
+            else:
+                subj = REPORT_SUBJ
+
+            full_message = [batch_prefix] + batch_messages + [batch_suffix]
+            send_email(namespace.email, subj, '\n'.join(full_message))
+
+        if error_messages and namespace.error_email:
+            full_message = [batch_prefix] + error_messages + [batch_suffix]
+            send_email(namespace.error_email, ERROR_REPORT_SUBJ,
+                                              '\n'.join(full_message))
 
     sys.exit(status)
 
