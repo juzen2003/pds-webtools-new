@@ -77,11 +77,7 @@ def generate_infodict(pdsdir, selection, old_infodict={},
             children = 0
             dt = datetime.datetime.fromtimestamp(os.path.getmtime(abspath))
             modtime = dt.strftime('%Y-%m-%d %H:%M:%S.%f')
-            try:
-                checksum = checkdict[abspath]
-            except KeyError:
-                logger.fatal('Missing checksum', abspath)
-                sys.exit(1)
+            checksum = checkdict[abspath]
 
             size = (0,0)
             ext = os.path.splitext(abspath)[1]
@@ -370,18 +366,12 @@ def initialize(pdsdir, selection, logger=None):
 
     # Check selection
     if selection:
-        if logger is None:
-            logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-        logger.fatal('File selection is disallowed for task "initialize": ' +
-                     selection)
-        sys.exit(1)
+        raise ValueError('File selection is disallowed for task ' +
+                         '"initialize": ' + selection)
 
     # Check destination
     if os.path.exists(infofile):
-        if logger is None:
-            logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-        logger.fatal('Info file already exists: ' + infofile)
-        sys.exit(1)
+        raise IOError('Info file already exists: ' + infofile)
 
     # Create parent directory if necessary
     parent = os.path.split(infofile)[0]

@@ -187,8 +187,8 @@ def write_archive(pdsdir, clobber=True, archive_invisible=True,
         (tarpath, lskip) = pdsdir.archive_path_and_lskip()
 
         if not clobber and os.path.exists(tarpath):
-            logger.fatal('Archive file already exists', tarpath)
-            sys.exit(1)
+            logger.error('Archive file already exists', tarpath)
+            return
 
         f = tarfile.open(tarpath, mode='w:gz')
         f.add(dirpath, arcname=dirpath[lskip:], recursive=True,

@@ -151,13 +151,15 @@ def read_checksums(checkfile, selection=None, limits={'ds_store':-1},
 
     logger.open('Reading MD5 checksums', checkfile, limits=limits)
 
+    if not os.path.exists(checkfile):
+        raise IOError('Unable to open MD5 checksum file', checkfile)
+
     try:
         prefix_ = pdscheck.dirpath_and_prefix_for_checksum()[1]
 
         # Read the pairs
         abspairs = []
-        try:
-          with open(checkfile, 'r') as f:
+        with open(checkfile, 'r') as f:
             for rec in f:
                 hexval = rec[:32]
                 filepath = rec[34:].rstrip()
@@ -179,9 +181,6 @@ def read_checksums(checkfile, selection=None, limits={'ds_store':-1},
 
                 abspairs.append((prefix_ + filepath, hexval))
                 logger.debug('Read', filepath)
-        except IOError as e:
-            logger.fatal('Unable to open MD5 checksum file', checkfile)
-            sys.exit(1)
 
         if selection and len(abspairs) == 0:
             raise ValueError('File selection %s not found' % selection)
@@ -363,20 +362,12 @@ def initialize(pdsdir, selection, logger=None):
 
     # Check selection
     if selection:
-        if logger is None:
-            logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
-        logger.fatal('File selection is disallowed for task "initialize": ' +
-                     selection)
-        sys.exit(1)
+        raise ValueError('File selection is disallowed for task ' +
+                         '"initialize": ' + selection)
 
     # Check destination
     if os.path.exists(checkfile):
-        if logger is None:
-            logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
-        logger.fatal('Checksum file already exists: ' + checkfile)
-        sys.exit(1)
+        raise IOError('Checksum file already exists: ' + checkfile)
 
     # Generate checksums
     pairs = generate_checksums(pdsdir, logger=logger)

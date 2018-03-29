@@ -592,10 +592,7 @@ def initialize(pdsdir, logger=None):
 
     # Check destination
     if os.path.exists(linkfile):
-        if logger is None:
-            logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-        logger.fatal('Link file already exists: ' + linkfile)
-        sys.exit(1)
+        raise IOError('Link file already exists: ' + linkfile)
 
     # Create parent directory if necessary
     parent = os.path.split(linkfile)[0]
@@ -783,6 +780,6 @@ if __name__ == '__main__':
 
     finally:
         (fatal, errors, warnings, tests) = LOGGER.close()
-        if errors: status = 1
+        if fatal or errors: status = 1
 
     sys.exit(status)
