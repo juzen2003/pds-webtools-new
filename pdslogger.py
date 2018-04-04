@@ -188,8 +188,8 @@ def error_handler(path, name='ERRORS.log', rotation='none'):
 class PdsLogger(object):
     """Logger class adapted for PDS Ring-Moon Systems Node.
 
-    This class defines four additional logging status aliases:
-        - Status "normal" is used for any normal outcome. 
+    This class defines six additional logging status aliases:
+        - Status "normal" is used for any normal outcome.
         - Status "ds_store" is to be used if a ".DS_Store" file is encountered.
         - Status "dot_" is to be used if a "._*" file is encountered.
         - Status "invisible" is to be used if any other invisible file or
@@ -212,7 +212,8 @@ class PdsLogger(object):
     a message.
     """
 
-    def __init__(self, logname, status={}, limits={}, roots=[], pid=False):
+    def __init__(self, logname, status={}, limits={}, roots=[], pid=False,
+                 default_prefix='pds'):
         """Constructor for a PdsLogger.
 
         Input:
@@ -231,10 +232,14 @@ class PdsLogger(object):
                         every file path is on the same physical volume.
 
             pid         True to include the process ID in each log record.
+
+            default_prefix
+                        The prefix to prepend to the logname if it is not
+                        already present.
         """
 
-        if not logname.startswith('pds.'):
-            logname = 'pds.' + logname
+        if not logname.startswith(default_prefix):
+            logname = default_prefix + '.' + logname
 
         parts = logname.split('.')
         if len(parts) != 3:
@@ -257,7 +262,7 @@ class PdsLogger(object):
         self.roots_ = [r.rstrip('/') + '/' for r in roots]
 
         self.level_by_name = DEFAULT_LEVEL_BY_NAME.copy()
-        for (name, level) in status.iteritems():
+        for (name, level) in status.items():
             if type(level) == str:
                 level = DEFAULT_LEVEL_BY_NAME[name]
             self.level_by_name[name] = level
@@ -268,7 +273,7 @@ class PdsLogger(object):
         if 'override' in limits:
             self.default_limits_by_name['override'] = limits['override']
 
-        for (name, level) in self.level_by_name.iteritems():
+        for (name, level) in self.level_by_name.items():
             if level not in self.level_tags:
                 self.level_tags[level] = name.upper()
             if name in limits:
@@ -422,7 +427,7 @@ class PdsLogger(object):
             self.limits_by_name.append(self.default_limits_by_name.copy())
 
         override = self.limits_by_name[-1]['override']
-        for (name, limit) in limits.iteritems():
+        for (name, limit) in limits.items():
             if name == 'override':
                 self.limits_by_name[-1][name] &= limit
             elif override:
@@ -534,7 +539,7 @@ class PdsLogger(object):
                          'SUMMARY', str(time - self.start_times[-1])))
 
         # Log message counts by error level
-        levels = self.counters_by_level[-1].keys()
+        levels = list(self.counters_by_level[-1].keys())
         levels.sort()
         for level in levels:
             count = self.counters_by_level[-1][level]
@@ -561,12 +566,12 @@ class PdsLogger(object):
 
         # Transfer the totals to the hierarchy depth above
         if depth > 1:
-            for (name, count) in self.counters_by_name[-1].iteritems():
+            for (name, count) in self.counters_by_name[-1].items():
                 self.counters_by_name[-2][name] += count
                 self.suppressed_by_name[-2][name] += \
                                             self.suppressed_by_name[-1][name]
 
-            for (level,count) in self.counters_by_level[-1].iteritems():
+            for (level,count) in self.counters_by_level[-1].items():
                 self.counters_by_level[-2][level] += count
                 self.suppressed_by_level[-2][level] += \
                                             self.suppressed_by_level[-1][level]
@@ -576,7 +581,7 @@ class PdsLogger(object):
         errors = 0
         warnings = 0
         tests = 0
-        for (level, count) in self.counters_by_level[-1].iteritems():
+        for (level, count) in self.counters_by_level[-1].items():
             if level >= logging.FATAL:
                 fatal += count
             if level >= logging.ERROR:
@@ -669,4 +674,3 @@ class PdsLogger(object):
 
     def blankline(self):
         self.logger.log(self.level_by_name['header'], '')
-

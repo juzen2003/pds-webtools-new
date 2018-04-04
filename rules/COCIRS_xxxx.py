@@ -449,7 +449,7 @@ spice_lookup = {
 }
 
 viewables = {}
-for (id, name) in spice_lookup.iteritems():
+for (id, name) in spice_lookup.items():
     viewables[name] = translator.TranslatorByRegex([
         (r'volumes/(COCIRS_[56].*)/DATA/\w+/(SPEC|ISPM|TAR|POI)(\w+)\..*', 0, (r'diagrams/\1/BROWSE/*/POI\2_%3d_*.jpg' % id,)),
         (r'volumes/(COCIRS_[56].*)/DATA/\w+/GEO(\w+)_%3d\..*' % id,        0, (r'diagrams/\1/BROWSE/*/POI\2_%3d_*.jpg' % id,)),
@@ -523,4 +523,3 @@ class COCIRS_xxxx(pdsfile.PdsFile):
 pdsfile.PdsFile.SUBCLASSES['COCIRS_xxxx'] = COCIRS_xxxx
 
 ####################################################################################################################################
-

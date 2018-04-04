@@ -3,7 +3,6 @@ import re
 import datetime
 import glob
 import shelve
-import gdbm
 import math
 import time
 import random
@@ -133,7 +132,8 @@ DEBUGGING = False   # True for extra-detailed debugging logs
 
 def load_volume_info(volume_info_path):
 
-    execfile(volume_info_path, globals())
+    with open(volume_info_path, 'rb') as file:
+        exec(compile(file.read(), volume_info_path, 'exec'), globals())
     volume_info_dict = globals()['VOLUME_INFO']
     if LOGGER:
         LOGGER.info('Volume info loaded', volume_info_path)
@@ -447,7 +447,7 @@ class PdsFile(object):
         this = cls.__new__(cls)
 
         source = PdsFile()
-        for (key, value) in source.__dict__.iteritems():
+        for (key, value) in source.__dict__.items():
             this.__dict__[key] = value
 
         if copypath:
@@ -477,7 +477,7 @@ class PdsFile(object):
         cls = type(self)
         this = cls.__new__(cls)
 
-        for (key, value) in self.__dict__.iteritems():
+        for (key, value) in self.__dict__.items():
             this.__dict__[key] = value
 
         return this
@@ -970,7 +970,7 @@ class PdsFile(object):
                 key = self.category_ + self.volset_ + self.volname
             else:
                 key = self.category_ + self.volset_[:-1]
-    
+
             try:
                 pdsf = PATHS[key]
                 if pdsf.volume_version_id_filled:
@@ -1202,7 +1202,7 @@ class PdsFile(object):
                 siblings = parent.pdsfiles_for_basenames(sibnames)
             else:
                 siblings = [self]
-    
+
             return pdsviewable.PdsViewSet.from_pdsfiles(siblings)
 
         # Otherwise, check for associated viewables
@@ -1316,7 +1316,7 @@ class PdsFile(object):
         # RANKS is keyed by [category_][volume set or name] and returns a sorted
         # list of ranks.
 
-        # VOLS is keyed by [category_][volume set or name][rank] and returns a 
+        # VOLS is keyed by [category_][volume set or name][rank] and returns a
         # volset or volname PdsFile.
 
         if self.volset and not self.volname:
@@ -1714,7 +1714,7 @@ class PdsFile(object):
             return PATHS[path]
         except KeyError:
             pass
-    
+
         path = path.rstrip('/')
         parts = path.split('/')
 
@@ -2234,7 +2234,7 @@ class PdsFile(object):
         shelf = PdsFile.get_shelf(shelf_path)
         if shelf is None:
             return None
-    
+
         return shelf[key]
 
     ############################################################################
@@ -2306,7 +2306,7 @@ class PdsFile(object):
         parts = shelf_file.split('/')
         k = parts.index('shelves')
         id = parts[k+1]
-    
+
         if PdsFile.LOG_ROOT_:
             parts = [id.rstrip('s') + 'shelf'] + parts[k+2:]
             log_path = PdsFile.LOG_ROOT_ + '/'.join(parts)
@@ -2871,7 +2871,7 @@ class PdsFile(object):
 
         # Sort basenames within each group; re-key by first basename
         basename_dict = {}
-        for (anchor, basenames) in anchor_dict.iteritems():
+        for (anchor, basenames) in anchor_dict.items():
             sorted = self.sort_basenames(basenames, labels_after=True)
             basename_dict[sorted[0]] = sorted
 
@@ -3370,7 +3370,7 @@ class PdsTable(object):
 #             parent_path = '/'.join(exclusion.split('/')[:-1])
 #             if parent_path in table_dict and \
 #                 not PdsFile.from_logical_path(exclusion).isdir:
-# 
+#
 #                 table_dict[parent_path].insert_file(
 #                                         PdsFile.from_logical_path(exclusion))
 
