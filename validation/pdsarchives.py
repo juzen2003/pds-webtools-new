@@ -226,10 +226,14 @@ def validate_tuples(dir_tuples, tar_tuples, limits={'normal':100}, logger=None):
             elif (dirpath, bytes, modtime) != tardict[abspath]:
 
                 if bytes != tardict[abspath][1]:
-                    logger.error('Byte count mismatch', abspath)
+                    logger.error('Byte count mismatch: ' +
+                                 '%d (filesystem) vs. %d (tarfile)' %
+                                 (bytes, tardict[abspath][1]), abspath)
 
-                if modtime != tardict[abspath][2]:
-                    logger.error('Modification time mismatch', abspath)
+                if abs(modtime != tardict[abspath][2]) > 1:
+                    logger.error('Modification time mismatch: ' +
+                                 '%s (filesystem) vs. %s (tarfile)' %
+                                 (modtime, tardict[abspath][2]), abspath)
 
                 del tardict[abspath]
 
