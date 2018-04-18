@@ -186,6 +186,12 @@ def write_archive(pdsdir, clobber=True, archive_invisible=True,
     try:
         (tarpath, lskip) = pdsdir.archive_path_and_lskip()
 
+        # Create parent directory if necessary
+        parent = os.path.split(tarpath)[0]
+        if not os.path.exists(parent):
+            logger.normal('Creating directory', parent)
+            os.makedirs(parent)
+
         if not clobber and os.path.exists(tarpath):
             logger.error('Archive file already exists', tarpath)
             return

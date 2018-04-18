@@ -32,12 +32,15 @@ TESTS = translator.TranslatorByRegex([
     ('.*/COCIRS_[56]xxx/.*',       0,  'cocirs56'),
     ('.*/COISS_[12]xxx/.*',        0, ['coiss12', 'cumindex', 'metadata']),
     ('.*/COISS_3xxx/.*',           0,  'coiss3'),
+    ('.*/COISS_3xxx_v[0-9]+/.*',   0,  'coiss3'),
     ('.*/COUVIS_0xxx/.*',          0, ['couvis', 'cumindex', 'metadata']),
     ('.*/COVIMS_0xxx/COVIMS_0.*',  0, ['covims', 'cumindex', 'metadata']),
     ('.*/COVIMS_0xxx/COVIMS_UNKS', 0, ['covims', 'cumindex_unks', 'metadata']),
     ('.*/GO_xxxx/*',               0,  'go'),
     ('.*/HST.x_xxxx/.*',           0,  'hst'),
     ('.*/NH..(LO|MV)_xxxx/.*',     0, ['nh', 'metadata']),
+    ('.*/NH..(LO|MV)_xxxx_v[0-9\.]+/.*',
+                                   0, ['nh_vx', 'metadata']),
     ('.*/VGISS_[5678]xxx/.*',      0, ['vgiss', 'cumindex', 'metadata']),
 ])
 
@@ -423,7 +426,7 @@ _ = PdsDependency(
 
 # For COISS_3xxx
 _ = PdsDependency(
-    'Previews of every COISS derived map',
+    'Previews of every COISS derived map image',
     'volumes/$/$/data/images/*.IMG',
     r'volumes/(.*?)/data/images/(.*)\.IMG',
     [r'previews/\1/data/images/\2_thumb.jpg',
@@ -434,7 +437,7 @@ _ = PdsDependency(
 )
 
 _ = PdsDependency(
-    'Previews of every COISS derived map',
+    'Previews of every COISS derived map PDF',
     'volumes/$/$/data/maps/*.PDF',
     r'volumes/(.*?)/data/maps/(.*)\.PDF',
     [r'previews/\1/data/maps/\2_thumb.png',

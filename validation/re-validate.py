@@ -44,8 +44,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
     tests_performed = 0
 
     # Open logger for this volume
-    logfile = pdsdir.log_path_for_volume()
-    logfile = logfile.replace('/volumes/', '/' + namespace.subdirectory)
+    logfile = pdsdir.log_path_for_volume('re-validate')
     path_handler = pdslogger.file_handler(logfile)
 
     logger.blankline()
@@ -335,7 +334,7 @@ parser.add_argument('--log', '-l', type=str, default='',
                          'written to the "re-validate" subdirectory of this '  +
                          'directory. If not specified, logs are written to '   +
                          '"re-validate" subdirectory of the path defined by '  +
-                         'environoment variable "%s". ' % LOGROOT_ENV          +
+                         'environment variable "%s". ' % LOGROOT_ENV           +
                          'If this is undefined, logs are written to the '      +
                          '"Logs/re-validate" subdirectory of the current '     +
                          'working directory.')
@@ -498,7 +497,7 @@ else:
 namespace.subdirectory = subdirectory_
 
 # Initialize logger
-pdsfile.PdsFile.set_log_root(namespace.log)
+pdsfile.PdsFile.set_log_root(None)  # Individual logs go to the pdsdata volume
 new_limits = {'info':10, 'normal':10, 'override':False}
 logger = pdslogger.PdsLogger(LOGNAME, limits=new_limits)
 

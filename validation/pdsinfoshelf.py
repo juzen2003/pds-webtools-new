@@ -274,6 +274,10 @@ def validate_infodict(pdsdir, dirdict, shelfdict,
                 (bytes1, count1, modtime1, checksum1, size1) = dirinfo
                 (bytes2, count2, modtime2, checksum2, size2) = shelfinfo
 
+                # Truncate modtimes to seconds
+                modtime1 = modtime1.rpartition('.')[0]
+                modtime2 = modtime2.rpartition('.')[0]
+
                 agreement = True
                 if bytes1 != bytes2:
                     logger.error('File size mismatch %d %d' %
@@ -417,7 +421,7 @@ def repair(pdsdir, selection, logger=None):
 
     infofile = pdsdir.shelf_path_and_lskip(id='info')[0]
 
-    shelf_infodict = load_infodict(infofile, logger=logger)
+    shelf_infodict = load_infodict(pdsdir, logger=logger)
     dir_infodict = generate_infodict(pdsdir, selection, logger=logger)
 
     # For a single selection, use the old information
