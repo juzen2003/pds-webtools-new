@@ -75,6 +75,7 @@ description_and_icon_by_dict = translator.TranslatorByDict({
     'COUVIS_0xxx/COUVIS_0056': ('Cassini UVIS Saturn data 2016-07-01 to 2016-09-30 (SC clock 1846112674-1853903812)', 'VOLUME'),
     'COUVIS_0xxx/COUVIS_0057': ('Cassini UVIS Saturn data 2016-10-01 to 2016-12-30 (SC clock 1853975456-1861772866)', 'VOLUME'),
     'COUVIS_0xxx/COUVIS_0058': ('Cassini UVIS Saturn data 2017-01-01 to 2017-03-31 (SC clock 1861943868-1869672278)', 'VOLUME'),
+    'COUVIS_0xxx/COUVIS_0059': ('Cassini UVIS Saturn data 2017-04-01 to 2017-06-30 (SC clock 1869748418-1877557568)', 'VOLUME'),
 }, key_from_path)
 
 description_and_icon_by_regex = translator.TranslatorByRegex([
