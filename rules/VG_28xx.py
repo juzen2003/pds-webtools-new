@@ -10,19 +10,6 @@ import re
 # DESCRIPTION_AND_ICON
 ####################################################################################################################################
 
-key_from_path = translator.TranslatorByRegex([
-    (r'[-a-z]+/VG_28xx(|_\w+)/VG_(28[0-9]{2})', re.I, r'VG_28xx/VG_\2'),
-    (r'[-a-z]+/VG_28xx(|_\w+)',                 re.I, r'VG_28xx'),
-])
-
-description_and_icon_by_dict = translator.TranslatorByDict({
-    'VG_28xx'        : ('Voyager radial profiles of the rings of Saturn, Uranus and Neptune' ,         'VOLDIR'),
-    'VG_28xx/VG_2801': ('Voyager photopolarimeter (PPS) ring profiles for Saturn, Uranus and Neptune', 'VOLUME'),
-    'VG_28xx/VG_2802': ('Voyager ultraviolet (UVS) ring profiles for Saturn, Uranus and Neptune',      'VOLUME'),
-    'VG_28xx/VG_2803': ('Voyager radio occultation profiles of the rings of Saturn and Uranus',        'VOLUME'),
-    'VG_28xx/VG_2810': ('Radial profiles of Saturn\'s rings derived from Voyager images',              'VOLUME'),
-}, key_from_path)
-
 description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'.*/EDITDATA', re.I, ('Edited data',                   'DATADIR')),
     (r'.*/FOVMAPS',  re.I, ('Field-of-view maps',            'IMAGEDIR')),
@@ -53,7 +40,7 @@ class VG_28xx(pdsfile.PdsFile):
     pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('VG_28xxx', re.I, 'VG_28xx')]) + \
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
 
-    DESCRIPTION_AND_ICON = description_and_icon_by_dict + description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
+    DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
 #     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
 
 ####################################################################################################################################

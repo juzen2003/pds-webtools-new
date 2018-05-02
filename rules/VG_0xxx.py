@@ -10,53 +10,6 @@ import re
 # DESCRIPTION_AND_ICON
 ####################################################################################################################################
 
-key_from_path = translator.TranslatorByRegex([
-    (r'[-a-z]+/VG_0xxx(|_\w+)/VG_([0-9]{4})', re.I, r'VG_0xxx/VG_\2'),
-    (r'[-a-z]+/VG_0xxx(|_\w+)',               re.I, r'VG_0xxx'),
-])
-
-description_and_icon_by_dict = translator.TranslatorByDict({
-    'VG_0xxx'        : ('Voyager image collection, original release of compressed raw images',        'VOLDIR'),
-    'VG_0xxx/VG_0001': ('Voyager 2 Uranus images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0002': ('Voyager 2 Uranus images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0003': ('Voyager 2 Uranus images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0004': ('Selected Voyager Saturn images, original release of compressed raw images',  'VOLUME'),
-    'VG_0xxx/VG_0005': ('Selected Voyager Saturn images, original release of compressed raw images',  'VOLUME'),
-    'VG_0xxx/VG_0006': ('Selected Voyager Jupiter images, original release of compressed raw images', 'VOLUME'),
-    'VG_0xxx/VG_0007': ('Selected Voyager Jupiter images, original release of compressed raw images', 'VOLUME'),
-    'VG_0xxx/VG_0008': ('Selected Voyager Jupiter images, original release of compressed raw images', 'VOLUME'),
-    'VG_0xxx/VG_0009': ('Voyager 2 Neptune images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0010': ('Voyager 2 Neptune images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0011': ('Voyager 2 Neptune images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0012': ('Voyager 2 Neptune images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0013': ('Voyager 1 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0014': ('Voyager 1 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0015': ('Voyager 1 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0016': ('Voyager 1 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0017': ('Voyager 1 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0018': ('Voyager 1 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0019': ('Voyager 1 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0020': ('Voyager 1 and 2 Jupiter images, original release of compressed raw images',  'VOLUME'),
-    'VG_0xxx/VG_0021': ('Voyager 2 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0022': ('Voyager 2 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0023': ('Voyager 2 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0024': ('Voyager 2 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0025': ('Voyager 2 Jupiter images, original release of compressed raw images',        'VOLUME'),
-    'VG_0xxx/VG_0026': ('Voyager 1 Saturn images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0027': ('Voyager 1 Saturn images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0028': ('Voyager 1 Saturn images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0029': ('Voyager 1 Saturn images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0030': ('Voyager 1 Saturn images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0031': ('Voyager 1 Saturn images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0032': ('Voyager 1 Saturn images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0033': ('Voyager 1 and 2 Saturn images, original release of compressed raw images',   'VOLUME'),
-    'VG_0xxx/VG_0034': ('Voyager 2 Saturn images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0035': ('Voyager 2 Saturn images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0036': ('Voyager 2 Saturn images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0037': ('Voyager 2 Saturn images, original release of compressed raw images',         'VOLUME'),
-    'VG_0xxx/VG_0038': ('Voyager 2 Saturn images, original release of compressed raw images',         'VOLUME'),
-}, key_from_path)
-
 description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'volumes/.*\.IBG',               re.I,   ('Compressed browse image',            'IMAGE'   )),
     (r'volumes/.*\.IMQ',               re.I,   ('Compressed raw image, VICAR',        'IMAGE'   )),
@@ -191,7 +144,7 @@ class VG_0xxx(pdsfile.PdsFile):
     pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('VG_0xxx', re.I, 'VG_0xxx')]) + \
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
 
-    DESCRIPTION_AND_ICON = description_and_icon_by_dict + description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
+    DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
 

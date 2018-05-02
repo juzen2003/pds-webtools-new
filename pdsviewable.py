@@ -146,10 +146,6 @@ class PdsViewSet(object):
 # ICON definitions
 ################################################################################
 
-ICON_COLOR = 'blue'
-ICON_PATH_ = '/Library/Webserver/Documents/icons-local/'
-ICON_URL_ = '/icons-local/'
-
 # This is a dictionary keyed by the icon_type. It returns (priority, filename).
 # Priority is just a rough number to indicate that, when several files share an
 # icon, the icon with the higher priority will be used. Primarily, this ensures
@@ -213,35 +209,42 @@ ICON_DIR_VS_SIZE = [( 30, 'png-30/'),
 # Create a dictionary of PdsViewSets keyed by [icon_type, open_state]:
 
 ICON_SET_BY_TYPE = {}
-for (icon_type, icon_info) in ICON_FILENAME_VS_TYPE.iteritems():
-    (priority, template) = icon_info
 
-    for open in (True, False):
-        pdsviews = []
+def load_icons(path, url, color='blue'):
+    """Loads icons for use by PdsViewable.iconset_for()."""
 
-        if '%s' in template:
-            if open:
-                basename = template % '_open'
+    for (icon_type, icon_info) in ICON_FILENAME_VS_TYPE.items():
+        (priority, template) = icon_info
+
+        icon_path_ = path.rstrip('/') + '/'
+        icon_url_  = url.rstrip('/') + '/'
+
+        for open in (True, False):
+            pdsviews = []
+
+            if '%s' in template:
+                if open:
+                    basename = template % '_open'
+                else:
+                    basename = template % ''
             else:
-                basename = template % ''
-        else:
-            basename = template
+                basename = template
 
-        for (size, icon_dir_) in ICON_DIR_VS_SIZE:
-            relpath = ICON_COLOR + '/' + icon_dir_ + basename
-            abspath = ICON_PATH_ + relpath
+            for (size, icon_dir_) in ICON_DIR_VS_SIZE:
+                relpath = color + '/' + icon_dir_ + basename
+                abspath = icon_path_ + relpath
 
-            im = Image.open(abspath)
-            (width, height) = im.size
-            im.close()
+                im = Image.open(abspath)
+                (width, height) = im.size
+                im.close()
 
-            pdsview = PdsViewable(ICON_PATH_ + relpath, ICON_URL_ + relpath,
-                                  width, height, icon_type + ' icon')
-            pdsviews.append(pdsview)
+                pdsview = PdsViewable(icon_path_ + relpath, icon_url_ + relpath,
+                                      width, height, icon_type + ' icon')
+                pdsviews.append(pdsview)
 
-        ICON_SET_BY_TYPE[icon_type, open] = PdsViewSet(pdsviews, priority)
+            ICON_SET_BY_TYPE[icon_type, open] = PdsViewSet(pdsviews, priority)
 
-    ICON_SET_BY_TYPE[icon_type] = ICON_SET_BY_TYPE[icon_type, False]
+        ICON_SET_BY_TYPE[icon_type] = ICON_SET_BY_TYPE[icon_type, False]
 
 ################################################################################
 # Method to select among multiple icons

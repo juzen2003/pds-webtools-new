@@ -396,7 +396,7 @@ class PdsLogger(object):
         except KeyError:
             return LOOKUP[logname]
 
-    def open(self, title, abspath='', limits={}, handler=None):
+    def open(self, title, abspath='', limits={}, handler=[]):
         """Begin a new set of tests at a new level in the hierarchy."""
 
         # Increment the hierarchy depth
@@ -412,13 +412,24 @@ class PdsLogger(object):
         timetag = time.strftime(TIME_FMT)
         self.start_times.append(time)
 
-        # Save a level-specific handler if necessary
-        if handler and handler not in self.handlers:
-            self.logger.addHandler(handler)
-            self.local_handlers.append(handler)
-            self.handlers.append(handler)
+        # Save any level-specific handlers if necessary
+        self.local_handlers.append([])
+
+        if type(handler) in (list, tuple):
+            handlers = handler
         else:
-            self.local_handlers.append(None)
+            handlers = [handler]
+
+        logfiles = [h.baseFilename for h in self.handlers if
+                                            isinstance(h, logging.FileHandler)]
+        for handler in handlers:
+            if handler in self.handlers: continue
+            if (isinstance(handler, logging.FileHandler) and
+                handler.baseFilename in logfiles): continue
+
+            self.logger.addHandler(handler)
+            self.local_handlers[-1].append(handler)
+            self.handlers.append(handler)
 
         # Set the level-specific limits
         if self.limits_by_name:
@@ -603,8 +614,8 @@ class PdsLogger(object):
         self.counters_by_level   = self.counters_by_level[:-1]
         self.suppressed_by_level = self.suppressed_by_level[:-1]
 
-        handler = self.local_handlers[-1]
-        if handler:
+        handlers = self.local_handlers[-1]
+        for handler in handlers:
             self.handlers.remove(handler)
             self.logger.removeHandler(handler)
 

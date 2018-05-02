@@ -11,6 +11,9 @@
 import re
 import translator
 
+GENERIC_VOLUME_DESC = 'Data volume'
+GENERIC_VOLSET_DESC = 'Volume collection'
+
 DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
 
     # PDS3 labels
@@ -52,9 +55,9 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
 
     # Volume types
     (r'volumes',                0, ('<em>PDS volumes</em> in Viewmaster', 'TOPFILE')),
-    (r'volumes/[^/]+$',         0, ('Volume collection',                  'VOLDIR')),
-    (r'volumes/[^/]+$',         0, ('Volume collection',                  'VOLDIR')),
-    (r'volumes/[^/]+/[^/]+$',   0, ('Data volume',                        'VOLUME')),
+    (r'volumes/[^/]+$',         0, (GENERIC_VOLSET_DESC, 'VOLDIR')),
+    (r'volumes/[^/]+$',         0, (GENERIC_VOLSET_DESC, 'VOLDIR')),
+    (r'volumes/[^/]+/[^/]+$',   0, (GENERIC_VOLUME_DESC, 'VOLUME')),
 
     (r'calibrated',       0, ('<em>Calibrated products</em> created by Node',     'TOPFILE')),
     (r'diagrams',         0, ('<em>Observation diagrams</em> created by Node',    'TOPFILE')),

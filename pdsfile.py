@@ -66,7 +66,7 @@ MIME_TYPES_VS_EXT = {
     'html'      : 'text/html',
 }
 
-# DESC_AND_ICON_FIXES is used to revise information about top-level directories
+# DESC_AND_ICON_FIXES updates descriptions and icons for virtual directories
 # Value returned is [suffix, new_icon_type]
 DESC_AND_ICON_FIXES = {
   ('calibrated/', 'VOLUME'): (' (<b>calibrated</b>)', 'VOLUME'  ),
@@ -78,8 +78,8 @@ DESC_AND_ICON_FIXES = {
   ('diagrams/',   'VOLUME'): (' (<b>diagrams</b>)',   'DIAGDIR' ),
   ('diagrams/',   'VOLDIR'): (' (<b>diagrams</b>)',   'DIAGDIR' ),
 
-  ('archives-volumes/',    'VOLUME'): (' (<b>tar.gz</b>)', 'TARBALL'),
-  ('archives-volumes/',    'VOLDIR'): (' (<b>tar.gz</b>)', 'TARDIR' ),
+  ('archives-volumes/',    'VOLUME'): (' (<b>tar.gz</b>)',           'TARBALL'),
+  ('archives-volumes/',    'VOLDIR'): (' (<b>tar.gz</b>)',           'TARDIR' ),
   ('archives-calibrated/', 'VOLUME'): (' (<b>calibrated tar.gz</b>)','TARBALL'),
   ('archives-calibrated/', 'VOLDIR'): (' (<b>calibrated tar.gz</b>)','TARDIR' ),
   ('archives-metadata/',   'VOLUME'): (' (<b>metadata tar.gz</b>)',  'TARBALL'),
@@ -102,7 +102,7 @@ def set_logger(logger, debugging=False):
     DEBUGGING = debugging
 
 ################################################################################
-# Global cache and memcached support
+# Memcached support
 ################################################################################
 
 MEMCACHE_PORT = 0
@@ -120,8 +120,9 @@ PATHS['$VOLS'] = {} # Dict keyed by [category_][volset or volname][rank]
 
 PATHS['$PRELOADED'] = []    # List of preloaded holdings abspaths
 
-PATHS['$VOLUME_INFO'] = {}  # Returns (version, publication date,
-                            # list of data set IDs) for volnames and volsets
+PATHS['$VOLUME_INFO'] = {}  # Returns (description, icon_type, version,
+                            # version, publication date, list of data set IDs)
+                            # for volnames and volsets
 
 DEFAULT_CACHING = 'none' # 'dir', 'all' or 'none'; use 'dir' for Viewmaster
 
@@ -129,16 +130,6 @@ LOGGER = None       # Optional logger
 DEBUGGING = False   # True for extra-detailed debugging logs
 
 # Initialize internal caches
-
-def load_volume_info(volume_info_path):
-
-    with open(volume_info_path, 'rb') as file:
-        exec(compile(file.read(), volume_info_path, 'exec'), globals())
-    volume_info_dict = globals()['VOLUME_INFO']
-    if LOGGER:
-        LOGGER.info('Volume info loaded', volume_info_path)
-
-    return volume_info_dict
 
 def cache_lifetime(arg):
     if type(arg) == str:                    # HTML
@@ -152,9 +143,17 @@ def cache_lifetime(arg):
     else:
         return 12 * 60 * 60
 
-def preload(holdings_list, volume_info_path, port=0, clear=False):
+def preload(holdings_list, port=0, clear=False):
     """Cache the top-level directories, starting from the given holdings
-    directory."""
+    directories.
+
+    Input:
+        holdings_list       a single abslute path to a holdings directory, or
+                            else a list of absolute paths.
+        port                port to use for memcached; zero to prevent use of
+                            memcached.
+        clear               True to clear the cache before preloading.
+    """
 
     global PATHS, MEMCACHE_PORT, DEFAULT_CACHING
 
@@ -165,9 +164,14 @@ def preload(holdings_list, volume_info_path, port=0, clear=False):
     blocking = False
 
     # Use cache as requested
-    if port == 0 and MEMCACHE_PORT == 0:
+    if (port == 0 and MEMCACHE_PORT == 0) or not pdscache.MEMCACHED_LOADED:
+        default_paths = PATHS
         PATHS = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                          limit=100000, logger=LOGGER)
+        PATHS['$RANKS'] = {}
+        PATHS['$VOLS'] = {}
+        PATHS['$PRELOADED'] = []
+        PATHS['$VOLUME_INFO'] = {}
 
         if LOGGER:
             LOGGER.info('Caching PdsFile objects in local dictionary')
@@ -178,7 +182,6 @@ def preload(holdings_list, volume_info_path, port=0, clear=False):
             PATHS = pdscache.MemcachedCache(MEMCACHE_PORT,
                                             lifetime=cache_lifetime,
                                             logger=LOGGER)
-
             if LOGGER:
                 LOGGER.info('Connecting to PdsFile Memcache [%s]' %
                             MEMCACHE_PORT)
@@ -186,6 +189,11 @@ def preload(holdings_list, volume_info_path, port=0, clear=False):
             # Clear if necessary
             if clear and not PATHS.is_blocked():
                 PATHS.clear(block=True)
+                PATHS['$RANKS'] = {}
+                PATHS['$VOLS'] = {}
+                PATHS['$PRELOADED'] = []
+                PATHS['$VOLUME_INFO'] = {}
+
                 blocking = True
 
         except pylibmc.Error as e:
@@ -197,6 +205,10 @@ def preload(holdings_list, volume_info_path, port=0, clear=False):
             MEMCACHE_PORT = 0
             PATHS = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                              limit=10000)
+            PATHS['$RANKS'] = {}
+            PATHS['$VOLS'] = {}
+            PATHS['$PRELOADED'] = []
+            PATHS['$VOLUME_INFO'] = {}
 
     ####################################
     # Recursive interior function
@@ -212,7 +224,9 @@ def preload(holdings_list, volume_info_path, port=0, clear=False):
         if pdsdir.logical_path.startswith('volumes/'):
             key = pdsdir.logical_path[8:]    # Skip over 'volumes/'
             try:
-                (version, pubdate, dsids) = PATHS.get_local('$VOLUME_INFO')[key]
+                (description, icon_type, version, pubdate,
+                              dsids) = PATHS.get_local('$VOLUME_INFO')[key]
+                pdsdir.description_and_icon_filled = (description, icon_type)
                 pdsdir.volume_version_id_filled = ("%3.1f" % version)
                 pdsdir.volume_publication_date_filled = pubdate
                 pdsdir.volume_data_set_ids_filled = dsids
@@ -251,19 +265,19 @@ def preload(holdings_list, volume_info_path, port=0, clear=False):
     except (KeyError, TypeError):
         preloaded = []
 
+    volume_info = PATHS.get('$VOLUME_INFO')
+    ranks = PATHS.get('$RANKS')
+    vols  = PATHS.get('$VOLS')
+
     if not blocking:
         PATHS.block()
 
     PATHS.pause()
-    PATHS.set_local('$VOLUME_INFO', load_volume_info(volume_info_path),
-                                    lifetime=0)
 
     if MEMCACHE_PORT:
         DEFAULT_CACHING = 'all'
 
     # Intiailize RANKS, VOLS and category list
-    ranks = {}
-    vols = {}
     categories = []
     for checksums_ in ('', 'checksums-'):
         for archives_ in ('', 'archives-'):
@@ -294,7 +308,11 @@ def preload(holdings_list, volume_info_path, port=0, clear=False):
                                                caching='all', lifetime=0)
                 _preload_dir(pdsdir)
 
+            # Load latest info about volumes in this holdings directory
+            load_volume_info(holdings, volume_info)
+
     finally:
+        PATHS.set_local('$VOLUME_INFO', volume_info, lifetime=0)
         PATHS.set_local('$PRELOADED', holdings_list, lifetime=0)
         PATHS.unblock(flush=True)
         PATHS.resume()
@@ -310,6 +328,48 @@ def resume_caching():
 def clear_cache():
     global PATHS
     PATHS.clear()
+
+def load_volume_info(holdings, volume_info):
+    """Load volume info associated with this holdings directory.
+
+    Each record contains a sequence of values separated by "|":
+        key: volset, volset/volname, category/volset, or category/volset/volname
+        description
+        icon_type or blank for default
+        version ID
+        publication date
+        data set ID (if any)
+        additional data set IDs (if any)
+
+    Blank records and those beginning with "#" are ignored.
+    """
+
+    volinfo_path = os.path.join(os.path.split(holdings)[0], 'volinfo')
+
+    children = os.listdir(volinfo_path)
+    for child in children:
+        if not child.endswith('.tab'): continue
+
+        table_path = os.path.join(volinfo_path, child)
+        with open(table_path) as f:
+            recs = f.readlines()
+
+        for rec in recs:
+            if rec[0] == '#': continue
+
+            parts = rec.split('|')
+            parts = [p.strip() for p in parts]
+            if parts == ['']: continue  # ignore blank lines
+
+            # Fill in icon type if missing
+            if parts[2] == '':
+                parts[2] = 'VOLUME' if '/' in parts[0] else 'VOLSET'
+
+            volume_info[parts[0]] = (parts[1], parts[2], parts[3], parts[4],
+                                     list(parts[5:]))
+
+    if LOGGER:
+        LOGGER.info('Volume info loaded', volinfo_path)
 
 ################################################################################
 # PdsFile class
@@ -376,7 +436,8 @@ class PdsFile(object):
         self.split_filled           = None
         self.global_anchor_filled   = None
         self.childnames_filled      = None
-        self.info_filled            = None
+        self.info_filled            = None  # bytes, child_count, modtime,
+                                            # checksum, size)
         self.date_filled            = None
         self.formatted_size_filled  = None
         self.is_viewable_filled     = None
@@ -387,7 +448,9 @@ class PdsFile(object):
         self.iconset_filled         = None
         self.internal_links_filled  = None
         self.mime_type_filled       = None
-        self.view_options_filled    = None
+        self.view_options_filled    = None  # (grid, multipage, continuous)
+        self.volume_info_filled     = None  # (desc, icon type, version ID,
+                                            #  pub date, list of dataset IDs)
         self.description_and_icon_filled    = None
         self.volume_publication_date_filled = None
         self.volume_version_id_filled       = None
@@ -398,6 +461,10 @@ class PdsFile(object):
         self.associated_parallels_filled    = None
 
     def make_virtual(self):
+        """A virtual directory based on the give path. Virtual directories
+        contain children from multiple physical directories. Examples are
+        volumes/, archives-volumes/, etc."""
+
         self.abspath      = None
         self.disk_        = None
         self.root_        = None
@@ -412,7 +479,7 @@ class PdsFile(object):
         self.split_filled           = (self.basename, '', '')
         self.global_anchor_filled   = self.basename
         # self.childnames_filled      = None
-        self.info_filled            = [0, 0, 0, '', (0,0)]
+        self.info_filled            = [0, 0, 0, '', (0,0)]  # 
         self.date_filled            = ''
         self.formatted_size_filled  = ''
         self.is_viewable_filled     = False
@@ -424,6 +491,7 @@ class PdsFile(object):
         self.internal_links_filled  = []
         self.mime_type_filled       = ''
         self.view_options_filled    = (False, False, False)
+        self.volume_info_filled     = None
         self.description_and_icon_filled    = None
         self.volume_publication_date_filled = ''
         self.volume_version_id_filled       = ''
@@ -720,37 +788,57 @@ class PdsFile(object):
         return self.formatted_size_filled
 
     @property
+    def volume_info(self):
+        if self.volume_info_filled is None:
+
+            base_key = self.volset + self.suffix
+            if self.volname:
+                base_key += '/' + self.volname
+
+            keys = (self.category_ + base_key, base_key)
+            for key in keys:
+                try:
+                    self.volume_info_filled = PATHS['$VOLUME_INFO'][key]
+                except KeyError:
+                    pass
+
+            if self.volume_info_filled is None:
+                self.volume_info_filled = ('', 'UNKNOWN', '', '', [])
+
+        return self.volume_info_filled
+
+    @property
     def description(self):
         if self.description_and_icon_filled is not None:
             return self.description_and_icon_filled[0]
 
-        pair = self.DESCRIPTION_AND_ICON.first(self.logical_path)
-        self.description_and_icon_filled = pair
+        if self.is_volume() or self.is_volset():
+            pair = self.volume_info[:2]
 
-        # Add annotation based on volume type
-        if pair and self.volset and not self.interior:
-          if self.category_ == 'calibrated/':
-            self.description_and_icon_filled = ('Calibrated ' + pair[0],
-                                                pair[1])
-          elif self.category_ == 'diagrams/':
-            self.description_and_icon_filled = ('Diagrams for ' + pair[0],
-                                                'GEOMDIR')
-          elif self.category_ == 'previews/':
-            self.description_and_icon_filled = ('Previews of ' + pair[0],
-                                                'BROWDIR')
-          elif self.category_ == 'metadata/' and 'metadata' not in pair[0]:
-            self.description_and_icon_filled = ('Metadata for ' + pair[0],
-                                                'INDEXDIR')
+            # Add annotation based on volume type
+            if self.category_ == 'calibrated/':
+                pair = ('Calibrated ' + pair[0], pair[1])
+            elif self.category_ == 'diagrams/':
+                pair = ('Diagrams for ' + pair[0], 'GEOMDIR')
+            elif self.category_ == 'previews/':
+                pair = ('Previews of ' + pair[0], 'BROWDIR')
+            elif self.category_ == 'metadata/':
+                pair = ('Metadata for ' + pair[0], 'INDEXDIR')
 
-        if not self.description_and_icon_filled:
-            self.description_and_icon_filled = ['Unavailable', 'UNKNOWN']
+        else:
+            pair = self.DESCRIPTION_AND_ICON.first(self.logical_path)
+
+            if pair is None:
+                pair = ['Unavailable', 'UNKNOWN']
 
         # Highlight top-level directories
-        key = (self.category_, self.description_and_icon_filled[1])
+        key = (self.category_, pair[1])
         if key in DESC_AND_ICON_FIXES:
             (suffix, new_icon_type) = DESC_AND_ICON_FIXES[key]
-            new_desc = self.description_and_icon_filled[0] # + suffix
-            self.description_and_icon_filled = [new_desc, new_icon_type]
+            new_desc = pair[0] # + suffix
+            pair = [new_desc, new_icon_type]
+
+        self.description_and_icon_filled = pair
 
         self.recache()
         return self.description_and_icon_filled[0]
@@ -936,92 +1024,47 @@ class PdsFile(object):
 
     @property
     def volume_publication_date(self):
-
         if self.volume_publication_date_filled is not None:
             return self.volume_publication_date_filled
 
-        self.volume_publication_date_filled = ''
-        if self.exists and self.volset:
-            if self.volname:
-                key = self.category_ + self.volset_ + self.volname
-            else:
-                key = self.category_ + self.volset_[:-1]
-
+        date = self.volume_info[3]
+        if date == '':
             try:
-                pdsf = PATHS[key]
-                if pdsf.volume_publication_date_filled:
-                    self.volume_publication_date_filled = \
-                                    pdsf.volume_publication_date_filled
-            except KeyError:
-                self.volume_publication_date_filled = self.date[:10]
+                date = self.volume_pdsfile().date[:10]
+            except ValueError:
+                pass
+
+        if date == '':
+            try:
+                date = self.volset_pdsfile().date[:10]
+            except ValueError:
+                pass
+
+        if date == '':
+            try:
+                date = self.date[:10]
+            except ValueError:
+                pass
+
+        self.volume_publication_date_filled = date
 
         self.recache()
         return self.volume_publication_date_filled
 
     @property
     def volume_version_id(self):
-        if self.volume_version_id_filled is not None:
-            return self.volume_version_id_filled
+        if self.volume_version_id_filled is None:
+            self.volume_version_id_filled = self.volume_info[2]
+            self.recache()
 
-        self.volume_version_id_filled = ''
-        if self.exists and self.volset:
-
-            if self.volname:
-                key = self.category_ + self.volset_ + self.volname
-            else:
-                key = self.category_ + self.volset_[:-1]
-
-            try:
-                pdsf = PATHS[key]
-                if pdsf.volume_version_id_filled:
-                    self.volume_version_id_filled = \
-                                            pdsf.volume_version_id_filled
-            except KeyError:
-                _ = self.version_info(self.suffix)
-
-                # Use the version ID from the volset
-                if self.version_id:
-                    self.volume_version_id_filled = self.version_id
-                    return self.volume_version_id_filled
-
-                # Increment the version ID of the previous volset
-                if len(self.version_ranks) > 1 and \
-                        self.version_ranks[-1] == 999999:
-                    prev_rank = self.version_ranks[-2]
-                    if prev_rank > 900000:
-                        return self.volume_version_id_filled
-
-                    part0 = prev_rank // 10000
-                    prev_rank -= 10000 * part0
-                    part1 = prev_rank // 100 + 1
-                    self.volume_version_id_filled = str(part0) + '.' + \
-                                                    str(part1)
-
-        self.recache()
         return self.volume_version_id_filled
 
     @property
     def volume_data_set_ids(self):
-        if self.volume_data_set_ids_filled is not None:
-            return self.volume_data_set_ids_filled
+        if self.volume_data_set_ids_filled is None:
+            self.volume_data_set_ids_filled = self.volume_info[4]
+            self.recache()
 
-        self.volume_data_set_ids_filled = ''
-        if self.exists:
-            if self.volset:
-                if self.volname:
-                    key = self.category_ + self.volset_ + self.volname
-                else:
-                    key = self.category_ + self.volset_[:-1]
-
-                try:
-                    pdsf = PATHS[key]
-                    if pdsf.volume_data_set_ids_filled:
-                        self.volume_data_set_ids_filled = \
-                                        pdsf.volume_data_set_ids_filled
-                except KeyError:
-                    pass
-
-        self.recache()
         return self.volume_data_set_ids_filled
 
     @property
@@ -1630,69 +1673,73 @@ class PdsFile(object):
         except KeyError:
             pass
 
-        this = PdsFile()
+        # Make sure this is an absolute path
+        # For Unix, it must start with "/"
+        # For Windows, the first item must contain a colon
+        # Note that all file paths must use forward slashes, not backslashes
 
         parts = abspath.split('/')
-        if parts[0] != '':
+        if ':' not in parts[0] and parts[0] != '':
             raise ValueError('Not an absolute path: ' + this.abspath)
 
-        pdsdata_found = False
-        for k in range(len(parts)):
-            if parts[k].startswith('pdsdata'):
-                pdsdata_found = True
-                break
+        # Search for "holdings" or "shelves"
+        parts_lc = [p.lower() for p in parts]
+        try:
+            holdings_index = parts_lc.index('holdings')
+        except ValueError:
+            try:
+                holdings_index = parts_lc.index('shelves')
+            except ValueError:
+                raise ValueError('"holdings" directory not found in ' +
+                                 abspath)
 
-        if not pdsdata_found:
-            raise ValueError('"pdsdata" not found in abspath', abspath)
+        # Fill in this.disk_, absolute path to "pdsdata*"
+        this = PdsFile()
+        this.disk_ = '/'.join(parts[:holdings_index]) + '/'
 
-        if k == 2 and parts[1].lower() == 'volumes':
-            if len(parts) < 4:
-                raise ValueError('Absolute path is too short: ' + abspath)
-            if validate or exists:
-                parts[1] = 'Volumes'
-                parts[2] = parts[2].lower()
-                parts[3] = parts[3].lower()
+        # Fill in this.root_, absolute path to "holdings"
+        # Get case right if possible
+        if validate and (os.path.exists(this.disk_) and
+                         os.path.isdir(this.disk_)):
+            children = os.listdir(this.disk_)
+            children_lc = [c.lower() for c in children]
+            try:
+                k = children_lc.index('holdings')
+            except ValueError:
+                raise ValueError('"holdings" directory not found inside ' +
+                                 this.disk_)
 
+            holdings_alone = children[k]
         else:
-            parts = ['', '/'.join(parts[1:k])] + parts[k:]
-            this.is_local = True
+            holdings_alone = 'holdings'
 
-            if validate or exists:
-                parts[2] = parts[2].lower()
-                parts[3] = parts[3].lower()
+        this.root_ = this.disk_ + holdings_alone + '/'
 
-        pdsdata = parts[2].split('-')[0]  # ignore anything after dash
-            # pdsdata-server2 -> pdsdata
-            # pdsdata2-local -> pdsdata2
+        # Fill in the HTML root
+        # ...pdsdata-whatever/holdings -> /holdings/
+        # ...pdsdata2-whatever/holdings -> /holdings2/
+        subparts = parts[holdings_index-1].split('-')
+        suffix = subparts[0][-1]
+        if suffix not in '123456789':
+            suffix = ''
 
-        # Handle root directory
-        if parts[3] != 'holdings':
-            raise ValueError('Invalid holdings directory "%s": %s' %
-                             (parts[3], this.abspath))
+        this.html_root_ = '/' + holdings_alone + suffix + '/'
 
-        this.disk_ = '/'.join(parts[:3]) + '/'
-        this.root_ = '/'.join(parts[:4]) + '/'
-        this.html_root_ = '/' + parts[3] + pdsdata[len('pdsdata'):] + '/'
-            # /Volumes/pdsdata-whatever/holdings -> /holdings/
-            # /Volumes/pdsdata2-whatever/holdings -> /holdings2/
-
-            # In Apache, /Volumes/pdsdata[n]-whatever must redirect to
-            # /Volumes/pdsdata[n]
-
-        root_ = this.root_
+        # Note: In Apache, the path "/holdings[n]/" must redirect to
+        # this.root_
 
         this.logical_path = ''
         this.abspath = this.root_[:-1]
-        this.basename = parts[3]
+        this.basename = holdings_alone
 
-        if len(parts) <= 4:
+        if len(parts) == holdings_index + 1:
             return this._complete(False, caching='none')
 
         # Handle the rest of the tree using child()
-        for part in parts[4:]:
+        for part in parts[holdings_index + 1:]:
             this = this.child(part, validate=validate, exists=exists,
                                     caching=caching, lifetime=lifetime,
-                                    root_=root_)
+                                    root_=this.root_)
 
         if exists and not os.path.exists(this.abspath):
             raise IOError('File not found', this.abspath)
@@ -2002,7 +2049,8 @@ class PdsFile(object):
         if self.volname:
             abspath = ''.join([self.root_, 'checksums-', self.category_,
                                self.volset_, self.volname, suffix, '_md5.txt'])
-            lskip = len(self.root_) + len(self.category_) + len(self.volset_)
+            lskip = (len(self.root_) + len(self.category_) +
+                     len(self.volset_))
         else:
             if not self.archives_:
                 raise ValueError('Non-archive checksums require volumes: ' +
@@ -2010,7 +2058,8 @@ class PdsFile(object):
 
             abspath = ''.join([self.root_, 'checksums-', self.category_,
                                self.volset, self.suffix, suffix, '_md5.txt'])
-            lskip = len(self.root_) + len(self.category_) + len(self.volset_)
+            lskip = (len(self.root_) + len(self.category_) +
+                     len(self.volset_))
 
         return (abspath, lskip)
 
@@ -2132,7 +2181,8 @@ class PdsFile(object):
 
             abspath = ''.join([self.disk_, 'shelves/', id, '/', self.category_,
                                self.volset, self.suffix, '_', id, '.shelf'])
-            lskip = len(self.root_) + len(self.category_) + len(self.volset_)
+            lskip = (len(self.root_) + len(self.category_) +
+                     len(self.volset_))
 
         else:
             if not self.volname_ and not volname:
@@ -2146,8 +2196,8 @@ class PdsFile(object):
 
             abspath = ''.join([self.disk_, 'shelves/', id, '/', self.category_,
                                self.volset_, this_volname, '_', id, '.shelf'])
-            lskip = len(self.root_) + len(self.category_) + \
-                    len(self.volset_) + len(this_volname) + 1
+            lskip = (len(self.root_) + len(self.category_) +
+                     len(self.volset_) + len(this_volname) + 1)
 
         return (abspath, lskip)
 
@@ -2245,17 +2295,32 @@ class PdsFile(object):
 
     @staticmethod
     def set_log_root(root=None):
+        """Define the default root directory for logs. If None, use the "logs"
+        directory parallel to "holdings"."""
+
         if root is None:
             PdsFile.LOG_ROOT_ = None
         else:
             PdsFile.LOG_ROOT_ = root.rstrip('/') + '/'
 
-    def log_path_for_volume(self, id='', task='', dir=''):
+    def log_path_for_volume(self, id='', task='', dir='', place='default'):
+        """Return a complete log file path for this volume.
 
-        if PdsFile.LOG_ROOT_ is None:
-            parts = [self.disk_, 'logs/', id, '/']
+        The file name is [dir/]category/volset/volname_id_timetag[_task].log.
+        """
+
+        # This option provides for a temporary override of the default log root
+        if place == 'default':
+            temporary_log_root = PdsFile.LOG_ROOT_
+        elif place == 'parallel':
+            temporary_log_root = None
         else:
-            parts = [PdsFile.LOG_ROOT_]
+            raise ValueError('unrecognized place option: ' + place)
+
+        if temporary_log_root is None:
+            parts = [self.disk_, 'logs/']
+        else:
+            parts = [temporary_log_root]
 
         if dir:
             parts += [dir, '/']
@@ -2275,12 +2340,24 @@ class PdsFile(object):
 
         return ''.join(parts)
 
-    def log_path_for_volset(self, id='', task='', dir=''):
+    def log_path_for_volset(self, id='', task='', dir='', place='default'):
+        """Return a complete log file path for this volume set.
 
-        if PdsFile.LOG_ROOT_ is None:
-            parts = [self.disk_, 'logs/', id, '/']
+        The file name is [dir/]category/volset_id_timetag[_task].log.
+        """
+
+        # This option provides for a temporary override of the default log root
+        if place == 'default':
+            temporary_log_root = PdsFile.LOG_ROOT_
+        elif place == 'parallel':
+            temporary_log_root = None
         else:
-            parts = [PdsFile.LOG_ROOT_]
+            raise ValueError('unrecognized place option: ' + place)
+
+        if temporary_log_root is None:
+            parts = [self.disk_, 'logs/']
+        else:
+            parts = [temporary_log_root]
 
         if dir:
             parts += [dir, '/']
@@ -2299,39 +2376,6 @@ class PdsFile(object):
         parts += ['.log']
 
         return ''.join(parts)
-
-    @staticmethod
-    def log_path_for_shelf(shelf_file, task='', selection=''):
-
-        parts = shelf_file.split('/')
-        k = parts.index('shelves')
-        id = parts[k+1]
-
-        if PdsFile.LOG_ROOT_:
-            parts = [id.rstrip('s') + 'shelf'] + parts[k+2:]
-            log_path = PdsFile.LOG_ROOT_ + '/'.join(parts)
-        else:
-            parts[k] = 'logs'
-            parts[k+1] += 'shelf'
-            log_path = '/'.join(parts)
-
-        timetag = datetime.datetime.now().strftime(LOGFILE_TIME_FMT)
-        suffix = ['_', timetag]
-
-        if task:
-            suffix += ['_', task]
-
-        if selection:
-            parts = selection.split('_')
-            if len(parts) > 2:
-                parts = parts[:2]
-
-            suffix += ['_', '_'.join(parts)]
-
-        suffix += ['.log']
-
-        log_path = log_path.replace('.shelf', ''.join(suffix))
-        return log_path
 
     ############################################################################
     # How to split and sort filenames
@@ -3118,11 +3162,11 @@ class PdsGroup(object):
         return [r for r in self.rows if r.logical_path in self.hidden]
 
 ################################################################################
-# Table class. An ordered set of PdsGroups sharing a common parent. Some may be
-# hidden.
+# PdsGroupTable class. An ordered set of PdsGroups sharing a common parent.
+# Some may be hidden.
 ################################################################################
 
-class PdsTable(object):
+class PdsGroupTable(object):
 
     def __init__(self, pdsgroups=[], parent=False):
 
@@ -3135,7 +3179,7 @@ class PdsTable(object):
             self.insert_group(group)
 
     def copy(self):
-        this = PdsTable()
+        this = PdsGroupTable()
         this.parent = self.parent
         this.groups = [g.copy() for g in self.groups]
         this.levels_filled = self.levels_filled
@@ -3207,7 +3251,8 @@ class PdsTable(object):
         if self.parent is False:
             self.parent = group.parent
         elif group.parent_logical_path != self.parent_logical_path:
-            raise ValueError('PdsGroup parent does not match PdsTable parent')
+            raise ValueError('PdsGroup parent does not match PdsGroupTable ' +
+                             'parent')
 
         # Append to existing group if anchor matches
         if merge:
@@ -3258,7 +3303,7 @@ class PdsTable(object):
 
             self.insert_file(pdsf)
 
-        elif isinstance(thing, PdsTable):
+        elif isinstance(thing, PdsGroupTable):
             for group in thing.groups:
                 self.insert_group(group)
 
@@ -3344,8 +3389,8 @@ class PdsTable(object):
     def tables_from_pdsfiles(pdsfiles, exclusions=set(), hidden=set(),
                                        labels_after=None, dirs_first=None,
                                        dirs_last=None, info_first=None):
-        """Return a sorted list of PdsTables accommodating the given list of
-        PdsFiles."""
+        """Return a sorted list of PdsGroupTables accommodating the given list
+        of PdsFiles."""
 
         table_dict = {}
         for pdsf in pdsfiles:
@@ -3358,7 +3403,7 @@ class PdsTable(object):
             parent_path = pdsf.parent_logical_path
 
             if parent_path not in table_dict:
-                table_dict[parent_path] = PdsTable(parent=parent)
+                table_dict[parent_path] = PdsGroupTable(parent=parent)
 
             table = table_dict[parent_path]
             is_hidden = (pdsf.logical_path in hidden)
@@ -3386,7 +3431,7 @@ class PdsTable(object):
                               dirs_last=dirs_last,
                               info_first=info_first)
 
-        tables = PdsTable.sort_tables(tables)
+        tables = PdsGroupTable.sort_tables(tables)
         return tables
 
     def remove_hidden(self):

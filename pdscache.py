@@ -1,7 +1,12 @@
 import os
 import time
-import pylibmc
 import random
+
+try:
+    import pylibmc
+    MEMCACHED_LOADED = True
+except ImportError:
+    MEMCACHED_LOADED = False
 
 ################################################################################
 ################################################################################
@@ -86,6 +91,7 @@ class DictionaryCache(PdsCache):
     def pause(self):
         """Increment the pause count. Trimming will resume when the count
         returns to zero."""
+
         self.pauses += 1
         if self.pauses == 1 and self.logger:
             self.logger.debug('DictionaryCache trimming paused')
@@ -93,6 +99,7 @@ class DictionaryCache(PdsCache):
     @property
     def is_paused(self):
         """Report on status of automatic trimming."""
+
         return self.pause > 0
 
     def resume(self):
