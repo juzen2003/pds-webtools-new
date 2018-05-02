@@ -23,25 +23,30 @@ LOGROOT_ENV = 'PDS_LOG_ROOT'
 
 ################################################################################
 # Translator for tests to apply
+#
+# Each path to a volume is compared against each regular expression. For those
+# regular expressions that match, the associated suite of tests is performed.
+# Note that 'general' tests are performed for every volume.
 ################################################################################
 
 TESTS = translator.TranslatorByRegex([
-    ('.*',                         0,  'general'),
-    ('.*/COCIRS_0[4-9]../.*',      0,  'cocirs01'),
-    ('.*/COCIRS_1xxx/.*',          0,  'cocirs01'),
-    ('.*/COCIRS_[56]xxx/.*',       0,  'cocirs56'),
-    ('.*/COISS_[12]xxx/.*',        0, ['coiss12', 'cumindex', 'metadata']),
-    ('.*/COISS_3xxx/.*',           0,  'coiss3'),
-    ('.*/COISS_3xxx_v[0-9]+/.*',   0,  'coiss3'),
-    ('.*/COUVIS_0xxx/.*',          0, ['couvis', 'cumindex', 'metadata']),
-    ('.*/COVIMS_0xxx/COVIMS_0.*',  0, ['covims', 'cumindex', 'metadata']),
-    ('.*/COVIMS_0xxx/COVIMS_UNKS', 0, ['covims', 'cumindex_unks', 'metadata']),
-    ('.*/GO_xxxx/*',               0,  'go'),
-    ('.*/HST.x_xxxx/.*',           0,  'hst'),
-    ('.*/NH..(LO|MV)_xxxx/.*',     0, ['nh', 'metadata']),
-    ('.*/NH..(LO|MV)_xxxx_v[0-9\.]+/.*',
-                                   0, ['nh_vx', 'metadata']),
-    ('.*/VGISS_[5678]xxx/.*',      0, ['vgiss', 'cumindex', 'metadata']),
+    ('.*',                          0,  'general'),
+    ('.*/COCIRS_0xxx(|_v[3-9])/COCIRS_0[4-9].*',
+                                    0,  'cocirs01'),
+    ('.*/COCIRS_1xxx(|_v[3-9]).*',  0,  'cocirs01'),
+    ('.*/COCIRS_[56]xxx.*',         0,  'cocirs56'),
+    ('.*/COISS_[12]xxx.*',          0, ['coiss12', 'cumindex', 'metadata']),
+    ('.*/COISS_3xxx.*',             0,  'coiss3'),
+    ('.*/COISS_3xxx_v[0-9]+.*',     0,  'coiss3'),
+    ('.*/COUVIS_0xxx.*',            0, ['couvis', 'cumindex', 'metadata']),
+    ('.*/COVIMS_0xxx/COVIMS_0.*',   0, ['covims', 'cumindex', 'metadata']),
+    ('.*/COVIMS_0xxx/COVIMS_UNKS',  0, ['covims', 'cumindex_unks', 'metadata']),
+    ('.*/GO_xxxx.*',                0,  'go'),
+    ('.*/HST.x_xxxx/.*',            0,  'hst'),
+    ('.*/NH(JU|LA)MV_xxxx.*',       0,  'nh', 'nhbrowse_vx'),
+    ('.*/NH(PC|PE)MV_xxxx.*',       0,  'nh', 'nhbrowse'),
+    ('.*/NH..(LO|MV)_xxxx.*',       0,  'nh'),
+    ('.*/VGISS_[5678]xxx.*',        0, ['vgiss', 'cumindex', 'metadata']),
 ])
 
 ################################################################################
@@ -138,8 +143,8 @@ class PdsDependency(object):
 
         if logger is None:
             logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-            logger.replace_root([pdsdir.root_, pdsdir.disk_])
 
+        logger.replace_root([pdsdir.root_, pdsdir.disk_])
         logger.open(self.title, dirpath)
 
         try:
@@ -208,10 +213,12 @@ class PdsDependency(object):
     def test_suite(key, dirpath, check_newer=True, limit=200, logger=None):
 
         dirpath = os.path.abspath(dirpath)
+        pdsdir = pdsfile.PdsFile.from_abspath(dirpath)
 
         if logger is None:
             logger = pdslogger.PdsLogger.get_logger(LOGNAME)
 
+        logger.replace_root(pdsdir.root_)
         logger.open('Dependency test suite "%s"' % key, dirpath)
 
         try:
@@ -300,11 +307,10 @@ for thing in ['volumes', 'metadata', 'calibrated']:
 _ = PdsDependency(
     'Metadata index table is newer than index.tab',
     'volumes/$/$/index/index.tab',
-    r'volumes/(.*?)/(.*?)/index/index.tab',
-    r'metadata/\1/\2/\2_index.tab',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)/index/index.tab',
+    r'metadata/\1/\3/\3_index.tab',
     suite='metadata', newer=True,
 )
-
 ################################################################################
 # Cumulative index tests
 ################################################################################
@@ -390,8 +396,8 @@ _ = PdsDependency(
 # For COCIRS_0xxx and COCIRS_1xxx
 _ = PdsDependency(
     'Preview versions of every cube file',
-    'volumes/$/$/EXTRAS/CUBE_OVERVIEW/*/*.tar.gz',
-    r'volumes/(.*)/EXTRAS/CUBE_OVERVIEW/(.*)\.tar\.gz',
+    'volumes/$/$/EXTRAS/CUBE_OVERVIEW/*/*.JPG',
+    r'volumes/(.*)/EXTRAS/CUBE_OVERVIEW/(.*)\.JPG',
     [r'previews/\1/DATA/CUBE/\2_thumb.jpg',
      r'previews/\1/DATA/CUBE/\2_small.jpg',
      r'previews/\1/DATA/CUBE/\2_med.jpg',
@@ -449,7 +455,7 @@ _ = PdsDependency(
 
 # For COUVIS_0xxx
 _ = PdsDependency(
-    'Newer supplemental index for every NH volume',
+    'Newer supplemental index for every COUVIS volume',
     'volumes/$/$/DATA/*/*.lbl',
     r'volumes/(\w+)/(\w+)/.*\.lbl',
     r'metadata/\1/\2/\2_supplemental_index.tab',
@@ -495,31 +501,43 @@ _ = PdsDependency(
 _ = PdsDependency(
     'Previews of every HST image label',
     'volumes/$/$/data/*/*.LBL',
-    r'volumes/(.*)\.LBL',
-    [r'previews/\1_thumb.jpg',
-     r'previews/\1_small.jpg',
-     r'previews/\1_med.jpg',
-     r'previews/\1_full.jpg'],
+    r'volumes/(HST.._....)(|_v[0-9.]+)/(HST.*)\.LBL',
+    [r'previews/\1/\3_thumb.jpg',
+     r'previews/\1/\3_small.jpg',
+     r'previews/\1/\3_med.jpg',
+     r'previews/\1/\3_full.jpg'],
     suite='hst', newer=False,
 )
 
-# For NHxxLO_xxxx and NHxxMV_xxxx
+# For NHxxLO_xxxx and NHxxMV_xxxx browse, stripping version number
 _ = PdsDependency(
     'Previews of every NH image file',
     'volumes/$/$/data/*/*.fit',
-    r'volumes/(.*)\.fit',
-    [r'previews/\1_thumb.jpg',
-     r'previews/\1_small.jpg',
-     r'previews/\1_med.jpg',
-     r'previews/\1_full.jpg'],
-    suite='nh', newer=False,
+    r'volumes/(NHxx.._....)(|_v[0-9.]+)/(NH.*?)(|_[0-9]+).fit',
+    [r'previews/\1/\3_thumb.jpg',
+     r'previews/\1/\3_small.jpg',
+     r'previews/\1/\3_med.jpg',
+     r'previews/\1/\3_full.jpg'],
+    suite='nhbrowse', newer=False,
+)
+
+# For NHxxLO_xxxx and NHxxMV_xxxx browse, without stripping version number
+_ = PdsDependency(
+    'Previews of every NH image file',
+    'volumes/$/$/data/*/*.fit',
+    r'volumes/(NHxx.._....)(|_v[0-9.]+)/(NH.*?).fit',
+    [r'previews/\1/\3_thumb.jpg',
+     r'previews/\1/\3_small.jpg',
+     r'previews/\1/\3_med.jpg',
+     r'previews/\1/\3_full.jpg'],
+    suite='nhbrowse_vx', newer=False,
 )
 
 _ = PdsDependency(
     'Newer supplemental index for every NH volume',
     'volumes/$/$/data/*/*.lbl',
-    r'volumes/(\w+)/(\w+)/.*\.lbl',
-    r'metadata/\1/\2/\2_supplemental_index.tab',
+    r'volumes/(NHxx.._....)(|_v[0-9.]+)/(NH...._.00)(.)/.*\.lbl',
+    r'metadata/\1/\g<3>1/\g<3>1_supplemental_index.tab',
     suite='nh', newer=True,
 )
 
@@ -558,16 +576,19 @@ if __name__ == '__main__':
                     'their creation dates are consistent.')
 
     parser.add_argument('volume', nargs='+', type=str,
-                        help='The path to the root directory of a volume.')
+                        help='The path to the root directory of a volume or '  +
+                             'a volume set.')
 
     parser.add_argument('--log', '-l', type=str, default='',
-                        help='Directory for the log files. If not specified, ' +
-                             'log files are written to the "validation" '      +
-                             'subdirectory of the path defined by '            +
-                             'environment variable "%s". ' % LOGROOT_ENV       +
-                             'If this is undefined, logs are written to the '  +
-                             '"Logs" subdirectory of the current working '     +
-                             'directory.')
+                        help='Optional root directory for a duplicate of the ' +
+                             'log files. If not specified, the value of '      +
+                             'environment variable "%s" ' % LOGROOT_ENV        +
+                             'is used. In addition, individual logs are '      +
+                             'written into the "logs" directory parallel to '  +
+                             '"holdings". Logs are created inside the '        +
+                             '"pdsdependency" subdirectory of each log root '  +
+                             'directory.'
+                             )
 
     parser.add_argument('--quiet', '-q', action='store_true',
                         help='Do not also log to the terminal.')
@@ -578,69 +599,115 @@ if __name__ == '__main__':
     status = 0
 
     # Define the logging directory
-    if args.log:
-        log_root = args.log
-    else:
+    if args.log == '':
         try:
-            log_root = os.path.join(os.environ[LOGROOT_ENV], 'validation')
+            args.log = os.environ[LOGROOT_ENV]
         except KeyError:
-            log_root = 'Logs'
+            args.log = None
 
     # Validate the paths
     for path in args.volume:
         path = os.path.abspath(path)
         pdsdir = pdsfile.PdsFile.from_abspath(path)
-        if not pdsdir.is_volume_dir():
-            print 'pdsdependency error: not a volume directory: ' + \
-                  pdsdir.logical_path
+        if not pdsdir.is_volume_dir() and not pdsdir.is_volset_dir():
+            print 'pdsdependency error: ' + \
+                  'not a volume or volume set directory: ' + pdsdir.logical_path
             sys.exit(1)
 
-    # Initialize logger and handler that writes to stdout
-    pdsfile.PdsFile.set_log_root(log_root)
-    log_path_ = os.path.join(log_root, 'dependency')
+        if pdsdir.category_ != 'volumes/':
+            print 'pdsdependency error: ' + \
+                  'not a volume or volume set directory: ' + pdsdir.logical_path
+            sys.exit(1)
 
-    LOGGER = pdslogger.PdsLogger(LOGNAME)
+    # Initialize the logger
+    logger = pdslogger.PdsLogger(LOGNAME)
+    pdsfile.PdsFile.set_log_root(args.log)
 
     if not args.quiet:
-        LOGGER.add_handler(pdslogger.stdout_handler)
+        logger.add_handler(pdslogger.stdout_handler)
 
-    warning_handler = pdslogger.warning_handler(log_path_)
-    LOGGER.add_handler(warning_handler)
+    if args.log:
+        path = os.path.join(args.log, 'pdsdependency')
+        warning_handler = pdslogger.warning_handler(path)
+        logger.add_handler(warning_handler)
 
-    error_handler = pdslogger.error_handler(log_path_)
-    LOGGER.add_handler(error_handler)
+        error_handler = pdslogger.error_handler(path)
+        logger.add_handler(error_handler)
 
-    LOGGER.open(' '.join(sys.argv))
+    # Generate a list of file paths before logging
+    paths = []
+    for path in args.volume:
+
+        if not os.path.exists(path):
+            print 'No such file or directory: ' + path
+            sys.exit(1)
+
+        path = os.path.abspath(path)
+        pdsf = pdsfile.PdsFile.from_abspath(path)
+
+        if pdsf.checksums_:
+            print 'No pdsdependency for checksum files: ' + path
+            sys.exit(1)
+
+        if pdsf.archives_:
+            print 'No pdsdependency for archive files: ' + path
+            sys.exit(1)
+
+        if pdsf.is_volset_dir():
+            paths += [os.path.join(path, c) for c in pdsf.childnames]
+
+        else:
+            paths.append(os.path.abspath(path))
+
+    # Loop through paths...
+    logger.open(' '.join(sys.argv))
     try:
+        for path in paths:
 
-        # Loop through paths...
-        for path in args.volume:
-
-            path = os.path.abspath(path)
             pdsdir = pdsfile.PdsFile.from_abspath(path)
-            logfile = pdsdir.log_path_for_volume('dependency', dir='dependency')
-            path_handler = pdslogger.file_handler(logfile)
 
-            LOGGER.open('Dependency tests', path, handler=path_handler)
-            LOGGER.info('Log file', logfile)
-            LOGGER.replace_root(pdsdir.root_)
+            # Save logs in up to two places
+            logfiles = set([pdsdir.log_path_for_volume(id='dependency',
+                                                       dir='pdsdependency'),
+                            pdsdir.log_path_for_volume(id='dependency',
+                                                       dir='pdsdependency',
+                                                       place='parallel')])
+
+            # Create all the handlers for this level in the logger
+            local_handlers = []
+            for logfile in logfiles:
+                logfile = logfile.replace('/volumes/', '/')
+                local_handlers.append(pdslogger.file_handler(logfile))
+                logdir = os.path.split(logfile)[0]
+
+                # These handlers are only used if they don't already exist
+                warning_handler = pdslogger.warning_handler(logdir)
+                error_handler = pdslogger.error_handler(logdir)
+                local_handlers += [warning_handler, error_handler]
+
+            # Open the next level of the log
+            logger.open('Dependency tests', path, handler=local_handlers)
+
             try:
-                test(pdsdir, logger=LOGGER)
+                for logfile in logfiles:
+                    logger.info('Log file', logfile)
+
+                test(pdsdir, logger=logger)
 
             except (Exception, KeyboardInterrupt) as e:
-                LOGGER.exception(e)
+                logger.exception(e)
                 raise
 
             finally:
-                _ = LOGGER.close()
+                _ = logger.close()
 
     except (Exception, KeyboardInterrupt) as e:
-        LOGGER.exception(e)
+        logger.exception(e)
         status = 1
         raise
 
     finally:
-        (fatal, errors, warnings, tests) = LOGGER.close()
+        (fatal, errors, warnings, tests) = logger.close()
         if fatal or errors: status = 1
 
     sys.exit(status)

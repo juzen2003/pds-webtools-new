@@ -38,17 +38,32 @@ ERROR_REPORT_SUBJ = "Re-validate ERROR report from " + socket.gethostname()
 # Function to validate one volume
 ################################################################################
 
-def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
+def validate_one_volume(pdsdir, voltypes, tests, args, logger):
     """Validates one volume."""
 
     tests_performed = 0
 
     # Open logger for this volume
-    logfile = pdsdir.log_path_for_volume('re-validate')
-    path_handler = pdslogger.file_handler(logfile)
+    logfiles = set([pdsdir.log_path_for_volume(id='re-validate',
+                                               dir='re-validate'),
+                    pdsdir.log_path_for_volume(id='re-validate',
+                                               dir='re-validate',
+                                               place='parallel')])
+
+    local_handlers = []
+    for logfile in logfiles:
+        logfile = logfile.replace('/volumes/','/')  # this subdir not needed
+        local_handlers.append(pdslogger.file_handler(logfile))
+        logdir = os.path.split(logfile)[0]
+        logdir = os.path.split(logdir)[0]
+
+        # These handlers are only used if they don't already exist
+        warning_handler = pdslogger.warning_handler(logdir)
+        error_handler = pdslogger.error_handler(logdir)
+        local_handlers += [warning_handler, error_handler]
 
     logger.blankline()
-    logger.open('Re-validate ' + pdsdir.abspath, handler=path_handler)
+    logger.open('Re-validate ' + pdsdir.abspath, handler=local_handlers)
     try:
 
         logger.info('Last modification', pdsdir.date)
@@ -63,18 +78,18 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
             if not os.path.exists(abspath): continue
 
             temp_pdsdir = pdsfile.PdsFile.from_abspath(abspath)
-            if namespace.checksums and not namespace.targz_only:
+            if args.checksums and not args.targz_only:
                 logger.open('Checksum re-validatation for', abspath)
                 try:
-                    pdschecksums.validate(temp_pdsdir, None, logger)
+                    pdschecksums.validate(temp_pdsdir, logger=logger)
                 finally:
                     tests_performed += 1
                     logger.close()
 
-            if namespace.archives and not namespace.targz_only:
+            if args.archives and not args.targz_only:
                 logger.open('Archive re-validatation for', abspath)
                 try:
-                    pdsarchives.validate(temp_pdsdir, logger)
+                    pdsarchives.validate(temp_pdsdir, logger=logger)
                 finally:
                     tests_performed += 1
                     logger.close()
@@ -94,7 +109,7 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
                 temp_pdsdir = pdsfile.PdsFile.from_abspath(prefix)
                 logger.open('Checksum re-validatation for', abspath)
                 try:
-                    pdschecksums.validate(temp_pdsdir, basename, logger)
+                    pdschecksums.validate(temp_pdsdir, logger=logger)
                 finally:
                     tests_performed += 1
                     logger.close()
@@ -106,25 +121,25 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
             if not os.path.exists(abspath): continue
 
             temp_pdsdir = pdsfile.PdsFile.from_abspath(abspath)
-            if namespace.infoshelves and not namespace.targz_only:
+            if args.infoshelves and not args.targz_only:
                 logger.open('Infoshelf re-validatation for', abspath)
                 try:
-                    pdsinfoshelf.validate(temp_pdsdir, None, logger)
+                    pdsinfoshelf.validate(temp_pdsdir, logger=logger)
                 finally:
                     tests_performed += 1
                     logger.close()
 
-            if (namespace.linkshelves and not namespace.targz_only and
+            if (args.linkshelves and not args.targz_only and
                 voltype in ('volumes', 'calibrated', 'metadata')):
                     logger.open('Linkshelf re-validatation for', abspath)
                     try:
-                        pdslinkshelf.validate(temp_pdsdir, logger)
+                        pdslinkshelf.validate(temp_pdsdir, logger=logger)
                     finally:
                         tests_performed += 1
                         logger.close()
 
         # Infoshelves for each 'archive-' + voltype...
-        if namespace.infoshelves and targz:
+        if args.infoshelves and targz:
             for voltype in voltypes:
                 abspath = pdsdir.abspath.replace('/volumes/',
                                                  '/archives-' + voltype + '/')
@@ -138,13 +153,13 @@ def validate_one_volume(pdsdir, voltypes, tests, namespace, logger):
                 temp_pdsdir = pdsfile.PdsFile.from_abspath(prefix)
                 logger.open('Infoshelf re-validatation for', abspath)
                 try:
-                    pdsinfoshelf.validate(temp_pdsdir, basename, logger)
+                    pdsinfoshelf.validate(temp_pdsdir, logger=logger)
                 finally:
                     tests_performed += 1
                     logger.close()
 
         # Dependencies
-        if namespace.dependencies and not namespace.targz_only:
+        if args.dependencies and not args.targz_only:
             logger.open('Dependency re-validation for', abspath)
             try:
                 pdsdependency.test(pdsdir, logger)
@@ -330,14 +345,13 @@ parser.add_argument('volume', nargs='*', type=str,
                     help='Paths to volumes or volume sets for validation.')
 
 parser.add_argument('--log', '-l', type=str, default='',
-                    help='Root directory for the log files. Log files are '    +
-                         'written to the "re-validate" subdirectory of this '  +
-                         'directory. If not specified, logs are written to '   +
-                         '"re-validate" subdirectory of the path defined by '  +
-                         'environment variable "%s". ' % LOGROOT_ENV           +
-                         'If this is undefined, logs are written to the '      +
-                         '"Logs/re-validate" subdirectory of the current '     +
-                         'working directory.')
+                    help='Optional root directory for a duplicate of the log ' +
+                         'files. If not specified, the value of '              +
+                         'environment variable "%s" ' % LOGROOT_ENV            +
+                         'is used. In addition, logs are written to the '      +
+                         '"logs" directory parallel to "holdings". Logs are '  +
+                         'created inside the "re-validate" subdirectory of '   +
+                         'each log root directory.')
 
 parser.add_argument('--subdirectory', '-s', type=str, default='',
                     help='Optional subdirectory below "re-validate" in which ' +
@@ -422,34 +436,34 @@ parser.add_argument('--all', '-a', action='store_true',
                          'volume.')
 
 # Parse and validate the command line
-namespace = parser.parse_args()
+args = parser.parse_args()
 
 # Interpret file types
 voltypes = []
-if namespace.volumes:
+if args.volumes:
     voltypes += ['volumes']
-if namespace.calibrated:
+if args.calibrated:
     voltypes += ['calibrated']
-if namespace.diagrams:
+if args.diagrams:
     voltypes += ['diagrams']
-if namespace.metadata:
+if args.metadata:
     voltypes += ['metadata']
-if namespace.calibrated:
+if args.calibrated:
     voltypes += ['previews']
 
-if voltypes == [] or namespace.all:
+if voltypes == [] or args.all:
     voltypes = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews']
 
-targz = namespace.all or namespace.targz or namespace.targz_only
+targz = args.all or args.targz or args.targz_only
 
 # Determine which tests to perform
-checksums    = namespace.checksums
-archives     = namespace.archives
-infoshelves  = namespace.info
-linkshelves  = namespace.links
-dependencies = namespace.dependencies
+checksums    = args.checksums
+archives     = args.archives
+infoshelves  = args.info
+linkshelves  = args.links
+dependencies = args.dependencies
 
-if namespace.full or not (checksums or archives or infoshelves or linkshelves or
+if args.full or not (checksums or archives or infoshelves or linkshelves or
                           dependencies):
     checksums    = True
     archives     = True
@@ -457,18 +471,18 @@ if namespace.full or not (checksums or archives or infoshelves or linkshelves or
     linkshelves  = True
     dependencies = True
 
-checksums    |= (namespace.targz_only and not infoshelves)
-archives     &= not namespace.targz_only
-dependencies &= ('volumes' in voltypes and not namespace.targz_only)
+checksums    |= (args.targz_only and not infoshelves)
+archives     &= not args.targz_only
+dependencies &= ('volumes' in voltypes and not args.targz_only)
 linkshelves  &= (('volumes' in voltypes or 'metadata' in voltypes or
                                            'calibrated' in voltypes) and
-                 not namespace.targz_only)
+                 not args.targz_only)
 
-namespace.checksums    = checksums
-namespace.archives     = archives
-namespace.infoshelves  = infoshelves
-namespace.linkshelves  = linkshelves
-namespace.dependencies = dependencies
+args.checksums    = checksums
+args.archives     = archives
+args.infoshelves  = infoshelves
+args.linkshelves  = linkshelves
+args.dependencies = dependencies
 
 tests = []
 if checksums   : tests.append('checksums')
@@ -476,52 +490,50 @@ if archives    : tests.append('archives')
 if infoshelves : tests.append('infoshelves')
 if linkshelves : tests.append('linkshelves')
 if dependencies: tests.append('dependencies')
-if namespace.targz_only: tests = ['checksums (tar.gz only)']
+if args.targz_only: tests = ['checksums (tar.gz only)']
 
 # Define the logging directory
-if namespace.log:
-    log_root_ = namespace.log.rstrip('/') + '/'
-else:
+if args.log == '':
     try:
-        log_root_ = os.environ[LOGROOT_ENV].rstrip('/') + '/'
+        args.log = os.environ[LOGROOT_ENV]
     except KeyError:
-        log_root_ = 'Logs/'
+        args.log = None
 
-namespace.log = log_root_ + 're-validate/'
+# Initialize the logger
+new_limits = {'info':10, 'normal':10, 'override':False}
+logger = pdslogger.PdsLogger(LOGNAME, limits=new_limits)
+pdsfile.PdsFile.set_log_root(args.log)
 
-if namespace.subdirectory:
-    subdirectory_ = namespace.subdirectory.rstrip('/') + '/'
+if not args.quiet:
+    logger.add_handler(pdslogger.stdout_handler)
+
+if args.log:
+    path = os.path.join(args.log, 're-validate')
+    warning_handler = pdslogger.warning_handler(path)
+    logger.add_handler(warning_handler)
+
+    error_handler = pdslogger.error_handler(path)
+    logger.add_handler(error_handler)
+
+if args.subdirectory:
+    subdirectory_ = args.subdirectory.rstrip('/') + '/'
 else:
     subdirectory_ = ''
 
-namespace.subdirectory = subdirectory_
-
-# Initialize logger
-pdsfile.PdsFile.set_log_root(None)  # Individual logs go to the pdsdata volume
-new_limits = {'info':10, 'normal':10, 'override':False}
-logger = pdslogger.PdsLogger(LOGNAME, limits=new_limits)
-
-if not namespace.quiet:
-    logger.add_handler(pdslogger.stdout_handler)
-
-warning_handler = pdslogger.warning_handler(namespace.log)
-logger.add_handler(warning_handler)
-
-error_handler = pdslogger.error_handler(namespace.log)
-logger.add_handler(error_handler)
+args.subdirectory = subdirectory_
 
 ########################################
 # Interactive mode
 ########################################
 
-if not namespace.batch and not namespace.batch_status:
+if not args.batch and not args.batch_status:
 
     # Stop if a volume or volume set doesn't exist
-    if not namespace.volume:
+    if not args.volume:
         print 'Missing volume path'
         sys.exit(1)
 
-    for volume in namespace.volume:
+    for volume in args.volume:
         if not os.path.exists(volume):
             print 'Volume path not found: ' + volume
             sys.exit(1)
@@ -529,7 +541,7 @@ if not namespace.batch and not namespace.batch_status:
     # Convert to PdsFile objects; expand volume sets; collect holdings paths
     pdsdirs = []
     roots = set()
-    for volume in namespace.volume:
+    for volume in args.volume:
         abspath = os.path.abspath(volume)
         pdsdir = pdsfile.PdsFile.from_abspath(abspath)
         if pdsdir.category_ != 'volumes/' or pdsdir.interior:
@@ -549,7 +561,7 @@ if not namespace.batch and not namespace.batch_status:
     try:
         # For each volume...
         for pdsdir in pdsdirs:
-            _ = validate_one_volume(pdsdir, voltypes, tests, namespace, logger)
+            _ = validate_one_volume(pdsdir, voltypes, tests, args, logger)
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
@@ -568,27 +580,27 @@ if not namespace.batch and not namespace.batch_status:
 else:
 
     # Find the holdings directory
-    if not namespace.volume:
-        namespace.volume = glob.glob('/Volumes/pdsdata*/holdings')
+    if not args.volume:
+        args.volume = glob.glob('/Volumes/pdsdata*/holdings')
 
-    if not namespace.volume:
+    if not args.volume:
         print 'No holdings path found'
         sys.exit(1)
 
-    for holding in namespace.volume:
+    for holding in args.volume:
         if not os.path.exists(holding):
             print 'Holdings path not found: ' + holding
             sys.exit(1)
 
-    logger.add_root(namespace.volume)
+    logger.add_root(args.volume)
 
     # Read the existing logs
-    log_info = get_all_log_info(namespace.log)
+    log_info = get_all_log_info(args.log)
     log_info = sort_log_info(log_info)
 
     # Read the current holdings
     holdings_info = []
-    for holding in namespace.volume:
+    for holding in args.volume:
         holdings_info += get_volume_info(holding)
 
     # Define an ordered list of tasks
@@ -596,7 +608,7 @@ else:
      current_logs) = find_modified_volumes(holdings_info, log_info)
 
     # Print info in trial run mode
-    if namespace.batch_status:
+    if args.batch_status:
         fmt = '%4d %20s/%-11s  modified %s, not previously validated'
         line_number = 0
         for (abspath, date) in modified_holdings:
@@ -645,7 +657,7 @@ else:
 
             (logfile,
              fatal, errors) = validate_one_volume(pdsdir, voltypes, tests,
-                                                  namespace, logger)
+                                                  args, logger)
             error_message = ''
             if fatal or errors:
                 stringlist = ['***** ']
@@ -667,7 +679,7 @@ else:
                 error_messages.append(error_message)
 
             now = datetime.datetime.now()
-            if (now - start).seconds > namespace.minutes*60:
+            if (now - start).seconds > args.minutes*60:
                 break
 
     except (Exception, KeyboardInterrupt) as e:
@@ -684,18 +696,18 @@ else:
                          int((now - start).seconds/60. + 0.5)))
         print batch_suffix
 
-        if namespace.email:
+        if args.email:
             if error_messages:
                 subj = REPORT_SUBJ_W_ERRORS
             else:
                 subj = REPORT_SUBJ
 
             full_message = [batch_prefix] + batch_messages + [batch_suffix]
-            send_email(namespace.email, subj, '\n'.join(full_message))
+            send_email(args.email, subj, '\n'.join(full_message))
 
-        if error_messages and namespace.error_email:
+        if error_messages and args.error_email:
             full_message = [batch_prefix] + error_messages + [batch_suffix]
-            send_email(namespace.error_email, ERROR_REPORT_SUBJ,
+            send_email(args.error_email, ERROR_REPORT_SUBJ,
                                               '\n'.join(full_message))
 
     sys.exit(status)

@@ -23,6 +23,9 @@ import translator
 LOGNAME = 'pds.validation.links'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
 
+# Holds log file directories temporarily, used by move_old_links()
+LOGDIRS = []
+
 REPAIRS = translator.TranslatorByRegex([
     ('.*/COCIRS_[01].*/DATAINFO.TXT', 0,
         {'DIAG.FMT'         : 'DATA/UNCALIBR/DIAG.FMT',
@@ -140,8 +143,8 @@ def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
 
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-        logger.replace_root(pdsdir.root_)
 
+    logger.replace_root(pdsdir.root_)
     logger.open('Finding link files', dirpath, limits)
 
     try:
@@ -343,8 +346,8 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
 
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-        logger.replace_root(pdsdir.root_)
 
+    logger.replace_root(pdsdir.root_)
     logger.open('Shelving link file info for', dirpath, limits)
 
     try:
@@ -453,8 +456,8 @@ def load_links(dirpath, limits={}, logger=None):
 
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-        logger.replace_root(pdsdir.root_)
 
+    logger.replace_root(pdsdir.root_)
     logger.open('Reading link file info for', dirpath, limits)
 
     try:
@@ -510,8 +513,8 @@ def validate_links(dirpath, dirdict, shelfdict, limits={}, logger=None):
 
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-        logger.replace_root(pdsdir.root_)
 
+    logger.replace_root(pdsdir.root_)
     logger.open('Validating link file info for', dirpath, limits=limits)
 
     try:
@@ -549,38 +552,41 @@ def validate_links(dirpath, dirdict, shelfdict, limits={}, logger=None):
 
 ################################################################################
 
-def move_old_links(shelf_file, logfile, logger=None):
+def move_old_links(shelf_file, logger=None):
     """Move a file to the /logs/ directory tree and append a time tag."""
+
+    if not os.path.exists(shelf_file): return
 
     shelf_basename = os.path.basename(shelf_file)
     (shelf_prefix, shelf_ext) = os.path.splitext(shelf_basename)
 
-    log_dir = os.path.split(logfile)[0]
-    dest_template = log_dir + '/' + shelf_prefix + '_v???' + shelf_ext
-
-    version_paths = glob.glob(dest_template)
-
-    max_version = 0
-    lskip = len(shelf_ext)
-    for version_path in version_paths:
-        version = int(version_path[-lskip-3:-lskip])
-        max_version = max(max_version, version)
-
-    new_version = max_version + 1
-    dest = dest_template.replace('???', '%03d' % new_version)
-    shutil.move(shelf_file, dest)
-
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
 
-    logger.info('Link shelf file moved from: ' + shelf_file)
-    logger.info('Link shelf file moved to ' + dest)
+    from_logged = False
+    for log_dir in LOGDIRS:
+        dest_template = log_dir + '/' + shelf_prefix + '_v???' + shelf_ext
+        version_paths = glob.glob(dest_template)
 
-    python_file = shelf_file[:-5] + 'py'
-    dest = dest[:-5] + 'py'
-    shutil.move(python_file, dest)
+        max_version = 0
+        lskip = len(shelf_ext)
+        for version_path in version_paths:
+            version = int(version_path[-lskip-3:-lskip])
+            max_version = max(max_version, version)
 
-    return dest
+        new_version = max_version + 1
+        dest = dest_template.replace('???', '%03d' % new_version)
+        shutil.copy(shelf_file, dest)
+
+        if not from_logged:
+            logger.info('Link shelf file moved from: ' + shelf_file)
+            from_logged = True
+
+        logger.info('Link shelf file moved to ' + dest)
+
+        python_file = shelf_file[:-5] + 'py'
+        dest = dest[:-5] + 'py'
+        shutil.copy(python_file, dest)
 
 ################################################################################
 # Simplified functions to perform tasks
@@ -604,8 +610,7 @@ def initialize(pdsdir, logger=None):
 
     # Move old file if necessary
     if os.path.exists(linkfile):
-        logfile = pdsfile.PdsFile.log_path_for_shelf(linkfile, 'initialize')
-        move_old_links(linkfile, logfile, logger=logger)
+        move_old_links(linkfile, logger=logger)
 
     # Save link files
     shelve_links(pdsdir.abspath, link_dict, logger=logger)
@@ -624,8 +629,7 @@ def reinitialize(pdsdir, logger=None):
 
     # Move old file if necessary
     if os.path.exists(linkfile):
-        logfile = pdsfile.PdsFile.log_path_for_shelf(linkfile, 'reinitialize')
-        move_old_links(linkfile, logfile, logger=logger)
+        move_old_links(linkfile, logger=logger)
 
     # Save link files
     shelve_links(pdsdir.abspath, link_dict, logger=logger)
@@ -650,12 +654,12 @@ def repair(pdsdir, logger=None):
     if canceled:
         if logger is None:
             logger = pdslogger.PdsLogger.get_logger(LOGNAME)
+
         logger.info('Link file is up to date; repair canceled', linkfile)
         return
 
     # Move files and write new info
-    logfile = pdsfile.PdsFile.log_path_for_shelf(linkfile, 'repair')
-    move_old_links(linkfile, logfile, logger=logger)
+    move_old_links(linkfile, logger=logger)
     shelve_links(pdsdir.abspath, dir_links, logger=logger)
 
 ################################################################################
@@ -693,13 +697,15 @@ if __name__ == '__main__':
                         help='The path to the root directory of a volume.')
 
     parser.add_argument('--log', '-l', type=str, default='',
-                        help='Directory for the log files. If not specified, ' +
-                             'log files are written to the "validation" '      +
-                             'subdirectory of the path defined by '            +
-                             'environment variable "%s". ' % LOGROOT_ENV       +
-                             'If this is undefined, logs are written to the '  +
-                             '"Logs" subdirectory of the current working '     +
-                             'directory.')
+                        help='Optional root directory for a duplicate of the ' +
+                             'log files. If not specified, the value of '      +
+                             'environment variable "%s" ' % LOGROOT_ENV        +
+                             'is used. In addition, individual logs are '      +
+                             'written into the "logs" directory parallel to '  +
+                             '"holdings". Logs are created inside the '        +
+                             '"pdslinkshelf" subdirectory of each log root '   +
+                             'directory.'
+                             )
 
     parser.add_argument('--quiet', '-q', action='store_true',
                         help='Do not also log to the terminal.')
@@ -714,45 +720,90 @@ if __name__ == '__main__':
     status = 0
 
     # Define the logging directory
-    if args.log:
-        log_root = args.log
-    else:
+    if args.log == '':
         try:
-            log_root = os.path.join(os.environ[LOGROOT_ENV], 'validation')
+            args.log = os.environ[LOGROOT_ENV]
         except KeyError:
-            log_root = 'Logs'
+            args.log = None
 
     # Initialize the logger
-    pdsfile.PdsFile.set_log_root(log_root)
-    log_path_ = os.path.join(log_root, 'linkshelf')
-
-    LOGGER = pdslogger.PdsLogger(LOGNAME)
+    logger = pdslogger.PdsLogger(LOGNAME)
+    pdsfile.PdsFile.set_log_root(args.log)
 
     if not args.quiet:
-        LOGGER.add_handler(pdslogger.stdout_handler)
+        logger.add_handler(pdslogger.stdout_handler)
 
-    warning_handler = pdslogger.warning_handler(log_path_)
-    LOGGER.add_handler(warning_handler)
+    if args.log:
+        path = os.path.join(args.log, 'pdslinkshelf')
+        warning_handler = pdslogger.warning_handler(path)
+        logger.add_handler(warning_handler)
 
-    error_handler = pdslogger.error_handler(log_path_)
-    LOGGER.add_handler(error_handler)
+        error_handler = pdslogger.error_handler(path)
+        logger.add_handler(error_handler)
 
-    LOGGER.open(' '.join(sys.argv))
+
+    # Generate a list of file paths before logging
+    paths = []
+    for path in args.volume:
+
+        if not os.path.exists(path):
+            print 'No such file or directory: ' + path
+            sys.exit(1)
+
+        path = os.path.abspath(path)
+        pdsf = pdsfile.PdsFile.from_abspath(path)
+
+        if pdsf.checksums_:
+            print 'No infoshelves for checksum files: ' + path
+            sys.exit(1)
+
+        if pdsf.archives_:
+            print 'No linkshelves for archive files: ' + path
+            sys.exit(1)
+
+        if pdsf.is_volset_dir():
+            paths += [os.path.join(path, c) for c in pdsf.childnames]
+
+        else:
+            paths.append(os.path.abspath(path))
+
+    # Loop through tuples...
+    logger.open(' '.join(sys.argv))
     try:
-        for path in args.volume:
+        for path in paths:
 
-            path = os.path.abspath(path)
             pdsdir = pdsfile.PdsFile.from_abspath(path)
-
             linkfile = pdsdir.shelf_path_and_lskip(id='links')[0]
-            logfile = pdsfile.PdsFile.log_path_for_shelf(linkfile, args.task)
-            path_handler = pdslogger.file_handler(logfile)
 
-            LOGGER.open('Task "' + args.task + '" for', path,
-                        handler=path_handler)
-            LOGGER.info('Log file', logfile)
-            LOGGER.replace_root(pdsdir.root_)
+            # Save logs in up to two places
+            logfiles = set([pdsdir.log_path_for_volume(id='links',
+                                                       task=args.task,
+                                                       dir='pdslinkshelf'),
+                            pdsdir.log_path_for_volume(id='links',
+                                                       task=args.task,
+                                                       dir='pdslinkshelf',
+                                                       place='parallel')])
+
+            # Create all the handlers for this level in the logger
+            local_handlers = []
+            LOGDIRS = []            # used by move_old_links()
+            for logfile in logfiles:
+                local_handlers.append(pdslogger.file_handler(logfile))
+                logdir = os.path.split(logfile)[0]
+                LOGDIRS.append(os.path.split(logfile)[0])
+
+                # These handlers are only used if they don't already exist
+                warning_handler = pdslogger.warning_handler(logdir)
+                error_handler = pdslogger.error_handler(logdir)
+                local_handlers += [warning_handler, error_handler]
+
+            # Open the next level of the log
+            logger.open('Task "' + args.task + '" for', path,
+                        handler=local_handlers)
+
             try:
+                for logfile in logfiles:
+                    logger.info('Log file', logfile)
 
                 if args.task == 'initialize':
                     initialize(pdsdir)
@@ -767,19 +818,19 @@ if __name__ == '__main__':
                     repair(pdsdir)
 
             except (Exception, KeyboardInterrupt) as e:
-                LOGGER.exception(e)
+                logger.exception(e)
                 raise
 
             finally:
-                _ = LOGGER.close()
+                _ = logger.close()
 
     except (Exception, KeyboardInterrupt) as e:
-        LOGGER.exception(e)
+        logger.exception(e)
         status = 1
         raise
 
     finally:
-        (fatal, errors, warnings, tests) = LOGGER.close()
+        (fatal, errors, warnings, tests) = logger.close()
         if fatal or errors: status = 1
 
     sys.exit(status)

@@ -29,7 +29,6 @@ for root in sys.argv[1:]:
 
     # Handle special case--undefined preliminary volume
     path = os.path.join(root, 'volumes/RES_xxxx_prelim/RES_0001')
-    print path, os.path.exists(path)
     if os.path.exists(path):
         volume_info['RES_xxxx_prelim/RES_0001'] = (0.9, '2008-03-30',
                                                    ['SR-5-DDR-RESONANCES-V0.9'])

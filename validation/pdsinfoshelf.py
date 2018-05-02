@@ -21,6 +21,9 @@ import pdslogger
 import pdsfile
 import pdschecksums
 
+# Holds log file directories temporarily, used by move_old_info()
+LOGDIRS = []
+
 LOGNAME = 'pds.validation.fileinfo'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
 
@@ -102,7 +105,8 @@ def generate_infodict(pdsdir, selection, old_infodict={},
 
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-        logger.replace_root(pdsdir.root_)
+
+    logger.replace_root(pdsdir.root_)
 
     if selection:
         logger.open('Generating file info for selection "%s"' % selection,
@@ -154,9 +158,9 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
 
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-        logger.open('Shelving file info for', dirpath, limits=limits)
 
     logger.replace_root(pdsdir.root_)
+    logger.open('Shelving file info for', dirpath, limits=limits)
 
     try:
         (shelf_path, lskip) = pdsdir.shelf_path_and_lskip(id='info')
@@ -223,8 +227,8 @@ def load_infodict(pdsdir, logger=None):
 
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-        logger.replace_root(pdsdir.root_)
 
+    logger.replace_root(pdsdir.root_)
     logger.open('Reading info file for', dirpath_[:-1])
 
     try:
@@ -260,8 +264,8 @@ def validate_infodict(pdsdir, dirdict, shelfdict,
 
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-        logger.replace_root(pdsdir.root_)
 
+    logger.replace_root(pdsdir.root_)
     logger.open('Validating file info for', pdsdir.abspath, limits=limits)
 
     try:
@@ -327,44 +331,47 @@ def validate_infodict(pdsdir, dirdict, shelfdict,
 
 ################################################################################
 
-def move_old_info(shelf_file, logfile, logger=None):
+def move_old_info(shelf_file, logger=None):
     """Move a file to the /logs/ directory tree and append a time tag."""
 
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
+    if not os.path.exists(shelf_file): return
 
     shelf_basename = os.path.basename(shelf_file)
     (shelf_prefix, shelf_ext) = os.path.splitext(shelf_basename)
 
-    log_dir = os.path.split(logfile)[0]
-    dest_template = log_dir + '/' + shelf_prefix + '_v???' + shelf_ext
+    if logger is None:
+        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
 
-    version_paths = glob.glob(dest_template)
+    from_logged = False
+    for log_dir in LOGDIRS:
+        dest_template = log_dir + '/' + shelf_prefix + '_v???' + shelf_ext
+        version_paths = glob.glob(dest_template)
 
-    max_version = 0
-    lskip = len(shelf_ext)
-    for version_path in version_paths:
-        version = int(version_path[-lskip-3:-lskip])
-        max_version = max(max_version, version)
+        max_version = 0
+        lskip = len(shelf_ext)
+        for version_path in version_paths:
+            version = int(version_path[-lskip-3:-lskip])
+            max_version = max(max_version, version)
 
-    new_version = max_version + 1
-    dest = dest_template.replace('???', '%03d' % new_version)
-    shutil.move(shelf_file, dest)
+        new_version = max_version + 1
+        dest = dest_template.replace('???', '%03d' % new_version)
+        shutil.copy(shelf_file, dest)
 
-    logger.info('Info shelf file moved from', shelf_file)
-    logger.info('Info shelf file moved to', dest)
+        if not from_logged:
+            logger.info('Info shelf file moved from: ' + shelf_file)
+            from_logged = True
 
-    python_file = shelf_file[:-5] + 'py'
-    dest = dest[:-5] + 'py'
-    shutil.move(python_file, dest)
+        logger.info('Info shelf file moved to', dest)
 
-    return dest
+        python_file = shelf_file[:-5] + 'py'
+        dest = dest[:-5] + 'py'
+        shutil.copy(python_file, dest)
 
 ################################################################################
 # Simplified functions to perform tasks
 ################################################################################
 
-def initialize(pdsdir, selection, logger=None):
+def initialize(pdsdir, selection=None, logger=None):
 
     infofile = pdsdir.shelf_path_and_lskip(id='info')[0]
 
@@ -388,7 +395,7 @@ def initialize(pdsdir, selection, logger=None):
     # Save info file
     shelve_infodict(pdsdir, infodict, logger=logger)
 
-def reinitialize(pdsdir, selection, logger=None):
+def reinitialize(pdsdir, selection=None, logger=None):
 
     infofile = pdsdir.shelf_path_and_lskip(id='info')[0]
 
@@ -402,14 +409,12 @@ def reinitialize(pdsdir, selection, logger=None):
 
     # Move old file if necessary
     if os.path.exists(infofile):
-        logfile = pdsfile.PdsFile.log_path_for_shelf(infofile, 'reinitialize',
-                                                     selection)
-        move_old_info(infofile, logfile, logger=logger)
+        move_old_info(infofile, logger=logger)
 
     # Save info file
     shelve_infodict(pdsdir, infodict, logger=logger)
 
-def validate(pdsdir, selection, logger=None):
+def validate(pdsdir, selection=None, logger=None):
 
     shelf_infodict = load_infodict(pdsdir, logger=logger)
     dir_infodict = generate_infodict(pdsdir, selection, logger=logger)
@@ -417,7 +422,7 @@ def validate(pdsdir, selection, logger=None):
     # Validate
     validate_infodict(pdsdir, dir_infodict, shelf_infodict, logger=logger)
 
-def repair(pdsdir, selection, logger=None):
+def repair(pdsdir, selection=None, logger=None):
 
     infofile = pdsdir.shelf_path_and_lskip(id='info')[0]
 
@@ -436,15 +441,15 @@ def repair(pdsdir, selection, logger=None):
     if canceled:
         if logger is None:
             logger = pdslogger.PdsLogger.get_logger(LOGNAME)
+
         logger.info('Info is up to date; repair canceled', infofile)
         return
 
     # Move files and write new info
-    logfile = pdsfile.PdsFile.log_path_for_shelf(infofile, 'repair', selection)
-    move_old_info(infofile, logfile, logger=logger)
+    move_old_info(infofile, logger=logger)
     shelve_infodict(pdsdir, dir_infodict, logger=logger)
 
-def update(pdsdir, selection, logger=None):
+def update(pdsdir, selection=None, logger=None):
 
     infofile = pdsdir.shelf_path_and_lskip(id='info')[0]
 
@@ -457,12 +462,12 @@ def update(pdsdir, selection, logger=None):
     if canceled:
         if logger is None:
             logger = pdslogger.PdsLogger.get_logger(LOGNAME)
+
         logger.info('Info is up to date; update canceled', infofile)
         return
 
     # Write checksum file
-    logfile = pdsfile.PdsFile.log_path_for_shelf(infofile, 'repair', selection)
-    move_old_info(infofile, logfile, logger=logger)
+    move_old_info(infofile, logger=logger)
     shelve_infodict(pdsdir, dir_infodict, logger=logger)
 
 ################################################################################
@@ -518,13 +523,15 @@ if __name__ == '__main__':
                              'directories inside it are handled in sequence.')
 
     parser.add_argument('--log', '-l', type=str, default='',
-                        help='Directory for the log files. If not specified, ' +
-                             'log files are written to the "validation" '      +
-                             'subdirectory of the path defined by '            +
-                             'environment variable "%s". ' % LOGROOT_ENV       +
-                             'If this is undefined, logs are written to the '  +
-                             '"Logs" subdirectory of the current working '     +
-                             'directory.')
+                        help='Optional root directory for a duplicate of the ' +
+                             'log files. If not specified, the value of '      +
+                             'environment variable "%s" ' % LOGROOT_ENV        +
+                             'is used. In addition, individual logs are '      +
+                             'written into the "logs" directory parallel to '  +
+                             '"holdings". Logs are created inside the '        +
+                             '"pdsinfoshelf" subdirectory of each log root '   +
+                             'directory.'
+                             )
 
     parser.add_argument('--quiet', '-q', action='store_true',
                         help='Do not also log to the terminal.')
@@ -540,70 +547,73 @@ if __name__ == '__main__':
     status = 0
 
     # Define the logging directory
-    if args.log:
-        log_root = args.log
-    else:
+    if args.log == '':
         try:
-            log_root = os.path.join(os.environ[LOGROOT_ENV], 'validation')
+            args.log = os.environ[LOGROOT_ENV]
         except KeyError:
-            log_root = 'Logs'
+            args.log = None
 
     # Initialize the logger
-    pdsfile.PdsFile.set_log_root(log_root)
-    log_path_ = os.path.join(log_root, 'infoshelf')
-
-    LOGGER = pdslogger.PdsLogger(LOGNAME)
+    logger = pdslogger.PdsLogger(LOGNAME)
+    pdsfile.PdsFile.set_log_root(args.log)
 
     if not args.quiet:
-        LOGGER.add_handler(pdslogger.stdout_handler)
+        logger.add_handler(pdslogger.stdout_handler)
 
-    warning_handler = pdslogger.warning_handler(log_path_)
-    LOGGER.add_handler(warning_handler)
+    if args.log:
+        path = os.path.join(args.log, 'pdsinfoshelf')
+        warning_handler = pdslogger.warning_handler(path)
+        logger.add_handler(warning_handler)
 
-    error_handler = pdslogger.error_handler(log_path_)
-    LOGGER.add_handler(error_handler)
+        error_handler = pdslogger.error_handler(path)
+        logger.add_handler(error_handler)
 
-    LOGGER.open(' '.join(sys.argv))
-    try:
+    # Generate a list of tuples (pdsfile, selection) before logging
+    info = []
+    for path in args.volume:
 
-        # Generate a list of tuples (pdsfile, selection)
-        info = []
-        for path in args.volume:
+        if not os.path.exists(path):
+            print 'No such file or directory: ' + path
+            sys.exit(1)
 
-            path = os.path.abspath(path)
-            pdsf = pdsfile.PdsFile.from_abspath(path)
-            if pdsf.checksums_:
-                raise ValueError('No infoshelves for checksum files')
+        path = os.path.abspath(path)
+        pdsf = pdsfile.PdsFile.from_abspath(path)
+        if pdsf.checksums_:
+            print 'No infoshelves for checksum files: ' + path
+            sys.exit(1)
 
-            if pdsf.is_volset_dir():
-                # Info about archive directories is stored by volset
-                if pdsf.archives_:
-                    info.append((pdsf, None))
-                # Others are checksumed by volume
-                else:
-                    info += [(pdsf.child(c), None) for c in pdsf.childnames]
-
-            elif pdsf.is_volume_dir():
-                # Shelve one volume
+        if pdsf.is_volset_dir():
+            # Info about archive directories is stored by volset
+            if pdsf.archives_:
                 info.append((pdsf, None))
 
-            elif pdsf.isdir:
-                raise ValueError('Invalid directory for an infoshelf: ' +
-                                 pdsf.logical_path)
-
+            # Others are checksumed by volume
             else:
-                pdsdir = pdsf.parent()
-                if pdsf.is_volume_file():
-                    # Shelve one archive file
-                    info.append((pdsdir, pdsf.basename))
-                elif pdsdir.is_volume_dir():
-                    # Shelve one top-level file in volume
-                    info.append((pdsdir, pdsf.basename))
-                else:
-                    raise ValueError('Invalid file for an infoshelf: ' +
-                                     pdsf.logical_path)
+                info += [(pdsf.child(c), None) for c in pdsf.childnames]
 
-        # Loop through tuples...
+        elif pdsf.is_volume_dir():
+            # Shelve one volume
+            info.append((pdsf, None))
+
+        elif pdsf.isdir:
+            print 'Invalid directory for an infoshelf: ' + pdsf.logical_path
+            sys.exit(1)
+
+        else:
+            pdsdir = pdsf.parent()
+            if pdsf.is_volume_file():
+                # Shelve one archive file
+                info.append((pdsdir, pdsf.basename))
+            elif pdsdir.is_volume_dir():
+                # Shelve one top-level file in volume
+                info.append((pdsdir, pdsf.basename))
+            else:
+                print 'Invalid file for an infoshelf: ' + pdsf.logical_path
+                sys.exit(1)
+
+    # Open logger and loop through tuples...
+    logger.open(' '.join(sys.argv))
+    try:
         for (pdsdir, selection) in info:
 
             infofile = pdsdir.shelf_path_and_lskip(id='info')[0]
@@ -613,22 +623,48 @@ if __name__ == '__main__':
             else:
                 pdsf = pdsdir
 
-            checkfile = pdsdir.checksum_path_and_lskip()[0]
-
-            logfile = pdsfile.PdsFile.log_path_for_shelf(infofile, args.task,
-                                                         selection)
-            path_handler = pdslogger.file_handler(logfile)
-
-            if selection:
-                LOGGER.open('Task "' + args.task + '" for selection ' +
-                            selection, path, handler=path_handler)
+            # Save logs in up to two places
+            if pdsf.volname:
+                logfiles = set([pdsf.log_path_for_volume(id='info',
+                                                         task=args.task,
+                                                         dir='pdsinfoshelf'),
+                                pdsf.log_path_for_volume(id='info',
+                                                         task=args.task,
+                                                         dir='pdsinfoshelf',
+                                                         place='parallel')])
             else:
-                LOGGER.open('Task "' + args.task + '" for', path,
-                            handler=path_handler)
+                logfiles = set([pdsf.log_path_for_volset(id='info',
+                                                         task=args.task,
+                                                         dir='pdsinfoshelf'),
+                                pdsf.log_path_for_volset(id='info',
+                                                         task=args.task,
+                                                         dir='pdsinfoshelf',
+                                                         place='parallel')])
 
-            LOGGER.info('Log file', logfile)
-            LOGGER.replace_root(pdsdir.root_)
+            # Create all the handlers for this level in the logger
+            local_handlers = []
+            LOGDIRS = []            # used by move_old_info()
+            for logfile in logfiles:
+                local_handlers.append(pdslogger.file_handler(logfile))
+                logdir = os.path.split(logfile)[0]
+                LOGDIRS.append(os.path.split(logfile)[0])
+
+                # These handlers are only used if they don't already exist
+                warning_handler = pdslogger.warning_handler(logdir)
+                error_handler = pdslogger.error_handler(logdir)
+                local_handlers += [warning_handler, error_handler]
+
+            # Open the next level of the log
+            if selection:
+                logger.open('Task "' + args.task + '" for selection ' +
+                            selection, path, handler=local_handlers)
+            else:
+                logger.open('Task "' + args.task + '" for', path,
+                            handler=local_handlers)
+
             try:
+                for logfile in logfiles:
+                    logger.info('Log file', logfile)
 
                 if args.task == 'initialize':
                     initialize(pdsdir, selection)
@@ -646,20 +682,20 @@ if __name__ == '__main__':
                     update(pdsdir, selection)
 
             except (Exception, KeyboardInterrupt), e:
-                LOGGER.exception(e)
+                logger.exception(e)
                 raise
 
             finally:
-                _ = LOGGER.close()
+                _ = logger.close()
 
     except (Exception, KeyboardInterrupt) as e:
-        LOGGER.exception(e)
+        logger.exception(e)
         print sys.exc_info()[2]
         status = 1
         raise
 
     finally:
-        (fatal, errors, warnings, tests) = LOGGER.close()
+        (fatal, errors, warnings, tests) = logger.close()
         if fatal or errors: status = 1
 
     sys.exit(status)
