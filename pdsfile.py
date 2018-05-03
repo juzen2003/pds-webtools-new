@@ -6,7 +6,12 @@ import shelve
 import math
 import time
 import random
-import pylibmc
+
+HAS_PYLIBMC = True
+try:
+    import pylibmc
+except ImportError:
+    HAS_PYLIBMC = False
 
 import pdscache
 import pdsviewable
@@ -177,6 +182,9 @@ def preload(holdings_list, port=0, clear=False):
             LOGGER.info('Caching PdsFile objects in local dictionary')
 
     else:
+        if not HAS_PYLIBMC:
+            assert False, 'Memcache requested but LIBPYMC not installed'
+
         MEMCACHE_PORT = MEMCACHE_PORT or port
         try:
             PATHS = pdscache.MemcachedCache(MEMCACHE_PORT,
@@ -298,6 +306,8 @@ def preload(holdings_list, port=0, clear=False):
                 continue
 
             holdings = os.path.abspath(holdings)
+            if os.sep == '\\':
+                holdings = holdings.replace('\\', '/')
             if LOGGER: LOGGER.info('Pre-loading ' + holdings)
 
             pds_holdings = PdsFile.from_abspath(holdings, caching='none')
@@ -479,7 +489,7 @@ class PdsFile(object):
         self.split_filled           = (self.basename, '', '')
         self.global_anchor_filled   = self.basename
         # self.childnames_filled      = None
-        self.info_filled            = [0, 0, 0, '', (0,0)]  # 
+        self.info_filled            = [0, 0, 0, '', (0,0)]  #
         self.date_filled            = ''
         self.formatted_size_filled  = ''
         self.is_viewable_filled     = False
@@ -1679,7 +1689,12 @@ class PdsFile(object):
         # Note that all file paths must use forward slashes, not backslashes
 
         parts = abspath.split('/')
-        if ':' not in parts[0] and parts[0] != '':
+        # Windows can have the first part be '<drive>:' and that's OK
+        drive_spec = ''
+        if os.sep == '\\' and parts[0][-1] == ':':
+            drive_spec = parts[0]
+            parts[0] = ''
+        if parts[0] != '':
             raise ValueError('Not an absolute path: ' + this.abspath)
 
         # Search for "holdings" or "shelves"
@@ -1695,7 +1710,7 @@ class PdsFile(object):
 
         # Fill in this.disk_, absolute path to "pdsdata*"
         this = PdsFile()
-        this.disk_ = '/'.join(parts[:holdings_index]) + '/'
+        this.disk_ = drive_spec + '/'.join(parts[:holdings_index]) + '/'
 
         # Fill in this.root_, absolute path to "holdings"
         # Get case right if possible
@@ -3519,6 +3534,8 @@ def repair_case(abspath):
 
     trailing_slash = abspath.endswith('/')  # must preserve a trailing slash!
     abspath = os.path.abspath(abspath)
+    if os.sep == '\\':
+        abspath = abspath.replace('\\', '/')
 
     # Fields are separated by slashes
     parts = abspath.split('/')
