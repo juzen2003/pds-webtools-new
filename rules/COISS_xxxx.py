@@ -30,8 +30,8 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'.*/thumbnail(/\w+)*',            re.I, ('Small browse images',           'BROWDIR' )),
     (r'.*/thumbnail/.*\.(gif|jpg|jpeg|jpeg_small|tif|tiff|png)', 
                                         re.I, ('Small browse image',            'BROWSE'  )),
-    (r'.*/tiff(/\w+)*',                 re.I, ('Full-size browse images',       'BROWDIR' )),
-    (r'.*/tiff/.*\.(gif|jpg|jpeg|jpeg_small|tif|tiff|png)', 
+    (r'.*/(tiff|full)(/\w+)*',          re.I, ('Full-size browse images',       'BROWDIR' )),
+    (r'.*/(tiff|full)/.*\.(tif|tiff|png)', 
                                         re.I, ('Full-size browse image',        'BROWSE'  )),
 ])
 

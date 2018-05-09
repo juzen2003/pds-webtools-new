@@ -169,6 +169,11 @@ class DictionaryCache(PdsCache):
 
         return self.get(key)
 
+    def get_now(self, key):
+        """Return the non-local value associated with a key."""
+
+        return self.get(key)
+
     ######## Set methods
 
     def set(self, key, value, lifetime=None, pause=False):
@@ -261,6 +266,22 @@ class DictionaryCache(PdsCache):
         self.dict.clear()
         self.keys = set()
 
+    def replicate_clear(self, clear_count):
+        """Clear the local cache if the MemCache if clear_count was incremented.
+        """
+
+        return False
+
+    def replicate_clear_if_necessary(self):
+        """Clear the local cache onlu if MemCache was cleared."""
+
+        return
+
+    def was_cleared(self):
+        """Returns True if the cache has been cleared."""
+
+        return False
+
 ################################################################################
 ################################################################################
 ################################################################################
@@ -327,6 +348,12 @@ class MemcachedCache(PdsCache):
         if len(self) == 0:
             self.mc.set('$OK_PID', 0, time=0)
 
+        # Get the current count of clear() events
+        self.clear_count = self.mc.get('$CLEAR_COUNT')
+        if self.clear_count is None:
+            self.clear_count = 0
+            self.mc.set('$CLEAR_COUNT', 0)
+
     MIN_POS_LONG = 2**63
     MAX_NEG_LONG = -1 - 2**63
 
@@ -355,7 +382,7 @@ class MemcachedCache(PdsCache):
         self.mc.set('$OK_PID', self.pid, time=300)
         if self.logger:
             self.logger.info('Process %d ' % self.pid +
-                             'blocked MemcachedCache [%s]' % self.port)
+                             'is blocking MemcachedCache [%s]' % self.port)
 
     def unblock(self, flush=True):
         """Remove block preventing processes from touching the cache."""
@@ -387,7 +414,11 @@ class MemcachedCache(PdsCache):
 
     def is_blocked(self):
         """Status of blocking."""
-        test_pid = self.mc.get('$OK_PID')
+
+        test_dict = self.mc.get_multi(['$OK_PID', '$CLEAR_COUNT'])
+        self.replicate_clear(test_dict['$CLEAR_COUNT'])
+
+        test_pid = test_dict['$OK_PID']
         if test_pid in (0, self.pid):
             return False
         else:
@@ -399,7 +430,7 @@ class MemcachedCache(PdsCache):
         self.pauses += 1
 
         if self.pauses == 1 and self.logger:
-            self.logger.debug('Process %d paused flushing of ' % self.pid +
+            self.logger.debug('Process %d has paused flushing on ' % self.pid +
                               'MemcachedCache [%s]' % self.port)
 
     @property
@@ -416,8 +447,8 @@ class MemcachedCache(PdsCache):
 
         if self.pauses == 0:
             if self.logger:
-                self.logger.debug('Process %d resumed flushing of ' % self.pid +
-                                  'MemcachedCache [%s]' % self.port)
+                self.logger.debug('Process %d has resumed ' % self.pid +
+                                  'flushing on MemcachedCache [%s]' % self.port)
             self._flush_if_necessary()
 
     def __contains__(self, key):
@@ -428,14 +459,14 @@ class MemcachedCache(PdsCache):
         block_was_logged = False
         while self.is_blocked():
             if not block_was_logged and self.logger:
-                self.logger.info('Process %d blocked at contains()' % self.pid +
-                                  ' for MemcachedCache [%s]' % self.port)
+                self.logger.info('Process %d is blocked at ' % self.pid +
+                                'contains() on MemcachedCache [%s]' % self.port)
                 block_was_logged = True
             time.sleep(0.5 * (1. + random.random()))  # A random short delay
 
         if block_was_logged and self.logger:
-            self.logger.info('Process %d unblocked at contains() ' % self.pid +
-                             'for MemcachedCache [%s]' % self.port)
+            self.logger.info('Process %d is unblocked at ' % self.pid +
+                             ' contains() on MemcachedCache [%s]' % self.port)
 
         return key in self.mc
 
@@ -468,16 +499,19 @@ class MemcachedCache(PdsCache):
             block_was_logged = False
             while self.is_blocked():
                 if not block_was_logged and self.logger:
-                    self.logger.info('Process %d blocked at ' % self.pid +
+                    self.logger.info('Process %d is blocked at ' % self.pid +
                                      'flush() on MemcacheCache [%s]' %
                                      self.port)
                     block_was_logged = True
                 time.sleep(0.5 * (1. + random.random()))  # A random short delay
 
             if block_was_logged and self.logger:
-                self.logger.info('Process %d unblocked at ' % self.pid +
+                self.logger.info('Process %d is unblocked at ' % self.pid +
                                  'flush() on MemcacheCache [%s]' % self.port)
           else:
+            return
+
+        if self.replicate_clear_if_necessary():
             return
 
         # Cache items grouped by lifetime
@@ -518,7 +552,7 @@ class MemcachedCache(PdsCache):
                 noun = 'item'
             else:
                 noun = 'items'
-            self.logger.debug(('Proces %d flushed ' % self.pid +
+            self.logger.debug(('Process %d has flushed ' % self.pid +
                                '%d %s to ' % (count, noun) +
                                'MemcachedCache [%s]; ' % self.port +
                                'current size is %d' % self.len_mc()))
@@ -528,7 +562,7 @@ class MemcachedCache(PdsCache):
                     noun = 'item'
                 else:
                     noun = 'items'
-                self.logger.warn('Process %d unable to flush ' % self.pid +
+                self.logger.warn('Process %d is unable to flush ' % self.pid +
                                  '%d %s to ' % (count, noun) +
                                  'MemcachedCache [%s]' % self.port)
 
@@ -555,20 +589,23 @@ class MemcachedCache(PdsCache):
             return self.local_value_by_key[key]
 
         # Otherwise, go to memcache but wait for block
-        key_and_ok = ['$OK_PID', key]
+        key_and_ok = ['$OK_PID', '$CLEAR_COUNT', key]
         mydict = self.mc.get_multi(key_and_ok)
+
+        self.replicate_clear(mydict['$CLEAR_COUNT'])
+
         block_was_logged = False
         while '$OK_PID' not in mydict or mydict['$OK_PID'] not in (0, self.pid):
             if not block_was_logged and self.logger:
-                self.logger.info('Process %d blocked at get() ' % self.pid +
-                                 'from MemcacheCache [%s]' % self.port)
+                self.logger.info('Process %d is blocked at get() ' % self.pid +
+                                 'on MemcacheCache [%s]' % self.port)
                 block_was_logged = True
             time.sleep(0.5 * (1. + random.random()))  # A random short delay
             mydict = self.mc.get_multi(key_and_ok)
 
         if block_was_logged and self.logger:
-            self.logger.info('Process %d unblocked at get() ' % self.pid +
-                             'from MemcacheCache [%s]' % self.port)
+            self.logger.info('Process %d is unblocked at get() ' % self.pid +
+                             'on MemcacheCache [%s]' % self.port)
 
         # Return value from memcache if found
         if key in mydict:
@@ -597,23 +634,26 @@ class MemcachedCache(PdsCache):
 
         # Retrieve non-local keys if any
         if nonlocal_keys:
-            keys_and_ok = ['$OK_PID'] + nonlocal_keys
+            keys_and_ok = ['$OK_PID', '$CLEAR_COUNT'] + nonlocal_keys
             block_was_logged = False
             mydict = self.mc.get_multi(keys_and_ok)
+
+            self.replicate_clear(mydict['$CLEAR_COUNT'])
+
             while ('$OK_PID' not in mydict or
                    mydict['$OK_PID'] not in (0, self.pid)):
 
                 if not block_was_logged and self.logger:
-                    self.logger.info('Process %d blocked at ' % self.pid +
-                                     'get_multi() from ' +
+                    self.logger.info('Process %d is blocked at ' % self.pid +
+                                     'get_multi() on ' +
                                      'MemcacheCache [%s]' % self.port)
                     block_was_logged = True
                 time.sleep(0.5 * (1. + random.random()))  # A random short delay
                 mydict = self.mc.get_multi(keys_and_ok)
 
             if block_was_logged and self.logger:
-                self.logger.info('Process %d unblocked at ' % self.pid +
-                                 'get_multi() from ' +
+                self.logger.info('Process %d is unblocked at ' % self.pid +
+                                 'get_multi() on ' +
                                  'MemcacheCache [%s]' % self.port)
 
             for (key,tuple) in mydict.iteritems():
@@ -635,6 +675,11 @@ class MemcachedCache(PdsCache):
             return self.local_value_by_key[key]
 
         return None
+
+    def get_now(self, key):
+        """Return the non-local value associated with a key, even if blocked."""
+
+        return self.mc.get(key)
 
     ######## Set methods
 
@@ -733,14 +778,14 @@ class MemcachedCache(PdsCache):
         block_was_logged = False
         while self.is_blocked():
             if not block_was_logged and self.logger:
-                self.logger.info('Process %d blocked at delete() ' % self.pid +
-                                 'from MemcacheCache [%s]' % self.port)
+                self.logger.info('Process %d is blocked at ' % self.pid +
+                                 'delete() on MemcacheCache [%s]' % self.port)
                 block_was_logged = True
             time.sleep(0.5 * (1. + random.random()))  # A random short delay
 
         if block_was_logged and self.logger:
-            self.logger.info('Process %d unblocked at delete() ' % self.pid +
-                             'from MemcacheCache [%s]' % self.port)
+            self.logger.info('Process %d is unblocked at ' % self.pid +
+                             'delete() on MemcacheCache [%s]' % self.port)
 
         status1 = self.mc.delete(key)
         status2 = self._delete_local(key)
@@ -763,15 +808,15 @@ class MemcachedCache(PdsCache):
         block_was_logged = False
         while self.is_blocked():
             if not block_was_logged and self.logger:
-                self.logger.info('Process %d blocked at ' % self.pid +
-                                 'delete_multi() from ' +
+                self.logger.info('Process %d is blocked at ' % self.pid +
+                                 'delete_multi() on ' +
                                  'MemcacheCache [%s]' % self.port)
                 block_was_logged = True
             time.sleep(0.5 * (1. + random.random()))  # A random short delay
 
         if block_was_logged and self.logger:
-            self.logger.info('Process %d unblocked at ' % self.pid +
-                             'delete_multi() from ' +
+            self.logger.info('Process %d is unblocked at ' % self.pid +
+                             'delete_multi() on ' +
                              'MemcacheCache [%s]' % self.port)
 
         # Delete whatever we can from the nonlocal cache
@@ -806,38 +851,76 @@ class MemcachedCache(PdsCache):
         return False
 
     def clear(self, block=False):
-        """Clear all concents of the cache."""
+        """Clear all contents of the cache."""
 
         block_was_logged = False
         while self.is_blocked():
             if not block_was_logged and self.logger:
-                self.logger.info('Process %d blocked at clear() ' % self.pid +
-                                 'of MemcacheCache [%s]' % self.port)
+                self.logger.info('Process %d is blocked at ' % self.pid +
+                                 'clear() on MemcacheCache [%s]' % self.port)
                 block_was_logged = True
             time.sleep(0.5 * (1. + random.random()))  # A random short delay
 
         if block_was_logged and self.logger:
-            self.logger.info('Process %d unblocked at clear() ' % self.pid +
-                             'of MemcacheCache [%s]' % self.port)
+            self.logger.info('Process %d is unblocked at clear() ' % self.pid +
+                             'on MemcacheCache [%s]' % self.port)
 
-        self.mc.delete('$OK_PID')
+        # Clear the cache except for critical info
+        self.block()
+        clear_count = self.mc.get('$CLEAR_COUNT') + 1
         self.mc.flush_all()
+        self.mc.set_multi({'$OK_PID': self.pid,
+                           '$CLEAR_COUNT': clear_count}, time=0)
 
         self.local_value_by_key.clear()
         self.local_keys_by_time.clear()
         self.local_time_by_key.clear()
+        self.clear_count = clear_count
+
+        if self.logger:
+          self.logger.info('Process %d ' % self.pid +
+                           'has set clear count to %d ' % self.clear_count +
+                           'on MemcacheCache [%s]' % self.port)
 
         if block:
-            self.mc.set('$OK_PID', self.pid, time=0)
             if self.logger:
-              self.logger.info('Process %d completed clear() of ' % self.pid +
-                               'MemcacheCache [%s] ' % self.port +
+              self.logger.info('Process %d has completed clear() ' % self.pid +
+                               'of MemcacheCache [%s] ' % self.port +
                                'but continues to block')
 
         else:
             self.mc.set('$OK_PID', 0, time=0)
 
             if self.logger:
-              self.logger.info('Process %d completed clear() of ' % self.pid +
-                               'MemcacheCache [%s]')
+              self.logger.info('Process %d has completed clear of ' % self.pid +
+                               'MemcacheCache [%s]' % self.port)
 
+    def replicate_clear(self, clear_count):
+        """Clear the local cache if the MemCache if clear_count was incremented.
+
+        Return True if cache was cleared; False otherwise.
+        """
+
+        if clear_count == self.clear_count: return False
+
+        self.local_value_by_key.clear()
+        self.local_keys_by_time.clear()
+        self.local_time_by_key.clear()
+        self.clear_count = clear_count
+
+        if self.logger:
+          self.logger.info('Process %d ' % self.pid +
+                           'replicated clear of MemcacheCache [%s]' % self.port)
+        return True
+
+    def replicate_clear_if_necessary(self):
+        """Clear the local cache onlu if MemCache was cleared."""
+
+        clear_count = self.mc.get('$CLEAR_COUNT')
+        self.replicate_clear(clear_count)
+
+    def was_cleared(self):
+        """Returns True if the cache has been cleared."""
+
+        clear_count = self.mc.get('$CLEAR_COUNT')
+        return clear_count > self.clear_count
