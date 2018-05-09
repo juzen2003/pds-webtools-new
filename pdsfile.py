@@ -1,23 +1,17 @@
 import datetime
 import glob
 import math
-<<<<<<< HEAD
 import os
-import pylibmc
 import random
 import re
 import shelve
 import time
-=======
-import time
-import random
 
-HAS_PYLIBMC = True
 try:
     import pylibmc
+    HAS_PYLIBMC = True
 except ImportError:
     HAS_PYLIBMC = False
->>>>>>> 243c53e6e58222f792efbd79912e03efc646bd15
 
 import pdsfile_rules        # Default rules
 import rules                # Rules unique to each volume set
@@ -208,7 +202,7 @@ def preload(holdings_list, port=0, clear=False):
     blocking_already = False
 
     # Use cache as requested
-    if (port == 0 and MEMCACHE_PORT == 0) or not pdscache.MEMCACHED_LOADED:
+    if (port == 0 and MEMCACHE_PORT == 0) or not HAS_PYLIBMC:
         default_paths = CACHE
         CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                          limit=100000, logger=LOGGER)
@@ -217,9 +211,6 @@ def preload(holdings_list, port=0, clear=False):
             LOGGER.info('Caching PdsFile objects in local dictionary')
 
     else:
-        if not HAS_PYLIBMC:
-            assert False, 'Memcache requested but LIBPYMC not installed'
-
         MEMCACHE_PORT = MEMCACHE_PORT or port
         try:
             CACHE = pdscache.MemcachedCache(MEMCACHE_PORT,
@@ -353,7 +344,8 @@ def preload(holdings_list, port=0, clear=False):
 
             holdings = os.path.abspath(holdings)
             if os.sep == '\\':
-                holdings = holdings.replace('\\', '/')
+                abspath = abspath.replace('\\', '/')
+
             if LOGGER: LOGGER.info('Pre-loading ' + holdings)
 
             # Load volume info
@@ -545,7 +537,6 @@ class PdsFile(object):
         contain children from multiple physical directories. Examples are
         volumes/, archives-volumes/, etc."""
 
-<<<<<<< HEAD
         this = PdsFile()
 
         this.basename     = basename
@@ -605,43 +596,6 @@ class PdsFile(object):
         this.associated_parallels_filled    = None
 
         return this
-=======
-        self.abspath      = None
-        self.disk_        = None
-        self.root_        = None
-        self.html_root_   = None
-
-        self.permanent    = True
-        self.is_virtual   = True
-
-        self.exists_filled          = True
-        self.islabel_filled         = False
-        self.isdir_filled           = True
-        self.split_filled           = (self.basename, '', '')
-        self.global_anchor_filled   = self.basename
-        # self.childnames_filled      = None
-        self.info_filled            = [0, 0, 0, '', (0,0)]  #
-        self.date_filled            = ''
-        self.formatted_size_filled  = ''
-        self.is_viewable_filled     = False
-        self.info_basename_filled   = ''
-        self.label_basename_filled  = ''
-        self.viewset_filled         = False
-        self.local_viewset_filled   = False
-        self.iconset_filled         = None
-        self.internal_links_filled  = []
-        self.mime_type_filled       = ''
-        self.view_options_filled    = (False, False, False)
-        self.volume_info_filled     = None
-        self.description_and_icon_filled    = None
-        self.volume_publication_date_filled = ''
-        self.volume_version_id_filled       = ''
-        self.volume_data_set_ids_filled     = ''
-        self.version_ranks_filled           = []
-        self.exact_archive_url_filled       = ''
-        self.exact_checksum_url_filled      = ''
-        # self.associated_parallels_filled    = None
->>>>>>> 243c53e6e58222f792efbd79912e03efc646bd15
 
     def new_pdsfile(self, key=None, copypath=False):
         """Empty PdsFile of the same subclass or a specified subclass."""
@@ -1802,10 +1756,7 @@ class PdsFile(object):
         # Note that all file paths must use forward slashes, not backslashes
 
         parts = abspath.split('/')
-<<<<<<< HEAD
-        if ':' not in parts[0] and parts[0] != '':
-            raise ValueError('Not an absolute path: ' + abspath)
-=======
+
         # Windows can have the first part be '<drive>:' and that's OK
         drive_spec = ''
         if os.sep == '\\' and parts[0][-1] == ':':
@@ -1813,7 +1764,6 @@ class PdsFile(object):
             parts[0] = ''
         if parts[0] != '':
             raise ValueError('Not an absolute path: ' + this.abspath)
->>>>>>> 243c53e6e58222f792efbd79912e03efc646bd15
 
         # Search for "holdings" or "shelves"
         parts_lc = [p.lower() for p in parts]
