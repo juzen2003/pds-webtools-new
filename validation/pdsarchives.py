@@ -422,10 +422,10 @@ if __name__ == '__main__':
             # Save logs in up to two places
             logfiles = set([pdsdir.log_path_for_volume(id='links',
                                                        task=args.task,
-                                                       dir='pdslinkshelf'),
+                                                       dir='pdsarchives'),
                             pdsdir.log_path_for_volume(id='links',
                                                        task=args.task,
-                                                       dir='pdslinkshelf',
+                                                       dir='pdsarchives',
                                                        place='parallel')])
 
             # Create all the handlers for this level in the logger

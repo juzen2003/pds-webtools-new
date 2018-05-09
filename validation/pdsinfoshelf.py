@@ -657,7 +657,7 @@ if __name__ == '__main__':
             # Open the next level of the log
             if selection:
                 logger.open('Task "' + args.task + '" for selection ' +
-                            selection, path, handler=local_handlers)
+                            selection, pdsdir.abspath, handler=local_handlers)
             else:
                 logger.open('Task "' + args.task + '" for', path,
                             handler=local_handlers)
