@@ -252,10 +252,10 @@ def preload(holdings_list, port=0, clear=False):
             try:
                 (description, icon_type, version, pubdate,
                               dsids) = CACHE['$VOLINFO-' + key.lower()]
-                pdsdir.description_and_icon_filled = (description, icon_type)
-                pdsdir.volume_version_id_filled = version
-                pdsdir.volume_publication_date_filled = pubdate
-                pdsdir.volume_data_set_ids_filled = dsids
+                pdsdir._description_and_icon_filled = (description, icon_type)
+                pdsdir._volume_version_id_filled = version
+                pdsdir._volume_publication_date_filled = pubdate
+                pdsdir._volume_data_set_ids_filled = dsids
 
             except KeyError:
                 if LOGGER:
@@ -271,7 +271,7 @@ def preload(holdings_list, port=0, clear=False):
                 _preload_dir(child, root_)
 
             except ValueError:                      # Skip out-of-place files
-                pdsdir.childnames_filled.remove(basename)
+                pdsdir._childnames_filled.remove(basename)
 
     ####################################
     # Begin active code
@@ -455,7 +455,7 @@ class PdsFile(object):
     # Translator from volume set ID to key in global registry
     VOLSET_TRANSLATOR = translator.TranslatorByRegex([('.*', 0, 'default')])
 
-    # Default translators, can be overridden
+    # Default translators, can be overridden by volset-specific subclasses
     DESCRIPTION_AND_ICON = pdsfile_rules.DESCRIPTION_AND_ICON
     VOLUMES_TO_ASSOCIATIONS = pdsfile_rules.VOLUMES_TO_ASSOCIATIONS
     ASSOCIATIONS_TO_VOLUMES = pdsfile_rules.ASSOCIATIONS_TO_VOLUMES
@@ -501,35 +501,35 @@ class PdsFile(object):
         self.permanent    = False
         self.is_virtual   = False
 
-        self.exists_filled          = None
-        self.islabel_filled         = None
-        self.isdir_filled           = None
-        self.split_filled           = None
-        self.global_anchor_filled   = None
-        self.childnames_filled      = None
-        self.info_filled            = None  # bytes, child_count, modtime,
+        self._exists_filled         = None
+        self._islabel_filled        = None
+        self._isdir_filled          = None
+        self._split_filled          = None
+        self._global_anchor_filled  = None
+        self._childnames_filled     = None
+        self._info_filled           = None  # bytes, child_count, modtime,
                                             # checksum, size)
-        self.date_filled            = None
-        self.formatted_size_filled  = None
-        self.is_viewable_filled     = None
-        self.info_basename_filled   = None
-        self.label_basename_filled  = None
-        self.viewset_filled         = None
-        self.local_viewset_filled   = None
-        self.iconset_filled         = None
-        self.internal_links_filled  = None
-        self.mime_type_filled       = None
-        self.view_options_filled    = None  # (grid, multipage, continuous)
-        self.volume_info_filled     = None  # (desc, icon type, version ID,
+        self._date_filled           = None
+        self._formatted_size_filled = None
+        self._is_viewable_filled    = None
+        self._info_basename_filled  = None
+        self._label_basename_filled = None
+        self._viewset_filled        = None
+        self._local_viewset_filled  = None
+        self._iconset_filled        = None
+        self._internal_links_filled = None
+        self._mime_type_filled      = None
+        self._view_options_filled   = None  # (grid, multipage, continuous)
+        self._volume_info_filled    = None  # (desc, icon type, version ID,
                                             #  pub date, list of dataset IDs)
-        self.description_and_icon_filled    = None
-        self.volume_publication_date_filled = None
-        self.volume_version_id_filled       = None
-        self.volume_data_set_ids_filled     = None
-        self.version_ranks_filled           = None
-        self.exact_archive_url_filled       = None
-        self.exact_checksum_url_filled      = None
-        self.associated_parallels_filled    = None
+        self._description_and_icon_filled    = None
+        self._volume_publication_date_filled = None
+        self._volume_version_id_filled       = None
+        self._volume_data_set_ids_filled     = None
+        self._version_ranks_filled           = None
+        self._exact_archive_url_filled       = None
+        self._exact_checksum_url_filled      = None
+        self._associated_parallels_filled    = None
 
     @staticmethod
     def new_virtual(basename):
@@ -567,33 +567,33 @@ class PdsFile(object):
         this.permanent    = True
         this.is_virtual   = True
 
-        this.exists_filled          = True
-        this.islabel_filled         = False
-        this.isdir_filled           = True
-        this.split_filled           = (basename, '', '')
-        this.global_anchor_filled   = basename
-        this.childnames_filled      = []
-        this.info_filled            = [0, 0, 0, '', (0,0)]  # 
-        this.date_filled            = ''
-        this.formatted_size_filled  = ''
-        this.is_viewable_filled     = False
-        this.info_basename_filled   = ''
-        this.label_basename_filled  = ''
-        this.viewset_filled         = False
-        this.local_viewset_filled   = False
-        this.iconset_filled         = None
-        this.internal_links_filled  = []
-        this.mime_type_filled       = ''
-        this.view_options_filled    = (False, False, False)
-        this.volume_info_filled     = None
-        this.description_and_icon_filled    = None
-        this.volume_publication_date_filled = ''
-        this.volume_version_id_filled       = ''
-        this.volume_data_set_ids_filled     = ''
-        this.version_ranks_filled           = []
-        this.exact_archive_url_filled       = ''
-        this.exact_checksum_url_filled      = ''
-        this.associated_parallels_filled    = None
+        this._exists_filled         = True
+        this._islabel_filled        = False
+        this._isdir_filled          = True
+        this._split_filled          = (basename, '', '')
+        this._global_anchor_filled  = basename
+        this._childnames_filled     = []
+        this._info_filled           = [0, 0, 0, '', (0,0)]  # 
+        this._date_filled           = ''
+        this._formatted_size_filled = ''
+        this._is_viewable_filled    = False
+        this._info_basename_filled  = ''
+        this._label_basename_filled = ''
+        this._viewset_filled        = False
+        this._local_viewset_filled  = False
+        this._iconset_filled        = None
+        this._internal_links_filled = []
+        this._mime_type_filled      = ''
+        this._view_options_filled   = (False, False, False)
+        this._volume_info_filled    = None
+        this._description_and_icon_filled    = None
+        this._volume_publication_date_filled = ''
+        this._volume_version_id_filled       = ''
+        this._volume_data_set_ids_filled     = ''
+        this._version_ranks_filled           = []
+        this._exact_archive_url_filled       = ''
+        this._exact_checksum_url_filled      = ''
+        this._associated_parallels_filled    = None
 
         return this
 
@@ -652,103 +652,129 @@ class PdsFile(object):
 
     @property
     def exists(self):
-        if self.exists_filled is not None:
-            return self.exists_filled
+        """True if the file exists."""
+
+        if self._exists_filled is not None:
+            return self._exists_filled
 
         if self.is_virtual:
-            self.exists_filled = True
+            self._exists_filled = True
         elif self.abspath is None:
-            self.exists_filled = False
+            self._exists_filled = False
         else:
-            self.exists_filled = os.path.exists(self.abspath)
+            self._exists_filled = os.path.exists(self.abspath)
 
-        self.recache()
-        return self.exists_filled
+        self._recache()
+        return self._exists_filled
 
     @property
     def isdir(self):
-        if self.isdir_filled is not None:
-            return self.isdir_filled
+        """True if the file is a directory."""
+
+        if self._isdir_filled is not None:
+            return self._isdir_filled
 
         if self.is_virtual:
-            self.isdir_filled = True
+            self._isdir_filled = True
         elif self.abspath is None:
-            self.isdir_filled = False
+            self._isdir_filled = False
         else:
-            self.isdir_filled = os.path.isdir(self.abspath)
+            self._isdir_filled = os.path.isdir(self.abspath)
 
-        self.recache()
-        return self.isdir_filled
+        self._recache()
+        return self._isdir_filled
 
     @property
+        """True if the file is a PDS3 label."""
+
     def islabel(self):
-        if self.islabel_filled is not None:
-            return self.islabel_filled
+        if self._islabel_filled is not None:
+            return self._islabel_filled
 
-        self.islabel_filled = self.basename_is_label(self.basename)
+        self._islabel_filled = self.basename_is_label(self.basename)
 
-        self.recache()
-        return self.islabel_filled
+        self._recache()
+        return self._islabel_filled
 
     @property
     def is_viewable(self):
-        if self.is_viewable_filled is not None:
-            return self.is_viewable_filled
+        """True if the file is viewable. Examples of viewable files are JPEGs,
+        TIFFs, PNGs, etc."""
 
-        self.is_viewable_filled = self.basename_is_viewable(self.basename)
+        if self._is_viewable_filled is not None:
+            return self._is_viewable_filled
 
-        self.recache()
-        return self.is_viewable_filled
+        self._is_viewable_filled = self.basename_is_viewable(self.basename)
+
+        self._recache()
+        return self._is_viewable_filled
 
     @property
     def html_path(self):
+        """A complete URL to this file; alias for "url"."""
+
+        return self.html_root_ + self.logical_path
+
+    @property
+    def url(self):
+        """A complete URL to this file, alias for "html_path"."""
         return self.html_root_ + self.logical_path
 
     @property
     def split(self):
-        """(anchor, suffix, extension)"""
+        """Returns (anchor, suffix, extension)"""
 
-        if self.split_filled is not None:
-            return self.split_filled
+        if self._split_filled is not None:
+            return self._split_filled
 
-        self.split_filled = self.split_basename()
+        self._split_filled = self.split_basename()
 
-        self.recache()
-        return self.split_filled
+        self._recache()
+        return self._split_filled
 
     @property
     def anchor(self):
+        """The anchor for this object. Objects with the same anchor are grouped
+        together in the same row of a Viewmaster table."""
+
         return self.split[0]
 
     @property
     def global_anchor(self):
-        if self.global_anchor_filled is not None:
-            return self.global_anchor_filled
+        """The global anchor is a unique string across all data products and
+        is suitable for use in HTML pages."""
+
+        if self._global_anchor_filled is not None:
+            return self._global_anchor_filled
 
         path = self.parent_logical_path + '/' + self.anchor
-        self.global_anchor_filled = path.replace('/', '-')
+        self._global_anchor_filled = path.replace('/', '-')
 
-        self.recache()
-        return self.global_anchor_filled
+        self._recache()
+        return self._global_anchor_filled
 
     @property
     def extension(self):
+        """The extension of this file, after the first dot."""
+
         return self.split[2]
 
     @property
     def childnames(self):
-        if self.childnames_filled is not None:
-            return self.childnames_filled
+        """A list of all the child names if this is a directory."""
 
-        self.childnames_filled = []
+        if self._childnames_filled is not None:
+            return self._childnames_filled
+
+        self._childnames_filled = []
         if self.isdir and self.abspath:
             basenames = os.listdir(self.abspath)
             basenames = [n for n in basenames if (n != '.DS_Store' and
                                                   not n.startswith('._'))]
-            self.childnames_filled = basenames
+            self._childnames_filled = basenames
 
-        self.recache()
-        return self.childnames_filled
+        self._recache()
+        return self._childnames_filled
 
     @property
     def parent_logical_path(self):
@@ -763,15 +789,17 @@ class PdsFile(object):
             return parent.logical_path
 
     @property
-    def info(self):
-        if self.info_filled is not None:
-            return self.info_filled
+    def _info(self):
+        """Internal method to retrieve info from the info shelf file."""
+
+        if self._info_filled is not None:
+            return self._info_filled
 
         if not self.exists or self.checksums_:
-            self.info_filled = (0, 0, None, '', (0,0))
+            self._info_filled = (0, 0, None, '', (0,0))
 
         elif self.volset and not self.volname:
-            self.info_filled = (0, 0, '', '', (0,0))
+            self._info_filled = (0, 0, '', '', (0,0))
 
         else:
             try:
@@ -787,10 +815,10 @@ class PdsFile(object):
                 ms = int(timestring[20:])
 
                 modtime = datetime.datetime(yr, mo, da, hr, mi, sc, ms)
-                self.info_filled = (bytes, child_count, modtime, checksum, size)
+                self._info_filled = (bytes, child_count, modtime, checksum, size)
 
             except (IOError, KeyError, ValueError) as e:
-                self.info_filled = (0, 0, None, '', (0,0))
+                self._info_filled = (0, 0, None, '', (0,0))
 
                 if not self.archives_ and not self.volname:
                     child_count = len(self.childnames)
@@ -822,73 +850,88 @@ class PdsFile(object):
                     if latest_modtime == datetime.datetime.min:
                         latest_modtime = None
 
-                    self.info_filled = (total_bytes, child_count,
+                    self._info_filled = (total_bytes, child_count,
                                         latest_modtime, '', (0,0))
 
         if self.modtime:
-            self.date_filled = self.modtime.strftime('%Y-%m-%d %H:%M:%S')
+            self._date_filled = self.modtime.strftime('%Y-%m-%d %H:%M:%S')
         else:
-            self.date_filled = ''
+            self._date_filled = ''
 
         if self.size_bytes:
-            self.formatted_size_filled = formatted_file_size(self.size_bytes)
+            self._formatted_size_filled = formatted_file_size(self.size_bytes)
         else:
-            self.formatted_size_filled = ''
+            self._formatted_size_filled = ''
 
-        self.recache()
-        return self.info_filled
+        self._recache()
+        return self._info_filled
 
     @property
     def size_bytes(self):
-        return self.info[0]
+        """Size in bytes represented as an int."""
+
+        return self._info[0]
 
     @property
     def modtime(self):
-        return self.info[2]
+        """Datetime object representing this file's modification date."""
+
+        return self._info[2]
 
     @property
     def checksum(self):
-        return self.info[3]
+        """MD5 checksum of this file."""
 
-    @property
-    def url(self):
-        return self.html_root_ + self.logical_path
+        return self._info[3]
 
     @property
     def width(self):
-        return self.info[4][0]
+        """Width of this image in pixels if it is viewable."""
+
+        return self._info[4][0]
 
     @property
     def height(self):
-        return self.info[4][1]
+         """Height of this image in pixels if it is viewable."""
+
+       return self._info[4][1]
 
     @property
     def alt(self):
+        """Alt tag to use if this is a viewable object."""
+
         return self.basename
 
     @property
     def date(self):
-        if self.date_filled is not None:
-            return self.date_filled
+        """Modification date/time of this file as a well-formatted string;
+        otherwise blank."""
 
-        _ = self.info
+        if self._date_filled is not None:
+            return self._date_filled
 
-        self.recache()
-        return self.date_filled
+        _ = self._info
+
+        self._recache()
+        return self._date_filled
 
     @property
     def formatted_size(self):
-        if self.info is not None:
-            return self.formatted_size_filled
+        """Size of this file as a formatted string, e.g., "2.16 MB"."""
 
-        _ = self.info
+        if self._info is not None:
+            return self._formatted_size_filled
 
-        self.recache()
-        return self.formatted_size_filled
+        _ = self._info
+
+        self._recache()
+        return self._formatted_size_filled
 
     @property
-    def volume_info(self):
-        if self.volume_info_filled is None:
+    def _volume_info(self):
+        """Internal method to retrieve information about this volume."""
+
+        if self._volume_info_filled is None:
 
             base_key = self.volset + self.suffix
             if self.volname:
@@ -897,22 +940,25 @@ class PdsFile(object):
             keys = (self.category_ + base_key, base_key)
             for key in keys:
                 try:
-                    self.volume_info_filled = CACHE['$VOLINFO-' + key.lower()]
+                    self._volume_info_filled = CACHE['$VOLINFO-' + key.lower()]
                 except KeyError:
                     pass
 
-            if self.volume_info_filled is None:
-                self.volume_info_filled = ('', 'UNKNOWN', '', '', [])
+            if self._volume_info_filled is None:
+                self._volume_info_filled = ('', 'UNKNOWN', '', '', [])
 
-        return self.volume_info_filled
+        self._recache()
+        return self._volume_info_filled
 
     @property
     def description(self):
-        if self.description_and_icon_filled is not None:
-            return self.description_and_icon_filled[0]
+        """Description text about this file as it appears in Viewmaster."""
+
+        if self._description_and_icon_filled is not None:
+            return self._description_and_icon_filled[0]
 
         if self.is_volume() or self.is_volset():
-            pair = self.volume_info[:2]
+            pair = self._volume_info[:2]
 
             # Add annotation based on volume type
             if self.category_ == 'calibrated/':
@@ -937,64 +983,70 @@ class PdsFile(object):
             new_desc = pair[0] # + suffix
             pair = [new_desc, new_icon_type]
 
-        self.description_and_icon_filled = pair
+        self._description_and_icon_filled = pair
 
-        self.recache()
-        return self.description_and_icon_filled[0]
+        self._recache()
+        return self._description_and_icon_filled[0]
 
     @property
     def icon_type(self):
+        """Icon type for this file."""
+
         _ = self.description
-        return self.description_and_icon_filled[1]
+        return self._description_and_icon_filled[1]
 
     @property
     def mime_type(self):
         """A best guess at the MIME type for this file. Blank for not
         displayable in a browser."""
 
-        if self.mime_type_filled is not None:
-            return self.mime_type_filled
+        if self._mime_type_filled is not None:
+            return self._mime_type_filled
 
         ext = self.extension[1:].lower()
 
         if self.isdir:
-            self.mime_type_filled = ''
+            self._mime_type_filled = ''
         elif ext in PLAIN_TEXT_EXTS:
-            self.mime_type_filled = 'text/plain'
+            self._mime_type_filled = 'text/plain'
         elif ext in MIME_TYPES_VS_EXT:
-            self.mime_type_filled = MIME_TYPES_VS_EXT[ext]
+            self._mime_type_filled = MIME_TYPES_VS_EXT[ext]
         else:
-            self.mime_type_filled = ''
+            self._mime_type_filled = ''
 
-        self.recache()
-        return self.mime_type_filled
+        self._recache()
+        return self._mime_type_filled
 
     @property
     def info_basename(self):
-        if self.info_basename_filled is not None:
-            return self.info_basename_filled
+        """Returns the basename of an informational file associated with this
+        PdsFile object. This could be a file like "VOLDESC.CAT", "CATINFO.TXT",
+        or the label file associated with a data product."""
 
-        self.info_basename_filled = \
+        if self._info_basename_filled is not None:
+            return self._info_basename_filled
+
+        self._info_basename_filled = \
             self.INFO_FILE_BASENAMES.first(self.childnames)
 
-        if self.info_basename_filled is None:
-            self.info_basename_filled = ''
+        if self._info_basename_filled is None:
+            self._info_basename_filled = ''
 
-        self.recache()
-        return self.info_basename_filled
+        self._recache()
+        return self._info_basename_filled
 
     @property
     def internal_link_info(self):
         """Returns a list of tuples [(recno, basename, abspath), ...], or else
         the abspath of the label for this file."""
 
-        if self.internal_links_filled is not None:
-            return self.internal_links_filled
+        if self._internal_links_filled is not None:
+            return self._internal_links_filled
 
         if self.isdir or self.checksums_ or self.archives_:
-            self.internal_links_filled = []
+            self._internal_links_filled = []
         elif self.voltype_ not in ('volumes/', 'calibrated/', 'metadata/'):
-            self.internal_links_filled = []
+            self._internal_links_filled = []
         else:
             volume_path_ = self.volume_abspath() + '/'
             try:
@@ -1002,21 +1054,21 @@ class PdsFile(object):
 
                 if type(values) == str:
                     if values:
-                        self.internal_links_filled = volume_path_ + values
+                        self._internal_links_filled = volume_path_ + values
                     else:
-                        self.internal_links_filled = []
+                        self._internal_links_filled = []
                 else:
                     new_list = []
                     for (recno, basename, internal_path) in values:
                         abspath = volume_path_ + internal_path
                         new_list.append((recno, basename, abspath))
-                    self.internal_links_filled = new_list
+                    self._internal_links_filled = new_list
 
             except IOError:
-                self.internal_links_filled = ()     # tuple instead of list
+                self._internal_links_filled = ()     # tuple instead of list
 
-        self.recache()
-        return self.internal_links_filled
+        self._recache()
+        return self._internal_links_filled
 
     @property
     def linked_abspaths(self):
@@ -1038,95 +1090,111 @@ class PdsFile(object):
 
     @property
     def label_basename(self):
-        if self.label_basename_filled is not None:
-            return self.label_basename_filled
+        """Basename of the label file associated with this data file."""
+
+        if self._label_basename_filled is not None:
+            return self._label_basename_filled
 
         _ = self.internal_link_info
 
-        if type(self.internal_links_filled) == str:
-            label_path = self.internal_links_filled
+        if type(self._internal_links_filled) == str:
+            label_path = self._internal_links_filled
             if label_path:
-                self.label_basename_filled = os.path.basename(label_path)
+                self._label_basename_filled = os.path.basename(label_path)
 
-        elif type(self.internal_links_filled) == list:
-            self.label_basename_filled = ''
+        elif type(self._internal_links_filled) == list:
+            self._label_basename_filled = ''
 
         # otherwise, tuple means not found
         elif self.is_label:
-            self.label_basename_filled = ''
+            self._label_basename_filled = ''
 
         else:
             ext = self.extension.lower()
             if ext in ('.lbl', '.txt', '.cat', 'tar.gz'):
-                self.label_basename_filled = ''
+                self._label_basename_filled = ''
             elif self.extension.islower():
-                self.label_basename_filled = self.basename[:-len(ext)] + '.lbl'
+                self._label_basename_filled = self.basename[:-len(ext)] + '.lbl'
             else:
-                self.label_basename_filled = self.basename[:-len(ext)] + '.LBL'
+                self._label_basename_filled = self.basename[:-len(ext)] + '.LBL'
 
-        self.recache()
-        return self.label_basename_filled
+        self._recache()
+        return self._label_basename_filled
 
     @property
     def viewset(self):
-        if self.viewset_filled is not None:
-            return self.viewset_filled
+        """PdsViewSet to use for this object."""
 
-        # Don't look for viewsets at volume root; saves time
+        if self._viewset_filled is not None:
+            return self._viewset_filled
+
+        # Don't look for PdsViewSets at volume root; saves time
         if (self.exists and self.volname_ and
             not self.archives_ and not self.checksums_ and
             self.interior and ('/' in self.interior)):
-                self.viewset_filled = self.viewset_lookup('default')
+                self._viewset_filled = self.viewset_lookup('default')
 
-        if self.viewset_filled is None:
-            self.viewset_filled = False
+        if self._viewset_filled is None:
+            self._viewset_filled = False
 
-        self.recache()
-        return self.viewset_filled
+        self._recache()
+        return self._viewset_filled
 
     @property
     def local_viewset(self):
-        if self.local_viewset_filled is not None:
-            return self.local_viewset_filled
+        """PdsViewSet for this object if it is itself viewable; otherwise False.
+        """
+
+        if self._local_viewset_filled is not None:
+            return self._local_viewset_filled
 
         if self.exists and self.basename_is_viewable():
-            self.local_viewset_filled = \
+            self._local_viewset_filled = \
                             pdsviewable.PdsViewSet.from_pdsfiles(self)
         else:
-            self.local_viewset_filled = False
+            self._local_viewset_filled = False
 
-        self.recache()
-        return self.local_viewset_filled
+        self._recache()
+        return self._local_viewset_filled
 
     @property
-    def iconset(self):
-        if self.iconset_filled is not None:
-            return self.iconset_filled[0]
+    def _iconset(self):
+        """Internal method to return the PdsViewSet for this object's icon
+        whether it is to be displayed in a closed or open state."""
 
-        self.iconset_filled = [pdsviewable.ICON_SET_BY_TYPE[self.icon_type,
-                                                            False],
-                               pdsviewable.ICON_SET_BY_TYPE[self.icon_type,
-                                                            True]]
+        if self._iconset_filled is not None:
+            return self._iconset_filled[0]
 
-        self.recache()
-        return self.iconset_filled[0]
+        self._iconset_filled = [pdsviewable.ICON_SET_BY_TYPE[self.icon_type,
+                                                             False],
+                                pdsviewable.ICON_SET_BY_TYPE[self.icon_type,
+                                                             True]]
+
+        self._recache()
+        return self._iconset_filled[0]
 
     @property
     def iconset_open(self):
-        _ = self.iconset
-        return self.iconset_filled[1]
+        """PdsViewSet for this object's icon if displayed in an open state."""
+
+        _ = self._iconset
+        return self._iconset_filled[1]
 
     @property
     def iconset_closed(self):
-        _ = self.iconset
-        return self.iconset_filled[0]
+        """PdsViewSet for this object's icon if displayed in a closed state."""
+
+        _ = self._iconset
+        return self._iconset_filled[0]
 
     @property
     def volume_publication_date(self):
-        if self.volume_publication_date_filled is not None:
-            return self.volume_publication_date_filled
+        """Publication date for this volume as a formatted string."""
 
-        date = self.volume_info[3]
+        if self._volume_publication_date_filled is not None:
+            return self._volume_publication_date_filled
+
+        date = self._volume_info[3]
         if date == '':
             try:
                 date = self.volume_pdsfile().date[:10]
@@ -1145,31 +1213,39 @@ class PdsFile(object):
             except ValueError:
                 pass
 
-        self.volume_publication_date_filled = date
+        self._volume_publication_date_filled = date
 
-        self.recache()
-        return self.volume_publication_date_filled
+        self._recache()
+        return self._volume_publication_date_filled
 
     @property
     def volume_version_id(self):
-        if self.volume_version_id_filled is None:
-            self.volume_version_id_filled = self.volume_info[2]
-            self.recache()
+        """Version ID of this volume."""
 
-        return self.volume_version_id_filled
+        if self._volume_version_id_filled is None:
+            self._volume_version_id_filled = self._volume_info[2]
+            self._recache()
+
+        return self._volume_version_id_filled
 
     @property
     def volume_data_set_ids(self):
-        if self.volume_data_set_ids_filled is None:
-            self.volume_data_set_ids_filled = self.volume_info[4]
-            self.recache()
+        """A list of the dataset IDs found in this volume."""
 
-        return self.volume_data_set_ids_filled
+        if self._volume_data_set_ids_filled is None:
+            self._volume_data_set_ids_filled = self._volume_info[4]
+            self._recache()
+
+        return self._volume_data_set_ids_filled
 
     @property
     def version_ranks(self):
-        if self.version_ranks_filled is not None:
-            return self.version_ranks_filled
+        """A list of the numeric version ranks associated with this file.
+
+        This is an integer that always sorts versions from oldest to newest."""
+
+        if self._version_ranks_filled is not None:
+            return self._version_ranks_filled
 
         if not self.exists:
             version_ranks_filled = []
@@ -1179,90 +1255,107 @@ class PdsFile(object):
                 ranks = CACHE['$RANKS-' + self.category_]
                 if self.volname:
                     key = self.volname.lower()
-                    self.version_ranks_filled = ranks[key]
+                    self._version_ranks_filled = ranks[key]
                 elif self.volset:
                     key = self.volset.lower()
-                    self.version_ranks_filled = ranks[key]
+                    self._version_ranks_filled = ranks[key]
                 else:
-                    self.version_ranks_filled = []
+                    self._version_ranks_filled = []
 
             except KeyError as e:
                 if LOGGER:
                     LOGGER.warn('Missing rank info', self.logical_path)
-                self.version_ranks_filled = []
+                self._version_ranks_filled = []
 
-        self.recache()
-        return self.version_ranks_filled
+        self._recache()
+        return self._version_ranks_filled
 
     @property
     def exact_archive_url(self):
-        if self.exact_archive_url_filled is not None:
-            return self.exact_archive_url_filled
+        """If an archive file contains the exact contents of this directory
+        tree, return the URL of that archive. Otherwise return blank."""
+
+        if self._exact_archive_url_filled is not None:
+            return self._exact_archive_url_filled
 
         if not self.exists:
-            self.exact_archive_url_filled = ''
+            self._exact_archive_url_filled = ''
 
         else:
             abspath = self.archive_path_if_exact()
             if abspath:
                 pdsf = PdsFile.from_abspath(abspath)
-                self.exact_archive_url_filled = pdsf.url
+                self._exact_archive_url_filled = pdsf.url
             else:
-                self.exact_archive_url_filled = ''
+                self._exact_archive_url_filled = ''
 
-        self.recache()
-        return self.exact_archive_url_filled
+        self._recache()
+        return self._exact_archive_url_filled
 
     @property
     def exact_checksum_url(self):
-        if self.exact_checksum_url_filled is not None:
-            return self.exact_checksum_url_filled
+        """If a checksum file contains the exact contents of this directory
+        tree, return the URL of that file. Otherwise return blank."""
+
+        if self._exact_checksum_url_filled is not None:
+            return self._exact_checksum_url_filled
 
         if not self.exists:
-            self.exact_checksum_url_filled = ''
+            self._exact_checksum_url_filled = ''
 
         else:
             abspath = self.checksum_path_if_exact()
             if abspath:
                 pdsf = PdsFile.from_abspath(abspath)
-                self.exact_checksum_url_filled = pdsf.url
+                self._exact_checksum_url_filled = pdsf.url
             else:
-                self.exact_checksum_url_filled = ''
+                self._exact_checksum_url_filled = ''
 
-        self.recache()
-        return self.exact_checksum_url_filled
+        self._recache()
+        return self._exact_checksum_url_filled
 
     @property
     def grid_view_allowed(self):
-        if self.view_options_filled is not None:
-            return self.view_options_filled[0]
+        """True if this directory can be viewed as a grid inside Viewmaster."""
+
+        if self._view_options_filled is not None:
+            return self._view_options_filled[0]
 
         if not self.exists:
-            self.view_options_filled = (False, False, False)
+            self._view_options_filled = (False, False, False)
 
         elif self.isdir:
-            self.view_options_filled = \
+            self._view_options_filled = \
                                 self.VIEW_OPTIONS.first(self.logical_path)
         else:
-            self.view_options_filled = (False, False, False)
+            self._view_options_filled = (False, False, False)
 
-        self.recache()
-        return self.view_options_filled[0]
+        self._recache()
+        return self._view_options_filled[0]
 
     @property
     def multipage_view_allowed(self):
+        """True if a multipage view starting from this directory is allowed
+        inside Viewmaster."""
+
         _ = self.grid_view_allowed
 
-        return self.view_options_filled[1]
+        return self._view_options_filled[1]
 
     @property
     def continuous_view_allowed(self):
+        """True if a continuous view of multiple directories starting from this
+        one is allowed inside Viewmaster."""
+
         _ = self.grid_view_allowed
 
-        return self.view_options_filled[2]
+        return self._view_options_filled[2]
 
     @property
     def has_neighbor_rule(self):
+        """True if a neighbor rule is available to go to the object just before
+        or just after this one."""
+
         if self.NEIGHBORS.first(self.parent().logical_path):
             return True
         else:
@@ -1272,6 +1365,8 @@ class PdsFile(object):
 
     @staticmethod
     def version_info(suffix):
+        """Procedure to associate a volset suffix with a version rank value."""
+
         version_id = ''
         if suffix == '':
             version_message = 'Current version'
@@ -1314,9 +1409,13 @@ class PdsFile(object):
         return (version_rank, version_message, version_id)
 
     def viewset_lookup(self, name='default'):
+        """Return the PdsViewSet associated with this file. If multiple
+        PdsViewSets are available, they can be selected by name; "default" is
+        assumed."""
+
         if not self.exists: return None
 
-        # If this is a directory, return the viewset of the first child
+        # If this is a directory, return the PdsViewSet of the first child
         if self.isdir:
             basenames = self.sort_childnames()
             basenames = [b for b in basenames
@@ -1335,8 +1434,8 @@ class PdsFile(object):
 
             return None
 
-        # If this is viewable, return the viewset of its viewable siblings with
-        # the same anchor
+        # If this is viewable, return the PdsViewSet of its viewable siblings
+        # with the same anchor
         if self.is_viewable:
             parent = self.parent()
             if parent:
@@ -1415,7 +1514,7 @@ class PdsFile(object):
                 pdsf = PdsFile.new_virtual(self.logical_path)
 
             merged = list(set(pdsf.childnames + self.childnames))
-            pdsf.childnames_filled = merged
+            pdsf._childnames_filled = merged
 
             CACHE.set(self.logical_path, pdsf, lifetime=0)
             return self
@@ -1472,9 +1571,13 @@ class PdsFile(object):
             CACHE.set('$RANKS-' + self.category_, rank_dict, lifetime=0)
             CACHE.set('$VOLS-'  + self.category_, vols_dict, lifetime=0)
 
-    def recache(self):
+    def _recache(self):
+        """Update the cache after this object has been modified, e.g., by having
+        a previously empty field filled in."""
+
         if self.abspath and (self.abspath in CACHE):
             CACHE.set(self.abspath, self)
+
         if self.logical_path in CACHE:
             CACHE.set(self.logical_path, self)
 
@@ -1621,7 +1724,7 @@ class PdsFile(object):
                          this.logical_path)
 
     def parent(self, exists=False, caching='default', lifetime=None):
-        """Constructor for the parent of this file."""
+        """Constructor for the parent PdsFile of this PdsFile."""
 
         if self.abspath is None:    # virtual pdsdir
             return None
@@ -1680,6 +1783,7 @@ class PdsFile(object):
 
     def from_relative_path(self, path, validate=False, exists=False,
                                        caching='default', lifetime=None):
+        """Constructor for a PdsFile given a path relative to this one."""
 
         path = path.rstrip('/')
         parts = path.split('/')
@@ -1697,7 +1801,7 @@ class PdsFile(object):
     @staticmethod
     def from_logical_path(path, validate=False, exists=exists,
                                 caching='default', lifetime=None):
-        """Constructor from a logical path."""
+        """Constructor for a PdsFile from a logical path."""
 
         if path is None: return None
 
@@ -2094,6 +2198,9 @@ class PdsFile(object):
         return (self.volset == '')
 
     def volume_abspath(self):
+        """Return the absolute path to the volume associated with this object.
+        """
+
         if not self.volname:
             return None
         elif self.volname_:
@@ -2104,6 +2211,9 @@ class PdsFile(object):
                             self.interior])
 
     def volset_abspath(self):
+        """Return the absolute path to the volset associated with this object.
+        """
+
         if not self.volset:
             return None
         elif self.volset_:
@@ -2117,6 +2227,10 @@ class PdsFile(object):
     ############################################################################
 
     def checksum_path_and_lskip(self):
+        """The absolute path to the checksum file associated with this PdsFile.
+        Also return the number of characters to skip over in that absolute
+        path to obtain the basename of the checksum file."""
+
         if self.checksums_:
             raise ValueError('No checksums of checksum files: ' +
                              self.logical_path)
@@ -2144,6 +2258,8 @@ class PdsFile(object):
         return (abspath, lskip)
 
     def checksum_path_if_exact(self):
+        """Absolute path to the checksum file with the exact same contents as
+        this directory; otherwise blank."""
 
         if self.checksums_: return ''
 
@@ -2182,6 +2298,10 @@ class PdsFile(object):
     ############################################################################
 
     def archive_path_and_lskip(self):
+        """The absolute path to the archive file associated with this PdsFile.
+        Also return the number of characters to skip over in that absolute
+        path to obtain the basename of the archive file."""
+
         if self.checksums_:
             raise ValueError('No archives for checksum files: ' +
                              self.logical_path)
@@ -2206,6 +2326,9 @@ class PdsFile(object):
         return (abspath, lskip)
 
     def archive_path_if_exact(self):
+        """Absolute path to the archive file with the exact same contents as
+        this directory; otherwise blank."""
+
         try:
             path = self.archive_path_and_lskip()[0]
         except ValueError:
@@ -2227,6 +2350,7 @@ class PdsFile(object):
         return (dirpath, parent)
 
     def archive_logpath(self, task):
+        """Absolute path to the log file associated with this archive file."""
 
         this = self.copy()
         this.checksums_ = ''
@@ -2249,6 +2373,9 @@ class PdsFile(object):
     SHELF_NULL_KEY_VALUES = {}
 
     def shelf_path_and_lskip(self, id='info', volname=''):
+        """The absolute path to the shelf file associated with this PdsFile.
+        Also return the number of characters to skip over in that absolute
+        path to obtain the basename of the shelf file."""
 
         if self.checksums_:
             raise ValueError('No shelf files for checksums: ' +
@@ -2291,7 +2418,9 @@ class PdsFile(object):
             return (abspath, self.interior)
 
     @staticmethod
-    def get_shelf(shelf_path):
+    def _get_shelf(shelf_path):
+        """Internal method to open a shelf file. A limited number of shelf files
+        are kept open at all times to reduce file IO."""
 
         # If the shelf is already open, update the access count and return it
         if shelf_path in PdsFile.SHELF_CACHE:
@@ -2330,12 +2459,14 @@ class PdsFile(object):
 
             shelf_paths = [p[1] for p in pairs]
             for shelf_path in shelf_paths[:-PdsFile.SHELF_CACHE_SIZE]:
-                PdsFile.close_shelf(shelf_path)
+                PdsFile._close_shelf(shelf_path)
 
         return shelf
 
     @staticmethod
-    def close_shelf(shelf_path):
+    def _close_shelf(shelf_path):
+        """Internal method to close a shelf file. A limited number of shelf
+        fiels are kept open at all times to reduce file IO."""
 
         # If the shelf is not already open, return
         if shelf_path not in PdsFile.SHELF_CACHE:
@@ -2353,11 +2484,16 @@ class PdsFile(object):
 
     @staticmethod
     def close_all_shelves():
+        """Close all shelf files."""
+
         for shelf_path in PdsFile.SHELF_CACHE.keys():   # use keys() so dict can
                                                         # be modified in loop!
-            PdsFile.close_shelf(shelf_path)
+            PdsFile._close_shelf(shelf_path)
 
     def shelf_lookup(self, id='info', volname=''):
+        """Return the contents of the id'd shelf file associated with this
+        object."""
+
         (shelf_path, key) = self.shelf_path_and_key(id, volname)
 
         # This potentially saves the need for a lot of opens and closes
@@ -2368,7 +2504,7 @@ class PdsFile(object):
 
             return PdsFile.SHELF_NULL_KEY_VALUES[shelf_path]
 
-        shelf = PdsFile.get_shelf(shelf_path)
+        shelf = PdsFile._get_shelf(shelf_path)
         if shelf is None:
             return None
 
@@ -2510,23 +2646,37 @@ class PdsFile(object):
     _INFO_FIRST = True
 
     def sort_labels_after(labels_after):
+        """If True, all label files will appear after their associated data
+        files when sorted."""
+
         PdsFile._LABELS_AFTER = labels_after
 
     def sort_dirs_first(dirs_first):
+        """If True, directories will appear before all files in a sorted list.
+        """
+
         PdsFile._DIRS_FIRST = dirs_first
 
     def sort_dirs_last(dirs_last):
+        """If True, directories will appear after all files in a sorted list.
+        """
+
         PdsFile._DIRS_LAST = dirs_last
 
     def sort_info_first(info_first):
+        """If True, info files will be listed first in all sorted lists."""
+
         PdsFile._INFO_FIRST = info_first
 
     def basename_is_label(self, basename):
-        """Override if label identification ever depends on the data set."""
+        """True if this basename is a label. Override if label identification
+        ever depends on the data set."""
+
         return (len(basename) > 4) and (basename[-4:].lower() == '.lbl')
 
     def basename_is_viewable(self, basename=None):
-        """Override if viewable files can have other extensions."""
+        """True if this basename is viewable. Override if viewable files can
+        have extensions other than the usual set (.png, .jpg, etc.)."""
 
         if basename is None:
             basename = self.basename
@@ -2591,15 +2741,19 @@ class PdsFile(object):
         return basenames
 
     def sort_childnames(self, labels_after=None, dirs_first=None):
+        """A sorted list of the contents of this directory."""
+
         return self.sort_basenames(self.childnames, labels_after, dirs_first,
                                    parent_abspath=self.abspath)
 
     def viewable_childnames(self):
+        """A sorted list of the files in this directory that are viewable."""
+
         basenames = self.sort_childnames()
         return [b for b in basenames if self.basename_is_viewable(b)]
 
     def childnames_by_anchor(self, anchor):
-        """Return a list of child basenames having the given anchor."""
+        """A list of child basenames having the given anchor."""
 
         matches = []
         for basename in self.childnames:
@@ -2610,7 +2764,7 @@ class PdsFile(object):
         return self.sort_basenames(matches)
 
     def viewable_childnames_by_anchor(self, anchor):
-        """Return a list of viewable child names having the given anchor."""
+        """A list of viewable child names having the given anchor."""
 
         matches = self.childnames_by_anchor(anchor)
         return [m for m in matches if self.basename_is_viewable(m)]
@@ -2886,16 +3040,16 @@ class PdsFile(object):
         category = category.rstrip('/')
 
         # Create the cached dictionary if necessary
-        if self.associated_parallels_filled is None:
-            self.associated_parallels_filled = {}
+        if self._associated_parallels_filled is None:
+            self._associated_parallels_filled = {}
 
         # Return from dictionary if already available
-        if rank is None and category in self.associated_parallels_filled:
-            path = self.associated_parallels_filled[category]
+        if rank is None and category in self._associated_parallels_filled:
+            path = self._associated_parallels_filled[category]
             return PdsFile.from_logical_path(path)
 
-        if (category, rank) in self.associated_parallels_filled:
-            path = self.associated_parallels_filled[category, rank]
+        if (category, rank) in self._associated_parallels_filled:
+            path = self._associated_parallels_filled[category, rank]
             return PdsFile.from_logical_path(path)
 
         # Handle special case of a virtual directory
@@ -2907,16 +3061,16 @@ class PdsFile(object):
             else:
                 path = target.logical_path
 
-            self.associated_parallels_filled[category] = path
-            self.associated_parallels_filled[category,     None] = path
-            self.associated_parallels_filled[category, 'latest'] = path
-            self.associated_parallels_filled[category,   999999] = path
-            self.associated_parallels_filled[category,        0] = path
-            self.associated_parallels_filled[category, 'previous'] = None
-            self.associated_parallels_filled[category,     'next'] = None
+            self._associated_parallels_filled[category] = path
+            self._associated_parallels_filled[category,     None] = path
+            self._associated_parallels_filled[category, 'latest'] = path
+            self._associated_parallels_filled[category,   999999] = path
+            self._associated_parallels_filled[category,        0] = path
+            self._associated_parallels_filled[category, 'previous'] = None
+            self._associated_parallels_filled[category,     'next'] = None
 
-            self.recache()
-            if (category, rank) in self.associated_parallels_filled:
+            self._recache()
+            if (category, rank) in self._associated_parallels_filled:
                 return target
             else:
                 return None
@@ -2939,16 +3093,16 @@ class PdsFile(object):
                     rank = self.version_ranks[k+1]
 
             except (IndexError, ValueError):
-                self.associated_parallels_filled[category, rank] = None
-                self.associated_parallels_filled[category, original_rank] = None
-                self.recache()
+                self._associated_parallels_filled[category, rank] = None
+                self._associated_parallels_filled[category, original_rank] = None
+                self._recache()
                 return None
 
         # If interpreted rank is in dictionary, return lookup
-        if (category, rank) in self.associated_parallels_filled:
-            self.associated_parallels_filled[category, original_rank] = \
-                                self.associated_parallels_filled[category, rank]
-            path = self.associated_parallels_filled[category, rank]
+        if (category, rank) in self._associated_parallels_filled:
+            self._associated_parallels_filled[category, original_rank] = \
+                                self._associated_parallels_filled[category, rank]
+            path = self._associated_parallels_filled[category, rank]
             return PdsFile.from_logical_path(path)
 
         # Search down from top for parallel file
@@ -2969,9 +3123,9 @@ class PdsFile(object):
             target = None
 
         if target is None:
-            self.associated_parallels_filled[category, rank] = None
-            self.associated_parallels_filled[category, original_rank] = None
-            self.recache()
+            self._associated_parallels_filled[category, rank] = None
+            self._associated_parallels_filled[category, original_rank] = None
+            self._recache()
             return None
 
         if target.isdir:
@@ -2989,9 +3143,9 @@ class PdsFile(object):
                     target = target.child(childnames[0])
 
         path = target.logical_path
-        self.associated_parallels_filled[category, rank] = path
-        self.associated_parallels_filled[category, original_rank] = path
-        self.recache()
+        self._associated_parallels_filled[category, rank] = path
+        self._associated_parallels_filled[category, original_rank] = path
+        self._recache()
         return target
 
     ############################################################################
@@ -3033,7 +3187,9 @@ class PdsFile(object):
 
 ################################################################################
 # File grouping class. An ordered set of PdsFiles, some of which may be hidden.
-# They must share a common parent and anchor.
+# They must share a common parent and anchor. In Viewmaster, they appear on the
+# same row of a table, where a row is identified by alternation between gray
+# and white.
 ################################################################################
 
 class PdsGroup(object):
@@ -3046,10 +3202,10 @@ class PdsGroup(object):
         self.rows = []
         self.hidden = set(hidden)
 
-        self.isdir_filled = None
-        self.iconset_filled = None
-        self.viewset_filled = None
-        self.local_viewset_filled = None
+        self._isdir_filled = None
+        self._iconset_filled = None
+        self._viewset_filled = None
+        self._local_viewset_filled = None
 
         if type(pdsfiles) in (list, tuple):
             for pdsf in pdsfiles:
@@ -3067,10 +3223,10 @@ class PdsGroup(object):
         this.rows = list(self.rows)
         this.hidden = self.hidden.copy()
 
-        this.isdir_filled = self.isdir_filled
-        this.iconset_filled = self.iconset_filled
-        this.viewset_filled = self.viewset_filled
-        this.local_viewset_filled = self.local_viewset_filled
+        this._isdir_filled = self._isdir_filled
+        this._iconset_filled = self._iconset_filled
+        this._viewset_filled = self._viewset_filled
+        this._local_viewset_filled = self._local_viewset_filled
 
         return this
 
@@ -3083,15 +3239,18 @@ class PdsGroup(object):
 
     @property
     def isdir(self):
-        if self.isdir_filled is None:
-            self.isdir_filled = any([p.isdir for p in self.rows])
+        if self._isdir_filled is None:
+            self._isdir_filled = any([p.isdir for p in self.rows])
 
-        return self.isdir_filled
+        return self._isdir_filled
 
     @property
-    def iconset(self):
-        if self.iconset_filled is None:
-            self.iconset_filled = {}
+    def _iconset(self):
+        """Internal method to return the PdsViewSet of this object's icon
+        whether it is to be displayed in a closed or open state."""
+
+        if self._iconset_filled is None:
+            self._iconset_filled = {}
             for open in (False, True):
                 best_set = pdsviewable.ICON_SET_BY_TYPE[self.rows[0].icon_type,
                                                         open]
@@ -3100,44 +3259,45 @@ class PdsGroup(object):
                     if test.priority > best_set.priority:
                         best_set = test
 
-                self.iconset_filled[open] = best_set
+                self._iconset_filled[open] = best_set
 
-        return self.iconset_filled[False]
+        return self._iconset_filled[False]
 
     @property
     def iconset_closed(self):
-        _ = self.iconset
-        return self.iconset_filled[0]
+        _ = self._iconset
+        return self._iconset_filled[0]
 
     @property
     def iconset_open(self):
-        _ = self.iconset
-        return self.iconset_filled[1]
+        _ = self._iconset
+        return self._iconset_filled[1]
 
     @property
     def viewset(self):
-        """The local viewset if it exists; otherwise, the first viewset."""
+        """The local PdsViewSet if it exists; otherwise, the first PdsViewSet.
+        """
 
-        if self.viewset_filled is None:
+        if self._viewset_filled is None:
 
             if self.local_viewset:
-                self.viewset_filled = self.local_viewset
+                self._viewset_filled = self.local_viewset
 
             else:
-                self.viewset_filled = []
+                self._viewset_filled = []
                 for pdsf in self.rows:
                     if pdsf.viewset:
-                        self.viewset_filled = pdsf.viewset
+                        self._viewset_filled = pdsf.viewset
                         break
 
-        return self.viewset_filled
+        return self._viewset_filled
 
     @property
     def local_viewset(self):
-        """False unless every item in the group is part of the viewset.
+        """The PdsViewSet of this object if it is viewable; False otherwise.
         """
 
-        if self.local_viewset_filled is None:
+        if self._local_viewset_filled is None:
 
             viewset = pdsviewable.PdsViewSet()
             for pdsf in self.rows:
@@ -3145,11 +3305,11 @@ class PdsGroup(object):
                     viewset.append(pdsf.local_viewset)
 
             if len(viewset) == len(self):
-                self.local_viewset_filled = viewset
+                self._local_viewset_filled = viewset
             else:
-                self.local_viewset_filled = False
+                self._local_viewset_filled = False
 
-        return self.local_viewset_filled
+        return self._local_viewset_filled
 
     @property
     def global_anchor(self):
@@ -3209,10 +3369,10 @@ class PdsGroup(object):
         if hidden:
             self.hidden |= {pdsf.logical_path}
 
-        self.isdir_filled = None
-        self.iconset_filled = None
-        self.viewset_filled = None
-        self.local_viewset_filled = None
+        self._isdir_filled = None
+        self._iconset_filled = None
+        self._viewset_filled = None
+        self._local_viewset_filled = None
 
     def remove(self, pdsf):
 
@@ -3263,7 +3423,8 @@ class PdsGroup(object):
 
 ################################################################################
 # PdsGroupTable class. An ordered set of PdsGroups sharing a common parent.
-# Some may be hidden.
+# Some may be hidden. These are grouped together within a single table in
+# Viewmaster.
 ################################################################################
 
 class PdsGroupTable(object):
@@ -3273,7 +3434,7 @@ class PdsGroupTable(object):
         self.parent_pdsf = parent   # False for un-initialized; None for virtual
         self.groups = []
 
-        self.levels_filled = None
+        self._levels_filled = None
 
         for group in pdsgroups:
             self.insert_group(group)
@@ -3282,7 +3443,7 @@ class PdsGroupTable(object):
         this = PdsGroupTable()
         this.parent_pdsf = self.parent_pdsf
         this.groups = [g.copy() for g in self.groups]
-        this.levels_filled = self.levels_filled
+        this._levels_filled = self._levels_filled
 
         return this
 
@@ -3295,16 +3456,16 @@ class PdsGroupTable(object):
 
     @property
     def levels(self):
-        if self.levels_filled is None:
+        if self._levels_filled is None:
             levels = []
             pdsf = self.parent_pdsf
             while pdsf is not None:
                 levels.append(pdsf)
                 pdsf = pdsf.parent()
 
-            self.levels_filled = levels
+            self._levels_filled = levels
 
-        return self.levels_filled
+        return self._levels_filled
 
     @property
     def levels_plus_one(self):
