@@ -80,6 +80,35 @@ neighbors = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_FORMAT
+####################################################################################################################################
+
+opus_format = translator.TranslatorByRegex([
+    (r'.*\.qub$', 0, ('Binary', 'ISIS')),
+])
+
+####################################################################################################################################
+# OPUS_PRODUCTS
+####################################################################################################################################
+
+opus_products = translator.TranslatorByRegex([
+    (r'.*volumes/(COVIMS_0xxx)/(COVIMS_0...)/(data/.*)\.(qub|lbl)', 0, [r'volumes/\1/\2/\3.qub',
+                                                                        r'volumes/\1/\2/\3.lbl',
+                                                                        r'previews/\1/\2/\3_thumb.png',
+                                                                        r'previews/\1/\2/\3_small.png',
+                                                                        r'previews/\1/\2/\3_med.png',
+                                                                        r'previews/\1/\2/\3_full.png',
+                                                                        r'metadata/\1/\2/\2_saturn_summary.lbl',
+                                                                        r'metadata/\1/\2/\2_saturn_summary.tab',
+                                                                        r'metadata/\1/\2/\2_moon_summary.lbl',
+                                                                        r'metadata/\1/\2/\2_moon_summary.tab',
+                                                                        r'metadata/\1/\2/\2_ring_summary.lbl',
+                                                                        r'metadata/\1/\2/\2_ring_summary.tab',
+                                                                        r'metadata/\1/\2/\2_inventory.lbl',
+                                                                        r'metadata/\1/\2/\2_inventory.tab']),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -92,6 +121,9 @@ class COVIMS_0xxx(pdsfile.PdsFile):
     ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
+
+    OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
+    OPUS_PRODUCTS = opus_products
 
     VIEWABLES = {'default': default_viewables}
 

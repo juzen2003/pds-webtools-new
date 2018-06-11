@@ -70,6 +70,38 @@ sort_key = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_FORMAT
+####################################################################################################################################
+
+opus_format = translator.TranslatorByRegex([
+    (r'.*\.DAT$', 0, ('Binary', 'Unformatted')),
+])
+
+####################################################################################################################################
+# OPUS_PRODUCTS
+####################################################################################################################################
+
+# Use of explicit file names means we don't need to invoke glob.glob(); this goes much faster
+opus_products = translator.TranslatorByRegex([
+    (r'.*volumes/(COUVIS_0xxx)/(COUVIS_0...)/(.*)\.(DAT|LBL)', 0, [r'volumes/\1/\2/\3.DAT',
+                                                                   r'volumes/\1/\2/\3.LBL',
+                                                                   r'previews/\1/\2/\3_thumb.png',
+                                                                   r'previews/\1/\2/\3_small.png',
+                                                                   r'previews/\1/\2/\3_med.png',
+                                                                   r'previews/\1/\2/\3_full.png',
+                                                                   r'metadata/\1/\2/\2_jupiter_summary.lbl',
+                                                                   r'metadata/\1/\2/\2_jupiter_summary.tab',
+                                                                   r'metadata/\1/\2/\2_saturn_summary.lbl',
+                                                                   r'metadata/\1/\2/\2_saturn_summary.tab',
+                                                                   r'metadata/\1/\2/\2_moon_summary.lbl',
+                                                                   r'metadata/\1/\2/\2_moon_summary.tab',
+                                                                   r'metadata/\1/\2/\2_ring_summary.lbl',
+                                                                   r'metadata/\1/\2/\2_ring_summary.tab',
+                                                                   r'metadata/\1/\2/\2_inventory.lbl',
+                                                                   r'metadata/\1/\2/\2_inventory.tab']),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -83,6 +115,9 @@ class COUVIS_0xxx(pdsfile.PdsFile):
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
     SORT_KEY = sort_key + pdsfile.PdsFile.SORT_KEY
     ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
+
+    OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
+    OPUS_PRODUCTS = opus_products
 
     VIEWABLES = {'default': default_viewables}
 

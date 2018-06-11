@@ -18,6 +18,7 @@ import rules                # Rules unique to each volume set
 import pdscache
 import pdsviewable
 import translator
+import pdstable
 
 ################################################################################
 # Configuration
@@ -99,6 +100,9 @@ DESC_AND_ICON_FIXES = {
 # PdsLogger support
 ################################################################################
 
+LOGGER = None       # Optional logger
+DEBUGGING = False   # True for extra-detailed debugging logs
+
 def set_logger(logger, debugging=False):
 
     global LOGGER, DEBUGGING
@@ -109,9 +113,6 @@ def set_logger(logger, debugging=False):
 ################################################################################
 # Memcached support
 ################################################################################
-
-MEMCACHE_PORT = 0
-CACHE = pdscache.DictionaryCache()
 
 # Cache of PdsFile objects:
 # 
@@ -134,9 +135,6 @@ CACHE = pdscache.DictionaryCache()
 LOCAL_PRELOADED = []        # local copy of CACHE['$PRELOADED']
 DEFAULT_CACHING = 'none'    # 'dir', 'all' or 'none'; use 'dir' for Viewmaster
 
-LOGGER = None       # Optional logger
-DEBUGGING = False   # True for extra-detailed debugging logs
-
 # Initialize internal caches
 
 def cache_lifetime(arg):
@@ -152,6 +150,10 @@ def cache_lifetime(arg):
         return 7 * 24 * 60 * 60             # Other directories for a week
     else:
         return 24 * 60 * 60                 # Files for a day
+
+CACHE = None            # initialize when first needed
+MEMCACHE_PORT = 0       # default is to use a DictionaryCache instead
+DICTIONARY_CACHE_LIMIT = 200000
 
 def preload_required(holdings_list, port=0, clear=False):
     """Returns True if a preload is required; False if the needed information is
@@ -205,7 +207,8 @@ def preload(holdings_list, port=0, clear=False):
     if (port == 0 and MEMCACHE_PORT == 0) or not HAS_PYLIBMC:
         default_paths = CACHE
         CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
-                                         limit=100000, logger=LOGGER)
+                                         limit=DICTIONARY_CACHE_LIMIT,
+                                         logger=LOGGER)
 
         if LOGGER:
             LOGGER.info('Caching PdsFile objects in local dictionary')
@@ -233,7 +236,8 @@ def preload(holdings_list, port=0, clear=False):
 
             MEMCACHE_PORT = 0
             CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
-                                             limit=10000)
+                                             limit=DICTIONARY_CACHE_LIMIT,
+                                             logger=LOGGER)
 
     ####################################
     # Recursive interior function
@@ -466,6 +470,10 @@ class PdsFile(object):
     VIEW_OPTIONS = pdsfile_rules.VIEW_OPTIONS
     VIEWABLES = pdsfile_rules.VIEWABLES
 
+    OPUS_TYPE = pdsfile_rules.OPUS_TYPE
+    OPUS_FORMAT = pdsfile_rules.OPUS_FORMAT
+    OPUS_PRODUCTS = pdsfile_rules.OPUS_PRODUCTS
+
     ############################################################################
     # Constructor
     ############################################################################
@@ -497,6 +505,8 @@ class PdsFile(object):
         self.volname      = ''
 
         self.interior     = ''
+        self.row_dicts    = []
+        self.column_names = []
 
         self.permanent    = False
         self.is_virtual   = False
@@ -519,6 +529,8 @@ class PdsFile(object):
         self._iconset_filled        = None
         self._internal_links_filled = None
         self._mime_type_filled      = None
+        self._opus_type_filled      = None
+        self._opus_format_filled    = None
         self._view_options_filled   = None  # (grid, multipage, continuous)
         self._volume_info_filled    = None  # (desc, icon type, version ID,
                                             #  pub date, list of dataset IDs)
@@ -563,6 +575,8 @@ class PdsFile(object):
         this.volname      = ''
 
         this.interior     = ''
+        this.row_dicts    = []
+        this.column_names = []
 
         this.permanent    = True
         this.is_virtual   = True
@@ -584,6 +598,8 @@ class PdsFile(object):
         this._iconset_filled        = None
         this._internal_links_filled = []
         this._mime_type_filled      = ''
+        this._opus_type_filled      = ''
+        this._opus_format_filled    = ''
         this._view_options_filled   = (False, False, False)
         this._volume_info_filled    = None
         this._description_and_icon_filled    = None
@@ -594,6 +610,51 @@ class PdsFile(object):
         this._exact_archive_url_filled       = ''
         this._exact_checksum_url_filled      = ''
         this._associated_parallels_filled    = None
+
+        return this
+
+    def new_index_row_pdsfile(self, filename_key):
+        """A PdsFile representing the content of one row of an index file. Used
+        to enable views of individual rows of large index files."""
+
+        this = self.copy()
+
+        this.basename     = filename_key
+
+        _filename_key = '/' + filename_key
+        this.abspath      += _filename_key
+        this.logical_path += _filename_key
+        this.interior     += _filename_key
+
+        this._exists_filled         = True
+        this._islabel_filled        = False
+        this._isdir_filled          = False
+        this._split_filled          = (this.basename, '', '')
+        this._global_anchor_filled  = None
+        this._childnames_filled     = []
+        this._info_filled           = [0, 0, 0, '', (0,0)]
+        this._date_filled           = self.date
+        this._formatted_size_filled = ''
+        this._is_viewable_filled    = False
+        this._info_basename_filled  = ''
+        this._label_basename_filled = ''
+        this._viewset_filled        = False
+        this._local_viewset_filled  = False
+        this._iconset_filled        = None
+        this._internal_links_filled = []
+        this._mime_type_filled      = 'text/plain'
+        this._opus_type_filled      = ''
+        this._opus_format_filled    = ''
+        this._view_options_filled   = (False, False, False)
+        this._volume_info_filled    = self._volume_info
+        this._description_and_icon_filled    = ('Row view of index', 'INFO')
+        this._volume_publication_date_filled = self.volume_publication_date
+        this._volume_version_id_filled       = self.volume_version_id
+        this._volume_data_set_ids_filled     = self.volume_data_set_ids
+        this._version_ranks_filled           = self.version_ranks
+        this._exact_archive_url_filled       = ''
+        this._exact_checksum_url_filled      = ''
+        this._associated_parallels_filled    = {}
 
         return this
 
@@ -685,9 +746,9 @@ class PdsFile(object):
         return self._isdir_filled
 
     @property
+    def islabel(self):
         """True if the file is a PDS3 label."""
 
-    def islabel(self):
         if self._islabel_filled is not None:
             return self._islabel_filled
 
@@ -772,6 +833,28 @@ class PdsFile(object):
             basenames = [n for n in basenames if (n != '.DS_Store' and
                                                   not n.startswith('._'))]
             self._childnames_filled = basenames
+
+        # Support for table row views as "children" of index tables
+        # For the sake of efficiency, we generate all the child objects at once
+        # allow them to be cached.
+        logical_path_lc = self.logical_path.lower()
+        if (logical_path_lc.endswith('.tab') and
+            ('/index/' in logical_path_lc or
+             logical_path_lc.startswith('metadata/'))):
+                table = pdstable.PdsTable(self.label_abspath)
+                table.index_rows_by_filename_key()
+                self._childnames_filled = table.filename_keys
+
+                column_names = table.get_keys()
+                for childname in self._childnames_filled:
+                    child = self.new_index_row_pdsfile(childname)
+                    child.row_dicts = table.rows_by_filename_key(childname)
+                    child.column_names = column_names
+                    child._complete(exists=True, caching='all')
+
+                # Cache the table too because it contains all the childnames
+                self._complete(caching='all')
+                return self._childnames_filled
 
         self._recache()
         return self._childnames_filled
@@ -892,9 +975,9 @@ class PdsFile(object):
 
     @property
     def height(self):
-         """Height of this image in pixels if it is viewable."""
+        """Height of this image in pixels if it is viewable."""
 
-       return self._info[4][1]
+        return self._info[4][1]
 
     @property
     def alt(self):
@@ -1018,6 +1101,28 @@ class PdsFile(object):
         return self._mime_type_filled
 
     @property
+    def opus_format(self):
+        """The OPUS format of this product, e.g., ('ASCII', 'Table') or
+        ('Binary', 'FITS')."""
+
+        if self._opus_format_filled is None:
+            self._opus_format_filled = self.OPUS_FORMAT.first(self.logical_path)
+            self._recache()
+
+        return self._opus_format_filled
+
+    @property
+    def opus_type(self):
+        """The OPUS type of this product, e.g., "Raw Data", "Calibrated Data",
+        or "Preview Image (full-size)"."""
+
+        if self._opus_type_filled is None:
+            self._opus_type_filled = self.OPUS_TYPE.first(self.logical_path)
+            self._recache()
+
+        return self._opus_type_filled
+
+    @property
     def info_basename(self):
         """Returns the basename of an informational file associated with this
         PdsFile object. This could be a file like "VOLDESC.CAT", "CATINFO.TXT",
@@ -1072,7 +1177,7 @@ class PdsFile(object):
 
     @property
     def linked_abspaths(self):
-        """Returns a list of absolute paths to linked files."""
+        """Returns a list of absolute paths linked this PdsFile."""
 
         abspaths = [self.abspath]
         for (_, _, abspath) in self.internal_link_info:
@@ -1120,6 +1225,16 @@ class PdsFile(object):
 
         self._recache()
         return self._label_basename_filled
+
+    @property
+    def label_abspath(self):
+        """Absolute path to the label if it exists; blank othrerwise."""
+
+        if self.label_basename:
+            parent_path = os.path.split(self.abspath)[0]
+            return parent_path + '/' + self.label_basename
+        else:
+            return ''
 
     @property
     def viewset(self):
@@ -1468,6 +1583,103 @@ class PdsFile(object):
         # We are out of options
         return pdsviewable.PdsViewSet([])
 
+    def opus_products(self):
+        """For this primary data product or label, return a dictionary keyed
+        by the OPUS product type ("Raw Data", "Calibrated Data", etc.). For any
+        key, this dictionary returns a list of sublists. Each sublist has the
+        form:
+            [PdsFile for a data product,
+             PdsFile for its label (if any),
+             PdsFile for the first embedded .FMT file (if any),
+             PdsFile for the second embedded .FMT file (if any), etc.]
+        This sublist contains every file that should be added to the OPUS
+        results if that data product is requested.
+
+        The dictionary actually returns a list of these subblists, because it is
+        possible for multiple data products to have the same OPUS product type.
+        However, most of the time, the list contains only one sublist.
+        """
+
+        opus_pdsfiles = {}
+
+        # Get the associated absolute paths
+        patterns = self.OPUS_PRODUCTS.all(self.logical_path)
+        patterns = [self.root_ + p for p in patterns]
+
+        abspaths = []
+        for pattern in patterns:
+            if '*' in pattern or '?' in pattern or '[' in pattern:
+                abspaths += glob.glob(pattern)
+            else:
+                if os.path.exists(pattern):
+                    abspaths.append(pattern)
+
+        # Sort into disjoint sets of labels and data files
+        abspaths = set(abspaths)
+        label_pdsfiles = set()
+        data_abspaths  = set()
+        for abspath in abspaths:
+            pdsf = PdsFile.from_abspath(abspath)
+            if pdsf.islabel:
+                label_pdsfiles.add(pdsf)
+            else:
+                data_abspaths.add(abspath)
+
+        data_abspaths_handled = set()
+
+        # Get the info about each labeled product
+        for label_pdsfile in label_pdsfiles:
+            linked_abspaths = set(label_pdsfile.linked_abspaths)
+            fmts = [f for f in linked_abspaths if f[-4:] in ('.fmt', '.FMT')]
+            fmts.sort()
+            fmt_pdsfiles = PdsFile.pdsfiles_for_abspaths(fmts, exists=True)
+            datapaths = linked_abspaths - set(fmts)
+
+            label_prefix = os.path.splitext(label_pdsfile.abspath)[0]
+            for datapath in datapaths:
+                data_pdsfile = PdsFile.from_abspath(datapath)
+
+                # Ignore links to this or other label files
+                if data_pdsfile.islabel:
+                    data_abspaths_handled.add(datapath)
+                    continue
+
+                # Be skeptical if datafile and label prefixes don't match
+                # because it could be a random cross-reference in the label
+                data_prefix = os.path.splitext(datapath)[0]
+                if data_prefix != label_prefix:
+
+                    # Check for a better label filename
+                    if (data_prefix + '.lbl') in abspaths or \
+                       (data_prefix + '.LBL') in abspaths:
+                            data_abspaths_handled.add(datapath)
+                            continue
+
+                # Update the dictionary with the datafile, label, and FMT files
+                opus_type = data_pdsfile.opus_type
+                sublist = [data_pdsfile, label_pdsfile] + fmt_pdsfiles
+
+                if opus_type not in opus_pdsfiles:
+                    opus_pdsfiles[opus_type] = [sublist]
+                else:
+                    opus_pdsfiles[opus_type].append(sublist)
+
+                data_abspaths_handled.add(datapath)
+
+        # Any remaining files are unlabeled
+        data_abspaths_remaining = data_abspaths - data_abspaths_handled
+        for datapath in data_abspaths_remaining:
+            data_pdsfile = PdsFile.from_abspath(datapath)
+            opus_type = data_pdsfile.opus_type
+            sublist = [data_pdsfile]
+
+            if opus_type not in opus_pdsfiles:
+                opus_pdsfiles[opus_type] = [sublist]
+            else:
+                opus_pdsfiles[opus_type].append(sublist)
+
+        return opus_pdsfiles
+
     ############################################################################
     # Support for alternative constructors
     ############################################################################
@@ -1526,7 +1738,9 @@ class PdsFile(object):
         if caching == 'all' or (caching == 'dir' and self.isdir):
             CACHE.set(self.abspath, self, lifetime=lifetime)
             CACHE.set(self.logical_path, self, lifetime=lifetime)
-            self._update_ranks_and_vols()
+
+            if not self.interior:
+                self._update_ranks_and_vols()
 
         return self
 
@@ -1593,9 +1807,31 @@ class PdsFile(object):
         path for children of virtual directories.
         """
 
+        global CACHE
+
+        # Initialize the cache if necessary
+        # This takes place if preload() was not called
+        if CACHE is None:
+            CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
+                                             limit=DICTIONARY_CACHE_LIMIT,
+                                             logger=LOGGER)
+
+        basename_lc = basename.lower()
+
+        # For the special case of index rows, make sure everything is cached
+        # and that the basename is trimmed and has the proper case
+        if self.basename.lower().endswith('.tab'):
+            childnames = self.childnames
+            childnames_lc = [c.lower() for c in childnames]
+            test_childname_lc = pdstable.filename_key(basename_lc)
+            try:
+                k = childnames_lc.index(test_childname_lc)
+                basename = childnames[k]
+            except ValueError:
+                pass
+
         # Fix the case if possible and if validation is on
         if validate and self.abspath and self.exists:
-            basename_lc = basename.lower()
             for name in self.childnames:
                 if basename_lc == name.lower():
                     return self.child(name, validate=False, exists=exists,
@@ -1851,7 +2087,7 @@ class PdsFile(object):
         abspath = abspath.rstrip('/')
         try:
             return CACHE[abspath]
-        except KeyError:
+        except (KeyError, TypeError):   # TypeError if CACHE was not initialized
             pass
 
         # Make sure this is an absolute path
@@ -2882,6 +3118,14 @@ class PdsFile(object):
         return PdsFile.logicals_for_abspaths(abspaths)
 
     def associated_abspaths(self, category, exists=True, primary=False):
+        """A list of absolute paths to files in the specified category.
+
+        Inputs:
+            category        the category of the associated paths.
+            exists          True to return only paths that exist.
+            primary         True to limit the list to the primary or best
+                            match based on filename criteria.
+        """
 
         category = category.rstrip('/')
 
@@ -2923,14 +3167,14 @@ class PdsFile(object):
         # Get rid of checksums-
         if self.checksums_:
             abspath = self.dirpath_and_prefix_for_checksum()[0]
-            pdsfile = PdsFile.from_abspath(abspath)
-            return pdsfile.associated_abspaths(category, exists)
+            pdsf = PdsFile.from_abspath(abspath)
+            return pdsf.associated_abspaths(category, exists)
 
         # Get rid of archives-
         if self.archives_:
             abspath = self.dirpath_and_prefix_for_archive()[0]
-            pdsfile = PdsFile.from_abspath(abspath)
-            return pdsfile.associated_abspaths(category, exists)
+            pdsf = PdsFile.from_abspath(abspath)
+            return pdsf.associated_abspaths(category, exists)
 
         # No more recursive calls...
 

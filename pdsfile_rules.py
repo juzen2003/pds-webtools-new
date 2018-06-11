@@ -364,3 +364,74 @@ SPLIT_RULES = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_TYPE
+#
+# Used for indicating the type of a data file as it will appear in OPUS, e.g., "Raw Data", "Calibrated Data", etc.
+#
+# These translations take a file's logical path and return a string indicating the file's OPUS_TYPE.
+####################################################################################################################################
+
+OPUS_TYPE = translator.TranslatorByRegex([
+
+    # Default for a volumes directory is raw data with an indication that calibrated products are unavailable
+    (r'volumes/[^/]+/[^/]+/data/.*\..*', re.I, 'Raw Data (calibrated unavailable)'),
+
+    # Previews
+    (r'previews/.*\_thumb\..*$', 0, 'Browse Image (thumbnail)'),
+    (r'previews/.*\_small\..*$', 0, 'Browse Image (small)'),
+    (r'previews/.*\_med\..*$',   0, 'Browse Image (medium)'),
+    (r'previews/.*\_full\..*$',  0, 'Browse Image (full-size)'),
+
+    # Diagrams
+    (r'diagrams/.*\_thumb\..*$', 0, 'Browse Diagram (thumbnail)'),
+    (r'diagrams/.*\_small\..*$', 0, 'Browse Diagram (small)'),
+    (r'diagrams/.*\_med\..*$',   0, 'Browse Diagram (medium)'),
+    (r'diagrams/.*\_full\..*$',  0, 'Browse Diagram (full-size)'),
+
+    # Metadata
+    (r'metadata/.*_inventory\..*', 0, 'Target Body Inventory'),
+    (r'metadata/.*_ring_summary\..*', 0, 'Ring Geometry Index'),
+    (r'metadata/.*_(moon|charon)_summary\..*', 0, 'Satellite Geometry Index'),
+    (r'metadata/.*_(jupiter|saturn|uranus|neptune|pluto)_summary\..*', 0, 'Planet Geometry Index'),
+])
+
+####################################################################################################################################
+# OPUS_FORMAT
+#
+# Returns a tuple (interchange format, file format) where the first is 'Binary', 'ASCII' or 'UTF-8' and the latter is the format
+# of the file, e.g., 'Vicar', 'FITS', 'Table', 'PDS3 Label', etc.
+####################################################################################################################################
+
+OPUS_FORMAT = translator.TranslatorByRegex([
+    (r'.*\.LBL$',     0, ('ASCII',  'PDS3 Label')),
+    (r'.*\.TAB$',     0, ('ASCII',  'Table')),
+    (r'.*\.FMT$',     0, ('ASCII',  'PDS3 Format File')),
+    (r'.*\.CSV$',     0, ('ASCII',  'Comma-Separated Values')),
+    (r'.*\.TXT$',     0, ('ASCII',  'Text')),
+    (r'.*\.ASC$',     0, ('ASCII',  'Text')),
+    (r'.*\.FIT(|S)$', 0, ('Binary', 'FITS')),
+    (r'.*\.TIF(|F)$', 0, ('Binary', 'TIFF')),
+    (r'.*\.JPG$',     0, ('Binary', 'JPEG')),
+    (r'.*\.GIF$',     0, ('Binary', 'GIF')),
+    (r'.*\.PNG$',     0, ('Binary', 'PNG')),
+    (r'.*\.PDF$',     0, ('Binary', 'PDF')),
+    (r'.*\.BSP$',     0, ('Binary', 'SPICE SPK')),
+    (r'.*\.BC$',      0, ('Binary', 'SPICE CK')),
+    (r'.*\.TPC$',     0, ('ASCII',  'SPICE PCK')),
+    (r'.*\.TLS$',     0, ('ASCII',  'SPICE LSK')),
+    (r'.*\.TI$',      0, ('ASCII',  'SPICE IK')),
+])
+
+####################################################################################################################################
+# OPUS_PRODUCTS
+#
+# Returns a list of glob.glob() patterns that match the absolute paths to the all associated files for an OPUS
+# query, given the logical path to the primary data file or its label.
+####################################################################################################################################
+
+# Default is to return an empty list
+OPUS_PRODUCTS = translator.TranslatorByRegex([
+    (r'.*', 0, []),
+])
+
+####################################################################################################################################

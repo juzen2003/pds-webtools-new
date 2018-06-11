@@ -52,6 +52,35 @@ default_viewables = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_TYPE
+####################################################################################################################################
+
+opus_type = translator.TranslatorByRegex([
+    (r'volumes/(?!CATALOG|DOCUMENT|INDEX|LABEL).*\.(IMG|LBL)', re.I, 'Raw Data (calibrated unavailable)'),
+])
+
+####################################################################################################################################
+# OPUS_FORMAT
+####################################################################################################################################
+
+opus_format = translator.TranslatorByRegex([
+    (r'.*\.IMG$', 0, ('Binary', 'VICAR')),
+])
+
+####################################################################################################################################
+# OPUS_PRODUCTS
+####################################################################################################################################
+
+opus_products = translator.TranslatorByRegex([
+    (r'.*volumes/(GO_0xxx)/(GO_0...)/(.*/C[0-9]{6}/[0-9]{4}.)\.(IMG|LBL)', 0, [r'volumes/\1/\2/\3.IMG',
+                                                                               r'volumes/\1/\2/\3.LBL',
+                                                                               r'previews/\1/\2/\3_thumb.jpg',
+                                                                               r'previews/\1/\2/\3_small.jpg',
+                                                                               r'previews/\1/\2/\3_med.jpg',
+                                                                               r'previews/\1/\2/\3_full.jpg']),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -63,6 +92,10 @@ class GO_0xxx(pdsfile.PdsFile):
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
+
+    OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
+    OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
+    OPUS_PRODUCTS = opus_products
 
     VIEWABLES = {'default': default_viewables}
 

@@ -142,6 +142,49 @@ sort_key = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_TYPE
+####################################################################################################################################
+
+opus_type = translator.TranslatorByRegex([
+    (r'volumes/.*\.(IMG|LBL)$', 0, 'Raw Data'),
+    (r'calibrated/.*_CALIB\.(IMG|LBL)$', 0, 'Calibrated Data'),
+])
+
+####################################################################################################################################
+# OPUS_FORMAT
+####################################################################################################################################
+
+opus_format = translator.TranslatorByRegex([
+    (r'.*\.IMG$', 0, ('Binary', 'VICAR')),
+])
+
+####################################################################################################################################
+# OPUS_PRODUCTS
+####################################################################################################################################
+
+# Use of explicit file names means we don't need to invoke glob.glob(); this goes much faster
+opus_products = translator.TranslatorByRegex([
+    (r'.*volumes/(COISS_[12]xxx)/(COISS_[12]...)/(data/.*)\.(IMG|LBL)', 0, [r'volumes/\1/\2/\3.IMG',
+                                                                            r'volumes/\1/\2/\3.LBL',
+                                                                            r'calibrated/\1/\2/\3_CALIB.IMG',
+                                                                            r'calibrated/\1/\2/\3_CALIB.LBL',
+                                                                            r'previews/\1/\2/\3_thumb.jpg',
+                                                                            r'previews/\1/\2/\3_small.jpg',
+                                                                            r'previews/\1/\2/\3_med.jpg',
+                                                                            r'previews/\1/\2/\3_full.jpg',
+                                                                            r'metadata/\1/\2/\2_jupiter_summary.lbl',
+                                                                            r'metadata/\1/\2/\2_jupiter_summary.tab',
+                                                                            r'metadata/\1/\2/\2_saturn_summary.lbl',
+                                                                            r'metadata/\1/\2/\2_saturn_summary.tab',
+                                                                            r'metadata/\1/\2/\2_moon_summary.lbl',
+                                                                            r'metadata/\1/\2/\2_moon_summary.tab',
+                                                                            r'metadata/\1/\2/\2_ring_summary.lbl',
+                                                                            r'metadata/\1/\2/\2_ring_summary.tab',
+                                                                            r'metadata/\1/\2/\2_inventory.lbl',
+                                                                            r'metadata/\1/\2/\2_inventory.tab']),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -155,6 +198,10 @@ class COISS_xxxx(pdsfile.PdsFile):
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
     SORT_KEY = sort_key + pdsfile.PdsFile.SORT_KEY
     ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
+
+    OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
+    OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
+    OPUS_PRODUCTS = opus_products
 
     VIEWABLES = {'default': default_viewables}
 

@@ -74,6 +74,31 @@ neighbors = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_TYPE
+####################################################################################################################################
+
+opus_type = translator.TranslatorByRegex([
+    (r'volumes/.*\.ASC$',               0, 'HST FITS Header Text'),
+    (r'volumes/.*\.TIF$',               0, 'HST Raw Data Preview (lossless)'),
+    (r'volumes/.*_(RAW|D0M_...)\.JPG$', 0, 'HST Raw Data Preview'),
+    (r'volumes/.*_(FLT|CAL)\.JPG$',     0, 'HST Calibrated Data Preview'),
+    (r'volumes/.*_(DRZ|MOS|IMA)\.JPG$', 0, 'HST Preview of Line Spectrum'),
+    (r'volumes/.*_X2D\.JPG$',           0, 'HST Preview of 2-D Spectrum'),
+])
+
+####################################################################################################################################
+# OPUS_PRODUCTS
+####################################################################################################################################
+
+opus_products = translator.TranslatorByRegex([
+    (r'.*volumes/(HST.x_xxxx)/(HST.._....)/(DATA/VISIT_../.{9}).*', 0, [r'volumes/\1/\2/\3*',
+                                                                        r'previews/\1/\2/\3_thumb.jpg',
+                                                                        r'previews/\1/\2/\3_small.jpg',
+                                                                        r'previews/\1/\2/\3_med.jpg',
+                                                                        r'previews/\1/\2/\3_full.jpg'])
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -87,6 +112,9 @@ class HSTxx_xxxx(pdsfile.PdsFile):
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
     ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
+
+    OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
+    OPUS_PRODUCTS = opus_products
 
     VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
     VOLUMES_TO_ASSOCIATIONS['previews'] = volumes_to_previews + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['previews']

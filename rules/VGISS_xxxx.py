@@ -106,6 +106,67 @@ default_viewables = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_TYPE
+####################################################################################################################################
+
+opus_type = translator.TranslatorByRegex([
+    (r'volumes/.*/C[0-9]{7}_RAW\..*$',     0, 'Raw Data'),
+    (r'volumes/.*/C[0-9]{7}_CLEANED\..*$', 0, 'VGISS Cleaned Data'),
+    (r'volumes/.*/C[0-9]{7}_CALIB\..*$',   0, 'Calibrated Data'),
+    (r'volumes/.*/C[0-9]{7}_GEOMED\..*$',  0, 'VGISS Geometrically Corrected Data'),
+    (r'volumes/.*/C[0-9]{7}_RESLOC\..*$',  0, 'VGISS Reseau Table'),
+    (r'volumes/.*/C[0-9]{7}_GEOMA\..*$',   0, 'VGISS Geometric Tiepoint Table'),
+])
+
+####################################################################################################################################
+# OPUS_FORMAT
+####################################################################################################################################
+
+opus_format = translator.TranslatorByRegex([
+    (r'.*\.IMG$', 0, ('Binary', 'VICAR')),
+    (r'.*\.DAT$', 0, ('Binary', 'VICAR')),
+])
+
+####################################################################################################################################
+# OPUS_PRODUCTS
+####################################################################################################################################
+
+opus_products = translator.TranslatorByRegex([
+    (r'.*volumes/(VGISS_[5-8]xxx)/(VGISS_[5-8]...)/(DATA/.*)_[A-Z]+\.(IMG|DAT|LBL|TAB)', 0, [r'volumes/\1/\2/\3_RAW.IMG',
+                                                                                             r'volumes/\1/\2/\3_RAW.LBL',
+                                                                                             r'volumes/\1/\2/\3_CLEANED.IMG',
+                                                                                             r'volumes/\1/\2/\3_CLEANED.LBL',
+                                                                                             r'volumes/\1/\2/\3_CALIB.IMG',
+                                                                                             r'volumes/\1/\2/\3_CALIB.LBL',
+                                                                                             r'volumes/\1/\2/\3_GEOMED.IMG',
+                                                                                             r'volumes/\1/\2/\3_GEOMED.LBL',
+                                                                                             r'volumes/\1/\2/\3_RESLOC.DAT',
+                                                                                             r'volumes/\1/\2/\3_RESLOC.TAB',
+                                                                                             r'volumes/\1/\2/\3_RESLOC.LBL',
+                                                                                             r'volumes/\1/\2/\3_GEOMA.DAT',
+                                                                                             r'volumes/\1/\2/\3_GEOMA.TAB',
+                                                                                             r'volumes/\1/\2/\3_GEOMA.LBL',
+                                                                                             r'previews/\1/\2/\3_thumb.jpg',
+                                                                                             r'previews/\1/\2/\3_small.jpg',
+                                                                                             r'previews/\1/\2/\3_med.jpg',
+                                                                                             r'previews/\1/\2/\3_full.jpg',
+                                                                                             r'metadata/\1/\2/\2_jupiter_summary.tab',
+                                                                                             r'metadata/\1/\2/\2_jupiter_summary.lbl',
+                                                                                             r'metadata/\1/\2/\2_saturn_summary.tab',
+                                                                                             r'metadata/\1/\2/\2_saturn_summary.lbl',
+                                                                                             r'metadata/\1/\2/\2_uranus_summary.tab',
+                                                                                             r'metadata/\1/\2/\2_uranus_summary.lbl',
+                                                                                             r'metadata/\1/\2/\2_neptune_summary.tab',
+                                                                                             r'metadata/\1/\2/\2_neptune_summary.lbl',
+                                                                                             r'metadata/\1/\2/\2_moon_summary.tab',
+                                                                                             r'metadata/\1/\2/\2_moon_summary.lbl',
+                                                                                             r'metadata/\1/\2/\2_ring_summary.tab',
+                                                                                             r'metadata/\1/\2/\2_ring_summary.lbl',
+                                                                                             r'metadata/\1/\2/\2_inventory.tab',
+                                                                                             r'metadata/\1/\2/\2_inventory.lbl'])
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -119,6 +180,10 @@ class VGISS_xxxx(pdsfile.PdsFile):
     SPLIT_RULES = split_rules + pdsfile.PdsFile.SPLIT_RULES
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
+
+    OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
+    OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
+    OPUS_PRODUCTS = opus_products
 
     ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
 
