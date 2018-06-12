@@ -115,18 +115,18 @@ def set_logger(logger, debugging=False):
 ################################################################################
 
 # Cache of PdsFile objects:
-# 
+#
 # CACHE['$RANKS-category/']
 #       Dictionary keyed by [volset or volname] returns a sorted list of ranks.
 #       Keys are lower case.
-# 
+#
 # CACHE['$VOLS-category/']
 #       Dictionary keyed by [volset or volname][rank] returns the CACHE key
 #       of the volset or name. Keys are lower case.
-# 
+#
 # CACHE['$PRELOADED']
 #       List of preloaded holdings abspaths
-# 
+#
 # CACHE['$VOLINFO-<volset or volset/volname>']
 #       Returns (description, icon_type, version, publication date, list of
 #                data set IDs)
@@ -356,7 +356,7 @@ def preload(holdings_list, port=0, clear=False):
 
             holdings = os.path.abspath(holdings)
             if os.sep == '\\':
-                abspath = abspath.replace('\\', '/')
+                holdings = holdings.replace('\\', '/')
 
             if LOGGER: LOGGER.info('Pre-loading ' + holdings)
 
@@ -594,7 +594,7 @@ class PdsFile(object):
         this._split_filled          = (basename, '', '')
         this._global_anchor_filled  = basename
         this._childnames_filled     = []
-        this._info_filled           = [0, 0, 0, '', (0,0)]  # 
+        this._info_filled           = [0, 0, 0, '', (0,0)]  #
         this._date_filled           = ''
         this._formatted_size_filled = ''
         this._is_viewable_filled    = False
