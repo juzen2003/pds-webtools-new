@@ -159,7 +159,9 @@ CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                  limit=DICTIONARY_CACHE_LIMIT,
                                  logger=LOGGER)
 FILESYSTEM = False
-DEFAULT_CACHING = 'all'     # 'dir', 'all' or 'none'; use 'dir' for Viewmaster;
+DEFAULT_CACHING = 'all'     # 'dir', 'all' or 'none';
+                            # use 'dir' for Viewmaster without MemCache;
+                            # use 'all' for Viewmaster with MemCache;
                             # use 'all' in the absence of a filesystem.
 
 def preload_required(holdings_list, port=0, clear=False):
@@ -246,6 +248,12 @@ def preload(holdings_list, port=0, clear=False):
             CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                              limit=DICTIONARY_CACHE_LIMIT,
                                              logger=LOGGER)
+
+    # Define default caching based on whether MemCache is active
+    if MEMCACHE_PORT == 0:
+        DEFAULT_CACHING = 'dir'
+    else:
+        DEFAULT_CACHING = 'all'
 
     ####################################
     # Recursive interior function
@@ -351,12 +359,13 @@ def preload(holdings_list, port=0, clear=False):
 
         # Prepare dictionary of top-level PdsFiles
         for holdings in holdings_list:
-            if holdings in preloaded:
-                continue
 
             holdings = os.path.abspath(holdings)
             if os.sep == '\\':
                 holdings = holdings.replace('\\', '/')
+
+            if holdings in preloaded:
+                continue
 
             if LOGGER: LOGGER.info('Pre-loading ' + holdings)
 
