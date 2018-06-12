@@ -99,6 +99,34 @@ opus_products = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_ID_TO_FILESPEC
+####################################################################################################################################
+
+opus_id_to_filespec = translator.TranslatorByRegex([
+    # Associated HST products share an OPUS ID based on the first nine characters of the file's basename. The filespec returned
+    # points to the combined-detached label.
+    (r'(HST[A-Z]._....)/V(.*)$', 0,  r'\1/DATA/VISIT_\2.LBL'),
+])
+
+####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+####################################################################################################################################
+
+filespec_to_opus_id = translator.TranslatorByRegex([
+    # Associated HST products share an OPUS ID based on the first nine characters of the file's basename.
+    (r'(HST[A-Z]._....)/DATA/VISIT_(../\w{9})\w*\....',  0, r'\1/V\2'),
+])
+
+####################################################################################################################################
+# FILESPEC_TO_LOGICAL_PATH
+####################################################################################################################################
+
+filespec_to_logical_path = translator.TranslatorByRegex([
+    (r'HST(.)(._..../.*_(thumb|small|med|full)\.(jpg|png))', 0, r'previews/HST\1x_xxxx/HST\1\2'),
+    (r'HST(.)(._..../.*)$',                                  0, r'volumes/HST\1x_xxxx/HST\1\2'),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -115,11 +143,16 @@ class HSTxx_xxxx(pdsfile.PdsFile):
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_PRODUCTS = opus_products
+    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
 
     VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
     VOLUMES_TO_ASSOCIATIONS['previews'] = volumes_to_previews + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['previews']
 
     VIEWABLES = {'default': default_viewables}
+
+# Global attributes shared by all subclasses
+pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
+pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH = filespec_to_logical_path + pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

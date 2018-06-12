@@ -81,6 +81,22 @@ opus_products = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_ID_TO_FILESPEC
+####################################################################################################################################
+
+opus_id_to_filespec = translator.TranslatorByRegex([
+    (r'(GO_00../.*/C[0-9]{6})([0-9]{4}).$', 0, r'\1/\2.IMG'),
+])
+
+####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+####################################################################################################################################
+
+filespec_to_opus_id = translator.TranslatorByRegex([
+    (r'(GO_00../.*/C[0-9]{6})/([0-9]{4}.)\.(IMG|LBL)$', 0, r'\1\2'),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -96,8 +112,12 @@ class GO_0xxx(pdsfile.PdsFile):
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
     OPUS_PRODUCTS = opus_products
+    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
 
     VIEWABLES = {'default': default_viewables}
+
+# Global attribute shared by all subclasses
+pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

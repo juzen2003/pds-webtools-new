@@ -185,6 +185,22 @@ opus_products = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_ID_TO_FILESPEC
+####################################################################################################################################
+
+opus_id_to_filespec = translator.TranslatorByRegex([
+    (r'(COISS_[12]...)/(.*)$', 0, r'\1/data/\2.IMG'),
+])
+
+####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+####################################################################################################################################
+
+filespec_to_opus_id = translator.TranslatorByRegex([
+    (r'(COISS_[12]...)/data/(.*)\.(IMG|LBL)$', 0, r'\1/\2'),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -202,6 +218,7 @@ class COISS_xxxx(pdsfile.PdsFile):
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
     OPUS_PRODUCTS = opus_products
+    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
 
     VIEWABLES = {'default': default_viewables}
 
@@ -209,6 +226,9 @@ class COISS_xxxx(pdsfile.PdsFile):
     VOLUMES_TO_ASSOCIATIONS['volumes'] = volumes_to_volumes + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['volumes']
     VOLUMES_TO_ASSOCIATIONS['calibrated'] = volumes_to_calibrated + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['calibrated']
     VOLUMES_TO_ASSOCIATIONS['previews'] = volumes_to_previews + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['previews']
+
+# Global attribute shared by all subclasses
+pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

@@ -102,6 +102,22 @@ opus_products = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_ID_TO_FILESPEC
+####################################################################################################################################
+
+opus_id_to_filespec = translator.TranslatorByRegex([
+    (r'(COUVIS_0...)/(.*)$', 0, r'\1/DATA/\2.DAT'),
+])
+
+####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+####################################################################################################################################
+
+filespec_to_opus_id = translator.TranslatorByRegex([
+    (r'(COUVIS_0...)/DATA/(.*)\.(DAT|LBL)$', 0, r'\1/\2'),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -118,8 +134,12 @@ class COUVIS_0xxx(pdsfile.PdsFile):
 
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
     OPUS_PRODUCTS = opus_products
+    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
 
     VIEWABLES = {'default': default_viewables}
+
+# Global attribute shared by all subclasses
+pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

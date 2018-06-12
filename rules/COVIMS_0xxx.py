@@ -109,6 +109,25 @@ opus_products = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_ID_TO_FILESPEC
+####################################################################################################################################
+
+opus_id_to_filespec = translator.TranslatorByRegex([
+    # Ignore the trailing "_VIS" or "_IR" when converting a VIMS ID to a filespec.
+    (r'(COVIMS_0...)/(.*)(|_VIS|_IR)$', 0, r'\1/data/\2.qub'),
+])
+
+####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+####################################################################################################################################
+
+filespec_to_opus_id = translator.TranslatorByRegex([
+    # There are up to two OPUS IDs associated with each VIMS file, one for the VIS channel and one for the IR channel.
+    # This translator returns the OPUS ID without the suffix "_IR" or "_VIS" used by OPUS. That must be handled separately
+    (r'(COVIMS_0...)/data/(.*)\.(qub|lbl)$', 0, r'\1/\2'),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -124,11 +143,15 @@ class COVIMS_0xxx(pdsfile.PdsFile):
 
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
     OPUS_PRODUCTS = opus_products
+    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
 
     VIEWABLES = {'default': default_viewables}
 
     VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
     VOLUMES_TO_ASSOCIATIONS['volumes'] = volumes_to_volumes + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['volumes']
+
+# Global attribute shared by all subclasses
+pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

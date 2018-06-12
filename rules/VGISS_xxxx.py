@@ -167,6 +167,25 @@ opus_products = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_ID_TO_FILESPEC
+####################################################################################################################################
+
+opus_id_to_filespec = translator.TranslatorByRegex([
+    # All the associated versions of VGISS files have a common OPUS ID. The filespec returned points to the raw image.
+    (r'(VGISS_[5-8]...)/(.*)$', 0, r'\1/DATA/\2_RAW.IMG'),
+])
+
+####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+####################################################################################################################################
+
+filespec_to_opus_id = translator.TranslatorByRegex([
+    # All the associated versions of VGISS files have a common OPUS ID based on the seven-digit FDS count plus '_xxx' to
+    # indicate something is missing.
+    (r'(VGISS_[5-8]...)/DATA/(C.....XX/C[0-9]{7})_[A-Z]+\....$', 0, r'\1/\2'),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -184,6 +203,7 @@ class VGISS_xxxx(pdsfile.PdsFile):
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
     OPUS_PRODUCTS = opus_products
+    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
 
     ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
 
@@ -191,6 +211,9 @@ class VGISS_xxxx(pdsfile.PdsFile):
     VOLUMES_TO_ASSOCIATIONS['previews'] = volumes_to_previews + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['previews']
 
     VIEWABLES = {'default': default_viewables}
+
+# Global attribute shared by all subclasses
+pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

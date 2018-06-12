@@ -246,6 +246,35 @@ opus_products = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_ID_TO_FILESPEC
+####################################################################################################################################
+
+opus_id_to_filespec = translator.TranslatorByRegex([
+    # Raw and calibrated NH volumes share common OPUS IDs, where "x" replaces the leading "1" or "2" in the volume ID and
+    # "eng" or "sci" at the end of the file name is removed. The filespec returned points to the raw file.
+    (r'(NH....)_x(...)/(.*)$',              0,  r'\1_1\2/data/\3_eng.fit'),
+])
+
+####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+####################################################################################################################################
+
+filespec_to_opus_id = translator.TranslatorByRegex([
+    # Raw and calibrated NH volumes (series *_1001 and *_2001) share common OPUS IDs. The OPUS ID replaces the leading
+    # "1" or "2" by "x" and removes the final "eng" or "sci".
+    (r'(NH....)_[12](...)/data/(.*)_(eng|sci).(fit|lbl)$', 0, r'\1_x\2/\3'),
+])
+
+####################################################################################################################################
+# FILESPEC_TO_LOGICAL_PATH
+####################################################################################################################################
+
+filespec_to_logical_path = translator.TranslatorByRegex([
+    (r'NH(..)(..)_(.*_(thumb|small|med|full)\.jpg)', 0, r'previews/NHxx\2_xxxx/NH\1\2_\3'),
+    (r'NH(..)(..)_(.*)$',                            0, r'volumes/NHxx\2_xxxx/NH\1\2_\3'),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -260,11 +289,16 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_PRODUCTS = opus_products
+    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
 
     VIEWABLES = {'default': default_viewables}
 
     VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
     VOLUMES_TO_ASSOCIATIONS['volumes'] = volumes_to_volumes + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['volumes']
+
+# Global attributes shared by all subclasses
+pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
+pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH = filespec_to_logical_path + pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

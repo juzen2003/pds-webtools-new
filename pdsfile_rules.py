@@ -435,3 +435,34 @@ OPUS_PRODUCTS = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_ID_TO_FILESPEC
+#
+# Translates an OPUS ID to the volume ID + file specification path of the primary data product.
+# Note: This is a class attribute, not an object attribute. It is shared by all subclasses.
+####################################################################################################################################
+
+OPUS_ID_TO_FILESPEC = translator.TranslatorByRegex([])
+
+####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+#
+# Translates a volume ID + file specification path to an OPUS ID.
+####################################################################################################################################
+
+FILESPEC_TO_OPUS_ID = translator.TranslatorByRegex([])
+
+####################################################################################################################################
+# FILESPEC_TO_LOGICAL_PATH
+#
+# Translates a volume ID + file specification path to a logical path.
+# Note: This is a class attribute, not an object attribute. It is shared by all subclasses.
+####################################################################################################################################
+
+# Default rules assume that the volset is the volume ID with the last three digits replaced by "xxx"
+FILESPEC_TO_LOGICAL_PATH = translator.TranslatorByRegex([
+    (r'([A-Z0-9]{2,6}_[0-9])([0-9]{3}.*_(thumb|small|med|full)\.(jpg|png|pdf))', 0,    r'previews/\1xxx/\1\2'),
+    (r'([A-Z0-9]{2,6}_[0-9])([0-9]{3}.*_CALIB\.(IMG|LBL))',                      re.I, r'calibrated/\1xxx/\1\2'),
+    (r'([A-Z0-9]{2,6}_[0-9])([0-9]{3}.*)',                                       0,    r'volumes/\1xxx/\1\2'),
+])
+
+####################################################################################################################################

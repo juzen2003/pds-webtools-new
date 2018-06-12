@@ -132,12 +132,10 @@ def set_logger(logger, debugging=False):
 #                data set IDs)
 #       for volnames and volsets. Keys are lower case.
 
-LOCAL_PRELOADED = []        # local copy of CACHE['$PRELOADED']
-DEFAULT_CACHING = 'none'    # 'dir', 'all' or 'none'; use 'dir' for Viewmaster
-
-# Initialize internal caches
-
 def cache_lifetime(arg):
+    """Used by caches. Returns the default lifetime based on what is being
+    cached."""
+
     if type(arg) == str:                    # Keep HTML for a day
         return 24 * 60 * 60
     elif not isinstance(arg, PdsFile):      # RANKS, VOLS, etc. forever
@@ -151,9 +149,18 @@ def cache_lifetime(arg):
     else:
         return 24 * 60 * 60                 # Files for a day
 
-CACHE = None            # initialize when first needed
-MEMCACHE_PORT = 0       # default is to use a DictionaryCache instead
+# Initialize the cache
+LOCAL_PRELOADED = []        # local copy of CACHE['$PRELOADED']
+MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
 DICTIONARY_CACHE_LIMIT = 200000
+
+# This cache is used if preload() is never called. No filesystem is required.
+CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
+                                 limit=DICTIONARY_CACHE_LIMIT,
+                                 logger=LOGGER)
+FILESYSTEM = False
+DEFAULT_CACHING = 'all'     # 'dir', 'all' or 'none'; use 'dir' for Viewmaster;
+                            # use 'all' in the absence of a filesystem.
 
 def preload_required(holdings_list, port=0, clear=False):
     """Returns True if a preload is required; False if the needed information is
@@ -195,7 +202,8 @@ def preload(holdings_list, port=0, clear=False):
         clear               True to clear the cache before preloading.
     """
 
-    global CACHE, MEMCACHE_PORT, DEFAULT_CACHING, LOCAL_PRELOADED
+    global CACHE, MEMCACHE_PORT, DEFAULT_CACHING, LOCAL_PRELOADED, FILESYSTEM
+    FILESYSTEM = True
 
     # Convert holdings to a list of strings
     if type(holdings_list) == str:
@@ -386,23 +394,18 @@ def is_preloading():
     return CACHE.get_now('$PRELOADING')
 
 def pause_caching():
-    global CACHE
     CACHE.pause()
 
 def resume_caching():
-    global CACHE
     CACHE.resume()
 
 def clear_cache(block=True):
-    global CACHE
     CACHE.clear(block)
 
 def block_cache():
-    global CACHE
     CACHE.block()
 
 def unblock_cache():
-    global CACHE
     CACHE.unblock()
 
 def load_volume_info(holdings):
@@ -473,6 +476,9 @@ class PdsFile(object):
     OPUS_TYPE = pdsfile_rules.OPUS_TYPE
     OPUS_FORMAT = pdsfile_rules.OPUS_FORMAT
     OPUS_PRODUCTS = pdsfile_rules.OPUS_PRODUCTS
+    OPUS_ID_TO_FILESPEC = pdsfile_rules.OPUS_ID_TO_FILESPEC
+    FILESPEC_TO_OPUS_ID = pdsfile_rules.FILESPEC_TO_OPUS_ID
+    FILESPEC_TO_LOGICAL_PATH = pdsfile_rules.FILESPEC_TO_LOGICAL_PATH
 
     ############################################################################
     # Constructor
@@ -529,6 +535,7 @@ class PdsFile(object):
         self._iconset_filled        = None
         self._internal_links_filled = None
         self._mime_type_filled      = None
+        self._opus_id_filled        = None
         self._opus_type_filled      = None
         self._opus_format_filled    = None
         self._view_options_filled   = None  # (grid, multipage, continuous)
@@ -598,6 +605,7 @@ class PdsFile(object):
         this._iconset_filled        = None
         this._internal_links_filled = []
         this._mime_type_filled      = ''
+        this._opus_id_filled        = ''
         this._opus_type_filled      = ''
         this._opus_format_filled    = ''
         this._view_options_filled   = (False, False, False)
@@ -643,6 +651,7 @@ class PdsFile(object):
         this._iconset_filled        = None
         this._internal_links_filled = []
         this._mime_type_filled      = 'text/plain'
+        this._opus_id_filled        = ''
         this._opus_type_filled      = ''
         this._opus_format_filled    = ''
         this._view_options_filled   = (False, False, False)
@@ -744,6 +753,12 @@ class PdsFile(object):
 
         self._recache()
         return self._isdir_filled
+
+    @property
+    def filespec(self):
+        """volname/interior."""
+
+        return self.volname_ + self.interior
 
     @property
     def islabel(self):
@@ -1024,7 +1039,7 @@ class PdsFile(object):
             for key in keys:
                 try:
                     self._volume_info_filled = CACHE['$VOLINFO-' + key.lower()]
-                except KeyError:
+                except (KeyError, TypeError):
                     pass
 
             if self._volume_info_filled is None:
@@ -1099,6 +1114,19 @@ class PdsFile(object):
 
         self._recache()
         return self._mime_type_filled
+
+    @property
+    def opus_id(self):
+        """The OPUS ID of this product if it has one; otherwise an empty string.
+        """
+
+        if self._opus_id_filled is None:
+            with_slashes = self.FILESPEC_TO_OPUS_ID.first(self.filespec)
+            self._opus_id_filled = with_slashes.replace('-', '--').replace('/',
+                                                                           '-')
+            self._recache()
+
+        return self._opus_id_filled
 
     @property
     def opus_format(self):
@@ -1228,7 +1256,7 @@ class PdsFile(object):
 
     @property
     def label_abspath(self):
-        """Absolute path to the label if it exists; blank othrerwise."""
+        """Absolute path to the label if it exists; blank otherwise."""
 
         if self.label_basename:
             parent_path = os.path.split(self.abspath)[0]
@@ -1692,10 +1720,8 @@ class PdsFile(object):
         If the file exists, then the capitalization must be correct!
         """
 
-        global CACHE
-
         # Confirm existence
-        if exists and not self.exists:
+        if exists and not self.exists and FILESYSTEM:
             raise IOError('File not found', self.abspath)
 
         if self.basename.strip() == '':     # Shouldn't happen, but just in case
@@ -1715,7 +1741,7 @@ class PdsFile(object):
         if not self.category_: return self
 
         # Do not cache nonexistent objects
-        if not self.exists: return self
+        if FILESYSTEM and not self.exists: return self
 
         # Always cache a virtual directory but not its physical equivalent
         # This will only happen during preload or in the absence of a MemCache
@@ -1736,10 +1762,11 @@ class PdsFile(object):
             caching = DEFAULT_CACHING
 
         if caching == 'all' or (caching == 'dir' and self.isdir):
-            CACHE.set(self.abspath, self, lifetime=lifetime)
             CACHE.set(self.logical_path, self, lifetime=lifetime)
+            if self.abspath:
+                CACHE.set(self.abspath, self, lifetime=lifetime)
 
-            if not self.interior:
+            if FILESYSTEM and not self.interior:
                 self._update_ranks_and_vols()
 
         return self
@@ -1806,15 +1833,6 @@ class PdsFile(object):
         Optional parameter root_ is needed to override the missing absolute
         path for children of virtual directories.
         """
-
-        global CACHE
-
-        # Initialize the cache if necessary
-        # This takes place if preload() was not called
-        if CACHE is None:
-            CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
-                                             limit=DICTIONARY_CACHE_LIMIT,
-                                             logger=LOGGER)
 
         basename_lc = basename.lower()
 
@@ -1962,14 +1980,15 @@ class PdsFile(object):
     def parent(self, exists=False, caching='default', lifetime=None):
         """Constructor for the parent PdsFile of this PdsFile."""
 
-        if self.abspath is None:    # virtual pdsdir
+        if self.is_virtual:    # virtual pdsdir
             return None
 
-        abspath = os.path.split(self.abspath)[0]
-        try:
-            return CACHE[abspath]
-        except KeyError:
-            pass
+        if FILESYSTEM:
+            abspath = os.path.split(self.abspath)[0]
+            try:
+                return CACHE[abspath]
+            except KeyError:
+                pass
 
         logical_path = os.path.split(self.logical_path)[0]
         try:
@@ -2039,10 +2058,12 @@ class PdsFile(object):
                                 caching='default', lifetime=None):
         """Constructor for a PdsFile from a logical path."""
 
-        if path is None: return None
+        if not path or path == '/':
+            return None
 
-        path = path.rstrip('/')
+        path = path.strip('/')
 
+        # Look for this logical path or any path above it in the cache
         try:
             return CACHE[path]
         except KeyError:
@@ -2068,10 +2089,24 @@ class PdsFile(object):
                 except KeyError:
                     pass
 
-        # Handle the rest of the tree using child()
+        # If a category-level directory is missing, create a virtual one
+        # This can happen if preload() was never called. In this case we are
+        # disconnected from any physical filesystem
         if ancestor is None:
-            raise IOError('File not found: ' + path)
+            category = parts[0].lower()
+            subparts = category.split('-')
+            if subparts[0] == 'checksums':
+                subparts = subparts[1:]
+            if subparts[0] == 'archives':
+                subparts = subparts[1:]
+            if subparts[0] in VOLTYPES and len(subparts) == 1:
+                ancestor = PdsFile.new_virtual(category)
+                CACHE[category] = ancestor
+                lparts = 1
+            else:
+                raise IOError('File not found: ' + path)
 
+        # Handle the rest of the tree using child()
         this = ancestor
         for part in parts[lparts:]:
             this = this.child(part, validate=validate, exists=exists,
@@ -2087,7 +2122,7 @@ class PdsFile(object):
         abspath = abspath.rstrip('/')
         try:
             return CACHE[abspath]
-        except (KeyError, TypeError):   # TypeError if CACHE was not initialized
+        except KeyError:
             pass
 
         # Make sure this is an absolute path
@@ -2369,6 +2404,31 @@ class PdsFile(object):
                                     caching=caching, lifetime=lifetime)
 
         return this
+
+    @staticmethod
+    def from_filespec(filespec):
+        """The PdsFile object based on a volume name plus file specification
+        path, without the category or prefix specified. This is only implemented
+        for products used by OPUS.
+        """
+
+        logical_path = PdsFile.FILESPEC_TO_LOGICAL_PATH.first(filespec)
+        if not logical_path:
+            raise ValueError('Unrecognized file specification: ' + filespec)
+
+        return PdsFile.from_logical_path(logical_path)
+
+    @staticmethod
+    def from_opus_id(opus_id):
+        """The PdsFile of the primary data file associated with this OPUS ID.
+        """
+
+        with_slashes = opus_id.replace('-','/').replace('//', '-')
+        filespec = PdsFile.OPUS_ID_TO_FILESPEC.first(with_slashes)
+        if not filespec:
+            raise ValueError('Unrecognized OPUS ID: ' + opus_id)
+
+        return PdsFile.from_filespec(filespec)
 
     def volume_pdsfile(self):
         """PdsFile object for the root volume."""
