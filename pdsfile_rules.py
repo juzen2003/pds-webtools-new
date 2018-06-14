@@ -233,7 +233,7 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
 
 ASSOCIATIONS_TO_VOLUMES = translator.TranslatorByRegex([
     (r'metadata/(\w+)/.*999.*', 0, r'volumes/\1'),
-    (r'([a-z]+)/(.*)', 0, r'volumes/\1')
+    (r'[a-z]+/(.*)', 0, r'volumes/\1')
 ])
 
 VOLUMES_TO_CALIBRATED = translator.TranslatorByRegex([

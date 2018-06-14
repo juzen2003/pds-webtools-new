@@ -96,6 +96,12 @@ DESC_AND_ICON_FIXES = {
   ('archives-diagrams/',   'VOLDIR'): (' (<b>diagrams tar.gz</b>)',  'TARDIR' ),
 }
 
+CATEGORIES = set()
+for checksums in ('', 'checksums-'):
+    for archives in ('', 'archives-'):
+        for voltype in VOLTYPES:
+            CATEGORIES.add(checksums + archives + voltype)
+
 ################################################################################
 # PdsLogger support
 ################################################################################
@@ -158,6 +164,7 @@ DICTIONARY_CACHE_LIMIT = 200000
 CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                  limit=DICTIONARY_CACHE_LIMIT,
                                  logger=LOGGER)
+
 FILESYSTEM = False
 DEFAULT_CACHING = 'all'     # 'dir', 'all' or 'none';
                             # use 'dir' for Viewmaster without MemCache;
@@ -255,11 +262,21 @@ def preload(holdings_list, port=0, clear=False):
     else:
         DEFAULT_CACHING = 'all'
 
+    ############################################################################
+    # Always create and cache permanent, category-level virtual directories.
+    # These are roots of the cache tree and they are also virtual directories,
+    # meaning that their childen can be assembled from multiple physical
+    # directories.
+    ############################################################################
+
+    for category in CATEGORIES:
+        CACHE.set(category, PdsFile.new_virtual(category), lifetime=0)
+
     ####################################
     # Recursive interior function
     ####################################
 
-    def _preload_dir(pdsdir, root_):
+    def _preload_dir(pdsdir):
         if not pdsdir.isdir: return
         if LOGGER: LOGGER.debug('Pre-loading', pdsdir.abspath)
 
@@ -268,7 +285,7 @@ def preload(holdings_list, port=0, clear=False):
 
         pdsdir.permanent = True
         if pdsdir.logical_path.startswith('volumes/'):
-            key = pdsdir.logical_path[8:]    # Skip over 'volumes/'
+            key = pdsdir.logical_path[8:]   # Skip over 'volumes/'
             try:
                 (description, icon_type, version, pubdate,
                               dsids) = CACHE['$VOLINFO-' + key.lower()]
@@ -283,14 +300,13 @@ def preload(holdings_list, port=0, clear=False):
 
         if pdsdir.volname: return           # don't go deeper than volume name
 
-        basenames = list(pdsdir.childnames) # copy in case of update
-        for basename in basenames:
+        for basename in pdsdir.childnames:
             try:
-                child = pdsdir.child(basename, validate=False,
-                                     caching='all', lifetime=0, root_=root_)
-                _preload_dir(child, root_)
+                child = pdsdir.child(basename, fix_case=False,
+                                               caching='all', lifetime=0)
+                _preload_dir(child)
 
-            except ValueError:                      # Skip out-of-place files
+            except ValueError:              # Skip out-of-place files
                 pdsdir._childnames_filled.remove(basename)
 
     ####################################
@@ -382,10 +398,11 @@ def preload(holdings_list, port=0, clear=False):
                   if LOGGER:
                     LOGGER.warn('Not a directory, ignored', category_abspath)
 
-                pdsdir = PdsFile.from_abspath(category_abspath, validate=False,
+                # This is the physical PdsFile, but from_abspath also adds this
+                # object to the list of childnames of the virtual directory.
+                pdsdir = PdsFile.from_abspath(category_abspath, fix_case=False,
                                               caching='all', lifetime=0)
-
-                _preload_dir(pdsdir, holdings_)
+                _preload_dir(pdsdir)
 
             preloaded.append(holdings)
 
@@ -502,7 +519,7 @@ class PdsFile(object):
 
         self.disk_        = ''      # Disk name alone
         self.root_        = ''      # Disk path + '/holdings/'
-        self.html_root_   = ''      # '/holdings/', '/holdings2/', etc.
+        self.html_root_   = ''      # 'holdings/', 'holdings2/', etc.
 
         self.category_    = ''      # Always checksums_ + archives_ + voltype_
         self.checksums_   = ''
@@ -564,6 +581,9 @@ class PdsFile(object):
         """A virtual directory with the given basename. Virtual directories
         contain children from multiple physical directories. Examples are
         volumes/, archives-volumes/, etc."""
+
+        if basename not in CATEGORIES:
+            raise ValueError('Invalid category: ' + basename)
 
         this = PdsFile()
 
@@ -765,9 +785,21 @@ class PdsFile(object):
 
     @property
     def filespec(self):
-        """volname/interior."""
+        """volname or volname/interior."""
 
-        return self.volname_ + self.interior
+        if self.interior:
+            return self.volname_ + self.interior
+        else:
+            return self.volname
+
+    @property
+    def absolute_or_logical_path(self):
+        """The absolute path if this has one; otherwise the logical path."""
+
+        if self.abspath:
+            return abspath
+        else:
+            return self.logical_path
 
     @property
     def islabel(self):
@@ -796,14 +828,24 @@ class PdsFile(object):
 
     @property
     def html_path(self):
-        """A complete URL to this file; alias for "url"."""
+        """URL to this file after the domain name and slash, starting with
+        "holdings"; alias for property "url".
+        """
+
+        # For a virtual path, return _something_, i.e., the first physical path
+        if self.abspath is None:
+            child_html_path = self.child(self.childnames[0]).html_path
+            return child_html_path.rpartition('/')[0]
 
         return self.html_root_ + self.logical_path
 
     @property
     def url(self):
-        """A complete URL to this file, alias for "html_path"."""
-        return self.html_root_ + self.logical_path
+        """URL to this file after the domain name and slash, starting with
+        "holdings"; alias for property "url".
+        """
+
+        return self.html_path
 
     @property
     def split(self):
@@ -853,18 +895,16 @@ class PdsFile(object):
 
         self._childnames_filled = []
         if self.isdir and self.abspath:
-            basenames = os.listdir(self.abspath)
-            basenames = [n for n in basenames if (n != '.DS_Store' and
-                                                  not n.startswith('._'))]
-            self._childnames_filled = basenames
+            self._childnames_filled = get_childnames(self.abspath)
 
         # Support for table row views as "children" of index tables
         # For the sake of efficiency, we generate all the child objects at once
         # allow them to be cached.
-        logical_path_lc = self.logical_path.lower()
-        if (logical_path_lc.endswith('.tab') and
-            ('/index/' in logical_path_lc or
-             logical_path_lc.startswith('metadata/'))):
+        else:
+          logical_path_lc = self.logical_path.lower()
+          if (logical_path_lc.endswith('.tab') and
+              ('/index/' in logical_path_lc or
+               logical_path_lc.startswith('metadata/'))):
                 table = pdstable.PdsTable(self.label_abspath)
                 table.index_rows_by_filename_key()
                 self._childnames_filled = table.filename_keys
@@ -874,10 +914,11 @@ class PdsFile(object):
                     child = self.new_index_row_pdsfile(childname)
                     child.row_dicts = table.rows_by_filename_key(childname)
                     child.column_names = column_names
-                    child._complete(exists=True, caching='all')
+                    child._complete(must_exist=True, caching='all')
 
                 # Cache the table too because it contains all the childnames
                 self._complete(caching='all')
+                self._recache()
                 return self._childnames_filled
 
         self._recache()
@@ -1168,11 +1209,22 @@ class PdsFile(object):
         if self._info_basename_filled is not None:
             return self._info_basename_filled
 
+        # Search based on rules
         self._info_basename_filled = \
             self.INFO_FILE_BASENAMES.first(self.childnames)
 
-        if self._info_basename_filled is None:
-            self._info_basename_filled = ''
+        # On failure, try the local label
+        if not self._info_basename_filled:
+
+            if self.islabel:
+                self._info_basename_filled = self.basename
+
+            elif self.label_basename:
+                self._info_basename_filled = self.label_basename
+
+            # Otherwise, there is no info file so change None to ''
+            else:
+                self._info_basename_filled = ''
 
         self._recache()
         return self._info_basename_filled
@@ -1614,7 +1666,7 @@ class PdsFile(object):
                 else:
                     abspaths += [self.root_ + pattern]
 
-            viewables = PdsFile.pdsfiles_for_abspaths(abspaths, exists=True)
+            viewables = PdsFile.pdsfiles_for_abspaths(abspaths, must_exist=True)
             return pdsviewable.PdsViewSet.from_pdsfiles(viewables)
 
         # We are out of options
@@ -1669,7 +1721,7 @@ class PdsFile(object):
             linked_abspaths = set(label_pdsfile.linked_abspaths)
             fmts = [f for f in linked_abspaths if f[-4:] in ('.fmt', '.FMT')]
             fmts.sort()
-            fmt_pdsfiles = PdsFile.pdsfiles_for_abspaths(fmts, exists=True)
+            fmt_pdsfiles = PdsFile.pdsfiles_for_abspaths(fmts, must_exist=True)
             datapaths = linked_abspaths - set(fmts)
 
             label_prefix = os.path.splitext(label_pdsfile.abspath)[0]
@@ -1721,7 +1773,7 @@ class PdsFile(object):
     # Support for alternative constructors
     ############################################################################
 
-    def _complete(self, exists=False, caching='default', lifetime=None):
+    def _complete(self, must_exist=False, caching='default', lifetime=None):
         """General procedure to maintain the CACHE cache. It returns PdsFiles or
         subclasses from the cache if available; otherwise it caches PdsFiles if
         appropriate.
@@ -1730,7 +1782,7 @@ class PdsFile(object):
         """
 
         # Confirm existence
-        if exists and not self.exists and FILESYSTEM:
+        if must_exist and not self.exists and FILESYSTEM:
             raise IOError('File not found', self.abspath)
 
         if self.basename.strip() == '':     # Shouldn't happen, but just in case
@@ -1739,10 +1791,18 @@ class PdsFile(object):
         if LOGGER and DEBUGGING:
             LOGGER.debug('Completing', self.logical_path)
 
-        # Check cache for absolute path
-        if self.abspath is not None:
+        # If we already have a PdsFile keyed by this absolute path, return it
+        if self.abspath:
             try:
                 return CACHE[self.abspath]
+            except KeyError:
+                pass
+
+        # If there is no absolute path, return the PdsFile keyed by the logical
+        # path
+        else:
+            try:
+                return CACHE[self.logical_path]
             except KeyError:
                 pass
 
@@ -1752,26 +1812,16 @@ class PdsFile(object):
         # Do not cache nonexistent objects
         if FILESYSTEM and not self.exists: return self
 
-        # Always cache a virtual directory but not its physical equivalent
-        # This will only happen during preload or in the absence of a MemCache
-        if not self.volset and self.abspath:
-            try:
-                pdsf = CACHE[self.logical_path].copy()
-            except KeyError:
-                pdsf = PdsFile.new_virtual(self.logical_path)
-
-            merged = list(set(pdsf.childnames + self.childnames))
-            pdsf._childnames_filled = merged
-
-            CACHE.set(self.logical_path, pdsf, lifetime=0)
-            return self
-
         # Otherwise, cache if necessary
         if caching == 'default':
             caching = DEFAULT_CACHING
 
         if caching == 'all' or (caching == 'dir' and self.isdir):
-            CACHE.set(self.logical_path, self, lifetime=lifetime)
+
+            # Don't overwrite a virtual directory
+            if self.logical_path not in CATEGORIES:
+                CACHE.set(self.logical_path, self, lifetime=lifetime)
+
             if self.abspath:
                 CACHE.set(self.abspath, self, lifetime=lifetime)
 
@@ -1828,26 +1878,35 @@ class PdsFile(object):
         if self.abspath and (self.abspath in CACHE):
             CACHE.set(self.abspath, self)
 
-        if self.logical_path in CACHE:
+        if self.logical_path in CACHE and (self.is_virtual ==
+                                           CACHE[self.logical_path].is_virtual):
             CACHE.set(self.logical_path, self)
 
     ############################################################################
     # Alternative constructors
     ############################################################################
 
-    def child(self, basename, validate=True, exists=False,
-                    caching='default', lifetime=None, root_=None):
+    def child(self, basename, fix_case=True, must_exist=False,
+                    caching='default', lifetime=None):
         """Constructor for a PdsFile of the proper subclass in this directory.
 
-        Optional parameter root_ is needed to override the missing absolute
-        path for children of virtual directories.
+        Inputs:
+            basename    name of the child.
+            fix_case    True to fix the case of the child.
+            must_exist  True to raise an exception if the parent or child does
+                        not exist.
+            caching     Type of caching to use.
+            lifetime    Lifetime parameter for cache.
         """
+
+        if must_exist and not self.exists:
+            raise IOError('File not found: ' + self.logical_path)
 
         basename_lc = basename.lower()
 
         # For the special case of index rows, make sure everything is cached
         # and that the basename is trimmed and has the proper case
-        if self.basename.lower().endswith('.tab'):
+        if basename_lc.endswith('.tab'):
             childnames = self.childnames
             childnames_lc = [c.lower() for c in childnames]
             test_childname_lc = pdstable.filename_key(basename_lc)
@@ -1855,40 +1914,44 @@ class PdsFile(object):
                 k = childnames_lc.index(test_childname_lc)
                 basename = childnames[k]
             except ValueError:
-                pass
+                if must_exist:
+                    raise IOError('Index row does not exist: ' +
+                                  self.logical_path + '/' + basename)
 
-        # Fix the case if possible and if validation is on
-        if validate and self.abspath and self.exists:
+        # Fix the case if possible
+        if fix_case:
             for name in self.childnames:
                 if basename_lc == name.lower():
-                    return self.child(name, validate=False, exists=exists,
+                    return self.child(name, fix_case=False,
+                                            must_exist=must_exist,
                                             caching=caching, lifetime=lifetime)
 
-        # Look up by absolute path
+        if must_exist and basename not in self.childnames:
+            raise IOError('File not found: ' +
+                          self.logical_path + '/' + basename)
+
+        # Look up by abspath or by logical path depending on parent
+        child_logical_path = os.path.join(self.logical_path, basename)
+        child_logical_path.rstrip('/')      # could happen at root level
+
         if self.abspath:
             child_abspath = os.path.join(self.abspath, basename)
-        elif root_:
-            child_abspath = os.path.join(root_ + self.logical_path, basename)
-        else:
-            child_abspath = None
-
-        if child_abspath:
             try:
                 return CACHE[child_abspath]
             except KeyError:
                 pass
+        else:
+            child_abspath = None
 
-        # Look up by logical path
-        child_logical_path = os.path.join(self.logical_path, basename)
-        child_logical_path.rstrip('/')      # could happen at root level
-        try:
-            child_pdsf = CACHE[child_logical_path]
-            if child_pdsf.abspath:          # don't return a virtual path
-                return child_pdsf
-        except KeyError:
-            pass
+        # If the parent has an absolute path, so must the child
+        if not child_abspath:
+            try:
+                pdsf = CACHE[child_logical_path]
+                if not pdsf.abspath: return pdsf
+            except KeyError:
+                pass
 
-        # Construct child from parent; modify as needed...
+        # Select subclass of child...
         if self.volset:
             class_key = self.volset
         elif self.category_:
@@ -1900,24 +1963,24 @@ class PdsFile(object):
         else:
             class_key = 'default'
 
+        # This is a copy of the parent object with internally cached values
+        # removed but all path information duplicated.
         this = self.new_pdsfile(key=class_key, copypath=True)
 
-        this.abspath = child_abspath
-        if child_abspath and not self.root_:
-            this.root_ = root_
-
+        # Update the path for the child
         this.logical_path = child_logical_path
+        this.abspath = child_abspath
         this.basename = basename
 
-        if this.interior:
-            this.interior = os.path.join(this.interior, basename)
-            return this._complete(exists, caching, lifetime)
+        if self.interior:
+            this.interior = os.path.join(self.interior, basename)
+            return this._complete(must_exist, caching, lifetime)
 
-        if this.volname_:
+        if self.volname_:
             this.interior = basename
-            return this._complete(exists, caching, lifetime)
+            return this._complete(must_exist, caching, lifetime)
 
-        if this.volset_:
+        if self.volset_:
 
             # Handle volume name
             matchobj = VOLNAME_PLUS_REGEX_I.match(basename)
@@ -1932,9 +1995,9 @@ class PdsFile(object):
                 this.volname_ = ''
                 this.interior = basename
 
-            return this._complete(exists, caching, lifetime)
+            return this._complete(must_exist, caching, lifetime)
 
-        if this.category_:
+        if self.category_:
 
             # Handle volume set and suffix
             matchobj = VOLSET_PLUS_REGEX_I.match(basename)
@@ -1957,9 +2020,19 @@ class PdsFile(object):
              this.version_message,
              this.version_id) = self.version_info(this.suffix)
 
-            return this._complete(exists, caching, lifetime)
+            # If this is the child of a category, then we must ensure that it is
+            # added to the child list of the virtual parent.
 
-        if not this.category_:
+            if self.abspath:
+                virtual_parent = CACHE[self.logical_path]
+                childnames = virtual_parent._childnames_filled
+                if basename not in childnames:
+                    virtual_parent._childnames_filled.append(basename)
+                    virtual_parent._childnames_filled.sort()
+
+            return this._complete(must_exist, caching, lifetime)
+
+        if not self.category_:
 
             # Handle voltype and category
             this.category_ = basename + '/'
@@ -1968,7 +2041,7 @@ class PdsFile(object):
                 raise ValueError('Invalid category "%s": %s' %
                                  (basename, this.logical_path))
 
-            if validate:
+            if fix_case:
                 this.checksums_ = matchobj.group(1).lower()
                 this.archives_  = matchobj.group(2).lower()
                 this.voltype_   = matchobj.group(3).lower() + '/'
@@ -1981,89 +2054,29 @@ class PdsFile(object):
                 raise ValueError('Unrecognized volume type "%s": %s' %
                                  (this.voltype_[:-1], this.logical_path))
 
-            return this._complete(exists, caching, lifetime)
+            return this._complete(must_exist, caching, lifetime)
 
         raise ValueError('Cannot define child from PDS root: ' +
                          this.logical_path)
 
-    def parent(self, exists=False, caching='default', lifetime=None):
+    def parent(self, must_exist=False, caching='default', lifetime=None):
         """Constructor for the parent PdsFile of this PdsFile."""
 
         if self.is_virtual:    # virtual pdsdir
             return None
 
-        if FILESYSTEM:
-            abspath = os.path.split(self.abspath)[0]
-            try:
-                return CACHE[abspath]
-            except KeyError:
-                pass
-
+        # Return the virtual parent if there is one
         logical_path = os.path.split(self.logical_path)[0]
-        try:
-            return CACHE[logical_path]
-        except KeyError:
-            pass
-
-        if self.volname:
-            this = self.new_pdsfile(copypath=True)
+        if logical_path in CATEGORIES or not self.abspath:
+            return PdsFile.from_logical_path(logical_path,
+                                             must_exist=must_exist)
         else:
-            this = PdsFile()
-
-        this.abspath = abspath
-        this.logical_path = logical_path
-
-        this.basename = os.path.basename(this.abspath)
-
-        if this.interior and this.volname_:
-            this.interior = os.path.split(this.interior)[0]
-            return this._complete(exists, caching, lifetime)
-
-        if this.volname:
-            this.volname_ = ''
-            this.volname  = ''
-            this.interior = ''
-            return this._complete(exists, caching, lifetime)
-
-        if this.volset:
-            this.volset_  = ''
-            this.volset   = ''
-            this.suffix   = ''
-            this.volname_ = ''
-            this.volname  = ''
-            this.interior = ''
-            this.version_message = ''
-            this.version_rank = ''
-            return this._complete(exists, caching, lifetime)
-
-        if this.category_:
-            this.category_  = ''
-            this.voltype_   = ''
-            this.archives_  = ''
-            this.checksums_ = ''
-            return this._complete(exists, caching, lifetime)
-
-        return None
-
-    def from_relative_path(self, path, validate=False, exists=False,
-                                       caching='default', lifetime=None):
-        """Constructor for a PdsFile given a path relative to this one."""
-
-        path = path.rstrip('/')
-        parts = path.split('/')
-
-        if len(parts) == 0:
-            return self._complete(exists, caching, lifetime)
-
-        this = self
-        for part in parts:
-            this = this.child(part, validate=validate, exists=exists,
-                                    caching=caching, lifetime=lifetime)
-
-        return this
+            abspath = os.path.split(self.abspath)[0]
+            return PdsFile.from_abspath(abspath,
+                                        must_exist=must_exist)
 
     @staticmethod
-    def from_logical_path(path, validate=False, exists=exists,
+    def from_logical_path(path, fix_case=False, must_exist=False,
                                 caching='default', lifetime=None):
         """Constructor for a PdsFile from a logical path."""
 
@@ -2072,14 +2085,18 @@ class PdsFile(object):
 
         path = path.strip('/')
 
-        # Look for this logical path or any path above it in the cache
+        # Look for this logical path in the cache
         try:
             return CACHE[path]
         except KeyError:
             pass
 
+        # Work upward through the path until something is found in the cache.
+        # Case must match!
         parts = path.split('/')
+        parts[0] = parts[0].lower()     # category is always lower case
         ancestor = None
+
         for lparts in range(len(parts)-1, 0, -1):
             ancestor_path = '/'.join(parts[:lparts])
 
@@ -2089,42 +2106,19 @@ class PdsFile(object):
             except KeyError:
                 pass
 
-            # For validation, experiment with case
-            for key in [ancestor_path.lower(), ancestor_path.upper(),
-                        ancestor_path.capitalize()]:
-                try:
-                    ancestor = CACHE[key]
-                    break
-                except KeyError:
-                    pass
-
-        # If a category-level directory is missing, create a virtual one
-        # This can happen if preload() was never called. In this case we are
-        # disconnected from any physical filesystem
         if ancestor is None:
-            category = parts[0].lower()
-            subparts = category.split('-')
-            if subparts[0] == 'checksums':
-                subparts = subparts[1:]
-            if subparts[0] == 'archives':
-                subparts = subparts[1:]
-            if subparts[0] in VOLTYPES and len(subparts) == 1:
-                ancestor = PdsFile.new_virtual(category)
-                CACHE[category] = ancestor
-                lparts = 1
-            else:
-                raise IOError('File not found: ' + path)
+            raise IOError('File not found: ' + path)
 
         # Handle the rest of the tree using child()
         this = ancestor
         for part in parts[lparts:]:
-            this = this.child(part, validate=validate, exists=exists,
+            this = this.child(part, fix_case=fix_case, must_exist=must_exist,
                                     caching=caching, lifetime=lifetime)
 
         return this
 
     @staticmethod
-    def from_abspath(abspath, validate=False, exists=False,
+    def from_abspath(abspath, fix_case=False, must_exist=False,
                               caching='default', lifetime=None):
         """Constructor from an absolute path."""
 
@@ -2147,7 +2141,7 @@ class PdsFile(object):
             drive_spec = parts[0]
             parts[0] = ''
         if parts[0] != '':
-            raise ValueError('Not an absolute path: ' + this.abspath)
+            raise ValueError('Not an absolute path: ' + abspath)
 
         # Search for "holdings" or "shelves"
         parts_lc = [p.lower() for p in parts]
@@ -2164,9 +2158,8 @@ class PdsFile(object):
         this = PdsFile()
         this.disk_ = drive_spec + '/'.join(parts[:holdings_index]) + '/'
 
-        # Fill in this.root_, absolute path to "holdings"
         # Get case right if possible
-        if validate and (os.path.exists(this.disk_) and
+        if fix_case and (os.path.exists(this.disk_) and
                          os.path.isdir(this.disk_)):
             children = os.listdir(this.disk_)
             children_lc = [c.lower() for c in children]
@@ -2180,8 +2173,6 @@ class PdsFile(object):
         else:
             holdings_alone = 'holdings'
 
-        this.root_ = this.disk_ + holdings_alone + '/'
-
         # Fill in the HTML root
         # ...pdsdata-whatever/holdings -> /holdings/
         # ...pdsdata2-whatever/holdings -> /holdings2/
@@ -2190,25 +2181,56 @@ class PdsFile(object):
         if suffix not in '123456789':
             suffix = ''
 
-        this.html_root_ = '/' + holdings_alone + suffix + '/'
+        this.root_ = this.disk_ + holdings_alone + '/'
+        this.html_root_ = holdings_alone + suffix + '/'
 
-        # Note: In Apache, the path "/holdings[n]/" must redirect to
-        # this.root_
+        # Note: In Apache, the path "/holdings[n]/" must redirect to this root
+        # directory
 
         this.logical_path = ''
-        this.abspath = this.root_[:-1]
+        this.abspath = this.disk_ + holdings_alone
         this.basename = holdings_alone
 
         # Handle the rest of the tree using child()
         for part in parts[holdings_index + 1:]:
-            this = this.child(part, validate=validate, exists=exists,
-                                    caching=caching, lifetime=lifetime,
-                                    root_=this.root_)
+            this = this.child(part, fix_case=fix_case, must_exist=must_exist,
+                                    caching=caching, lifetime=lifetime)
 
-        if exists and not os.path.exists(this.abspath):
+        if must_exist and not this.exists:
             raise IOError('File not found', this.abspath)
 
         return this
+
+    def from_relative_path(self, path, fix_case=False, must_exist=False,
+                                       caching='default', lifetime=None):
+        """Constructor for a PdsFile given a path relative to this one."""
+
+        path = path.rstrip('/')
+        parts = path.split('/')
+
+        if len(parts) == 0:
+            return self._complete(must_exist, caching, lifetime)
+
+        this = self
+        for part in parts:
+            this = this.child(part, fix_case=fix_case, must_exist=must_exist,
+                                    caching=caching, lifetime=lifetime)
+
+        return this
+
+    @staticmethod
+    def _from_absolute_or_logical_path(path, fix_case=False, must_exist=False,
+                                       caching='default', lifetime=None):
+        """Return a PdsFile based on either an absolute or a logical path."""
+
+        if '/holdings/' in path:
+            return PdsFile.from_abspath(path,
+                                        fix_case=False, must_exist=False,
+                                        caching='default', lifetime=None)
+        else:
+            return PdsFile.from_logical_path(path,
+                                             fix_case=False, must_exist=False,
+                                             caching='default', lifetime=None)
 
     @staticmethod
     def from_path(path, caching='default', lifetime=None):
@@ -2409,7 +2431,7 @@ class PdsFile(object):
 
         # Resolve the path below
         for part in parts:
-            this = this.child(part, validate=True,
+            this = this.child(part, fix_case=True,
                                     caching=caching, lifetime=lifetime)
 
         return this
@@ -3081,22 +3103,23 @@ class PdsFile(object):
     #### ... for pdsfiles
 
     @staticmethod
-    def abspaths_for_pdsfiles(pdsfiles, exists=False):
-        if exists:
-            return [p.abspath for p in pdsfiles if p.exists]
+    def abspaths_for_pdsfiles(pdsfiles, must_exist=False):
+        if must_exist:
+            return [p.abspath for p in pdsfiles if p.abspath is not None
+                                                and p.exists]
         else:
-            return [p.abspath for p in pdsfiles]
+            return [p.abspath for p in pdsfilesf if p.abspath is not None]
 
     @staticmethod
-    def logicals_for_pdsfiles(pdsfiles, exists=False):
-        if exists:
+    def logicals_for_pdsfiles(pdsfiles, must_exist=False):
+        if must_exist:
             return [p.logical_path for p in pdsfiles if p.exists]
         else:
             return [p.logical_path for p in pdsfiles]
 
     @staticmethod
-    def basenames_for_pdsfiles(pdsfiles, exists=False):
-        if exists:
+    def basenames_for_pdsfiles(pdsfiles, must_exist=False):
+        if must_exist:
             return [p.basename for p in pdsfiles if p.exists]
         else:
             return [p.basename for p in pdsfiles]
@@ -3104,154 +3127,190 @@ class PdsFile(object):
     #### ... for abspaths
 
     @staticmethod
-    def pdsfiles_for_abspaths(abspaths, exists=False):
+    def pdsfiles_for_abspaths(abspaths, must_exist=False):
         pdsfiles = [PdsFile.from_abspath(p) for p in abspaths]
-        if exists:
-            pdsfiles = [f for f in pdsfiles if f.exists]
+        if must_exist:
+            pdsfiles = [pdsf for pdsf in pdsfiles if pdsf.exists]
 
         return pdsfiles
 
     @staticmethod
-    def logicals_for_abspaths(abspaths, exists=False):
-        pdsfiles = PdsFile.pdsfiles_for_abspaths(abspaths, exists=exists)
-        return [f.logical_path for f in pdsfiles]
+    def logicals_for_abspaths(abspaths, must_exist=False):
+        if must_exist:
+            abspaths = [p for p in abspaths if os.path.exists(p)]
+
+        return [logical_path_from_path(p) for p in abspaths]
 
     @staticmethod
-    def basenames_for_abspaths(abspaths, exists=False):
-        if exists:
-            return [os.path.basename(p) for p in abspaths if os.path.exists(p)]
-        else:
-            return [os.path.basename(p) for p in abspaths]
+    def basenames_for_abspaths(abspaths, must_exist=False):
+        if must_exist:
+            abspaths = [p for p in abspaths if os.path.exists(p)]
+
+        return [os.path.basename(p) for p in abspaths]
 
     #### ... for logicals
 
     @staticmethod
-    def pdsfiles_for_logicals(logical_paths, exists=False):
+    def pdsfiles_for_logicals(logical_paths, must_exist=False):
         pdsfiles = [PdsFile.from_logical_path(p) for p in logical_paths]
-        if exists:
-            pdsfiles = [f for f in pdsfiles if f.exists]
+        if must_exist:
+            pdsfiles = [pdsf for pdsf in pdsfiles if pdsf.exists]
 
         return pdsfiles
 
     @staticmethod
-    def abspaths_for_logicals(logical_paths, exists=False):
-        pdsfiles = PdsFile.pdsfiles_for_logicals(logical_paths, exists=exists)
-        return [p.abspath for p in pdsfiles]
+    def abspaths_for_logicals(logical_paths, must_exist=False):
+        pdsfiles = PdsFile.pdsfiles_for_logicals(logical_paths,
+                                                 must_exist=must_exist)
+        return [pdsf.abspath for pdsf in pdsfiles]
 
     @staticmethod
-    def basenames_for_logicals(logical_paths, exists=False):
-        if exists:
+    def basenames_for_logicals(logical_paths, must_exist=False):
+        if must_exist:
             pdsfiles = PdsFile.pdsfiles_for_logicals(logical_paths,
-                                                     exists=exists)
+                                                     must_exist=must_exist)
             return PdsFile.basenames_for_pdsfiles(pdsfiles)
-
-        return [os.path.basename(p) for p in logical_paths]
+        else:
+            return [os.path.basename(p) for p in logical_paths]
 
     #### ... for basenames
 
-    def pdsfiles_for_basenames(self, basenames, exists=False):
+    def pdsfiles_for_basenames(self, basenames, must_exist=False):
 
         pdsfiles = [self.child(b) for b in basenames]
 
-        if exists:
-            pdsfiles = [f for f in pdsfiles if f.exists]
+        if must_exist:
+            pdsfiles = [pdsf for pdsf in pdsfiles if pdsf.exists]
 
         return pdsfiles
 
-    def abspaths_for_basenames(self, basenames, exists=False):
+    def abspaths_for_basenames(self, basenames, must_exist=False):
         # shortcut
-        if self.abspath and not exists:
+        if self.abspath and not must_exist:
             return [os.path.join(self.abspath, b) for b in basenames]
 
-        pdsfiles = self.pdsfiles_for_basenames(basenames, exists=exists)
-        return [f.abspath for f in pdsfiles]
+        pdsfiles = self.pdsfiles_for_basenames(basenames, must_exist=must_exist)
+        return [pdsf.abspath for pdsf in pdsfiles]
 
-    def logicals_for_basenames(self, basenames, exists=False):
+    def logicals_for_basenames(self, basenames, must_exist=False):
         # shortcut
-        if not exists:
+        if not must_exist:
             return [os.path.join(self.logical_path, b) for b in basenames]
 
-        pdsfiles = self.pdsfiles_for_basenames(basenames, exists=exists)
-        return [f.logical_path for f in pdsfiles]
+        pdsfiles = self.pdsfiles_for_basenames(basenames, must_exist=must_exist)
+        return [pdsf.logical_path for pdsf in pdsfiles]
 
     ############################################################################
     # Associations
     ############################################################################
 
-    def associated_logical_paths(self, category, exists=True, primary=False):
+    def associated_logical_paths(self, category, must_exist=True,
+                                                 primary=False):
 
         if not self.volset: return []   # Not for virtual paths
 
-        abspaths = self.associated_abspaths(category, exists=exists,
-                                                      primary=primary)
-        return PdsFile.logicals_for_abspaths(abspaths)
+        return self._associated_paths(category, must_exist=must_exist,
+                                                primary=primary,
+                                                use_abspaths=False)
 
-    def associated_abspaths(self, category, exists=True, primary=False):
-        """A list of absolute paths to files in the specified category.
+    def associated_abspaths(self, category, must_exist=True,
+                                            primary=False):
+
+        return self._associated_paths(category, must_exist=must_exist,
+                                                primary=primary,
+                                                use_abspaths=True)
+
+    def _associated_paths(self, category, must_exist=True,
+                                          primary=False, use_abspaths=True):
+        """A list of logical or absolute paths to files in the specified
+        category.
 
         Inputs:
             category        the category of the associated paths.
-            exists          True to return only paths that exist.
+            must_exist      True to return only paths that exist.
             primary         True to limit the list to the primary or best
                             match based on filename criteria.
+            use_abspaths    True to return absolute paths; False to return
+                            logical paths
         """
 
-        category = category.rstrip('/')
+        category = category.strip('/')
 
         # Handle checksums by finding associated files in subcategory
         if category.startswith('checksums-'):
             subcategory = category[len('checksums-'):]
-            abspaths = self.associated_abspaths(subcategory, exists)
-            if not abspaths: return []
+            paths = self._associated_paths(subcategory,
+                                           must_exist=must_exist,
+                                           primary=primary,
+                                           use_abspaths=use_abspaths)
+            if not paths: return []
 
-            this = PdsFile.from_abspath(abspaths[0])
+            this = PdsFile._from_absolute_or_logical_path(paths[0])
             try:
                 checksum_abspath = this.checksum_path_and_lskip()[0]
             except ValueError:
                 return []
 
-            if exists and not os.path.exists(checksum_abspath):
+            if must_exist and not os.path.exists(checksum_abspath):
                 return []
 
-            return [checksum_abspath]
+            return [selected_path_from_path(checksum_abspath, use_abspaths)]
 
         # Handle archives by finding associated files in subcategory
         if category.startswith('archives-'):
             subcategory = category[len('archives-'):]
-            abspaths = self.associated_abspaths(subcategory, exists)
-            if not abspaths:
-                return []
+            paths = self._associated_paths(subcategory,
+                                           must_exist=must_exist,
+                                           primary=primary,
+                                           use_abspaths=use_abspaths)
+            if not paths: return []
 
-            this = PdsFile.from_abspath(abspaths[0])
+            this = PdsFile._from_absolute_or_logical_path(paths[0])
             try:
                 archive_abspath = this.archive_path_and_lskip()[0]
             except ValueError:
                 return []
 
-            if exists and not os.path.exists(archive_abspath):
+            if  must_exist and not os.path.exists(archive_abspath):
                 return []
 
-            return [archive_abspath]
+            return [selected_path_from_path(archive_abspath, use_abspaths)]
 
         # Get rid of checksums-
         if self.checksums_:
-            abspath = self.dirpath_and_prefix_for_checksum()[0]
-            pdsf = PdsFile.from_abspath(abspath)
-            return pdsf.associated_abspaths(category, exists)
+            if not self.volset:
+                path = self.archives_ + self.voltype
+            else:
+                path = self.dirpath_and_prefix_for_checksum()[0]
+
+            pdsf = PdsFile._from_absolute_or_logical_path(path)
+            return pdsf._associated_paths(category,
+                                          must_exist=must_exist,
+                                          primary=primary,
+                                          use_abspaths=use_abspaths)
 
         # Get rid of archives-
         if self.archives_:
-            abspath = self.dirpath_and_prefix_for_archive()[0]
-            pdsf = PdsFile.from_abspath(abspath)
-            return pdsf.associated_abspaths(category, exists)
+            if not self.volset:
+                path = self.voltype
+            else:
+                path = self.dirpath_and_prefix_for_archive()[0]
+
+            pdsf = PdsFile._from_absolute_or_logical_path(path)
+            return pdsf._associated_paths(category,
+                                          must_exist=must_exist,
+                                          primary=primary,
+                                          use_abspaths=use_abspaths)
 
         # No more recursive calls...
+        # Every path from here on is an abspath; translation to logical is only
+        # upon return
 
         # Get the associated parallel inside volumes
         if self.category_ == 'volumes/':
             parallel_volume_pdsf = self
         else:
-            parallel_volume_pdsf = self.associated_parallel(category='volumes')
+            parallel_volume_pdsf = self.associated_parallel('volumes')
             if parallel_volume_pdsf is None:
                 return []
 
@@ -3263,9 +3322,9 @@ class PdsFile(object):
             patterns = [self.root_ + p for p in patterns]
 
             for pattern in patterns:
-                if exists or ('*' in pattern or
-                              '?' in pattern or
-                              '[' in pattern):
+                if must_exist or ('*' in pattern or
+                                  '?' in pattern or
+                                  '[' in pattern):
                     abspaths += glob.glob(pattern)
                 else:
                     abspaths += [pattern]
@@ -3278,9 +3337,9 @@ class PdsFile(object):
                 patterns = [self.root_ + p for p in patterns]
 
                 for pattern in patterns:
-                    if exists or ('*' in pattern or
-                                  '?' in pattern or
-                                  '[' in pattern):
+                    if must_exist or ('*' in pattern or
+                                      '?' in pattern or
+                                      '[' in pattern):
                         abspaths += glob.glob(pattern)
                     else:
                         abspaths += [pattern]
@@ -3291,7 +3350,10 @@ class PdsFile(object):
 
             # Remove duplicates and return
             abspaths = list(set(abspaths))
-            return abspaths
+            if use_abspaths:
+                return abspaths
+            else:
+                return PdsFile.logicals_for_abspaths(abspaths)
 
         # Translate to alternative voltypes as needed
         logical_paths = [parallel_volume_pdsf.logical_path]
@@ -3303,9 +3365,9 @@ class PdsFile(object):
 
         abspaths = []
         for pattern in patterns:
-            if exists or ('*' in pattern or
-                          '?' in pattern or
-                          '[' in pattern):
+            if must_exist or ('*' in pattern or
+                              '?' in pattern or
+                              '[' in pattern):
                 abspaths += glob.glob(pattern)
             else:
                 abspaths += [pattern]
@@ -3318,8 +3380,12 @@ class PdsFile(object):
             if pdsf:
                 abspaths += [pdsf.abspath]
 
+            # Remove duplicates and return
             abspaths = list(set(abspaths))
-            return abspaths
+            if use_abspaths:
+                return abspaths
+            else:
+                return PdsFile.logicals_for_abspaths(abspaths)
 
         # Handle archives-
         if 'archives-' in category:
@@ -3340,8 +3406,12 @@ class PdsFile(object):
             pdsf = PdsFile.from_abspath(abspath)
             new_abspaths.append(pdsf.checksum_path_and_lskip())
 
-        abspaths = list(set(new_abspaths))
-        return abspaths
+        # Remove duplicates and return
+        abspaths = list(set(abspaths))
+        if use_abspaths:
+            return abspaths
+        else:
+            return PdsFile.logicals_for_abspaths(abspaths)
 
     def associated_parallel(self, category=None, rank=None):
         """Rank can be number or 'latest', 'previous', 'next'; None for rank of
@@ -3443,7 +3513,7 @@ class PdsFile(object):
 
         if target.isdir:
             for part in parts:
-                child = target.child(part, validate=True)
+                child = target.child(part, fix_case=True)
                 if os.path.exists(child.abspath):
                     target = child
                 else:
@@ -3466,7 +3536,7 @@ class PdsFile(object):
     ############################################################################
 
     def group_children(self, basenames=None):
-        """Return children as a list of x objects."""
+        """Return children as a list of PdsGroup objects."""
 
         if basenames is None:
             basenames = self.childnames
@@ -3772,7 +3842,7 @@ class PdsGroupTable(object):
         if self._levels_filled is None:
             levels = []
             pdsf = self.parent_pdsf
-            while pdsf is not None:
+            while pdsf:
                 levels.append(pdsf)
                 pdsf = pdsf.parent()
 
@@ -3969,9 +4039,10 @@ class PdsGroupTable(object):
         table_dict = {}
         for pdsf in pdsfiles:
             if type(pdsf) == str:
-                pdsf = PdsFile.from_logical_path(pdsf)
+                pdsf = PdsFile._from_absolute_or_logical_path(pdsf)
 
             if pdsf.logical_path in exclusions: continue
+            if pdsf.abspath in exclusions: continue
 
             parent_pdsf = pdsf.parent()
             parent_path = pdsf.parent_logical_path
@@ -4028,6 +4099,20 @@ class PdsGroupTable(object):
 ################################################################################
 
 PdsFile.SUBCLASSES['default'] = PdsFile
+
+################################################################################
+# After the constructors are defined, always create and cache permanent,
+# category-level virtual directories. These are roots of the cache tree and they
+# are also virtual directories, meaning that their childen can be assembled from
+# multiple physical directories.
+
+# Note that this cache will be replaced by a call to preload(), so it will need
+# to be initialized again.
+################################################################################
+
+for category in CATEGORIES:
+    if category not in CACHE:
+        CACHE.set(category, PdsFile.new_virtual(category), lifetime=0)
 
 ################################################################################
 # PdsFile subclass support. Only imported when needed.
@@ -4140,5 +4225,42 @@ FILE_BYTE_UNITS = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 def formatted_file_size(size):
     order = int(math.log10(size) // 3) if size else 0
     return '{:.3g} {}'.format(size / 1000.**order, FILE_BYTE_UNITS[order])
+
+def get_childnames(abspath):
+    """A list of all the child names for a directory abspath. Invisible files
+    are deleted and the list is sorted into alphabetical order."""
+
+    basenames = os.listdir(abspath)
+    basenames = [n for n in basenames if (n != '.DS_Store' and
+                                          not n.startswith('._'))]
+    basenames.sort()
+    return basenames
+
+def is_logical_path(path):
+    """Quick test returns True if this appears to be a logical path; False
+    otherwise."""
+
+    return ('/holdings/' in path)
+
+def logical_path_from_path(abspath):
+    """Logical path derived from either a logical or an absolute path."""
+
+    parts = abspath.partition('/holdings/')
+    if parts[1]:
+        return parts[2]
+    else:
+        return abspath
+
+def selected_path_from_path(path, abspaths=True):
+    """Logical path or absolute path derived from a logical or an absolute
+    path."""
+
+    if abspaths:
+        if is_logical_path(path):
+            raise ValueError('Unable to derive absolute path for ' + path)
+        return path
+
+    else:
+        return logical_path_from_path(path)
 
 ################################################################################
