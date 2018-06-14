@@ -241,7 +241,7 @@ parser.add_argument('server', type=str,
                     help='URL of a server running Viewmaster.')
 parser.add_argument('volume', nargs='+', type=str,
                     help='Starting volset or volset/volume for this search.')
-parser.add_argument('-n', nargs=1, type=int, default=1000,
+parser.add_argument('-n', type=int, default=1000,
                     help='Number of links to check; default 1000.')
 parser.add_argument('--scope', '-s', type=str, default='volume',
                     choices=['volume', 'volset', 'all'],
