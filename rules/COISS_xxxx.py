@@ -162,12 +162,15 @@ opus_format = translator.TranslatorByRegex([
 # OPUS_PRODUCTS
 ####################################################################################################################################
 
-# Use of explicit file names means we don't need to invoke glob.glob(); this goes much faster
+# NOTE: Entries supporting versions are commented out; nncomment when OPUS is ready to support version numbers in shopping carts
+
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(COISS_[12]xxx)/(COISS_[12]...)/(data/.*)\.(IMG|LBL)', 0, [r'volumes/\1/\2/\3.IMG',
                                                                             r'volumes/\1/\2/\3.LBL',
                                                                             r'calibrated/\1/\2/\3_CALIB.IMG',
+#                                                                             r'calibrated/\1_v*/\2/\3_CALIB.IMG',
                                                                             r'calibrated/\1/\2/\3_CALIB.LBL',
+#                                                                             r'calibrated/\1_v*/\2/\3_CALIB.LBL',
                                                                             r'previews/\1/\2/\3_thumb.jpg',
                                                                             r'previews/\1/\2/\3_small.jpg',
                                                                             r'previews/\1/\2/\3_med.jpg',

@@ -68,62 +68,6 @@ FILE_TYPE_LOOKUP = (2 * [''] + 2 * ['PACKETIZED_'] + 2 * ['LOSSY_'] +   # LORRI
 
 BINNED_TYPE_LOOKUP = 6 * [False] + 6 * [True] + 18 * [False] + 6 * [True]
 
-# def nh_file_types(filenames, prefix='RAW', suffix='IMAGE'):
-#     """Given a list of LORRI or MVIC file names for the same clock count, return
-#     the associated set of unique file types.
-#     """
-# 
-#     # If there is just one filename, use the primary type
-#     primary_type = prefix + '_' + suffix
-# 
-#     if len(filenames) == 1:
-#         return [primary_type]
-# 
-#     # Sort the filenames by priority
-#     sortable_priorities = []
-#     for indx in range(len(filenames)):
-#         filename = filenames[indx]
-#         upperfile = filename.upper()
-#         k = upperfile.index('0X')
-#         code = upperfile[k:][2:5]
-#         sortable_priorities.append((FILE_TYPE_PRIORITY[code], indx))
-# 
-#     sortable_priorities.sort()
-# 
-#     # Fill in the top-priority file type
-#     (priority, indx) = sortable_priorities[0]
-#     type_of_primary = FILE_TYPE_LOOKUP[priority]
-#     primary_is_binned = BINNED_TYPE_LOOKUP[priority]
-#     types_used = [primary_type]
-#     sortable_types = [(indx, primary_type)]
-# 
-#     # Assign subsequent types based on priority
-#     for (priority, indx) in sortable_priorities[1:]:
-#         this_type = FILE_TYPE_LOOKUP[priority] + primary_type
-# 
-#         # If primary is not binned, always identify binned images
-#         is_binned = BINNED_TYPE_LOOKUP[priority]
-#         if is_binned and not primary_is_binned:
-#             this_type = 'BINNED_' + this_type
-# 
-#         # A recurrence of a prior file type is a duplicate
-#         if this_type in types_used:
-#             duplicate_type = 'DUPLICATE_' + this_type
-# 
-#             if duplicate_type in types_used:
-#                 raise ValueError('Non-unique file type ' + this_type +
-#                                  ' for ' + filenames[indx])
-# 
-#             this_type = duplicate_type
-# 
-#         types_used.append(this_type)
-#         sortable_types.append((indx, this_type))
-# 
-#     # Sort back to the original given order of filenames
-#     sortable_types.sort()
-# 
-#     return [rec[1] for rec in sortable_types]
-
 ####################################################################################################################################
 # DESCRIPTION_AND_ICON
 ####################################################################################################################################
@@ -202,46 +146,73 @@ sort_key = translator.TranslatorByRegex([
 opus_type = translator.TranslatorByRegex([
 
     # Hide calibrated previews because the raw previews are fine
-    (r'previews/NHxx.._xxxx/NH...._2xxx/.*$', 0, ''),
+    (r'previews/NHxx.._xxxx(|_v[1-9][0-9]*)/NH...._2xxx/.*$', 0, ''),
 
-    (r'volumes/NHxx.._xxxx/NH...._1.../data/.*eng\.(fit|lbl)$', 0, 'Raw Data'),
-    (r'volumes/NHxx.._xxxx/NH...._2.../data/.*sci\.(fit|lbl)$', 0, 'Calibrated Data'),
+    (r'volumes/NHxx.._xxxx(|_v[1-9][0-9]*)/NH...._1.../data/.*eng(|_[1-9])\.(fit|lbl)$', re.I, 'Raw Data'),
+    (r'volumes/NHxx.._xxxx(|_v[1-9][0-9]*)/NH...._2.../data/.*sci(|_[1-9])\.(fit|lbl)$', 0, 'Calibrated Data'),
 ])
 
 ####################################################################################################################################
 # OPUS_PRODUCTS
 ####################################################################################################################################
 
-opus_products = translator.TranslatorByRegex([
-    (r'.*volumes/(NH..LO_xxxx)/(NH..LO)_[12](...)/(.*)_(eng|sci)\.(fit|lbl)', 0, [r'volumes/\1/\2_1\3/\4_eng.fit',
-                                                                                  r'volumes/\1/\2_1\3/\4_eng.lbl',
-                                                                                  r'volumes/\1/\2_2\3/\4_sci.lbl',
-                                                                                  r'volumes/\1/\2_2\3/\4_sci.fit',
-                                                                                  r'previews/\1/\2_1\3/\4_eng_thumb.jpg',
-                                                                                  r'previews/\1/\2_1\3/\4_eng_small.jpg',
-                                                                                  r'previews/\1/\2_1\3/\4_eng_med.jpg',
-                                                                                  r'previews/\1/\2_1\3/\4_eng_full.jpg',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_jupiter_summary.lbl',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_jupiter_summary.tab',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_pluto_summary.lbl',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_pluto_summary.tab',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_charon_summary.lbl',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_charon_summary.tab',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_moon_summary.lbl',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_moon_summary.tab',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_ring_summary.lbl',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_ring_summary.tab',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_inventory.lbl',
-                                                                                  r'metadata/\1/\2_1\3/\2_1\3_inventory.tab']),
+# NOTE: Entries supporting versions are commented out; nncomment when OPUS is ready to support version numbers in shopping carts
 
-    (r'.*volumes/(NH..MV_xxxx)/(NH..MV)_[12](...)/(.*)_(eng|sci)\.(fit|lbl)', 0, [r'volumes/\1/\2_1\3/\4_eng.fit',
-                                                                                  r'volumes/\1/\2_1\3/\4_eng.lbl',
-                                                                                  r'volumes/\1/\2_2\3/\4_sci.lbl',
-                                                                                  r'volumes/\1/\2_2\3/\4_sci.lbl',
-                                                                                  r'previews/\1/\2_1\3/\4_eng_thumb.jpg',
-                                                                                  r'previews/\1/\2_1\3/\4_eng_small.jpg',
-                                                                                  r'previews/\1/\2_1\3/\4_eng_med.jpg',
-                                                                                  r'previews/\1/\2_1\3/\4_eng_full.jpg']),
+opus_products = translator.TranslatorByRegex([
+    (r'.*volumes/(NH..LO_xxxx)/(NH..LO)_[12](...)/(.*)_(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
+                                                                [r'volumes/\1/\2_1\3/\4_eng*.[fl][ib][tl]',
+#                                                                  r'volumes/\1_v*/\2_1\3/\4_eng*.[fl][ib][tl]',
+                                                                 r'volumes/\1/\2_2\3/\4_sci*.[fl][ib][tl]',
+#                                                                  r'volumes/\1_v*/\2_2\3/\4_sci*.[fl][ib][tl]',
+                                                                 r'previews/\1/\2_1\3/\4_eng*_thumb.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_eng*_small.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_eng*_med.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_eng*_full.jpg',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_jupiter_summary.lbl',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_jupiter_summary.tab',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_pluto_summary.lbl',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_pluto_summary.tab',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_charon_summary.lbl',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_charon_summary.tab',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_moon_summary.lbl',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_moon_summary.tab',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_ring_summary.lbl',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_ring_summary.tab',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_inventory.lbl',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_inventory.tab']),
+
+    # These two entries are necessary because NHxxMV_xxxx_v1/NHJUMV_1001 uses uppercase file names
+#     (r'.*volumes/(NH..MV_xxxx)/(NH..MV)_[12](...)/data/(.*)/mc(.*)_0x(...)_(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
+#                                                                 [r'volumes/\1/\2_1\3/data/\4/mc\5_0x\6_eng*.[fl][ib][tl]',
+#                                                                  r'volumes/\1_v1/\2_1\3/DATA/\4/MC\5_0X\6_ENG*.[FL][IB][TL]',
+#                                                                  r'volumes/\1_v*/\2_1\3/data/\4/mc\5_0x\6_eng*.[fl][ib][tl]',
+#                                                                  r'volumes/\1/\2_2\3/data/\4/mc\5_0x\6_sci*.[fl][ib][tl]',
+#                                                                  r'volumes/\1_v*/\2_2\3/data/\4/mc\5_0x\6_sci*.[fl][ib][tl]',
+#                                                                  r'previews/\1/\2_1\3/data/\4/mc\5_0x\6_eng*_thumb.jpg',
+#                                                                  r'previews/\1/\2_1\3/data/\4/mc\5_0x\6_eng*_small.jpg',
+#                                                                  r'previews/\1/\2_1\3/data/\4/mc\5_0x\6_eng*_med.jpg',
+#                                                                  r'previews/\1/\2_1\3/data/\4/mc\5_0x\6_eng*_full.jpg']),
+# 
+#     (r'.*volumes/(NH..MV_xxxx)/(NH..MV)_[12](...)/data/(.*)/mpf(.*)_0x(...)_(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
+#                                                                 [r'volumes/\1/\2_1\3/data/\4/mpf\5_0x\6_eng*.[fl][ib][tl]',
+#                                                                  r'volumes/\1_v1/\2_1\3/DATA/\4/MPF\5_0X\6_ENG*.[FL][IB][TL]',
+#                                                                  r'volumes/\1_v*/\2_1\3/data/\4/mpf\5_0x\6_eng*.[fl][ib][tl]',
+#                                                                  r'volumes/\1/\2_2\3/data/\4/mpf\5_0x\6_sci*.[fl][ib][tl]',
+#                                                                  r'volumes/\1_v*/\2_2\3/data/\4/mpf\5_0x\6_sci*.[fl][ib][tl]',
+#                                                                  r'previews/\1/\2_1\3/data/\4/mpf\5_0x\6_eng*_thumb.jpg',
+#                                                                  r'previews/\1/\2_1\3/data/\4/mpf\5_0x\6_eng*_small.jpg',
+#                                                                  r'previews/\1/\2_1\3/data/\4/mpf\5_0x\6_eng*_med.jpg',
+#                                                                  r'previews/\1/\2_1\3/data/\4/mpf\5_0x\6_eng*_full.jpg']),
+
+    (r'.*volumes/(NH..MV_xxxx)/(NH..MV)_[12](...)/(.*)_(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
+                                                                [r'volumes/\1/\2_1\3/\4_eng*.[fl][ib][tl]',
+#                                                                  r'volumes/\1_v*/\2_1\3/\4_eng*.[fl][ib][tl]',
+                                                                 r'volumes/\1/\2_2\3/\4_sci*.[fl][ib][tl]',
+#                                                                  r'volumes/\1_v*/\2_2\3/\4_sci*.[fl][ib][tl]',
+                                                                 r'previews/\1/\2_1\3/\4_eng*_thumb.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_eng*_small.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_eng*_med.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_eng*_full.jpg']),
 
 ])
 
@@ -251,8 +222,9 @@ opus_products = translator.TranslatorByRegex([
 
 opus_id_to_filespec = translator.TranslatorByRegex([
     # Raw and calibrated NH volumes share common OPUS IDs, where "x" replaces the leading "1" or "2" in the volume ID and
-    # "eng" or "sci" at the end of the file name is removed. The filespec returned points to the raw file.
-    (r'(NH....)_x(...)/(.*)$',              0,  r'\1_1\2/data/\3_eng.fit'),
+    # "eng" or "sci" at the end of the file name is removed. The filespec returned points to the raw file. Note that some
+    # releases of the data set have a downlink number following "eng" or "sci"; others do not.
+    (r'(NH....)_x(...)/(.*)$', 0, r'\1_1\2/data/\3_eng*.fit'),
 ])
 
 ####################################################################################################################################
@@ -261,8 +233,8 @@ opus_id_to_filespec = translator.TranslatorByRegex([
 
 filespec_to_opus_id = translator.TranslatorByRegex([
     # Raw and calibrated NH volumes (series *_1001 and *_2001) share common OPUS IDs. The OPUS ID replaces the leading
-    # "1" or "2" by "x" and removes the final "eng" or "sci".
-    (r'(NH....)_[12](...)/data/(.*)_(eng|sci).(fit|lbl)$', 0, r'\1_x\2/\3'),
+    # "1" or "2" by "x" and removes the final "eng" or "sci". It strips away a downlink number if necessary.
+    (r'(NH....)_[12](...)(|_v[1-9])/data/(.*)_(eng|sci)(|_[1-9][0-9]*).(fit|lbl)$', 0, r'\1_x\2/\4'),
 ])
 
 ####################################################################################################################################

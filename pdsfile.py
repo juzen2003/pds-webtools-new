@@ -894,32 +894,38 @@ class PdsFile(object):
             return self._childnames_filled
 
         self._childnames_filled = []
+        logical_path_lc = self.logical_path.lower()
+
         if self.isdir and self.abspath:
             self._childnames_filled = get_childnames(self.abspath)
 
         # Support for table row views as "children" of index tables
         # For the sake of efficiency, we generate all the child objects at once
-        # allow them to be cached.
-        else:
-          logical_path_lc = self.logical_path.lower()
-          if (logical_path_lc.endswith('.tab') and
+        # and allow them to be cached.
+        elif (logical_path_lc.endswith('.tab') and
               ('/index/' in logical_path_lc or
                logical_path_lc.startswith('metadata/'))):
-                table = pdstable.PdsTable(self.label_abspath)
-                table.index_rows_by_filename_key()
-                self._childnames_filled = table.filename_keys
 
-                column_names = table.get_keys()
-                for childname in self._childnames_filled:
-                    child = self.new_index_row_pdsfile(childname)
-                    child.row_dicts = table.rows_by_filename_key(childname)
-                    child.column_names = column_names
-                    child._complete(must_exist=True, caching='all')
+                try:
+                    table = pdstable.PdsTable(self.label_abspath)
+                    table.index_rows_by_filename_key()
+                    self._childnames_filled = table.filename_keys
 
-                # Cache the table too because it contains all the childnames
-                self._complete(caching='all')
-                self._recache()
-                return self._childnames_filled
+                    column_names = table.get_keys()
+                    for childname in self._childnames_filled:
+                        child = self.new_index_row_pdsfile(childname)
+                        child.row_dicts = table.rows_by_filename_key(childname)
+                        child.column_names = column_names
+                        child._complete(must_exist=True, caching='all')
+
+                    # Cache the table too because it contains all the childnames
+                    self._complete(caching='all')
+                    self._recache()
+                    return self._childnames_filled
+
+                # Not a valid index table
+                except IOError:
+                    pass
 
         self._recache()
         return self._childnames_filled
@@ -1825,7 +1831,7 @@ class PdsFile(object):
             if self.abspath:
                 CACHE.set(self.abspath, self, lifetime=lifetime)
 
-            if FILESYSTEM and not self.interior:
+            if FILESYSTEM:
                 self._update_ranks_and_vols()
 
         return self
@@ -1841,14 +1847,15 @@ class PdsFile(object):
         # returns a volset or volname PdsFile.
 
         if self.volset and not self.volname:
-            key = self.volset.lower()
+            key = self.volset
         elif self.volname and not self.volname_:
-            key = self.volname.lower()
+            key = self.volname
         elif self.volname_ and not self.interior:
-            key = self.volname.lower()
+            key = self.volname
         else:
             return
 
+        key = key.lower()
         self.permanent = True       # VOLS entries are permanent!
 
         rank_dict = CACHE['$RANKS-' + self.category_]
@@ -2446,6 +2453,17 @@ class PdsFile(object):
         logical_path = PdsFile.FILESPEC_TO_LOGICAL_PATH.first(filespec)
         if not logical_path:
             raise ValueError('Unrecognized file specification: ' + filespec)
+
+        # If the filespec contains a match pattern, search the filesystem for
+        # matches and return the first.
+        if ('*' in logical_path) or ('?' in logical_path) or \
+           ('[' in logical_path):
+            parts = logical_path.split('/')
+            volset_logical_path = '/'.join(parts[:2])
+            volset_pdsf = PdsFile.from_logical_path(volset_logical_path)
+            abspath_pattern = volset_pdsf.abspath + '/' + '/'.join(parts[2:])
+            abspaths = glob.glob(abspath_pattern)
+            return PdsFile.from_abspath(abspaths[0])
 
         return PdsFile.from_logical_path(logical_path)
 
