@@ -18,7 +18,14 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'volumes/.*/data/.*hsk_data',          re.I, ('Housekeeping data',            'DATADIR')),
     (r'volumes/.*/data/.*nav_data',          re.I, ('Geometry data',                'GEOMDIR')),
     (r'volumes/.*/data/.*uncalibr',          re.I, ('Uncalibrated data',            'DATADIR')),
-    (r'volumes/.*/extras/cube_overview/\w+', re.I, ('Browse image collection',      'BROWDIR')),
+    (r'volumes/.*/cube*/equirectangular',    re.I, ('Synthesized surface maps',     'DATADIR')),
+    (r'volumes/.*/cube*/point_perspective',  re.I, ('Synthesized images',           'DATADIR')),
+    (r'volumes/.*/cube*/ring_polar',         re.I, ('Synthesized ring maps',        'DATADIR')),
+
+    (r'volumes/.*/extras/cube_overview/equirectangular',   re.I, ('JPEGs of synthesized surface maps', 'BROWDIR')),
+    (r'volumes/.*/extras/cube_overview/point_perspective', re.I, ('JPEGs of synthesized images',       'BROWDIR')),
+    (r'volumes/.*/extras/cube_overview/ring_polar',        re.I, ('JPEGs of synthesized ring maps',    'BROWDIR')),
+
     (r'volumes/COCIRS_[56].*\.png',          re.I, ('Browse diagram',               'DIAGRAM' )),
     (r'diagrams/COCIRS_[56].*\.png',         re.I, ('Observation diagram',          'DIAGRAM' )),
     (r'volumes/COCIRS_[56].*/BROWSE',        re.I, ('Observation diagrams',         'DIAGDIR' )),

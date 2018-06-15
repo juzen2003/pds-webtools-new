@@ -221,4 +221,59 @@ class PdsFileIterator(object):
         (logical_path, basename, _) = self.next()
         return (logical_path, parent_display_path + '/' + basename, 1)
 
- ################################################################################
+################################################################################
+# PdsRowIterator
+################################################################################
+
+class PdsRowIterator(object):
+
+    def __init__(self, pdsf, sign=1):
+
+        self.parent_pdsf = pdsf.parent()
+        self.parent_logical_path_ = self.parent_pdsf.logical_path + '/'
+
+        self.sign = sign
+        self.sibnames = list(self.parent_pdsf.childnames)
+        self.sibling_index = self.sibnames.index(pdsf.basename)
+
+    def copy(self, sign=None):
+        """Return a clone of this iterator."""
+
+        if sign is None:
+            sign1 = self.sign
+        else:
+            sign1 = -1 if sign < 0 else +1
+
+        childname = self.sibnames[self.sibling_index]
+        return PdsRowIterator(self.parent_pdsf.child(childname), sign=sign1)
+
+    ############################################################################
+    # Iterator
+    ############################################################################
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        """Iterator returns (logical_path, display path, level of jump)
+
+        Level of jump is 0 for a sibling, 1 for a cousin.
+
+        Display path is the part of the path that has changed.
+            At level 0, it is basename;
+            At level 1, it is parent directory/basename;
+        """
+
+        try:
+            self.sibling_index += self.sign
+            if self.sibling_index < 0:
+                raise IndexError
+
+            sibname = self.sibnames[self.sibling_index]
+            return (self.parent_logical_path_ + sibname, sibname, 0)
+
+        # Iteration stops on indexing error
+        except IndexError:
+            raise StopIteration
+
+################################################################################
