@@ -152,6 +152,8 @@ class HSTxx_xxxx(pdsfile.PdsFile):
 
     VIEWABLES = {'default': default_viewables}
 
+    FILENAME_KEYLEN = 9     # trim off suffixes
+
 # Global attributes shared by all subclasses
 pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
 pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH = filespec_to_logical_path + pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH

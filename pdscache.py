@@ -54,8 +54,6 @@ class DictionaryCache(PdsCache):
         """Trim the dictionary if it is too big."""
 
         if len(self.keys) > self.limit + self.slop:
-            print (12345, 'trimming', len(self.keys), self.limit, self.slop)
-
             expirations = [(self.dict[k][1], k) for k in self.keys if
                             self.dict[k][0] > 0]
             expirations.sort()

@@ -1980,7 +1980,7 @@ class PdsFile(object):
         else:
             child_abspath = None
 
-        # If the parent has an absolute path, so must the child
+        # If the parent does not have an absolute path, neither does the child
         if not child_abspath:
             try:
                 pdsf = CACHE[child_logical_path]
@@ -2000,13 +2000,13 @@ class PdsFile(object):
         else:
             class_key = 'default'
 
-        # This is a copy of the parent object with internally cached values
-        # removed but all path information duplicated.
+        # "this" is a copy of the parent object with internally cached values
+        # removed but with path information duplicated.
         this = self.new_pdsfile(key=class_key, copypath=True)
 
         # Update the path for the child
         this.logical_path = child_logical_path
-        this.abspath = child_abspath
+        this.abspath = child_abspath    # might be None
         this.basename = basename
 
         if self.interior:
@@ -2066,6 +2066,7 @@ class PdsFile(object):
                 if basename not in childnames:
                     virtual_parent._childnames_filled.append(basename)
                     virtual_parent._childnames_filled.sort()
+                    CACHE.set(self.logical_path, virtual_parent, lifetime=0)
 
             return this._complete(must_exist, caching, lifetime)
 
