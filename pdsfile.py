@@ -1937,7 +1937,8 @@ class PdsFile(object):
                 # With this call, every child is permanently cached
 
             childnames_lc = [c.lower() for c in childnames]
-            test_childname_lc = os.path.splitext(basename.lower())[0]
+            test_childname_lc = os.path.basename(basename.lower())
+            test_childname_lc = os.path.splitext(test_childname_lc)[0]
             try:
                 k = childnames_lc.index(test_childname_lc)
                 logical_path = self.logical_path + '/' + childnames[k]
