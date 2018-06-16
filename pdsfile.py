@@ -218,7 +218,7 @@ def preload(holdings_list, port=0, clear=False):
     if type(holdings_list) == str:
         holdings_list = [holdings_list]
 
-    blocking_already = False
+    cleared_already = False
 
     # Use cache as requested
     if (port == 0 and MEMCACHE_PORT == 0) or not HAS_PYLIBMC:
@@ -243,7 +243,7 @@ def preload(holdings_list, port=0, clear=False):
             # Clear if necessary
             if clear and not CACHE.is_blocked():
                 CACHE.clear(block=True)
-                blocking_already = True
+                cleared_already = True
 
         except pylibmc.Error as e:
             if LOGGER:
@@ -263,18 +263,8 @@ def preload(holdings_list, port=0, clear=False):
         DEFAULT_CACHING = 'all'
 
     ############################################################################
-    # Always create and cache permanent, category-level virtual directories.
-    # These are roots of the cache tree and they are also virtual directories,
-    # meaning that their childen can be assembled from multiple physical
-    # directories.
-    ############################################################################
-
-    for category in CATEGORIES:
-        CACHE.set(category, PdsFile.new_virtual(category), lifetime=0)
-
-    ####################################
     # Recursive interior function
-    ####################################
+    ############################################################################
 
     def _preload_dir(pdsdir):
         if not pdsdir.isdir: return
@@ -309,9 +299,9 @@ def preload(holdings_list, port=0, clear=False):
             except ValueError:              # Skip out-of-place files
                 pdsdir._childnames_filled.remove(basename)
 
-    ####################################
+    ############################################################################
     # Begin active code
-    ####################################
+    ############################################################################
 
     if LOGGER:
         LOGGER.add_root(holdings_list)
@@ -334,23 +324,29 @@ def preload(holdings_list, port=0, clear=False):
         LOCAL_PRELOADED = preloaded
         return
 
-    # Block the cache before proceeding
-    if not blocking_already:
-        CACHE.block()           # Blocked means every other thread is waiting
+    # Clear and block the cache before proceeding
+    if not cleared_already:
+        CACHE.clear(block=True) # Blocked means every other thread is waiting
 
     # Indicate that the cache is preloading
     CACHE.set('$PRELOADING', True)
     CACHE.flush()
 
     # Pause the cache before proceeding--saves I/O
-    CACHE.pause()               # Paused means no changes will be flushed to the
-                                # external cache until resume() is called
+    CACHE.pause()       # Paused means no local changes will be flushed to the
+                        # external cache until resume() is called.
 
-    # With MemCache, cache everything
-    if MEMCACHE_PORT:
-        DEFAULT_CACHING = 'all'
+    ############################################################################
+    # Always create and cache permanent, category-level virtual directories.
+    # These are roots of the cache tree and they are also virtual directories,
+    # meaning that their childen can be assembled from multiple physical
+    # directories.
+    ############################################################################
 
-    try:    # undo the pause and block in the finally clause
+    for category in CATEGORIES:
+        CACHE.set(category, PdsFile.new_virtual(category), lifetime=0)
+
+    try:    # undo the pause and block in the finally clause below
 
         # Initialize RANKS, VOLS and category list
         categories = []     # order counts below!
