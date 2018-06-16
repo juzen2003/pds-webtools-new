@@ -32,6 +32,7 @@ class DictionaryCache(PdsCache):
                                 lifetime(value)
             limit           limit on the number of items in the cache. Permanent
                             objects do not count against this limit.
+            logger          PdsLogger to use, optional.
         """
 
         self.dict = {}              # returns (value, expiration) by key
@@ -54,8 +55,6 @@ class DictionaryCache(PdsCache):
         """Trim the dictionary if it is too big."""
 
         if len(self.keys) > self.limit + self.slop:
-            print (12345, 'trimming', len(self.keys), self.limit, self.slop)
-
             expirations = [(self.dict[k][1], k) for k in self.keys if
                             self.dict[k][0] > 0]
             expirations.sort()
@@ -307,6 +306,7 @@ class MemcachedCache(PdsCache):
             localtime       limits on the number of seconds an item should
                             remain in the buffer before it is flushed to the
                             memcache.
+            logger          PdsLogger to use, optional.
         """
 
         self.port = port
@@ -437,12 +437,13 @@ class MemcachedCache(PdsCache):
 
     @property
     def is_paused(self):
-        """Report on status of automatic flushing."""
+        """Report on status of automatic flushing for this thread."""
+
         return self.pause > 0
 
     def resume(self):
-        """Decrement the pause count. Flushing will resume when the count
-        returns to zero."""
+        """Decrement the pause count. Flushing of this thread will resume when
+        the count returns to zero."""
 
         if self.pauses > 0:
             self.pauses -= 1
@@ -510,6 +511,8 @@ class MemcachedCache(PdsCache):
             if block_was_logged and self.logger:
                 self.logger.info('Process %d is unblocked at ' % self.pid +
                                  'flush() on MemcacheCache [%s]' % self.port)
+
+          # Otherwise, save changes for later
           else:
             return
 

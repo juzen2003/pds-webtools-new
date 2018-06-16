@@ -218,7 +218,7 @@ def preload(holdings_list, port=0, clear=False):
     if type(holdings_list) == str:
         holdings_list = [holdings_list]
 
-    blocking_already = False
+    cleared_already = False
 
     # Use cache as requested
     if (port == 0 and MEMCACHE_PORT == 0) or not HAS_PYLIBMC:
@@ -243,7 +243,7 @@ def preload(holdings_list, port=0, clear=False):
             # Clear if necessary
             if clear and not CACHE.is_blocked():
                 CACHE.clear(block=True)
-                blocking_already = True
+                cleared_already = True
 
         except pylibmc.Error as e:
             if LOGGER:
@@ -263,18 +263,8 @@ def preload(holdings_list, port=0, clear=False):
         DEFAULT_CACHING = 'all'
 
     ############################################################################
-    # Always create and cache permanent, category-level virtual directories.
-    # These are roots of the cache tree and they are also virtual directories,
-    # meaning that their childen can be assembled from multiple physical
-    # directories.
-    ############################################################################
-
-    for category in CATEGORIES:
-        CACHE.set(category, PdsFile.new_virtual(category), lifetime=0)
-
-    ####################################
     # Recursive interior function
-    ####################################
+    ############################################################################
 
     def _preload_dir(pdsdir):
         if not pdsdir.isdir: return
@@ -309,9 +299,9 @@ def preload(holdings_list, port=0, clear=False):
             except ValueError:              # Skip out-of-place files
                 pdsdir._childnames_filled.remove(basename)
 
-    ####################################
+    ############################################################################
     # Begin active code
-    ####################################
+    ############################################################################
 
     if LOGGER:
         LOGGER.add_root(holdings_list)
@@ -334,23 +324,29 @@ def preload(holdings_list, port=0, clear=False):
         LOCAL_PRELOADED = preloaded
         return
 
-    # Block the cache before proceeding
-    if not blocking_already:
-        CACHE.block()           # Blocked means every other thread is waiting
+    # Clear and block the cache before proceeding
+    if not cleared_already:
+        CACHE.clear(block=True) # Blocked means every other thread is waiting
 
     # Indicate that the cache is preloading
     CACHE.set('$PRELOADING', True)
     CACHE.flush()
 
     # Pause the cache before proceeding--saves I/O
-    CACHE.pause()               # Paused means no changes will be flushed to the
-                                # external cache until resume() is called
+    CACHE.pause()       # Paused means no local changes will be flushed to the
+                        # external cache until resume() is called.
 
-    # With MemCache, cache everything
-    if MEMCACHE_PORT:
-        DEFAULT_CACHING = 'all'
+    ############################################################################
+    # Always create and cache permanent, category-level virtual directories.
+    # These are roots of the cache tree and they are also virtual directories,
+    # meaning that their childen can be assembled from multiple physical
+    # directories.
+    ############################################################################
 
-    try:    # undo the pause and block in the finally clause
+    for category in CATEGORIES:
+        CACHE.set(category, PdsFile.new_virtual(category), lifetime=0)
+
+    try:    # undo the pause and block in the finally clause below
 
         # Initialize RANKS, VOLS and category list
         categories = []     # order counts below!
@@ -506,6 +502,8 @@ class PdsFile(object):
     FILESPEC_TO_OPUS_ID = pdsfile_rules.FILESPEC_TO_OPUS_ID
     FILESPEC_TO_LOGICAL_PATH = pdsfile_rules.FILESPEC_TO_LOGICAL_PATH
 
+    FILENAME_KEYLEN = 0
+
     ############################################################################
     # Constructor
     ############################################################################
@@ -623,7 +621,7 @@ class PdsFile(object):
         this._split_filled          = (basename, '', '')
         this._global_anchor_filled  = basename
         this._childnames_filled     = []
-        this._info_filled           = [0, 0, 0, '', (0,0)]  #
+        this._info_filled           = [None, None, None, '', (0,0)]
         this._date_filled           = ''
         this._formatted_size_filled = ''
         this._is_viewable_filled    = False
@@ -685,7 +683,7 @@ class PdsFile(object):
         this._opus_format_filled    = ''
         this._view_options_filled   = (False, False, False)
         this._volume_info_filled    = self._volume_info
-        this._description_and_icon_filled    = ('Row view of index', 'INFO')
+        this._description_and_icon_filled    = None
         this._volume_publication_date_filled = self.volume_publication_date
         this._volume_version_id_filled       = self.volume_version_id
         this._volume_data_set_ids_filled     = self.volume_data_set_ids
@@ -887,6 +885,19 @@ class PdsFile(object):
         return self.split[2]
 
     @property
+    def is_index(self):
+        """True if this is _probably_ an index file but not cumulative."""
+
+        logical_path_lc = self.logical_path.lower()
+        if (logical_path_lc.endswith('.tab') and
+            logical_path_lc.startswith('metadata/')):
+
+            if '999' in self.volset: return False
+            return True
+
+        return False
+
+    @property
     def childnames(self):
         """A list of all the child names if this is a directory."""
 
@@ -901,31 +912,29 @@ class PdsFile(object):
 
         # Support for table row views as "children" of index tables
         # For the sake of efficiency, we generate all the child objects at once
-        # and allow them to be cached.
-        elif (logical_path_lc.endswith('.tab') and
-              ('/index/' in logical_path_lc or
-               logical_path_lc.startswith('metadata/'))):
+        # and allow them to be cached permanently.
+        if self.is_index:
+            try:
+                table = pdstable.PdsTable(self.label_abspath,
+                                          filename_keylen=self.FILENAME_KEYLEN)
+                table.index_rows_by_filename_key()
+                self._childnames_filled = table.filename_keys
 
-                try:
-                    table = pdstable.PdsTable(self.label_abspath)
-                    table.index_rows_by_filename_key()
-                    self._childnames_filled = table.filename_keys
+                column_names = table.get_keys()
+                for childname in self._childnames_filled:
+                    child = self.new_index_row_pdsfile(childname)
+                    child.row_dicts = table.rows_by_filename_key(childname)
+                    child.column_names = column_names
+                    child._complete(must_exist=True, caching='all', lifetime=0)
 
-                    column_names = table.get_keys()
-                    for childname in self._childnames_filled:
-                        child = self.new_index_row_pdsfile(childname)
-                        child.row_dicts = table.rows_by_filename_key(childname)
-                        child.column_names = column_names
-                        child._complete(must_exist=True, caching='all')
+                # Cache the table too because it contains all the childnames
+                self._complete(caching='all')
+                self._recache()
+                return self._childnames_filled
 
-                    # Cache the table too because it contains all the childnames
-                    self._complete(caching='all')
-                    self._recache()
-                    return self._childnames_filled
-
-                # Not a valid index table
-                except IOError:
-                    pass
+            # Not a valid index table
+            except (IOError, KeyError):
+                pass
 
         self._recache()
         return self._childnames_filled
@@ -1123,6 +1132,13 @@ class PdsFile(object):
                 pair = ('Previews of ' + pair[0], 'BROWDIR')
             elif self.category_ == 'metadata/' and 'metadata' not in pair[0]:
                 pair = ('Metadata for ' + pair[0], 'INDEXDIR')
+
+        elif self.row_dicts:
+            table_name = self.parent().basename
+            if len(self.row_dicts) == 1:
+                pair = ('Selected row of ' + table_name, 'INFO')
+            else:
+                pair = ('Selected rows of ' + table_name, 'INFO')
 
         else:
             pair = self.DESCRIPTION_AND_ICON.first(self.logical_path)
@@ -1913,19 +1929,30 @@ class PdsFile(object):
 
         basename_lc = basename.lower()
 
-        # For the special case of index rows, make sure everything is cached
-        # and that the basename is trimmed and has the proper case
-        if basename_lc.endswith('.tab'):
+        # Handle the special case of index rows
+        if self.is_index:
             childnames = self.childnames
+                # With this call, every child is permanently cached
+
             childnames_lc = [c.lower() for c in childnames]
-            test_childname_lc = pdstable.filename_key(basename_lc)
+            test_childname_lc = os.path.basename(basename.lower())
+            test_childname_lc = os.path.splitext(test_childname_lc)[0]
             try:
                 k = childnames_lc.index(test_childname_lc)
-                basename = childnames[k]
+                logical_path = self.logical_path + '/' + childnames[k]
+                return CACHE[logical_path]
+
             except ValueError:
-                if must_exist:
-                    raise IOError('Index row does not exist: ' +
-                                  self.logical_path + '/' + basename)
+                pass
+
+            # Maybe the key is shorter than the filename
+            for k in range(len(childnames_lc)):
+                if test_childname_lc.startswith(childnames_lc[k]):
+                    logical_path = self.logical_path + '/' + childnames[k]
+                    return CACHE[logical_path]
+
+            raise IOError('Index row does not exist: ' +
+                          self.logical_path + '/' + basename)
 
         # Fix the case if possible
         if fix_case:
@@ -1952,7 +1979,7 @@ class PdsFile(object):
         else:
             child_abspath = None
 
-        # If the parent has an absolute path, so must the child
+        # If the parent does not have an absolute path, neither does the child
         if not child_abspath:
             try:
                 pdsf = CACHE[child_logical_path]
@@ -1964,7 +1991,7 @@ class PdsFile(object):
         if self.volset:
             class_key = self.volset
         elif self.category_:
-            matchobj = VOLSET_PLUS_REGEX_I.match(basename) # used again
+            matchobj = VOLSET_PLUS_REGEX_I.match(basename)  # used again
             if matchobj is None:
                 raise ValueError('Illegal volume set directory "%s": %s' %
                                  (basename, self.logical_path))
@@ -1972,13 +1999,13 @@ class PdsFile(object):
         else:
             class_key = 'default'
 
-        # This is a copy of the parent object with internally cached values
-        # removed but all path information duplicated.
+        # "this" is a copy of the parent object with internally cached values
+        # removed but with path information duplicated.
         this = self.new_pdsfile(key=class_key, copypath=True)
 
         # Update the path for the child
         this.logical_path = child_logical_path
-        this.abspath = child_abspath
+        this.abspath = child_abspath    # might be None
         this.basename = basename
 
         if self.interior:
@@ -2038,6 +2065,7 @@ class PdsFile(object):
                 if basename not in childnames:
                     virtual_parent._childnames_filled.append(basename)
                     virtual_parent._childnames_filled.sort()
+                    CACHE.set(self.logical_path, virtual_parent, lifetime=0)
 
             return this._complete(must_exist, caching, lifetime)
 
@@ -3254,6 +3282,43 @@ class PdsFile(object):
                             logical paths
         """
 
+        def test_pattern(pattern):
+
+            # Handle an index row by separating the filepath from the suffix
+            if '.tab/' in pattern:
+                parts = pattern.partition('.tab')
+                pattern = parts[0] + parts[1]
+                suffix = parts[2]
+            else:
+                suffix = ''
+
+            # Find the file(s) that match the pattern
+            if must_exist or ('*' in pattern or
+                              '?' in pattern or
+                              '[' in pattern):
+                test_abspaths = glob.glob(pattern)
+            else:
+                test_abspaths = [pattern]
+
+            # Without a suffix, we're done
+            if not suffix:
+                return test_abspaths
+
+            # With a suffix, make sure it matches a row of the index
+            filtered_abspaths = []
+            for abspath in test_abspaths:
+                pdsf = PdsFile.from_abspath(abspath)
+                try:
+                    row = pdsf.child(suffix[1:])
+                    if row.exists:
+                        filtered_abspaths.append(row.abspath)
+                except Exception:
+                    pass
+
+            return filtered_abspaths
+
+        # Begin active code...
+
         category = category.strip('/')
 
         # Handle checksums by finding associated files in subcategory
@@ -3340,14 +3405,8 @@ class PdsFile(object):
 
             patterns = self.ASSOCIATIONS_TO_VOLUMES.all(self.logical_path)
             patterns = [self.root_ + p for p in patterns]
-
             for pattern in patterns:
-                if must_exist or ('*' in pattern or
-                                  '?' in pattern or
-                                  '[' in pattern):
-                    abspaths += glob.glob(pattern)
-                else:
-                    abspaths += [pattern]
+                abspaths += test_pattern(pattern)
 
             # Translate to additional volumes files if necessary
             if not primary:
@@ -3355,14 +3414,8 @@ class PdsFile(object):
                 trans = self.VOLUMES_TO_ASSOCIATIONS['volumes']
                 patterns = trans.all(logical_paths)
                 patterns = [self.root_ + p for p in patterns]
-
                 for pattern in patterns:
-                    if must_exist or ('*' in pattern or
-                                      '?' in pattern or
-                                      '[' in pattern):
-                        abspaths += glob.glob(pattern)
-                    else:
-                        abspaths += [pattern]
+                    abspaths += test_pattern(pattern)
 
                 # Add the linked abspaths to the set of matches
                 if self.islabel:
@@ -3385,12 +3438,7 @@ class PdsFile(object):
 
         abspaths = []
         for pattern in patterns:
-            if must_exist or ('*' in pattern or
-                              '?' in pattern or
-                              '[' in pattern):
-                abspaths += glob.glob(pattern)
-            else:
-                abspaths += [pattern]
+            abspaths += test_pattern(pattern)
 
         # Without checksums- or archives-, we're done
         if voltype == category:
