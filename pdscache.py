@@ -261,7 +261,7 @@ class DictionaryCache(PdsCache):
 
         return status
 
-    def clear(self, ok=True):
+    def clear(self, block=False):
         """Clear all concents of the cache."""
 
         self.dict.clear()
@@ -403,14 +403,14 @@ class MemcachedCache(PdsCache):
                                  'MemcachedCache [%s]; ' % self.port +
                                  'Cache is blocked by process %d' % test_pid)
                 return
-    
+
         if flush:
             self.flush()
 
         if self.logger:
             self.logger.info('Process %d removed block of ' % self.pid +
                              'MemcachedCache [%s] ' % self.port)
-                             
+
 
         self.mc.set('$OK_PID', 0, time=0)
 
