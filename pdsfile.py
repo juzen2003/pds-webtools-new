@@ -1178,6 +1178,8 @@ class PdsFile(object):
 
         if self._opus_id_filled is None:
             with_slashes = self.FILESPEC_TO_OPUS_ID.first(self.filespec)
+            if with_slashes is None:
+                return None
             self._opus_id_filled = with_slashes.replace('-', '--').replace('/',
                                                                            '-')
             self._recache()
