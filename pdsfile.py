@@ -445,13 +445,13 @@ def load_volume_info(holdings):
     Blank records and those beginning with "#" are ignored.
     """
 
-    volinfo_path = os.path.join(os.path.split(holdings)[0], 'volinfo')
+    volinfo_path = _clean_join(os.path.split(holdings)[0], 'volinfo')
 
     children = os.listdir(volinfo_path)
     for child in children:
         if not child.endswith('.tab'): continue
 
-        table_path = os.path.join(volinfo_path, child)
+        table_path = _clean_join(volinfo_path, child)
         with open(table_path) as f:
             recs = f.readlines()
 
@@ -475,6 +475,9 @@ def load_volume_info(holdings):
 ################################################################################
 # PdsFile class
 ################################################################################
+
+def _clean_join(a, b):
+    return os.path.join(a,b).replace('\\', '/')
 
 class PdsFile(object):
 
@@ -1967,11 +1970,11 @@ class PdsFile(object):
                           self.logical_path + '/' + basename)
 
         # Look up by abspath or by logical path depending on parent
-        child_logical_path = os.path.join(self.logical_path, basename)
+        child_logical_path = _clean_join(self.logical_path, basename)
         child_logical_path.rstrip('/')      # could happen at root level
 
         if self.abspath:
-            child_abspath = os.path.join(self.abspath, basename)
+            child_abspath = _clean_join(self.abspath, basename)
             try:
                 return CACHE[child_abspath]
             except KeyError:
@@ -2009,7 +2012,7 @@ class PdsFile(object):
         this.basename = basename
 
         if self.interior:
-            this.interior = os.path.join(self.interior, basename)
+            this.interior = _clean_join(self.interior, basename)
             return this._complete(must_exist, caching, lifetime)
 
         if self.volname_:
@@ -3085,10 +3088,10 @@ class PdsFile(object):
                 parts[2:] = [self.basename_is_label(basename)] + parts[2:]
 
             if dirs_first and parent_abspath:
-                abspath = os.path.join(parent_abspath, basename)
+                abspath = _clean_join(parent_abspath, basename)
                 parts = [not os.path.isdir(abspath)] + parts
             elif dirs_last and parent_abspath:
-                abspath = os.path.join(parent_abspath, basename)
+                abspath = _clean_join(parent_abspath, basename)
                 parts = [os.path.isdir(abspath)] + parts
 
             if info_first:
@@ -3235,7 +3238,7 @@ class PdsFile(object):
     def abspaths_for_basenames(self, basenames, must_exist=False):
         # shortcut
         if self.abspath and not must_exist:
-            return [os.path.join(self.abspath, b) for b in basenames]
+            return [_clean_join(self.abspath, b) for b in basenames]
 
         pdsfiles = self.pdsfiles_for_basenames(basenames, must_exist=must_exist)
         return [pdsf.abspath for pdsf in pdsfiles]
@@ -3243,7 +3246,7 @@ class PdsFile(object):
     def logicals_for_basenames(self, basenames, must_exist=False):
         # shortcut
         if not must_exist:
-            return [os.path.join(self.logical_path, b) for b in basenames]
+            return [_clean_join(self.logical_path, b) for b in basenames]
 
         pdsfiles = self.pdsfiles_for_basenames(basenames, must_exist=must_exist)
         return [pdsf.logical_path for pdsf in pdsfiles]
