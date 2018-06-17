@@ -409,14 +409,14 @@ class MemcachedCache(PdsCache):
                                  'MemcachedCache [%s]; ' % self.port +
                                  'Cache is blocked by process %d' % test_pid)
                 return
-    
+
         if flush:
             self.flush()
 
         if self.logger:
             self.logger.info('Process %d removed block of ' % self.pid +
                              'MemcachedCache [%s] ' % self.port)
-                             
+
 
         self.mc.set('$OK_PID', 0, time=0)
 
