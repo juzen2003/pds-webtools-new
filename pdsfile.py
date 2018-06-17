@@ -1324,7 +1324,7 @@ class PdsFile(object):
             self._label_basename_filled = ''
 
         # otherwise, tuple means not found
-        elif self.is_label:
+        elif self.islabel:
             self._label_basename_filled = ''
 
         else:
