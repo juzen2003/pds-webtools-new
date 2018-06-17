@@ -261,20 +261,22 @@ class DictionaryCache(PdsCache):
 
         return status
 
-    def clear(self, ok=True):
+    def clear(self, block=False):
         """Clear all concents of the cache."""
 
         self.dict.clear()
         self.keys = set()
 
     def replicate_clear(self, clear_count):
-        """Clear the local cache if the MemCache if clear_count was incremented.
+        """Clear the local cache if clear_count was incremented.
+
+        Return True if cache was cleared; False otherwise.
         """
 
         return False
 
     def replicate_clear_if_necessary(self):
-        """Clear the local cache onlu if MemCache was cleared."""
+        """Clear the local cache only if MemCache was cleared."""
 
         return
 
@@ -300,7 +302,7 @@ class MemcachedCache(PdsCache):
             lifetime        default lifetime in seconds; 0 for no expiration.
                             Can be a constant or a function; if the latter, then
                             the default lifetime must be returned by
-                                lifetime[self]
+                                lifetime(self)
             localsize       number of items to accumulate in a buffer before it
                             is flushed to the memcache.
             localtime       limits on the number of seconds an item should
@@ -317,8 +319,8 @@ class MemcachedCache(PdsCache):
             self.mc = pylibmc.Client(['127.0.0.1:%d' % port], binary=True)
 
         self.local_value_by_key = {}
-        self.local_keys_by_time = {}
-        self.local_time_by_key = {}
+        self.local_keys_by_lifetime = {}
+        self.local_lifetime_by_key = {}
 
         if type(lifetime).__name__ == 'function':
             self.lifetime_func = lifetime
@@ -331,6 +333,10 @@ class MemcachedCache(PdsCache):
         self.localtime = localtime
         self.flushtime = 0.
         self.pauses = 0
+
+        self.permanent_values = {}      # For all values with lifetime == 0.
+                                        # Needed because Memcache might allow
+                                        # a permanent value to expire
 
         self.logger = logger
 
@@ -354,7 +360,7 @@ class MemcachedCache(PdsCache):
         self.clear_count = self.mc.get('$CLEAR_COUNT')
         if self.clear_count is None:
             self.clear_count = 0
-            self.mc.set('$CLEAR_COUNT', 0)
+            self.mc.set('$CLEAR_COUNT', 0, time=0)
 
     MIN_POS_LONG = 2**63
     MAX_NEG_LONG = -1 - 2**63
@@ -519,12 +525,17 @@ class MemcachedCache(PdsCache):
         if self.replicate_clear_if_necessary():
             return
 
+        # Save non-expiring values to the permanent dictionary
+        if 0 in self.local_keys_by_lifetime:
+            for k in self.local_keys_by_lifetime[0]:
+                self.permanent_values[k] = self.local_value_by_key[k]
+
         # Cache items grouped by lifetime
-        for lifetime in self.local_keys_by_time:
+        for lifetime in self.local_keys_by_lifetime:
 
             # Save tuples (value, lifetime)
-            mydict = {k:(self.local_value_by_key[k],lifetime) for
-                                        k in self.local_keys_by_time[lifetime]}
+            mydict = {k:(self.local_value_by_key[k], lifetime) for
+                                    k in self.local_keys_by_lifetime[lifetime]}
 
             # Update to memcache
             failures = []
@@ -552,7 +563,7 @@ class MemcachedCache(PdsCache):
                 failures += keys
 
         if self.logger:
-            count = len(self.local_keys_by_time) - len(failures)
+            count = len(self.local_keys_by_lifetime) - len(failures)
             if count == 1:
                 noun = 'item'
             else:
@@ -572,9 +583,9 @@ class MemcachedCache(PdsCache):
                                  'MemcachedCache [%s]' % self.port)
 
         # Clear internal dictionaries
-        self.local_time_by_key.clear()
+        self.local_lifetime_by_key.clear()
         self.local_value_by_key.clear()
-        self.local_keys_by_time.clear()
+        self.local_keys_by_lifetime.clear()
 
     def _flush_if_necessary(self):
         if self.pauses > 0: return
@@ -614,8 +625,20 @@ class MemcachedCache(PdsCache):
 
         # Return value from memcache if found
         if key in mydict:
-            result = mydict[key]
-            return MemcachedCache.undo_long(result[0])
+            (value, lifetime) = mydict[key]
+            value = MemcachedCache.undo_long(value)
+
+            # Save permanent values in local dictionary
+            if lifetime == 0:
+                self.permanent_values[key] = value
+
+            return value
+
+        # Check the permanent dictionary in case it was deleted from Memcache
+        if key in self.permanent_values:
+            value = self.permanent_values[key]
+            self.set_local(key, value, lifetime=0)  # restore to cache at flush
+            return value
 
         return None
 
@@ -661,8 +684,22 @@ class MemcachedCache(PdsCache):
                                  'get_multi() on ' +
                                  'MemcacheCache [%s]' % self.port)
 
-            for (key,tuple) in mydict.iteritems():
-                mydict[key] = MemcachedCache.undo_longs(tuple[0])
+            for (key, tuple) in mydict.iteritems():
+                (value, lifetime) = tuple
+                value = MemcachedCache.undo_long(value)
+                mydict[key] = value
+
+                # Save permanent values in local dictionary
+                if lifetime == 0:
+                    self.permanent_values[key] = value
+
+            # Restore any permanent values missing from Memcache
+            for key in nonlocal_keys:
+                if key in self.permanent_value:
+                    mydict[key] = self.permanent_values[key]
+                    self.set_local(key, mydict[key], lifetime=0)
+                        # restore to cache at next flush
+
         else:
             mydict = {}
 
@@ -684,7 +721,11 @@ class MemcachedCache(PdsCache):
     def get_now(self, key):
         """Return the non-local value associated with a key, even if blocked."""
 
-        return self.mc.get(key)
+        result = self.mc.get(key)
+        if result is None: return None
+
+        (value, lifetime) = result
+        return value
 
     ######## Set methods
 
@@ -692,7 +733,7 @@ class MemcachedCache(PdsCache):
         """Set a single value. Preserve a previously-defined lifetime (and reset
         the clock) if lifetime is None."""
 
-        if (lifetime is None) and (key not in self.local_time_by_key):
+        if (lifetime is None) and (key not in self.local_lifetime_by_key):
             try:
                 (_, lifetime) = self.mc[key]
             except KeyError:
@@ -723,7 +764,7 @@ class MemcachedCache(PdsCache):
                 nonlocal_dict = self.mc.get_multi(nonlocal_keys)
                 for (key, tuple) in nonlocal_dict:
                     lifetime = tuple[1]
-                    self.local_time_by_key[key] = lifetime
+                    self.local_lifetime_by_key[key] = lifetime
 
         # Save or update values in local cache
         for (key, value) in mydict.iteritems():
@@ -749,7 +790,7 @@ class MemcachedCache(PdsCache):
         # Determine the lifetime
         if lifetime is None:
             try:
-                lifetime = self.local_time_by_key[key]
+                lifetime = self.local_lifetime_by_key[key]
             except KeyError:
                 if self.lifetime:
                     lifetime = self.lifetime
@@ -758,27 +799,27 @@ class MemcachedCache(PdsCache):
 
         # Remove an outdated key from the lifetime-to-keys dictionary
         try:
-            prev_lifetime = self.local_time_by_key[key]
+            prev_lifetime = self.local_lifetime_by_key[key]
             if prev_lifetime != lifetime:
-                self.local_keys_by_time[prev_lifetime].remove(key)
-                if len(self.local_keys_by_time[prev_lifetime]) == 0:
-                    del self.local_keys_by_time[prev_lifetime]
+                self.local_keys_by_lifetime[prev_lifetime].remove(key)
+                if len(self.local_keys_by_lifetime[prev_lifetime]) == 0:
+                    del self.local_keys_by_lifetime[prev_lifetime]
         except (KeyError, ValueError):
             pass
 
         # Insert the key into the lifetime-to-keys dictionary
-        if lifetime not in self.local_keys_by_time:
-            self.local_keys_by_time[lifetime] = [key]
-        elif key not in self.local_keys_by_time[lifetime]:
-            self.local_keys_by_time[lifetime].append(key)
+        if lifetime not in self.local_keys_by_lifetime:
+            self.local_keys_by_lifetime[lifetime] = [key]
+        elif key not in self.local_keys_by_lifetime[lifetime]:
+            self.local_keys_by_lifetime[lifetime].append(key)
 
         # Insert the key into the key-to-lifetime dictionary
-        self.local_time_by_key[key] = lifetime
+        self.local_lifetime_by_key[key] = lifetime
 
     ######## Delete methods
 
     def delete(self, key):
-        """Delete one key. Return true if it was deleted, false otherwise."""
+        """Delete one key. Return True if it was deleted, False otherwise."""
 
         block_was_logged = False
         while self.is_blocked():
@@ -794,6 +835,10 @@ class MemcachedCache(PdsCache):
 
         status1 = self.mc.delete(key)
         status2 = self._delete_local(key)
+
+        if key in self.permanent_values:
+            del self.permanent_values[key]
+
         return status1 or status2
 
     def __delitem__(self, key):
@@ -830,9 +875,12 @@ class MemcachedCache(PdsCache):
         # Save the current length
         prev_len = len(self)
 
-        # Delete whatever we can from the local cache
+        # Delete whatever we can from the local cache and  permanent dictionary
         for key in keys:
             _ = self._del_local(key)
+
+            if key in self.permanent_values:
+                del self.permanent_values[key]
 
         count = len(self) - prev_len
         return (count == len(keys))
@@ -841,15 +889,15 @@ class MemcachedCache(PdsCache):
         """Delete a single key from the local cache, if present. The nonlocal
         cache is not checked. Return True if deleted, False otherwise."""
 
-        if key in self.local_time_by_key:
+        if key in self.local_lifetime_by_key:
             del self.local_value_by_key[key]
 
-            lifetime = self.local_time_by_key[key]
-            self.local_keys_by_time[lifetime].remove(key)
-            if len(self.local_keys_by_time[lifetime]) == 0:
-                del self.local_keys_by_time[lifetime]
+            lifetime = self.local_lifetime_by_key[key]
+            self.local_keys_by_lifetime[lifetime].remove(key)
+            if len(self.local_keys_by_lifetime[lifetime]) == 0:
+                del self.local_keys_by_lifetime[lifetime]
 
-            del self.local_time_by_key[key]
+            del self.local_lifetime_by_key[key]
 
             return True
 
@@ -878,9 +926,10 @@ class MemcachedCache(PdsCache):
                            '$CLEAR_COUNT': clear_count}, time=0)
 
         self.local_value_by_key.clear()
-        self.local_keys_by_time.clear()
-        self.local_time_by_key.clear()
+        self.local_keys_by_lifetime.clear()
+        self.local_lifetime_by_key.clear()
         self.clear_count = clear_count
+        self.permanent_values.clear()
 
         if self.logger:
           self.logger.info('Process %d ' % self.pid +
@@ -901,7 +950,7 @@ class MemcachedCache(PdsCache):
                                'MemcacheCache [%s]' % self.port)
 
     def replicate_clear(self, clear_count):
-        """Clear the local cache if the MemCache if clear_count was incremented.
+        """Clear the local cache if clear_count was incremented.
 
         Return True if cache was cleared; False otherwise.
         """
@@ -909,8 +958,8 @@ class MemcachedCache(PdsCache):
         if clear_count == self.clear_count: return False
 
         self.local_value_by_key.clear()
-        self.local_keys_by_time.clear()
-        self.local_time_by_key.clear()
+        self.local_keys_by_lifetime.clear()
+        self.local_lifetime_by_key.clear()
         self.clear_count = clear_count
 
         if self.logger:
@@ -919,7 +968,7 @@ class MemcachedCache(PdsCache):
         return True
 
     def replicate_clear_if_necessary(self):
-        """Clear the local cache onlu if MemCache was cleared."""
+        """Clear the local cache only if MemCache was cleared."""
 
         clear_count = self.mc.get('$CLEAR_COUNT')
         self.replicate_clear(clear_count)
