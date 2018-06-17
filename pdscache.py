@@ -417,7 +417,6 @@ class MemcachedCache(PdsCache):
             self.logger.info('Process %d removed block of ' % self.pid +
                              'MemcachedCache [%s] ' % self.port)
 
-
         self.mc.set('$OK_PID', 0, time=0)
 
     def is_blocked(self):
