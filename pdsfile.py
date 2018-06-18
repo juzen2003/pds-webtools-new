@@ -798,7 +798,7 @@ class PdsFile(object):
         """The absolute path if this has one; otherwise the logical path."""
 
         if self.abspath:
-            return abspath
+            return self.abspath
         else:
             return self.logical_path
 
