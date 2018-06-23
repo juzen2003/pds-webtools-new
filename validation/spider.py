@@ -117,7 +117,7 @@ def random_tree_search(viewmaster_, start, regex, logger, handler=None,
         full_url = random.choice(full_urls[key])
 
         # Progress info for log files
-        progress = '%3d/%-4s' % (len(checked) + 1, len(full_urls))
+        progress = '%3d/%-4s' % (len(checked), len(full_urls))
 
         # Log an invalid URL
         if (' ' in full_url or '<' in full_url or '>' in full_url):

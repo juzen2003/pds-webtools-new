@@ -11,6 +11,7 @@
 import sys
 import os
 import shelve
+import pickle
 import shutil
 import glob
 import datetime
@@ -166,15 +167,22 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
         (shelf_path, lskip) = pdsdir.shelf_path_and_lskip(id='info')
         logger.info('Shelf file', shelf_path)
 
-        # Write the shelf
+        # Write the shelf and the pickle file
         shelf = shelve.open(shelf_path, flag='n')
 
+        pickle_dict = {}
         for (key, values) in infodict.iteritems():
-            shelf[key[lskip:]] = values
+            short_key = key[lskip:]
+            shelf[short_key] = values
+            pickle_dict[short_key] = values
 
         shelf.close()
 
-    except (Exception, KeyboardInterrupt), e:
+        pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(pickle_dict, f)
+
+    except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
         raise
 
@@ -191,7 +199,7 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
         len_path -= lskip
 
         # Write the python dictionary version
-        python_path = shelf_path[:-5] + 'py'
+        python_path = shelf_path.rpartition('.')[0] + '.py'
         name = os.path.basename(python_path)
         parts = name.split('_')
         name = '_'.join(parts[:2]) + '_info'
@@ -363,8 +371,8 @@ def move_old_info(shelf_file, logger=None):
 
         logger.info('Info shelf file moved to', dest)
 
-        python_file = shelf_file[:-5] + 'py'
-        dest = dest[:-5] + 'py'
+        python_file = shelf_file.rpartition('.')[0] + '.py'
+        dest = dest.rpartition('.')[0] + '.py'
         shutil.copy(python_file, dest)
 
 ################################################################################

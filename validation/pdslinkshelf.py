@@ -11,6 +11,7 @@
 import sys
 import os
 import shelve
+import pickle
 import shutil
 import glob
 import re
@@ -29,7 +30,7 @@ LOGDIRS = []
 REPAIRS = translator.TranslatorByRegex([
     ('.*/COCIRS_[01].*/DATAINFO.TXT', 0,
         {'DIAG.FMT'         : 'DATA/UNCALIBR/DIAG.FMT',
-         'FRV.FMT'          : 'DATA/NAV_DATA/FRV.FMT',
+         'FRV.FMT'          : 'DATA/UNCALIBR/FRV.FMT',
          'GEO.FMT'          : 'DATA/NAV_DATA/GEO.FMT',
          'HSK.FMT'          : 'DATA/HSK_DATA/HSK.FMT',
          'IFGM.FMT'         : 'DATA/UNCALIBR/IFGM.FMT',
@@ -121,6 +122,8 @@ REPAIRS = translator.TranslatorByRegex([
 
 ################################################################################
 
+EXTS_WO_LABELS = set(['.LBL', '.CAT', '.TXT', '.FMT', '.SFD'])
+
 def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
     """Generate a dictionary keyed by the absolute file path for files in the
     given directory tree, which must correspond to a volume.
@@ -178,16 +181,17 @@ def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
             # If necessary, search the file for links
             for abspath in abspaths:
                 ext = abspath[-4:].upper()
-                if ext not in ('.LBL', '.CAT', '.TXT', '.SFD'): continue
+                if ext not in EXTS_WO_LABELS: continue
                 islabel = (ext == '.LBL')
 
                 tuples = read_links(abspath, files, logger=logger)
 
                 # Identify all files that might be labeled by this file
-                if ext == '.LBL':
+                if islabel:
                     for tuple in tuples:
-                        if len(tuple) == 3:     # if target is in same directory
-                            link_dict[tuple[-1]] = abspath
+                        if (len(tuple) == 3 and
+                            tuple[1][-4:].upper() not in EXTS_WO_LABELS):
+                                link_dict[tuple[-1]] = abspath
 
                 # Save the list of linked and labeled files
                 link_dict[abspath] = tuples
@@ -235,14 +239,16 @@ def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
 LINK_REGEX = re.compile('\w[-A-Z0-9_]+\.[A-Z](?!\w{4})\w{0,3}', re.I)
 
 def read_links(abspath, basenames, logger=None):
-    """Return a list of tuples (recno, basename, [abspath]) linked or labeled
+    """Return a list of tuples (recno, basename[, abspath]) linked or labeled
     by this file.
 
     basenames is a list of all the base filenames in the same directory. This is
     used to associate files with their labels.
 
-    abspath is present if it is found among the basenames. Otherwise, the tuple
-    just contains (recno, basename).
+    abspath points to the target of the link. It is present if it was found
+    among the target's name was basenames or else if it was filled in via a
+    repair rule. Otherwise, the tuple just contains (recno, basename) and
+    another attempt will be made to fill in the path to the target.
     """
 
     if logger is None:
@@ -303,7 +309,9 @@ def read_links(abspath, basenames, logger=None):
     return links
 
 def locate_link(abspath, filename):
-    """Return the absolute path associated with a PDS link file."""
+    """Return the absolute path associated with a link in a PDS file. This is
+    done by searching up the tree and also by looking inside the LABEL,
+    CATALOG and INCLUDE directories if they exist."""
 
     filename_upper = filename.upper()
 
@@ -374,6 +382,11 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
 
         shelf.close()
 
+        # Write the pickle file
+        pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
+        with open(shelf_path, 'wb') as f:
+            pickle.dump(interior_dict, f)
+
     except (Exception, KeyboardInterrupt), e:
         logger.exception(e)
         raise
@@ -396,7 +409,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
         len_key = min(len_key, 60)
 
         # Write the python dictionary version
-        python_path = shelf_path[:-5] + 'py'
+        python_path = shelf_path.rpartition('.')[0] + '.py'
         name = os.path.basename(python_path)
         parts = name.split('_')
         name = '_'.join(parts[:2]) + '_links'
@@ -584,8 +597,8 @@ def move_old_links(shelf_file, logger=None):
 
         logger.info('Link shelf file moved to ' + dest)
 
-        python_file = shelf_file[:-5] + 'py'
-        dest = dest[:-5] + 'py'
+        python_file = shelf_file.rpartition('.')[0] + '.py'
+        dest = dest.rpartition('.')[0] + '.py'
         shutil.copy(python_file, dest)
 
 ################################################################################

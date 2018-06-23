@@ -575,7 +575,7 @@ if __name__ == '__main__':
         # Convert to a list of absolute paths that exist
         path = os.path.abspath(path)
         try:
-            pdsf = pdsfile.PdsFile.from_abspath(path, exists=True)
+            pdsf = pdsfile.PdsFile.from_abspath(path, must_exist=True)
             abspaths.append(pdsf.abspath)
 
         except (ValueError, IOError):
