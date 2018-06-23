@@ -340,7 +340,12 @@ def preload(holdings_list, port=0, clear=False):
 
     if already_loaded:
         LOCAL_PRELOADED = preloaded
-        if MEMCACHE_PORT: get_permanent_values()
+
+        if MEMCACHE_PORT:
+            get_permanent_values(holdings_list, MEMCACHE_PORT)
+            # Note that if any permanent values are missing, this call will
+            # recursively clear the cache and preload again.
+
         return
 
     # Clear and block the cache before proceeding
@@ -449,6 +454,35 @@ def block_cache():
 def unblock_cache():
     CACHE.unblock()
 
+def get_permanent_values(holdings_list, port):
+    """Load the most obvious set of permanent values from the cache to ensure
+    we have local copies."""
+
+    try:
+        for category in CATEGORIES:
+            _ = CACHE['$RANKS-' + category + '/']
+            _ = CACHE['$VOLS-'  + category + '/']
+            pdsf0 = CACHE[category]
+
+            for volset in pdsf0.childnames:
+                pdsf1 = CACHE[category + '/' + volset]
+                pdsf1a = CACHE[pdsf1.abspath]
+
+                for volname in pdsf1.childnames:
+                    pdsf2 = CACHE[pdsf1.logical_path + '/' + volname]
+                    pdsf2a = CACHE[pdsf2.abspath]
+
+    except KeyError as e:
+        if LOGGER:
+            LOGGER.warn('Permanent value "%s" missing from Memcache; '
+                        'preloading again')
+        preload(holdings_list, port, clear=True)
+
+    else:
+        if LOGGER:
+            LOGGER.info('Permanent values retrieved from Memcache',
+                        str(len(CACHE.permanent_values)))
+
 def load_volume_info(holdings):
     """Load volume info associated with this holdings directory.
 
@@ -490,27 +524,6 @@ def load_volume_info(holdings):
 
     if LOGGER:
         LOGGER.info('Volume info loaded', volinfo_path)
-
-def get_permanent_values():
-    """Load the most obvious set of permanent values from the cache to ensure
-    we have local copies."""
-
-    for category in CATEGORIES:
-        _ = CACHE.get('$RANKS-' + category + '/')
-        _ = CACHE.get('$VOLS-'  + category + '/')
-        pdsf0 = CACHE.get(category)
-
-        for volset in pdsf0.childnames:
-            pdsf1 = CACHE.get(category + '/' + volset)
-            pdsf1a = CACHE.get(pdsf1.abspath)
-
-            for volname in pdsf1.childnames:
-                pdsf2 = CACHE.get(pdsf1.logical_path + '/' + volname)
-                pdsf2a = CACHE.get(pdsf2.abspath)
-
-    if LOGGER:
-        LOGGER.info('Permanent values retrieved from Memcache',
-                    str(len(CACHE.permanent_values)))
 
 ################################################################################
 # PdsFile class
@@ -1002,7 +1015,6 @@ class PdsFile(object):
             # Cache the table too because it contains all the childnames
             self._complete(caching='all', lifetime=0)
             self._recache()
-            return self._childnames_filled
 
         finally:
             CACHE.resume()
