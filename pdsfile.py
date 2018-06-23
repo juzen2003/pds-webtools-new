@@ -962,8 +962,12 @@ class PdsFile(object):
         self._recache()
         return self._childnames_filled
 
-    def cache_child_row_dicts(self):
-        """Cache all the rows of a index file as row dictionaries."""
+    def cache_child_row_dicts(self, selection=None):
+        """Fill in the child names and cache all the rows of a index file as
+        row dictionaries.
+
+        If a row selection is specified, return the PdsFile for that row.
+        """
 
         CACHE.pause()       # wait till all the changes are ready
         try:
@@ -974,6 +978,9 @@ class PdsFile(object):
         except (IOError, KeyError):
             PdsFile.LAST_EXC_INFO = sys.exc_info()
             self._childnames_filled = []
+            if selection:
+                raise IOError('Rows unavailable; not an index file: ' +
+                              self.logical_path + '/' + selection)
             return
 
         # Otherwise generate and cache all child objects
@@ -983,12 +990,14 @@ class PdsFile(object):
             self._childnames_filled = table.filename_keys
 
             column_names = table.get_keys()
+            children = []
             for childname in self._childnames_filled:
                 child = self.new_index_row_pdsfile(childname)
                 child.row_dicts = table.rows_by_filename_key(childname)
                 child.column_names = column_names
                 child._complete(must_exist=True, caching='all',
                                 lifetime=3*86400)   # cache for 3 days
+                children.append(child)
 
             # Cache the table too because it contains all the childnames
             self._complete(caching='all', lifetime=0)
@@ -997,6 +1006,49 @@ class PdsFile(object):
 
         finally:
             CACHE.resume()
+
+        if selection:
+            row_index = self.find_selected_row_index(selection)
+            return children[row_index]
+        else:
+            return
+
+    def find_selected_row_index(self, selection):
+        """Return the index of this selection among the rows of an index."""
+
+        # Try the most obvious answer
+        try:
+            return self.childnames.index(selection)
+        except ValueError:
+            pass
+
+        # Clean up selection and search in lower case
+        selection_lc = selection.lower()
+        selection_lc = selection_lc.rstrip('/')
+        selection_lc = os.path.basename(selection_lc)
+        selection_lc = os.path.splitext(test_childname_lc)[0]
+
+        childnames = self.childnames
+        childnames_lc = [c.lower() for c in childnames]
+
+        # Find the index of this selection among the rows
+        child_index = None
+        try:
+            child_index = childnames_lc.index(test_childname_lc)
+
+        except ValueError:  # If the test childname is not in the list
+
+            # Maybe the key is shorter than the filename
+            for k in range(len(childnames_lc)):
+                if childnames_lc[k] in selection_lc:
+                    child_index = k
+                    break
+
+        if child_index is None:
+            raise IOError('Index row does not exist: ' +
+                          self.logical_path + '/' + basename)
+
+        return child_index
 
     @property
     def parent_logical_path(self):
@@ -2032,32 +2084,22 @@ class PdsFile(object):
 
         # Handle the special case of index rows
         if self.is_index:
-            childnames = self.childnames
-            childnames_lc = [c.lower() for c in childnames]
-            test_childname_lc = os.path.basename(basename.lower())
-            test_childname_lc = os.path.splitext(test_childname_lc)[0]
-            try:
-                k = childnames_lc.index(test_childname_lc)
+            childnames = self.childnames    # This will cache the children if
+                                            # this is the first time called.
+            child_index = self.find_selected_row_index(basename)
 
-            except ValueError:  # If the test childname is not in the list
+            # Determine the new logical path
+            logical_path = self.logical_path + '/' + childnames[child_index]
+
+            # Check the cache
+            try:
+                return CACHE[logical_path]
+            except KeyError:
                 pass
 
-            else:
-                logical_path = self.logical_path + '/' + childnames[k]
-                try:
-                    return CACHE[logical_path]
-                except KeyError:    # happens if the row was removed from cache
-                    self.cache_child_row_dicts()
-                    return CACHE[logical_path]
-
-            # Maybe the key is shorter than the filename
-            for k in range(len(childnames_lc)):
-                if test_childname_lc.startswith(childnames_lc[k]):
-                    logical_path = self.logical_path + '/' + childnames[k]
-                    return CACHE[logical_path]
-
-            raise IOError('Index row does not exist: ' +
-                          self.logical_path + '/' + basename)
+            # Maybe this child has been removed from the cache. If so, restore
+            # the cache and return the selection
+            return self.cache_child_row_dicts(selection=basename)
 
         # Fix the case if possible
         if fix_case:
@@ -3291,8 +3333,6 @@ class PdsFile(object):
         # Sort the value for each key (recursively!)
         sorted_paths = []
         for basename in sorted_basenames:
-            if parent: print(parent.logical_path, basename)
-            else: print ('None', basename)
 
             if parent is None:
                 pdsf = PdsFile.from_logical_path(basename)
