@@ -374,11 +374,12 @@ class MemcachedCache(PdsCache):
         else:
             try:
                 d = value.__dict__
+            except AttributeError:
+                pass
+            else:
                 for (k,v) in d.iteritems():
                     if type(v) == long:
                         d[k] = MemcachedCache.undo_long(v)
-            except AttributeError:
-                pass
 
         return value
 
@@ -635,9 +636,8 @@ class MemcachedCache(PdsCache):
 
         # Check the permanent dictionary in case it was deleted from Memcache
         if key in self.permanent_values:
-            value = self.permanent_values[key]
-            self.set_local(key, value, lifetime=0)  # restore to cache at flush
-            return value
+            self._restore_permanent_to_cache()
+            return self.permanent_values[key]
 
         return None
 
@@ -694,10 +694,9 @@ class MemcachedCache(PdsCache):
 
             # Restore any permanent values missing from Memcache
             for key in nonlocal_keys:
-                if key in self.permanent_value:
-                    mydict[key] = self.permanent_values[key]
-                    self.set_local(key, mydict[key], lifetime=0)
-                        # restore to cache at next flush
+                if key in self.permanent_values:
+                    self._restore_permanent_to_cache()
+                    break
 
         else:
             mydict = {}
@@ -884,7 +883,7 @@ class MemcachedCache(PdsCache):
         count = len(self) - prev_len
         return (count == len(keys))
 
-    def _delete_local(key):
+    def _delete_local(self, key):
         """Delete a single key from the local cache, if present. The nonlocal
         cache is not checked. Return True if deleted, False otherwise."""
 
@@ -927,8 +926,8 @@ class MemcachedCache(PdsCache):
         self.local_value_by_key.clear()
         self.local_keys_by_lifetime.clear()
         self.local_lifetime_by_key.clear()
-        self.clear_count = clear_count
         self.permanent_values.clear()
+        self.clear_count = clear_count
 
         if self.logger:
           self.logger.info('Process %d ' % self.pid +
@@ -959,6 +958,7 @@ class MemcachedCache(PdsCache):
         self.local_value_by_key.clear()
         self.local_keys_by_lifetime.clear()
         self.local_lifetime_by_key.clear()
+        self.permanent_values.clear()
         self.clear_count = clear_count
 
         if self.logger:
@@ -977,3 +977,29 @@ class MemcachedCache(PdsCache):
 
         clear_count = self.mc.get('$CLEAR_COUNT')
         return clear_count > self.clear_count
+
+    def _restore_permanent_to_cache(self):
+        """Write every permanent value to the cache. This is triggered if any
+        permanent value disappears from Memcache. It ensures that permanent
+        values are always in Memcache."""
+
+        # Update permanent values from cache; prepare to write remainder back
+        local_dict = self.permanent_values.copy()
+        for (key, pair) in self.permanent_values.items():
+            pair = self.mc.get(key)
+            if pair:
+                self.permanent_values[key] = MemcachedCache.undo_long(pair[0])
+                del local_dict[key]
+
+        # At this point local_dict contains all the permanent values currently
+        # missing from the cache
+
+        # Write the missing values into the local cache
+        self.pause()
+        try:
+            for (key, value) in local_dict.items():
+                self.set_local(key, value, lifetime=0)
+        finally:
+            self.resume()
+            self.flush()
+

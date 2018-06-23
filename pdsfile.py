@@ -2,9 +2,11 @@ import datetime
 import glob
 import math
 import os
+import pickle
 import random
 import re
 import shelve
+import sys
 import time
 
 try:
@@ -117,6 +119,21 @@ def set_logger(logger, debugging=False):
     DEBUGGING = debugging
 
 ################################################################################
+# Pickle files vs. shelf files
+################################################################################
+
+USE_PICKLES = False
+
+def use_pickles(status=True):
+    """Call before preload(). Status=True to read ancillary information from
+    pickle files; False to read from shelf files instead. Shelf files are a bit
+    faster but do not work across platforms."""
+
+    global USE_PICKLES
+
+    USE_PICKLES = status
+
+################################################################################
 # Memcached support
 ################################################################################
 
@@ -142,8 +159,8 @@ def cache_lifetime(arg):
     """Used by caches. Returns the default lifetime based on what is being
     cached."""
 
-    if type(arg) == str:                    # Keep HTML for a day
-        return 24 * 60 * 60
+    if type(arg) == str:                    # Keep HTML for 12 hours
+        return 12 * 60 * 60
     elif not isinstance(arg, PdsFile):      # RANKS, VOLS, etc. forever
         return 0
     elif not arg.interior:                  # Tree down to volname level forever
@@ -151,9 +168,9 @@ def cache_lifetime(arg):
     elif arg.interior.lower() == 'data':    # .../volname/data forever
         return 0
     elif arg.isdir:
-        return 7 * 24 * 60 * 60             # Other directories for a week
+        return 3 * 24 * 60 * 60             # Other directories for three days
     else:
-        return 24 * 60 * 60                 # Files for a day
+        return 12 * 60 * 60                 # Files for 12 hours
 
 # Initialize the cache
 LOCAL_PRELOADED = []        # local copy of CACHE['$PRELOADED']
@@ -245,7 +262,7 @@ def preload(holdings_list, port=0, clear=False):
                 CACHE.clear(block=True)
                 cleared_already = True
 
-        except pylibmc.Error as e:
+        except pylibmc.Error:
             if LOGGER:
                 LOGGER.error(('Failed to connect PdsFile Memcache [%s]; '+
                                'using dictionary instead') %
@@ -279,14 +296,15 @@ def preload(holdings_list, port=0, clear=False):
             try:
                 (description, icon_type, version, pubdate,
                               dsids) = CACHE['$VOLINFO-' + key.lower()]
+            except KeyError:
+                if LOGGER:
+                    LOGGER.warn('Volume info not found', pdsdir.logical_path)
+
+            else:
                 pdsdir._description_and_icon_filled = (description, icon_type)
                 pdsdir._volume_version_id_filled = version
                 pdsdir._volume_publication_date_filled = pubdate
                 pdsdir._volume_data_set_ids_filled = dsids
-
-            except KeyError:
-                if LOGGER:
-                    LOGGER.warn('Volume info not found', pdsdir.logical_path)
 
         if pdsdir.volname: return           # don't go deeper than volume name
 
@@ -322,6 +340,7 @@ def preload(holdings_list, port=0, clear=False):
 
     if already_loaded:
         LOCAL_PRELOADED = preloaded
+        if MEMCACHE_PORT: get_permanent_values()
         return
 
     # Clear and block the cache before proceeding
@@ -472,6 +491,23 @@ def load_volume_info(holdings):
     if LOGGER:
         LOGGER.info('Volume info loaded', volinfo_path)
 
+def get_permanent_values():
+    """Load the most obvious set of permanent values from the cache to ensure
+    we have local copies."""
+
+    for category in CATEGORIES:
+        _ = CACHE.get('$RANKS-' + category + '/')
+        _ = CACHE.get('$VOLS-'  + category + '/')
+        pdsf0 = CACHE.get(category)
+
+        for volset in pdsf0.childnames:
+            pdsf1 = CACHE.get(category + '/' + volset)
+            pdsf1a = CACHE.get(pdsf1.abspath)
+
+            for volname in pdsf1.childnames:
+                pdsf2 = CACHE.get(pdsf1.logical_path + '/' + volname)
+                pdsf2a = CACHE.get(pdsf2.abspath)
+
 ################################################################################
 # PdsFile class
 ################################################################################
@@ -503,6 +539,9 @@ class PdsFile(object):
     FILESPEC_TO_LOGICAL_PATH = pdsfile_rules.FILESPEC_TO_LOGICAL_PATH
 
     FILENAME_KEYLEN = 0
+
+    # Used to help with debugging
+    LAST_EXC_INFO = (None, None, None)
 
     ############################################################################
     # Constructor
@@ -892,7 +931,7 @@ class PdsFile(object):
         if (logical_path_lc.endswith('.tab') and
             logical_path_lc.startswith('metadata/')):
 
-            if '999' in self.volset: return False
+            if '999' in self.volname: return False
             return True
 
         return False
@@ -912,11 +951,20 @@ class PdsFile(object):
 
         # Support for table row views as "children" of index tables
         # For the sake of efficiency, we generate all the child objects at once
-        # and allow them to be cached permanently.
+        # and allow them to be cached for a long time.
         if self.is_index:
+            CACHE.pause()       # wait till all the changes are ready
             try:
                 table = pdstable.PdsTable(self.label_abspath,
                                           filename_keylen=self.FILENAME_KEYLEN)
+
+            # Not a valid index table; that means it has no children
+            except (IOError, KeyError):
+                PdsFile.LAST_EXC_INFO = sys.exc_info()
+                self._childnames_filled = []
+
+            # Otherwise generate all child objects and make them permanent
+            else:
                 table.index_rows_by_filename_key()
                 self._childnames_filled = table.filename_keys
 
@@ -925,16 +973,16 @@ class PdsFile(object):
                     child = self.new_index_row_pdsfile(childname)
                     child.row_dicts = table.rows_by_filename_key(childname)
                     child.column_names = column_names
-                    child._complete(must_exist=True, caching='all', lifetime=0)
+                    child._complete(must_exist=True, caching='all',
+                                    lifetime=3*86400)   # cache for 3 days
 
                 # Cache the table too because it contains all the childnames
                 self._complete(caching='all')
                 self._recache()
                 return self._childnames_filled
 
-            # Not a valid index table
-            except (IOError, KeyError):
-                pass
+            finally:
+                CACHE.resume()
 
         self._recache()
         return self._childnames_filled
@@ -958,17 +1006,27 @@ class PdsFile(object):
         if self._info_filled is not None:
             return self._info_filled
 
+        # Missing files and checksum files get no _info
         if not self.exists or self.checksums_:
             self._info_filled = (0, 0, None, '', (0,0))
 
-        elif self.volset and not self.volname:
-            self._info_filled = (0, 0, '', '', (0,0))
+        # For volsets that are not archives, fill in the needed info directly
+        # from the filesystem
+        elif not self.archives_ and self.volset and not self.volname:
+            child_count = len(self.childnames)
 
-        else:
-            try:
-                (bytes, child_count,
-                 timestring, checksum, size) = self.shelf_lookup('info')
+            latest_modtime = datetime.datetime.min
+            total_bytes = 0
+            for volname in self.childnames:
 
+                (bytes, _, timestring, _, _) = self.shelf_lookup('info',
+                                                                 volname)
+
+                if timestring == '' or bytes == 0: continue
+                    # Some preview dirs are empty. Without this check, we get
+                    # an error.
+
+                # Convert formatted time to datetime
                 yr = int(timestring[ 0:4])
                 mo = int(timestring[ 5:7])
                 da = int(timestring[ 8:10])
@@ -976,51 +1034,55 @@ class PdsFile(object):
                 mi = int(timestring[14:16])
                 sc = int(timestring[17:19])
                 ms = int(timestring[20:])
-
                 modtime = datetime.datetime(yr, mo, da, hr, mi, sc, ms)
-                self._info_filled = (bytes, child_count, modtime, checksum, size)
+                latest_modtime = max(modtime, latest_modtime)
 
+                total_bytes += bytes
+
+            # If no modtimes were found. Shouldn't happen but worth checking.
+            if latest_modtime == datetime.datetime.min:
+                latest_modtime = None
+
+            self._info_filled = (total_bytes, child_count,
+                                latest_modtime, '', (0,0))
+
+        # Otherwise, get the info from a shelf file
+        else:
+            try:
+                (bytes, child_count,
+                 timestring, checksum, size) = self.shelf_lookup('info')
+
+            # Shelf file failure
             except (IOError, KeyError, ValueError) as e:
+                PdsFile.LAST_EXC_INFO = sys.exc_info()
                 self._info_filled = (0, 0, None, '', (0,0))
 
-                if not self.archives_ and not self.volname:
-                    child_count = len(self.childnames)
+            else:
+                if timestring:
+                    # Interpret the modtime
+                    yr = int(timestring[ 0:4])
+                    mo = int(timestring[ 5:7])
+                    da = int(timestring[ 8:10])
+                    hr = int(timestring[11:13])
+                    mi = int(timestring[14:16])
+                    sc = int(timestring[17:19])
+                    ms = int(timestring[20:])
+                    modtime = datetime.datetime(yr, mo, da, hr, mi, sc, ms)
 
-                    latest_modtime = datetime.datetime.min
-                    total_bytes = 0
-                    for volname in self.childnames:
+                    self._info_filled = (bytes, child_count, modtime, checksum,
+                                         size)
 
-                        (bytes, _, timestring,
-                         _, _) = self.shelf_lookup('info', volname)
+                # This can happen for empty directories
+                else:
+                    self._info_filled = (0, 0, None, '', (0,0))
 
-                        if timestring == '' or bytes == 0: continue
-                            # Some preview dirs contain no files. Without this
-                            # line it causes an error.
-
-                        yr = int(timestring[ 0:4])
-                        mo = int(timestring[ 5:7])
-                        da = int(timestring[ 8:10])
-                        hr = int(timestring[11:13])
-                        mi = int(timestring[14:16])
-                        sc = int(timestring[17:19])
-                        ms = int(timestring[20:])
-
-                        modtime = datetime.datetime(yr, mo, da, hr, mi, sc, ms)
-                        latest_modtime = max(modtime, latest_modtime)
-
-                        total_bytes += bytes
-
-                    if latest_modtime == datetime.datetime.min:
-                        latest_modtime = None
-
-                    self._info_filled = (total_bytes, child_count,
-                                        latest_modtime, '', (0,0))
-
+        # Now format the date
         if self.modtime:
             self._date_filled = self.modtime.strftime('%Y-%m-%d %H:%M:%S')
         else:
             self._date_filled = ''
 
+        # Format the byte count
         if self.size_bytes:
             self._formatted_size_filled = formatted_file_size(self.size_bytes)
         else:
@@ -1100,6 +1162,10 @@ class PdsFile(object):
             if self.volname:
                 base_key += '/' + self.volname
 
+            # Try lookup using two different keys: with and without category.
+            # Most of the time, _volume_info is independent of the category.
+            # However, there are a few exceptions. This allows the _volume_info
+            # for a particular category to differ from the default.
             keys = (self.category_ + base_key, base_key)
             for key in keys:
                 try:
@@ -1261,29 +1327,50 @@ class PdsFile(object):
         if self._internal_links_filled is not None:
             return self._internal_links_filled
 
+        # Some file types never have links
         if self.isdir or self.checksums_ or self.archives_:
             self._internal_links_filled = []
+
         elif self.voltype_ not in ('volumes/', 'calibrated/', 'metadata/'):
             self._internal_links_filled = []
+
+        # Otherwise, lookup the info in the shelf file
         else:
-            volume_path_ = self.volume_abspath() + '/'
             try:
                 values = self.shelf_lookup('links')
 
+            # Shelf file failure
+            except (IOError, KeyError, ValueError) as e:
+                PdsFile.LAST_EXC_INFO = sys.exc_info()
+                self._internal_links_filled = ()
+                    # An empty _tuple_ indicates that link info is missing
+                    # because of a shelf file failure; an empty _list_ object
+                    # means that the file simply contains no links.
+                    # This distinction is there if we ever care.
+
+            else:
+                volume_path_ = self.volume_abspath() + '/'
+
+                # A string value means that this is actually the path from this
+                # file to its external PDS label
                 if type(values) == str:
                     if values:
                         self._internal_links_filled = volume_path_ + values
                     else:
                         self._internal_links_filled = []
+
+                # A list value indicates that each value is a tuple:
+                #   (recno, basename, internal_path)
+                # The tuple indicates that this label file contains an external
+                # link in line <recno>. The occurrence of string <basename> is
+                # actually a link to a file with the path <internal_path>.
+                # There is one tuple for each internal link in the label file.
                 else:
                     new_list = []
                     for (recno, basename, internal_path) in values:
                         abspath = volume_path_ + internal_path
                         new_list.append((recno, basename, abspath))
                     self._internal_links_filled = new_list
-
-            except IOError:
-                self._internal_links_filled = ()     # tuple instead of list
 
         self._recache()
         return self._internal_links_filled
@@ -1477,23 +1564,26 @@ class PdsFile(object):
 
         if not self.exists:
             version_ranks_filled = []
-
         else:
             try:
                 ranks = CACHE['$RANKS-' + self.category_]
-                if self.volname:
-                    key = self.volname.lower()
-                    self._version_ranks_filled = ranks[key]
-                elif self.volset:
-                    key = self.volset.lower()
-                    self._version_ranks_filled = ranks[key]
-                else:
-                    self._version_ranks_filled = []
 
-            except KeyError as e:
+            except KeyError:
                 if LOGGER:
                     LOGGER.warn('Missing rank info', self.logical_path)
                 self._version_ranks_filled = []
+
+            else:
+                if self.volname:
+                    key = self.volname.lower()
+                    self._version_ranks_filled = ranks[key]
+
+                elif self.volset:
+                    key = self.volset.lower()
+                    self._version_ranks_filled = ranks[key]
+
+                else:
+                    self._version_ranks_filled = []
 
         self._recache()
         return self._version_ranks_filled
@@ -1939,11 +2029,13 @@ class PdsFile(object):
             test_childname_lc = os.path.splitext(test_childname_lc)[0]
             try:
                 k = childnames_lc.index(test_childname_lc)
+
+            except ValueError:  # If the test childname is not in the list
+                pass
+
+            else:
                 logical_path = self.logical_path + '/' + childnames[k]
                 return CACHE[logical_path]
-
-            except ValueError:
-                pass
 
             # Maybe the key is shorter than the filename
             for k in range(len(childnames_lc)):
@@ -1979,15 +2071,15 @@ class PdsFile(object):
         else:
             child_abspath = None
 
-        # If the parent does not have an absolute path, neither does the child
+        # If the parent has no absolute path, neither can the child
         if not child_abspath:
             try:
                 pdsf = CACHE[child_logical_path]
-                if not pdsf.abspath: return pdsf
+                if not pdsf.abspath: return pdsf    # child with no abspath
             except KeyError:
                 pass
 
-        # Select subclass of child...
+        # Select the correct subclass for the child...
         if self.volset:
             class_key = self.volset
         elif self.category_:
@@ -2122,7 +2214,7 @@ class PdsFile(object):
 
         path = path.strip('/')
 
-        # Look for this logical path in the cache
+        # If the PdsFile with this logical path is in the cache, return it
         try:
             return CACHE[path]
         except KeyError:
@@ -2286,9 +2378,20 @@ class PdsFile(object):
             pass
 
         path = path.rstrip('/')
+        path_lc = path.lower()
+
+        # Reserve a row indicator for later
+        k = path_lc.find('.tab/')
+        if k >= 0:
+            row_designator = path[k+5:]
+            path = path[:k+4]
+        else:
+            row_designator = ''
+
+        # Interpret the URL part by part
         parts = path.split('/')
 
-        if path.lower().startswith('/volumes/pdsdata'):
+        if path_lc.startswith('/volumes/pdsdata'):
             parts = parts[3:]
 
         if parts[0].lower().startswith('holdings'):
@@ -2404,6 +2507,7 @@ class PdsFile(object):
                 if rank in PdsFile.LATEST_VERSION_RANKS[:-1]:
                     k = PdsFile.LATEST_VERSION_RANKS.index(rank)
                     alt_ranks = PdsFile.LATEST_VERSION_RANKS[k+1:]
+
                 # Without suffix, find most recent
                 elif rank == PdsFile.LATEST_VERSION_RANKS[-1]:
                     alt_ranks = PdsFile.LATEST_VERSION_RANKS[:-1][::-1]
@@ -2470,6 +2574,11 @@ class PdsFile(object):
         for part in parts:
             this = this.child(part, fix_case=True,
                                     caching=caching, lifetime=lifetime)
+
+        # If we have a row_designator, apply it now
+        if row_designator:
+            _ = this.childnames     # Fill in the child objectes
+            this = this.child(row_designator, fix_case=False, must_exist=True)
 
         return this
 
@@ -2650,6 +2759,7 @@ class PdsFile(object):
             return pdsf.checksum_path_and_lskip()[0]
 
         except (ValueError, TypeError):
+            PdsFile.LAST_EXC_INFO = sys.exc_info()
             return ''
 
     def dirpath_and_prefix_for_checksum(self):
@@ -2794,8 +2904,8 @@ class PdsFile(object):
 
     @staticmethod
     def _get_shelf(shelf_path):
-        """Internal method to open a shelf file. A limited number of shelf files
-        are kept open at all times to reduce file IO."""
+        """Internal method to open a shelf file or pickle file. A limited number
+        of shelf files are kept open at all times to reduce file IO."""
 
         # If the shelf is already open, update the access count and return it
         if shelf_path in PdsFile.SHELF_CACHE:
@@ -2805,16 +2915,29 @@ class PdsFile(object):
             return PdsFile.SHELF_CACHE[shelf_path]
 
         # Open and cache the shelf
+        if USE_PICKLES:
+            shelf_path = shelf_path.rpartition('.')[0] + '.pickle'
+            Name = 'Pickle'
+            name = 'pickle'
+        else:
+            Name = 'Shelf'
+            name = 'shelf'
+
         if LOGGER:
-            LOGGER.debug('Opening shelf', shelf_path)
+            LOGGER.debug('Opening %s file' % name, shelf_path)
 
         if not os.path.exists(shelf_path):
-            raise IOError('Shelf file not found: ' + shelf_path)
+            raise IOError('%s file not found: %s' % (Name, shelf_path))
 
         try:
-            shelf = shelve.open(shelf_path, flag='r')
+            if USE_PICKLES:
+                with open(shelf_path, 'rb') as f:
+                    shelf = pickle.load(f)
+            else:
+                shelf = shelve.open(shelf_path, flag='r')
+
         except Exception as e:
-            raise IOError('Unable to open shelf file: ' + shelf_path)
+            raise IOError('Unable to open %s file: %s' % (name, shelf_path))
 
         # Save the null key values from the shelves. This can save a lot of
         # shelf open/close operations.
@@ -2846,16 +2969,27 @@ class PdsFile(object):
         # If the shelf is not already open, return
         if shelf_path not in PdsFile.SHELF_CACHE:
             if LOGGER:
-                LOGGER.error('Cannot close shelf; not currently open',
-                             shelf_path)
+                if USE_PICKLES:
+                    LOGGER.error('Cannot close pickle file; not currently open',
+                                 shelf_path.rpartition('.') + '.pickle')
+                else:
+                    LOGGER.error('Cannot close shelf; not currently open',
+                                 shelf_path)
                 return
 
         # Close the shelf and remove from the cache
-        PdsFile.SHELF_CACHE[shelf_path].close()
+        if not USE_PICKLES:
+            PdsFile.SHELF_CACHE[shelf_path].close()
+
         del PdsFile.SHELF_CACHE[shelf_path]
         del PdsFile.SHELF_ACCESS[shelf_path]
 
-        if LOGGER: LOGGER.debug('Shelf closed', shelf_path)
+        if LOGGER:
+            if USE_PICKLES:
+                LOGGER.debug('Pickle file closed',
+                             shelf_path.rpartition('.') + '.pickle')
+            else:
+                LOGGER.debug('Shelf closed', shelf_path)
 
     @staticmethod
     def close_all_shelves():
@@ -2891,7 +3025,7 @@ class PdsFile(object):
         of each volume."""
 
         (shelf_path, key) = self.shelf_path_and_key(id, volname)
-        dict_path = shelf_path[:-6] + '.py'
+        dict_path = shelf_path.rpartition('.')[0] + '.py'
         with open(dict_path, 'r') as f:
             rec = f.readline()
             rec = f.readline()
@@ -3526,7 +3660,7 @@ class PdsFile(object):
             else:
                 return None
 
-        # Interpret rank
+        # Interpret the rank
         original_rank = rank
         if rank is None:
             rank = self.version_rank
@@ -3544,6 +3678,7 @@ class PdsFile(object):
                     rank = self.version_ranks[k+1]
 
             except (IndexError, ValueError):
+                PdsFile.LAST_EXC_INFO = sys.exc_info()
                 self._associated_parallels_filled[category, rank] = None
                 self._associated_parallels_filled[category, original_rank] = None
                 self._recache()
@@ -3569,9 +3704,10 @@ class PdsFile(object):
 
         try:
             target_abspath = CACHE['$VOLS-' + category + '/'][volkey][rank]
-            target = PdsFile.from_abspath(target_abspath)
         except KeyError:
             target = None
+        else:
+            target = PdsFile.from_abspath(target_abspath)
 
         if target is None:
             self._associated_parallels_filled[category, rank] = None
@@ -4183,59 +4319,6 @@ for category in CATEGORIES:
         CACHE.set(category, PdsFile.new_virtual(category), lifetime=0)
 
 ################################################################################
-# PdsFile subclass support. Only imported when needed.
-################################################################################
-
-def FROM_RULES_IMPORT_STAR():
-#     from rules import *           # Illegal in Python (It's a long story.)
-
-    import rules.ASTROM_xxxx
-    import rules.COCIRS_xxxx
-    import rules.COISS_xxxx
-    import rules.CORSS_8xxx
-    import rules.COUVIS_0xxx
-    import rules.COUVIS_8xxx
-    import rules.COVIMS_0xxx
-    import rules.COVIMS_8xxx
-    import rules.EBROCC_xxxx
-    import rules.GO_0xxx
-    import rules.HSTxx_xxxx
-    import rules.NHSP_xxxx
-    import rules.NHxxxx_xxxx
-    import rules.RES_xxxx
-    import rules.RPX_xxxx
-    import rules.VG_0xxx
-    import rules.VG_20xx
-    import rules.VG_28xx
-    import rules.VGIRIS_xxxx
-    import rules.VGISS_xxxx
-
-def reload_rules():
-    reload(rules.ASTROM_xxxx)
-    reload(rules.COCIRS_xxxx)
-    reload(rules.COISS_xxxx)
-    reload(rules.CORSS_8xxx)
-    reload(rules.COUVIS_0xxx)
-    reload(rules.COUVIS_8xxx)
-    reload(rules.COVIMS_0xxx)
-    reload(rules.COVIMS_8xxx)
-    reload(rules.EBROCC_xxxx)
-    reload(rules.GO_0xxx)
-    reload(rules.HSTxx_xxxx)
-    reload(rules.NHSP_xxxx)
-    reload(rules.NHxxxx_xxxx)
-    reload(rules.RES_xxxx)
-    reload(rules.RPX_xxxx)
-    reload(rules.VG_0xxx)
-    reload(rules.VG_20xx)
-    reload(rules.VG_28xx)
-    reload(rules.VGIRIS_xxxx)
-    reload(rules.VGISS_xxxx)
-
-# from rules import *
-FROM_RULES_IMPORT_STAR()
-
-################################################################################
 # Support functions
 ################################################################################
 
@@ -4330,5 +4413,58 @@ def selected_path_from_path(path, abspaths=True):
 
     else:
         return logical_path_from_path(path)
+
+################################################################################
+# PdsFile subclass support. Only imported when needed.
+################################################################################
+
+def FROM_RULES_IMPORT_STAR():
+#     from rules import *           # Illegal in Python (It's a long story.)
+
+    import rules.ASTROM_xxxx
+    import rules.COCIRS_xxxx
+    import rules.COISS_xxxx
+    import rules.CORSS_8xxx
+    import rules.COUVIS_0xxx
+    import rules.COUVIS_8xxx
+    import rules.COVIMS_0xxx
+    import rules.COVIMS_8xxx
+    import rules.EBROCC_xxxx
+    import rules.GO_0xxx
+    import rules.HSTxx_xxxx
+    import rules.NHSP_xxxx
+    import rules.NHxxxx_xxxx
+    import rules.RES_xxxx
+    import rules.RPX_xxxx
+    import rules.VG_0xxx
+    import rules.VG_20xx
+    import rules.VG_28xx
+    import rules.VGIRIS_xxxx
+    import rules.VGISS_xxxx
+
+def reload_rules():
+    reload(rules.ASTROM_xxxx)
+    reload(rules.COCIRS_xxxx)
+    reload(rules.COISS_xxxx)
+    reload(rules.CORSS_8xxx)
+    reload(rules.COUVIS_0xxx)
+    reload(rules.COUVIS_8xxx)
+    reload(rules.COVIMS_0xxx)
+    reload(rules.COVIMS_8xxx)
+    reload(rules.EBROCC_xxxx)
+    reload(rules.GO_0xxx)
+    reload(rules.HSTxx_xxxx)
+    reload(rules.NHSP_xxxx)
+    reload(rules.NHxxxx_xxxx)
+    reload(rules.RES_xxxx)
+    reload(rules.RPX_xxxx)
+    reload(rules.VG_0xxx)
+    reload(rules.VG_20xx)
+    reload(rules.VG_28xx)
+    reload(rules.VGIRIS_xxxx)
+    reload(rules.VGISS_xxxx)
+
+# from rules import *
+FROM_RULES_IMPORT_STAR()
 
 ################################################################################

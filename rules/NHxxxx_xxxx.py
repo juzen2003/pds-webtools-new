@@ -100,9 +100,9 @@ view_options = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 neighbors = translator.TranslatorByRegex([
-    (r'(volumes|previews)/(NHxx.._xxxx.*/NH...._[12])...',            0,    r'\1/\2*'),
-    (r'(volumes|previews)/(NHxx.._xxxx.*/NH...._[12]).../data',       re.I, r'\1/\2*/data'),
-    (r'(volumes|previews)/(NHxx.._xxxx.*/NH...._[12]).../data/(\w+)', re.I, r'\1/\2*/data/*'),
+    (r'(volumes|previews)/(NHxx.._xxxx.*/NH)..(.._[12])...',            0,    r'\1/\2??\3*'),
+    (r'(volumes|previews)/(NHxx.._xxxx.*/NH)..(.._[12]).../data',       re.I, (r'\1/\2??\3*/data',   r'\1/\2??\3*/DATA'  )),
+    (r'(volumes|previews)/(NHxx.._xxxx.*/NH)..(.._[12]).../data/(\w+)', re.I, (r'\1/\2??\3*/data/*', r'\1/\2??\3*/DATA/*')),
 ])
 
 ####################################################################################################################################
@@ -132,7 +132,7 @@ volumes_to_volumes = translator.TranslatorByRegex([
 
 sort_key = translator.TranslatorByRegex([
 
-    # Orders volumes by LA, JU, PC, PE
+    # Order volumes by LA, JU, PC, PE
     (r'NHLA(.._[0-9]{4}.*)', 0, r'NH1LA\1'),
     (r'NHJU(.._[0-9]{4}.*)', 0, r'NH2JU\1'),
     (r'NHPC(.._[0-9]{4}.*)', 0, r'NH3PC\1'),
@@ -257,7 +257,8 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
-    NEIGHBORS = neighbors
+    NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
+    SORT_KEY = sort_key + pdsfile.PdsFile.SORT_KEY
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_PRODUCTS = opus_products
