@@ -512,9 +512,6 @@ def get_permanent_values():
 # PdsFile class
 ################################################################################
 
-def _clean_join(a, b):
-    return os.path.join(a,b).replace('\\', '/')
-
 class PdsFile(object):
 
     # Global registry of subclasses
@@ -4324,6 +4321,9 @@ for category in CATEGORIES:
 ################################################################################
 # Support functions
 ################################################################################
+
+def _clean_join(a, b):
+    return os.path.join(a,b).replace('\\', '/')
 
 def repair_case(abspath):
     """Return a file's absolute path with capitalization exactly as it appears
