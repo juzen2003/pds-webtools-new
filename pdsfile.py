@@ -508,6 +508,10 @@ def get_permanent_values():
                 pdsf2 = CACHE.get(pdsf1.logical_path + '/' + volname)
                 pdsf2a = CACHE.get(pdsf2.abspath)
 
+    if LOGGER:
+        LOGGER.info('Permanent values retrieved from Memcache',
+                    str(len(CACHE.permanent_values)))
+
 ################################################################################
 # PdsFile class
 ################################################################################
@@ -951,41 +955,48 @@ class PdsFile(object):
 
         # Support for table row views as "children" of index tables
         # For the sake of efficiency, we generate all the child objects at once
-        # and allow them to be cached for a long time.
+        # and allow them to be cached for at least a few days.
         if self.is_index:
-            CACHE.pause()       # wait till all the changes are ready
-            try:
-                table = pdstable.PdsTable(self.label_abspath,
-                                          filename_keylen=self.FILENAME_KEYLEN)
-
-            # Not a valid index table; that means it has no children
-            except (IOError, KeyError):
-                PdsFile.LAST_EXC_INFO = sys.exc_info()
-                self._childnames_filled = []
-
-            # Otherwise generate all child objects and make them permanent
-            else:
-                table.index_rows_by_filename_key()
-                self._childnames_filled = table.filename_keys
-
-                column_names = table.get_keys()
-                for childname in self._childnames_filled:
-                    child = self.new_index_row_pdsfile(childname)
-                    child.row_dicts = table.rows_by_filename_key(childname)
-                    child.column_names = column_names
-                    child._complete(must_exist=True, caching='all',
-                                    lifetime=3*86400)   # cache for 3 days
-
-                # Cache the table too because it contains all the childnames
-                self._complete(caching='all')
-                self._recache()
-                return self._childnames_filled
-
-            finally:
-                CACHE.resume()
+            self.cache_child_row_dicts()
 
         self._recache()
         return self._childnames_filled
+
+    def cache_child_row_dicts(self):
+        """Cache all the rows of a index file as row dictionaries."""
+
+        CACHE.pause()       # wait till all the changes are ready
+        try:
+            table = pdstable.PdsTable(self.label_abspath,
+                                      filename_keylen=self.FILENAME_KEYLEN)
+
+        # Not a valid index table; that means it has no children
+        except (IOError, KeyError):
+            PdsFile.LAST_EXC_INFO = sys.exc_info()
+            self._childnames_filled = []
+            return
+
+        # Otherwise generate and cache all child objects
+        else:
+    
+            table.index_rows_by_filename_key()
+            self._childnames_filled = table.filename_keys
+
+            column_names = table.get_keys()
+            for childname in self._childnames_filled:
+                child = self.new_index_row_pdsfile(childname)
+                child.row_dicts = table.rows_by_filename_key(childname)
+                child.column_names = column_names
+                child._complete(must_exist=True, caching='all',
+                                lifetime=3*86400)   # cache for 3 days
+
+            # Cache the table too because it contains all the childnames
+            self._complete(caching='all', lifetime=0)
+            self._recache()
+            return self._childnames_filled
+
+        finally:
+            CACHE.resume()
 
     @property
     def parent_logical_path(self):
@@ -2022,8 +2033,6 @@ class PdsFile(object):
         # Handle the special case of index rows
         if self.is_index:
             childnames = self.childnames
-                # With this call, every child is permanently cached
-
             childnames_lc = [c.lower() for c in childnames]
             test_childname_lc = os.path.basename(basename.lower())
             test_childname_lc = os.path.splitext(test_childname_lc)[0]
@@ -2035,7 +2044,11 @@ class PdsFile(object):
 
             else:
                 logical_path = self.logical_path + '/' + childnames[k]
-                return CACHE[logical_path]
+                try:
+                    return CACHE[logical_path]
+                except KeyError:    # happens if the row was removed from cache
+                    self.cache_child_row_dicts()
+                    return CACHE[logical_path]
 
             # Maybe the key is shorter than the filename
             for k in range(len(childnames_lc)):
@@ -3248,6 +3261,51 @@ class PdsFile(object):
         basenames = list(basenames)
         basenames.sort(key=modified_sort_key)
         return basenames
+
+    @staticmethod
+    def sort_logical_paths(logical_paths, parent=None):
+        """Sort a list of logical paths, using the sort order at each level in
+        the directory tree. The logical paths must all have the same number of
+        directory levels."""
+
+        # Dictionary subpaths is a dictionary of strings keyed by the top-level
+        # directory name. The dictionary returns a list of all the string values
+        # following the first slash
+        subpaths = {}
+        for logical_path in logical_paths:
+            parts = logical_path.partition('/')
+            basename = parts[0]
+            if basename in subpaths:
+                if parts[2] not in subpaths[basename]:
+                    subpaths[basename].append(parts[2])
+            else:
+                subpaths[basename] = [parts[2]]
+
+        # Sort the basenames
+        if parent is None:
+            sorted_basenames = subpaths.keys()
+            sorted_basenames.sort()
+        else:
+            sorted_basenames = parent.sort_basenames(subpaths.keys())
+
+        # Sort the value for each key (recursively!)
+        sorted_paths = []
+        for basename in sorted_basenames:
+            if parent: print(parent.logical_path, basename)
+            else: print ('None', basename)
+
+            if parent is None:
+                pdsf = PdsFile.from_logical_path(basename)
+                sorted_paths += PdsFile.sort_logical_paths(subpaths[basename],
+                                                           pdsf)
+            elif basename == '':
+                sorted_paths += [parent.logical_path]
+            else:
+                pdsf = parent.child(basename)
+                sorted_paths += PdsFile.sort_logical_paths(subpaths[basename],
+                                                           pdsf)
+
+        return sorted_paths
 
     def sort_childnames(self, labels_after=None, dirs_first=None):
         """A sorted list of the contents of this directory."""

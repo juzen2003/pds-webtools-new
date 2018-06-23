@@ -60,12 +60,7 @@ class PdsDirIterator(object):
             logical_paths = list(set(logical_paths))
 
             # Sort based on the rules
-            basenames = [os.path.basename(p) for p in logical_paths]
-
-            parent = pdsf.parent()
-            sorted_basenames = parent.sort_basenames(basenames)
-            logical_paths = [parent.logical_path + '/' + b
-                             for b in sorted_basenames]
+            logical_paths = pdsfile.PdsFile.sort_logical_paths(logical_paths)
 
         else:
             logical_paths = [pdsf.logical_path]
