@@ -25,6 +25,9 @@ class Translator(object):
 ################################################################################
 ################################################################################
 
+# Python 2 and 3 compatible, byte strings and unicode
+def _isstr(x): return isinstance(x, ("".__class__, u"".__class__))
+
 class TranslatorBySequence(Translator):
     """Translator defined by a sequence of other translators."""
 
@@ -42,7 +45,7 @@ class TranslatorBySequence(Translator):
         result in priority order."""
 
         # Convert an individual string to a list
-        if type(strings) == str:
+        if _isstr(strings):
             strings = [strings]
 
         # Initialize the set of results
@@ -74,7 +77,7 @@ class TranslatorBySequence(Translator):
         result. Return None if no translation is found."""
 
         # Convert an individual string to a list
-        if type(strings) == str:
+        if _isstr(strings):
             strings = [strings]
 
         # Two options for priority...
@@ -223,12 +226,12 @@ class TranslatorByDict(Translator):
 
         expanded = []
         for result in results:
-            if type(result) == str:
+            if _isstr(result):
                 result = result.replace(r'\1', key)
             elif type(result) == tuple:
                 items = []
                 for item in result:
-                    if type(item) == str:
+                    if _isstr(item):
                         item = item.replace(r'\1', key)
                     items.append(item)
                 result = tuple(items)
@@ -302,7 +305,7 @@ class TranslatorByRegex(Translator):
         value in priority order."""
 
         # Convert an individual string to a list
-        if type(strings) == str:
+        if _isstr(strings):
             strings = [strings]
 
         # Initialize the list of results
@@ -334,7 +337,7 @@ class TranslatorByRegex(Translator):
         result. Return None if no translation is found."""
 
         # Convert an individual string to a list
-        if type(strings) == str:
+        if _isstr(strings):
             strings = [strings]
 
         # Two options for priority...
@@ -372,14 +375,14 @@ class TranslatorByRegex(Translator):
         for replacement in replacements:
 
             # If replacement is a string, apply substitution
-            if type(replacement) == str:
+            if _isstr(replacement):
                 results.append(matchobj.expand(replacement))
 
             # Deal with a tuple
             elif type(replacement) == tuple:
                 items = []
                 for item in replacement:
-                    if type(item) == str:
+                    if _isstr(item):
                         items.append(matchobj.expand(item))
                     else:
                         items.append(item)
