@@ -22,6 +22,9 @@ import pdsviewable
 import translator
 import pdstable
 
+# Python 2 and 3 compatible, byte strings and unicode
+def _isstr(x): return isinstance(x, ("".__class__, u"".__class__))
+
 ################################################################################
 # Configuration
 ################################################################################
@@ -159,7 +162,7 @@ def cache_lifetime(arg):
     """Used by caches. Returns the default lifetime based on what is being
     cached."""
 
-    if type(arg) == str:                    # Keep HTML for 12 hours
+    if _isstr(arg):                    # Keep HTML for 12 hours
         return 12 * 60 * 60
     elif not isinstance(arg, PdsFile):      # RANKS, VOLS, etc. forever
         return 0
@@ -204,7 +207,7 @@ def preload_required(holdings_list, port=0, clear=False):
         pass
 
     # Convert holdings to a list of strings
-    if type(holdings_list) == str:
+    if _isstr(holdings_list):
         holdings_list = [holdings_list]
 
     if set(holdings_list) != set(LOCAL_PRELOADED):
@@ -232,7 +235,7 @@ def preload(holdings_list, port=0, clear=False):
     FILESYSTEM = True
 
     # Convert holdings to a list of strings
-    if type(holdings_list) == str:
+    if _isstr(holdings_list):
         holdings_list = [holdings_list]
 
     cleared_already = False
@@ -998,7 +1001,7 @@ class PdsFile(object):
 
         # Otherwise generate and cache all child objects
         else:
-    
+
             table.index_rows_by_filename_key()
             self._childnames_filled = table.filename_keys
 
@@ -1428,7 +1431,7 @@ class PdsFile(object):
 
                 # A string value means that this is actually the path from this
                 # file to its external PDS label
-                if type(values) == str:
+                if _isstr(type(values)):
                     if values:
                         self._internal_links_filled = volume_path_ + values
                     else:
@@ -1477,7 +1480,7 @@ class PdsFile(object):
 
         _ = self.internal_link_info
 
-        if type(self._internal_links_filled) == str:
+        if _isstr(self._internal_links_filled):
             label_path = self._internal_links_filled
             if label_path:
                 self._label_basename_filled = os.path.basename(label_path)
@@ -1841,7 +1844,7 @@ class PdsFile(object):
 
         # Otherwise, check for associated viewables
         patterns = self.VIEWABLES[name].first(self.logical_path)
-        if type(patterns) == str:
+        if _isstr(patterns):
             patterns = [patterns]
 
         if patterns:
@@ -2974,13 +2977,6 @@ class PdsFile(object):
         """Internal method to open a shelf file or pickle file. A limited number
         of shelf files are kept open at all times to reduce file IO."""
 
-        # If the shelf is already open, update the access count and return it
-        if shelf_path in PdsFile.SHELF_CACHE:
-            PdsFile.SHELF_ACCESS[shelf_path] = PdsFile.SHELF_ACCESS_COUNT
-            PdsFile.SHELF_ACCESS_COUNT += 1
-
-            return PdsFile.SHELF_CACHE[shelf_path]
-
         # Open and cache the shelf
         if USE_PICKLES:
             shelf_path = shelf_path.rpartition('.')[0] + '.pickle'
@@ -2989,6 +2985,13 @@ class PdsFile(object):
         else:
             Name = 'Shelf'
             name = 'shelf'
+
+        # If the shelf is already open, update the access count and return it
+        if shelf_path in PdsFile.SHELF_CACHE:
+            PdsFile.SHELF_ACCESS[shelf_path] = PdsFile.SHELF_ACCESS_COUNT
+            PdsFile.SHELF_ACCESS_COUNT += 1
+
+            return PdsFile.SHELF_CACHE[shelf_path]
 
         if LOGGER:
             LOGGER.debug('Opening %s file' % name, shelf_path)
@@ -3776,7 +3779,7 @@ class PdsFile(object):
             rank = self.version_rank
         elif rank == 'latest':
             rank = self.version_ranks[-1]
-        elif type(rank) == str:
+        elif _isstr(rank):
             try:
                 k = self.version_ranks.index(self.version_rank)
                 if rank == 'previous':
@@ -4253,7 +4256,7 @@ class PdsGroupTable(object):
 
         thing = things
 
-        if type(thing) == str:
+        if _isstr(thing):
             try:
                 pdsf = PdsFile.from_logical_path(thing)
             except ValueError:
@@ -4352,7 +4355,7 @@ class PdsGroupTable(object):
 
         table_dict = {}
         for pdsf in pdsfiles:
-            if type(pdsf) == str:
+            if _isstr(pdsf):
                 pdsf = PdsFile._from_absolute_or_logical_path(pdsf)
 
             if pdsf.logical_path in exclusions: continue
