@@ -20,10 +20,10 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'volumes/.*/software.*/PPVL_report',                    re.I, ('Program binary',             'CODE'   )),
 
     (r'.*/thumbnail(/\w+)*',            re.I, ('Small browse images',           'BROWDIR' )),
-    (r'.*/thumbnail/.*\.(gif|jpg|jpeg|jpeg_small|tif|tiff|png)', 
+    (r'.*/thumbnail/.*\.(gif|jpg|jpeg|jpeg_small|tif|tiff|png)',
                                         re.I, ('Small browse image',            'BROWSE'  )),
     (r'.*/tiff(/\w+)*',                 re.I, ('Full-size browse images',       'BROWDIR' )),
-    (r'.*/tiff/.*\.(gif|jpg|jpeg|jpeg_small|tif|tiff|png)', 
+    (r'.*/tiff/.*\.(gif|jpg|jpeg|jpeg_small|tif|tiff|png)',
                                         re.I, ('Full-size browse image',        'BROWSE'  )),
 ])
 
@@ -114,7 +114,7 @@ opus_products = translator.TranslatorByRegex([
 
 opus_id_to_filespec = translator.TranslatorByRegex([
     # Ignore the trailing "_VIS" or "_IR" when converting a VIMS ID to a filespec.
-    (r'(COVIMS_0...)/(.*)(|_VIS|_IR)$', 0, r'\1/data/\2.qub'),
+    (r'(COVIMS_0...)/([\w]+_[\w]+/[\w]+_\d+_\d+|[\w]+_[\w]+/[\w]+_\d+)(|_VIS|_IR)$', 0, r'\1/data/\2.qub'),
 ])
 
 ####################################################################################################################################
@@ -160,4 +160,3 @@ pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS
 pdsfile.PdsFile.SUBCLASSES['COVIMS_0xxx'] = COVIMS_0xxx
 
 ####################################################################################################################################
-

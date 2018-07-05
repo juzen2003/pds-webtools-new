@@ -12,20 +12,22 @@ from PIL import Image
 class PdsViewable(object):
     """Contains the minimum information needed to show an image in HTML."""
 
-    def __init__(self, abspath, url, width, height, alt):
+    def __init__(self, abspath, url, width, height, alt, size_bytes,
+                 pdsf=None):
         self.abspath = abspath
         self.url = url
         self.width = width
         self.height = height
         self.alt = alt
-        self.bytes = os.path.getsize(abspath)
+        self.bytes = size_bytes
+        self.pdsf = pdsf
 
         self.width_over_height = float(self.width) / float(self.height)
         self.height_over_width = float(self.height) / float(self.width)
 
     def copy(self):
         return PdsViewable(self.abspath, self.url, self.width, self.height,
-                                         self.alt)
+                           self.alt, self.size_bytes, self.pdsf)
 
     @staticmethod
     def from_pdsfile(pdsf):
@@ -33,7 +35,7 @@ class PdsViewable(object):
             raise ValueError('PdsFile is not viewable: ' + pdsf.abspath)
 
         return PdsViewable(pdsf.abspath, pdsf.url, pdsf.width, pdsf.height,
-                           pdsf.logical_path)
+                           pdsf.logical_path, pdsf.size_bytes, pdsf)
 
 ################################################################################
 ################################################################################
