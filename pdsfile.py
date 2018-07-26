@@ -2672,6 +2672,8 @@ class PdsFile(object):
             volset_pdsf = PdsFile.from_logical_path(volset_logical_path)
             abspath_pattern = volset_pdsf.abspath + '/' + '/'.join(parts[2:])
             abspaths = glob.glob(abspath_pattern)
+            if not abspaths:
+                raise ValueError('No matches for regex: '+abspath_pattern)
             return PdsFile.from_abspath(abspaths[0])
 
         return PdsFile.from_logical_path(logical_path)
