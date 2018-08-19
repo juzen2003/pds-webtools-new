@@ -22,6 +22,11 @@ import pdsviewable
 import translator
 import pdstable
 
+try:
+    GDBM_MODULE = __import__("gdbm")
+except ImportError:
+    pass
+
 # Python 2 and 3 compatible, byte strings and unicode
 def _isstr(x): return isinstance(x, ("".__class__, u"".__class__))
 
@@ -3006,7 +3011,8 @@ class PdsFile(object):
                 with open(shelf_path, 'rb') as f:
                     shelf = pickle.load(f)
             else:
-                shelf = shelve.open(shelf_path, flag='r')
+                # shelf = shelve.open(shelf_path, flag='r')
+                shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'r'))
 
         except Exception as e:
             raise IOError('Unable to open %s file: %s' % (name, shelf_path))
