@@ -27,7 +27,7 @@ class PdsViewable(object):
 
     def copy(self):
         return PdsViewable(self.abspath, self.url, self.width, self.height,
-                           self.alt, self.size_bytes, self.pdsf)
+                           self.alt, self.bytes, self.pdsf)
 
     @staticmethod
     def from_pdsfile(pdsf):
@@ -240,8 +240,10 @@ def load_icons(path, url, color='blue'):
                 (width, height) = im.size
                 im.close()
 
+                bytes = os.stat(abspath).st_size
+
                 pdsview = PdsViewable(icon_path_ + relpath, icon_url_ + relpath,
-                                      width, height, icon_type + ' icon')
+                                      width, height, icon_type + ' icon', bytes)
                 pdsviews.append(pdsview)
 
             ICON_SET_BY_TYPE[icon_type, open] = PdsViewSet(pdsviews, priority)
