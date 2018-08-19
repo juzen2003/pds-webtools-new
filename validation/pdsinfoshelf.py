@@ -22,6 +22,8 @@ import pdslogger
 import pdsfile
 import pdschecksums
 
+GDBM_MODULE = __import__("gdbm")
+
 # Holds log file directories temporarily, used by move_old_info()
 LOGDIRS = []
 
@@ -168,7 +170,8 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
         logger.info('Shelf file', shelf_path)
 
         # Write the shelf and the pickle file
-        shelf = shelve.open(shelf_path, flag='n')
+        # shelf = shelve.open(shelf_path, flag='n')
+        shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'n'))
 
         pickle_dict = {}
         for (key, values) in infodict.iteritems():
@@ -249,7 +252,9 @@ def load_infodict(pdsdir, logger=None):
         # Read the shelf file and convert to a dictionary
         # On failure, read pickle file
         try:
-            shelf = shelve.open(shelf_path, flag='r')
+            # shelf = shelve.open(shelf_path, flag='r')
+            shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'r'))
+
             shelf_is_open = True
         except Exception:
             pickle_path = shelf_path.rpartition('.')[0] + '.pickle'

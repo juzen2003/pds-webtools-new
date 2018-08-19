@@ -358,6 +358,10 @@ parser.add_argument('--subdirectory', '-s', type=str, default='',
                          'write the log file. This can be used to organize '   +
                          'the results of different validation options.')
 
+parser.add_argument('--pickles', '-P', action='store_true',
+                    help='Use pickle files instead of shelf files during '     +
+                         'validation.')
+
 parser.add_argument('--batch', '-b', action='store_true',
                     help='Operate in batch mode. In this mode, the program '   +
                          'searches the existing logs and the given holdings '  +
@@ -372,7 +376,7 @@ parser.add_argument('--minutes', type=int, default=60,
                          'through available volumes but will not start a new ' +
                          'one once the time limit in minutes has been reached.')
 
-parser.add_argument('--batch-status',  action='store_true',
+parser.add_argument('--batch-status', action='store_true',
                     help='Prints a summary of what the program would do now '  +
                          'if run in batch mode.')
 
@@ -455,6 +459,9 @@ if voltypes == [] or args.all:
     voltypes = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews']
 
 targz = args.all or args.targz or args.targz_only
+
+if args.pickles:
+    pdsfile.use_pickles()
 
 # Determine which tests to perform
 checksums    = args.checksums

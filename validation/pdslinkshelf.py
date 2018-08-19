@@ -21,6 +21,8 @@ import pdslogger
 import pdsfile
 import translator
 
+GDBM_MODULE = __import__("gdbm")
+
 LOGNAME = 'pds.validation.links'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
 
@@ -375,7 +377,8 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
                 interior_dict[key[lskip:]] = new_list
 
         # Write the shelf
-        shelf = shelve.open(shelf_path, flag='n')
+        # shelf = shelve.open(shelf_path, flag='n')
+        shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'n'))
 
         for (key, values) in interior_dict.iteritems():
             shelf[key] = values
@@ -485,7 +488,9 @@ def load_links(dirpath, limits={}, logger=None):
         # Read the shelf file and convert to a dictionary
         # On failure, read pickle file
         try:
-            shelf = shelve.open(shelf_path, flag='r')
+            # shelf = shelve.open(shelf_path, flag='r')
+            shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'r'))
+
         except Exception:
             pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
             with open(pickle_path, 'rb') as f:
