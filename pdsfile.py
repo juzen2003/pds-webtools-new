@@ -1881,9 +1881,9 @@ class PdsFile(object):
         This sublist contains every file that should be added to the OPUS
         results if that data product is requested.
 
-        The dictionary actually returns a list of these subblists, because it is
-        possible for multiple data products to have the same OPUS product type.
-        However, most of the time, the list contains only one sublist.
+        The dictionary returns a list of sublists because it is possible for
+        multiple data products to have the same OPUS product type. However, most
+        of the time, the list contains only one sublist.
         """
 
         opus_pdsfiles = {}

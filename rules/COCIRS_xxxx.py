@@ -227,6 +227,60 @@ split_rules = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_TYPE
+####################################################################################################################################
+
+opus_type = translator.TranslatorByRegex([
+    (r'volumes/.*/DATA/APODSPEC/ISPM.*', 0, 'Calibrated Data (raw unavailable)'),
+    (r'volumes/.*/DATA/GEODATA/GEO.*',   0, 'COCIRS Planetary system geometry'),
+    (r'volumes/.*/DATA/ISPMDATA/ISPM.*', 0, 'COCIRS Observation metadata'),
+    (r'volumes/.*/DATA/POIDATA/POI.*',   0, 'COCIRS Footprint geometry on bodies'),
+    (r'volumes/.*/DATA/RINDATA/RIN.*',   0, 'COCIRS Footprint geometry on rings'),
+    (r'volumes/.*/DATA/TARDATA/TAR.*',   0, 'COCIRS Target body identifications'),
+])
+
+####################################################################################################################################
+# OPUS_FORMAT
+####################################################################################################################################
+
+opus_format = translator.TranslatorByRegex([
+    (r'.*\.DAT$', 0, ('Binary', 'Table')),
+    (r'.*\.TAB$', 0, ('ASCII', 'Table')),
+])
+
+####################################################################################################################################
+# OPUS_PRODUCTS
+####################################################################################################################################
+
+opus_products = translator.TranslatorByRegex([
+    (r'.*volumes/(COCIRS_[56]xxx/COCIRS_[56]...)/DATA/.\w+/[A-Z]+([0-9]{10})_(FP.)\.(TAB|DAT|LBL)', 0,
+            [r'volumes/\1/DATA/APODSPEC/SPEC\2_\3.*',
+             r'volumes/\1/DATA/GEODATA/GEO\2_6??.*',
+             r'volumes/\1/DATA/POIDATA/POI\2_\3.*',
+             r'volumes/\1/DATA/RINDATA/RIN\2_\3.*',
+             r'volumes/\1/DATA/TARDATA/TAR\2_\3.*',
+             r'diagrams/\1/BROWSE/*/POI\2_\3_*.jpg',
+             r'diagrams/\1/BROWSE/S_RINGS/RIN\2_\3_*.jpg',
+             r'diagrams/\1/BROWSE/TARGETS/IMG\2_\3*.jpg']),
+])
+
+####################################################################################################################################
+# OPUS_ID_TO_FILESPEC
+####################################################################################################################################
+
+opus_id_to_filespec = translator.TranslatorByRegex([
+    (r'(COCIRS_[56]...)/([0-9]{10}_FP.)$', 0, r'\1/DATA/APODSPEC/SPEC\2.DAT'),
+])
+
+####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+####################################################################################################################################
+
+filespec_to_opus_id = translator.TranslatorByRegex([
+    (r'(COCIRS_[56]...)/DATA/\w+/[A-Z]+([0-9]{10}_FP.)\.(DAT|TAB|LBL)$', 0, r'\1/\2'),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -241,12 +295,19 @@ class COCIRS_xxxx(pdsfile.PdsFile):
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
     SPLIT_RULES = split_rules + pdsfile.PdsFile.SPLIT_RULES
 
+    OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
+    OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
+    OPUS_PRODUCTS = opus_products
+    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
+
     VIEWABLES = viewables
 
     VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
     VOLUMES_TO_ASSOCIATIONS['volumes'] = volumes_to_volumes + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['volumes']
     VOLUMES_TO_ASSOCIATIONS['diagrams'] = volumes_to_diagrams + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['diagrams']
     VOLUMES_TO_ASSOCIATIONS['previews'] = volumes_to_previews + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['previews']
+
+pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

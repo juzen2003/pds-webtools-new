@@ -162,7 +162,7 @@ opus_format = translator.TranslatorByRegex([
 # OPUS_PRODUCTS
 ####################################################################################################################################
 
-# NOTE: Entries supporting versions are commented out; nncomment when OPUS is ready to support version numbers in shopping carts
+# NOTE: Entries supporting versions are commented out; uncomment when OPUS is ready to support version numbers in shopping carts
 
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(COISS_[12]xxx)/(COISS_[12]...)/(data/.*)\.(IMG|LBL)', 0, [r'volumes/\1/\2/\3.IMG',
