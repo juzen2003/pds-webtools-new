@@ -232,11 +232,11 @@ split_rules = translator.TranslatorByRegex([
 
 opus_type = translator.TranslatorByRegex([
     (r'volumes/.*/DATA/APODSPEC/ISPM.*', 0, 'Calibrated Data (raw unavailable)'),
-    (r'volumes/.*/DATA/GEODATA/GEO.*',   0, 'COCIRS Planetary system geometry'),
-    (r'volumes/.*/DATA/ISPMDATA/ISPM.*', 0, 'COCIRS Observation metadata'),
-    (r'volumes/.*/DATA/POIDATA/POI.*',   0, 'COCIRS Footprint geometry on bodies'),
-    (r'volumes/.*/DATA/RINDATA/RIN.*',   0, 'COCIRS Footprint geometry on rings'),
-    (r'volumes/.*/DATA/TARDATA/TAR.*',   0, 'COCIRS Target body identifications'),
+    (r'volumes/.*/DATA/GEODATA/GEO.*',   0, 'COCIRS Planetary System Geometry'),
+    (r'volumes/.*/DATA/ISPMDATA/ISPM.*', 0, 'COCIRS Observation Metadata'),
+    (r'volumes/.*/DATA/POIDATA/POI.*',   0, 'COCIRS Footprint Geometry on Bodies'),
+    (r'volumes/.*/DATA/RINDATA/RIN.*',   0, 'COCIRS Footprint Geometry on Rings'),
+    (r'volumes/.*/DATA/TARDATA/TAR.*',   0, 'COCIRS Target Body Identifications'),
 ])
 
 ####################################################################################################################################
