@@ -483,13 +483,20 @@ def load_links(dirpath, limits={}, logger=None):
             raise IOError('File not found: ' + shelf_path)
 
         # Read the shelf file and convert to a dictionary
-        shelf = shelve.open(shelf_path, flag='r')
+        # On failure, read pickle file
+        try:
+            shelf = shelve.open(shelf_path, flag='r')
+        except Exception:
+            pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
+            with open(pickle_path, 'rb') as f:
+                interior_dict = pickle.load(f)
 
-        interior_dict = {}
-        for key in shelf.keys():
-            interior_dict[key] = shelf[key]
+        else:
+            interior_dict = {}
+            for key in shelf.keys():
+                interior_dict[key] = shelf[key]
 
-        shelf.close()
+            shelf.close()
 
         # Convert interior paths to absolute paths
         link_dict = {}

@@ -246,7 +246,16 @@ def load_infodict(pdsdir, logger=None):
         if not os.path.exists(shelf_path):
             raise IOError('File not found: ' + shelf_path)
 
-        shelf = shelve.open(shelf_path, flag='r')
+        # Read the shelf file and convert to a dictionary
+        # On failure, read pickle file
+        try:
+            shelf = shelve.open(shelf_path, flag='r')
+            shelf_is_open = True
+        except Exception:
+            pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
+            shelf_is_open = False
+            with open(pickle_path, 'rb') as f:
+                shelf = pickle.load(f)
 
         infodict = {}
         for key in shelf.keys():
@@ -255,7 +264,9 @@ def load_infodict(pdsdir, logger=None):
             else:
                 infodict[dirpath_[:lskip] + key] = shelf[key]
 
-        shelf.close()
+        if shelf_is_open:
+            shelf.close()
+
         return infodict
 
     except (Exception, KeyboardInterrupt) as e:
