@@ -387,7 +387,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
 
         # Write the pickle file
         pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
-        with open(shelf_path, 'wb') as f:
+        with open(pickle_path, 'wb') as f:
             pickle.dump(interior_dict, f)
 
     except (Exception, KeyboardInterrupt), e:
