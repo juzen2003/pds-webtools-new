@@ -141,7 +141,7 @@ def read_archive_info(tarpath, limits={'normal':100}, logger=None):
 
 ################################################################################
 
-def write_archive(pdsdir, clobber=True, archive_invisible=True,
+def write_archive(pdsdir, clobber=True, archive_invisibles=True,
                            limits={'normal':-1, 'dot_':100}, logger=None):
     """Write an archive file containing all the files in the directory."""
 
