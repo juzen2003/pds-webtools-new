@@ -84,8 +84,8 @@ opus_type = translator.TranslatorByRegex([
     (r'volumes/.*\.TIF$',               0, 'HST Raw Data Preview (lossless)'),
     (r'volumes/.*_(RAW|D0M_...)\.JPG$', 0, 'HST Raw Data Preview'),
     (r'volumes/.*_(FLT|CAL)\.JPG$',     0, 'HST Calibrated Data Preview'),
-    (r'volumes/.*_(DRZ|MOS|IMA)\.JPG$', 0, 'HST Preview of Line Spectrum'),
-    (r'volumes/.*_X2D\.JPG$',           0, 'HST Preview of 2-D Spectrum'),
+    (r'volumes/.*_(DRZ|MOS|IMA)\.JPG$', 0, 'HST Line Spectrum Preview'),
+    (r'volumes/.*_X2D\.JPG$',           0, 'HST 2-D Spectrum Preview'),
 ])
 
 ####################################################################################################################################
