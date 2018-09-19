@@ -1,7 +1,10 @@
-# python time_and_planet.py path_to_volume, ...
+#!/usr/bin/env python
+################################################################################
+# python time_and_planet.py path_to_volume ...
 #
 # Example:
 #   python time_and_planet.py <path>HSTJ0_9725 ...
+################################################################################
 
 import sys
 import os
