@@ -388,7 +388,12 @@ SPLIT_RULES = translator.TranslatorByRegex([
 ####################################################################################################################################
 # OPUS_TYPE
 #
-# Used for indicating the type of a data file as it will appear in OPUS, e.g., "Raw Data", "Calibrated Data", etc.
+# Used for indicating the type of a data file as it will appear in OPUS, e.g., "Raw Data", "Calibrated Data", etc. The tuple
+# returned is (category, rank, slug, title) where:
+#   category is 'standard', 'browse', 'diagram', or a meaningful header for special cases like 'Voyager ISS', 'Cassini CIRS'
+#   rank is the sort order within the category
+#   slug is a short string that will appear in URLs
+#   title is a meaning title for product, e.g., 'Raw Data (calibrated unavailable)'
 #
 # These translations take a file's logical path and return a string indicating the file's OPUS_TYPE.
 ####################################################################################################################################
@@ -396,25 +401,26 @@ SPLIT_RULES = translator.TranslatorByRegex([
 OPUS_TYPE = translator.TranslatorByRegex([
 
     # Default for a volumes directory is raw data with an indication that calibrated products are unavailable
-    (r'volumes/[^/]+/[^/]+/data/.*\..*', re.I, 'Raw Data (calibrated unavailable)'),
+    (r'volumes/[^/]+/[^/]+/data/.*\..*', re.I, ('standard', 10, 'raw', 'Raw Data (calibrated unavailable)')),
 
     # Previews
-    (r'previews/.*\_thumb\..*$', 0, 'Browse Image (thumbnail)'),
-    (r'previews/.*\_small\..*$', 0, 'Browse Image (small)'),
-    (r'previews/.*\_med\..*$',   0, 'Browse Image (medium)'),
-    (r'previews/.*\_full\..*$',  0, 'Browse Image (full-size)'),
+    (r'previews/.*\_thumb\..*$', 0, ('browse', 10, 'browse-thumb', 'Browse Image (thumbnail)')),
+    (r'previews/.*\_small\..*$', 0, ('browse', 20, 'browse-small', 'Browse Image (small)')),
+    (r'previews/.*\_med\..*$',   0, ('browse', 30, 'browse-medium', 'Browse Image (medium)')),
+    (r'previews/.*\_full\..*$',  0, ('browse', 40, 'browse-full', 'Browse Image (full-size)')),
 
     # Diagrams
-    (r'diagrams/.*\_thumb\..*$', 0, 'Browse Diagram (thumbnail)'),
-    (r'diagrams/.*\_small\..*$', 0, 'Browse Diagram (small)'),
-    (r'diagrams/.*\_med\..*$',   0, 'Browse Diagram (medium)'),
-    (r'diagrams/.*\_full\..*$',  0, 'Browse Diagram (full-size)'),
+    (r'diagrams/.*\_thumb\..*$', 0, ('diagram', 10, 'diagram-thumb', 'Browse Diagram (thumbnail)')),
+    (r'diagrams/.*\_small\..*$', 0, ('diagram', 20, 'diagram-small', 'Browse Diagram (small)')),
+    (r'diagrams/.*\_med\..*$',   0, ('diagram', 30, 'diagram-medium', 'Browse Diagram (medium)')),
+    (r'diagrams/.*\_full\..*$',  0, ('diagram', 40, 'diagram-full', 'Browse Diagram (full-size)')),
 
     # Metadata
-    (r'metadata/.*_inventory\..*', 0, 'Target Body Inventory'),
-    (r'metadata/.*_ring_summary\..*', 0, 'Ring Geometry Index'),
-    (r'metadata/.*_(moon|charon)_summary\..*', 0, 'Satellite Geometry Index'),
-    (r'metadata/.*_(jupiter|saturn|uranus|neptune|pluto)_summary\..*', 0, 'Planet Geometry Index'),
+    (r'metadata/.*_inventory\..*',             0, ('metadata', 10, 'inventory',       'Target Body Inventory')),
+    (r'metadata/.*_(jupiter|saturn|uranus|neptune|pluto)_summary\..*',
+                                               0, ('metadata', 20, 'planet-geometry', 'Planet Geometry Index')),
+    (r'metadata/.*_(moon|charon)_summary\..*', 0, ('metadata', 30, 'moon-geometry',   'Moon Geometry Index')),
+    (r'metadata/.*_ring_summary\..*',          0, ('metadata', 40, 'ring-geometry',   'Ring Geometry Index')),
 ])
 
 ####################################################################################################################################
@@ -425,23 +431,23 @@ OPUS_TYPE = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 OPUS_FORMAT = translator.TranslatorByRegex([
-    (r'.*\.LBL$',     0, ('ASCII',  'PDS3 Label')),
-    (r'.*\.TAB$',     0, ('ASCII',  'Table')),
-    (r'.*\.FMT$',     0, ('ASCII',  'PDS3 Format File')),
-    (r'.*\.CSV$',     0, ('ASCII',  'Comma-Separated Values')),
-    (r'.*\.TXT$',     0, ('ASCII',  'Text')),
-    (r'.*\.ASC$',     0, ('ASCII',  'Text')),
-    (r'.*\.FIT(|S)$', 0, ('Binary', 'FITS')),
-    (r'.*\.TIF(|F)$', 0, ('Binary', 'TIFF')),
-    (r'.*\.JPG$',     0, ('Binary', 'JPEG')),
-    (r'.*\.GIF$',     0, ('Binary', 'GIF')),
-    (r'.*\.PNG$',     0, ('Binary', 'PNG')),
-    (r'.*\.PDF$',     0, ('Binary', 'PDF')),
-    (r'.*\.BSP$',     0, ('Binary', 'SPICE SPK')),
-    (r'.*\.BC$',      0, ('Binary', 'SPICE CK')),
-    (r'.*\.TPC$',     0, ('ASCII',  'SPICE PCK')),
-    (r'.*\.TLS$',     0, ('ASCII',  'SPICE LSK')),
-    (r'.*\.TI$',      0, ('ASCII',  'SPICE IK')),
+    (r'.*\.LBL$',     re.I, ('ASCII',  'PDS3 Label')),
+    (r'.*\.TAB$',     re.I, ('ASCII',  'Table')),
+    (r'.*\.FMT$',     re.I, ('ASCII',  'PDS3 Format File')),
+    (r'.*\.CSV$',     re.I, ('ASCII',  'Comma-Separated Values')),
+    (r'.*\.TXT$',     re.I, ('ASCII',  'Text')),
+    (r'.*\.ASC$',     re.I, ('ASCII',  'Text')),
+    (r'.*\.FIT(|S)$', re.I, ('Binary', 'FITS')),
+    (r'.*\.TIF(|F)$', re.I, ('Binary', 'TIFF')),
+    (r'.*\.JPE?G$',   re.I, ('Binary', 'JPEG')),
+    (r'.*\.GIF$',     re.I, ('Binary', 'GIF')),
+    (r'.*\.PNG$',     re.I, ('Binary', 'PNG')),
+    (r'.*\.PDF$',     re.I, ('Binary', 'PDF')),
+    (r'.*\.BSP$',     re.I, ('Binary', 'SPICE SPK')),
+    (r'.*\.BC$',      re.I, ('Binary', 'SPICE CK')),
+    (r'.*\.TPC$',     re.I, ('ASCII',  'SPICE PCK')),
+    (r'.*\.TLS$',     re.I, ('ASCII',  'SPICE LSK')),
+    (r'.*\.TI$',      re.I, ('ASCII',  'SPICE IK')),
 ])
 
 ####################################################################################################################################
@@ -459,8 +465,8 @@ OPUS_PRODUCTS = translator.TranslatorByRegex([
 ####################################################################################################################################
 # OPUS_ID_TO_FILESPEC
 #
-# Translates an OPUS ID to the volume ID + file specification path of the primary data product.
-# Note: This is a class attribute, not an object attribute. It is shared by all subclasses.
+# Translates an OPUS ID to a compiled regular expression that matches the volume ID + file specification path of the primary data
+# product. Note: This is a class attribute, not an object attribute. It is shared by all subclasses.
 ####################################################################################################################################
 
 OPUS_ID_TO_FILESPEC = translator.TranslatorByRegex([])

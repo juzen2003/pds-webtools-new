@@ -136,6 +136,30 @@ neighbors = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+####################################################################################################################################
+
+filespec_to_opus_id = translator.TranslatorByRegex([
+    (r'VG_000[1-3]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg.iss.2.u.\1'),
+    (r'VG_000[45]/.*/(C3[0-9]{6})\.(IMQ|IBG)',       0, r'vg.iss.1.s.\1'),
+    (r'VG_000[45]/.*/(C4[0-9]{6})\.(IMQ|IBG)',       0, r'vg.iss.2.s.\1'),
+    (r'VG_000[6-8]/.*/(C1[0-7][0-9]{5})\.(IMQ|IBG)', 0, r'vg.iss.1.j.\1'),
+    (r'VG_000[6-8]/.*/(C1[8-9][0-9]{5})\.(IMQ|IBG)', 0, r'vg.iss.2.j.\1'),
+    (r'VG_000[6-8]/.*/(C2[0-9]{6})\.(IMQ|IBG)',      0, r'vg.iss.2.j.\1'),
+    (r'VG_0009/.*/(C[0-9]{7})\.(IMQ|IBG)',           0, r'vg.iss.2.n.\1'),
+    (r'VG_001[0-2]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg.iss.2.n.\1'),
+    (r'VG_001[3-9]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg.iss.1.j.\1'),
+    (r'VG_0020/.*/(C1[0-7][0-9]{5})\.(IMQ|IBG)',     0, r'vg.iss.1.j.\1'),
+    (r'VG_0020/.*/(C1[8-9][0-9]{5})\.(IMQ|IBG)',     0, r'vg.iss.2.j.\1'),
+    (r'VG_002[1-5]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg.iss.2.j.\1'),
+    (r'VG_002[6-9]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg.iss.1.s.\1'),
+    (r'VG_003[0-2]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg.iss.1.s.\1'),
+    (r'VG_0033/.*/(C3[0-9]{6})\.(IMQ|IBG)',          0, r'vg.iss.1.s.\1'),
+    (r'VG_0033/.*/(C4[0-9]{6})\.(IMQ|IBG)',          0, r'vg.iss.2.s.\1'),
+    (r'VG_003[4-8]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg.iss.2.s.\1'),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -147,6 +171,8 @@ class VG_0xxx(pdsfile.PdsFile):
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
+
+    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
 
     VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
     VOLUMES_TO_ASSOCIATIONS['volumes'] = volumes_to_volumes + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['volumes']

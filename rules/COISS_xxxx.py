@@ -146,8 +146,11 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*\.(IMG|LBL)$', 0, 'Raw Data'),
-    (r'calibrated/.*_CALIB\.(IMG|LBL)$', 0, 'Calibrated Data'),
+    (r'volumes/.*\.(IMG|LBL)$',          0, ('standard',   0, 'raw',   'Raw Data')),
+    (r'calibrated/.*_CALIB\.(IMG|LBL)$', 0, ('standard', 100, 'calib', 'Calibrated Data')),
+    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini ISS', 10, 'coiss-thumb',  'Extra preview (thumbnail)')),
+    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini ISS', 20, 'coiss-medium', 'Extra preview (medium)')),
+    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini ISS', 30, 'coiss-full',   'Extra preview (full)')),
 ])
 
 ####################################################################################################################################
@@ -155,26 +158,29 @@ opus_type = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_format = translator.TranslatorByRegex([
-    (r'.*\.IMG$', 0, ('Binary', 'VICAR')),
+    (r'.*\.IMG$',        0, ('Binary', 'VICAR')),
+    (r'.*\.jpeg_small$', 0, ('Binary', 'JPEG')),
 ])
 
 ####################################################################################################################################
 # OPUS_PRODUCTS
 ####################################################################################################################################
 
-# NOTE: Entries supporting versions are commented out; uncomment when OPUS is ready to support version numbers in shopping carts
-
 opus_products = translator.TranslatorByRegex([
-    (r'.*volumes/(COISS_[12]xxx)/(COISS_[12]...)/(data/.*)\.(IMG|LBL)', 0, [r'volumes/\1/\2/\3.IMG',
-                                                                            r'volumes/\1/\2/\3.LBL',
-                                                                            r'calibrated/\1/\2/\3_CALIB.IMG',
-#                                                                             r'calibrated/\1_v*/\2/\3_CALIB.IMG',
-                                                                            r'calibrated/\1/\2/\3_CALIB.LBL',
-#                                                                             r'calibrated/\1_v*/\2/\3_CALIB.LBL',
-                                                                            r'previews/\1/\2/\3_thumb.jpg',
-                                                                            r'previews/\1/\2/\3_small.jpg',
-                                                                            r'previews/\1/\2/\3_med.jpg',
-                                                                            r'previews/\1/\2/\3_full.jpg',
+    (r'.*volumes/(COISS_[12]xxx)/(COISS_[12]...)/data/(.*)\.(IMG|LBL)', 0, [r'volumes/\1/\2/data/\3.IMG',
+                                                                            r'volumes/\1/\2/data/\3.LBL',
+                                                                            r'volumes/\1/\2/extras/thumbnail/\3.IMG.jpeg_small',
+                                                                            r'volumes/\1/\2/extras/browse/\3.IMG.jpeg',
+                                                                            r'volumes/\1/\2/extras/full/\3.IMG.png',
+                                                                            r'volumes/\1/\2/extras/tiff/\3.IMG.tiff',
+                                                                            r'calibrated/\1/\2/data/\3_CALIB.IMG',
+                                                                            r'calibrated/\1_v*/\2/data/\3_CALIB.IMG',
+                                                                            r'calibrated/\1/\2/data/\3_CALIB.LBL',
+                                                                            r'calibrated/\1_v*/\2/data/\3_CALIB.LBL',
+                                                                            r'previews/\1/\2/data/\3_thumb.jpg',
+                                                                            r'previews/\1/\2/data/\3_small.jpg',
+                                                                            r'previews/\1/\2/data/\3_med.jpg',
+                                                                            r'previews/\1/\2/data/\3_full.jpg',
                                                                             r'metadata/\1/\2/\2_jupiter_summary.lbl',
                                                                             r'metadata/\1/\2/\2_jupiter_summary.tab',
                                                                             r'metadata/\1/\2/\2_saturn_summary.lbl',
@@ -188,19 +194,34 @@ opus_products = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+####################################################################################################################################
+
+# filespec_to_opus_id = translator.TranslatorByRegex([
+#     (r'COISS_100[0-4]/.*/([NW][0-9]{10})_[0-9]+\..+$',      0, r'cassini.iss.jupiter_cruise..\1'),
+#     (r'COISS_1005/.*/([NW]1357[0-9]{6})_[0-9]+\..+$',       0, r'cassini.iss.jupiter_cruise..\1'),
+#     (r'COISS_1005/.*/([NW]1358[0-1][0-9]{5})_[0-9]+\..+$',  0, r'cassini.iss.jupiter_cruise..\1'),
+#     (r'COISS_1005/.*/([NW]1358[2-9][0-9]{5})_[0-9]+\..+$',  0, r'cassini.iss.jupiter..\1'),
+#     (r'COISS_1005/.*/([NW]1359[0-9]{6})_[0-9]+\..+$',       0, r'cassini.iss.jupiter..\1'),
+#     (r'COISS_1006/.*/([NW]1359[0-9]{6})_[0-9]+\..+$',       0, r'cassini.iss.jupiter..\1'),
+#     (r'COISS_1006/.*/([NW]136[0-2][0-9]{6})_[0-9]+\..+$',   0, r'cassini.iss.jupiter..\1'),
+#     (r'COISS_1006/.*/([NW]13630[0-7][0-9]{4})_[0-9]+\..+$', 0, r'cassini.iss.jupiter..\1'),
+#     (r'COISS_1006/.*/([NW]13630[8-9][0-9]{4})_[0-9]+\..+$', 0, r'cassini.iss.saturn_cruise..\1'),
+#     (r'COISS_1006/.*/([NW]1363[1-9][0-9]{5})_[0-9]+\..+$',  0, r'cassini.iss.saturn_cruise..\1'),
+#     (r'COISS_100[7-9]/.*/([NW][0-9]{10})_[0-9]+\..+$',      0, r'cassini.iss.saturn_cruise..\1'),
+#     (r'COISS_2.../.*/([NW][0-9]{10})_[0-9]+\..+$',          0, r'cassini.iss.saturn..\1'),
+# ])
+
+filespec_to_opus_id = translator.TranslatorByRegex([
+    (r'COISS_[12][10]../(data|extras)/.*/([NW][0-9]{10})_[0-9]+\..+$', 0, r'co.iss.\2'),
+])
+
+####################################################################################################################################
 # OPUS_ID_TO_FILESPEC
 ####################################################################################################################################
 
 opus_id_to_filespec = translator.TranslatorByRegex([
-    (r'(COISS_[12]...)/(.*)$', 0, r'\1/data/\2.IMG'),
-])
-
-####################################################################################################################################
-# FILESPEC_TO_OPUS_ID
-####################################################################################################################################
-
-filespec_to_opus_id = translator.TranslatorByRegex([
-    (r'(COISS_[12]...)/data/(.*)\.(IMG|LBL)$', 0, r'\1/\2'),
+    (r'co\.iss\..*', 0, re.compile(r'.*_[0-9]+\.LBL')),
 ])
 
 ####################################################################################################################################
@@ -218,7 +239,6 @@ class COISS_xxxx(pdsfile.PdsFile):
     SORT_KEY = sort_key + pdsfile.PdsFile.SORT_KEY
     ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
 
-    OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
     OPUS_PRODUCTS = opus_products
     FILESPEC_TO_OPUS_ID = filespec_to_opus_id

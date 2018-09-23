@@ -142,6 +142,22 @@ def use_pickles(status=True):
     USE_PICKLES = status
 
 ################################################################################
+# OPUS IDs -> PdsFile objects
+################################################################################
+
+SUPPORT_OPUS_LOOKUPS = False
+
+def support_opus_lookups(status=True):
+    """Call before preload(). Status=True to support method
+    PdsFile.from_opus_id, which returns the primary PdsFile object given an
+    OPUS IDs. Note: with this option selected, the call to preload() will take
+    a few minutes."""
+
+    global SUPPORT_OPUS_LOOKUPS
+
+    SUPPORT_OPUS_LOOKUPS = status
+
+################################################################################
 # Memcached support
 ################################################################################
 
@@ -237,6 +253,8 @@ def preload(holdings_list, port=0, clear=False):
     """
 
     global CACHE, MEMCACHE_PORT, DEFAULT_CACHING, LOCAL_PRELOADED, FILESYSTEM
+    global SUPPORT_OPUS_LOOKUPS
+
     FILESYSTEM = True
 
     # Convert holdings to a list of strings
@@ -314,7 +332,12 @@ def preload(holdings_list, port=0, clear=False):
                 pdsdir._volume_publication_date_filled = pubdate
                 pdsdir._volume_data_set_ids_filled = dsids
 
-        if pdsdir.volname: return           # don't go deeper than volume name
+        if pdsdir.volname:
+            if SUPPORT_OPUS_LOOKUPS:            # load OPUS IDs if necessary
+                (shelf_path, _) = pdsdir.shelf_path_and_key('info')
+                _ = PdsFile._get_shelf(shelf_path)
+
+            return                          # don't go deeper than volume name
 
         for basename in pdsdir.childnames:
             try:
@@ -567,6 +590,65 @@ class PdsFile(object):
 
     # Used to help with debugging
     LAST_EXC_INFO = (None, None, None)
+
+    ############################################################################
+    # OPUS_ID support
+    ############################################################################
+
+    # We track all abspaths associated with an OPUS ID. These data structures
+    # are used for this purpose. Each call to load_opus_ids adds() results to
+    # these two structures if the information has not already been loaded.
+
+    # This dictionary returns a set of abspaths given an OPUS ID.
+    OPUS_ID_ABSPATHS = {}
+
+    # This set contains abspaths of all the volumes that have had their OPUS IDs
+    # loaded.
+    OPUS_ID_VOLUMES_LOADED = set()
+
+    @staticmethod
+    def load_opus_ids_for_volume_interiors(volume_abspath, interiors):
+        """Given a volume abspath and list of interior paths, update the OPUS ID
+        database."""
+
+        # Validate
+        if '/holdings/volumes/' not in volume_abspath:
+            raise ValueError('Not a volume path: ', volume_abspath)
+
+        # Strip a trailing slash
+        volume_abspath = volume_abspath.rstrip('/')
+
+        # If this volumes was already loaded, we're done
+        if volume_abspath in PdsFile.OPUS_ID_VOLUMES_LOADED: return
+
+        # Separate the abspath prefix and the volume ID
+        (prefix, slash, volume_id) = volume_abspath.rpartition('/')
+        if not VOLNAME_REGEX.match(volume_id):
+            raise ValueError('Not a volume path: ', volume_abspath)
+
+        abspath_prefix_ = volume_abspath + '/'
+        filespec_prefix_ = volume_id + '/'
+        pdsvol = PdsFile.from_abspath(volume_abspath)
+
+        # For each interior path...
+        for interior in interiors:
+
+            # Generate the abspath and filespec
+            abspath  = abspath_prefix_  + interior
+            filespec = filespec_prefix_ + interior
+
+            # Generate the OPUS ID if any
+            opus_id = pdsvol.opus_id_from_filespec(filespec)
+            if not opus_id: continue
+
+            # Add the OPUS ID and associated abspath to the structure
+            if opus_id not in PdsFile.OPUS_ID_ABSPATHS:
+                PdsFile.OPUS_ID_ABSPATHS[opus_id] = set()
+
+            PdsFile.OPUS_ID_ABSPATHS[opus_id].add(abspath)
+
+        # Note that this volume has now been added
+        PdsFile.OPUS_ID_VOLUMES_LOADED.add(volume_abspath)
 
     ############################################################################
     # Constructor
@@ -1336,17 +1418,21 @@ class PdsFile(object):
         self._recache()
         return self._mime_type_filled
 
+    def opus_id_from_filespec(self, filespec):
+        """The OPUS ID of this product based on the given filespec. This object
+        must be of the same PdsFile subclass.
+        """
+
+        opus_id = self.FILESPEC_TO_OPUS_ID.first(filespec) or ''
+        return opus_id.lower()
+
     @property
     def opus_id(self):
         """The OPUS ID of this product if it has one; otherwise an empty string.
         """
 
         if self._opus_id_filled is None:
-            with_slashes = self.FILESPEC_TO_OPUS_ID.first(self.filespec)
-            if with_slashes is None:
-                return None
-            self._opus_id_filled = with_slashes.replace('-', '--').replace('/',
-                                                                           '-')
+            self._opus_id_filled = self.opus_id_from_filespec(self.filespec)
             self._recache()
 
         return self._opus_id_filled
@@ -1368,7 +1454,8 @@ class PdsFile(object):
         or "Preview Image (full-size)"."""
 
         if self._opus_type_filled is None:
-            self._opus_type_filled = self.OPUS_TYPE.first(self.logical_path)
+            self._opus_type_filled = \
+                                self.OPUS_TYPE.first(self.logical_path) or ''
             self._recache()
 
         return self._opus_type_filled
@@ -1863,8 +1950,28 @@ class PdsFile(object):
                 else:
                     abspaths += [self.root_ + pattern]
 
+            # Treat a viewable named "full" as special
+            full_abspath = ''
+            for abspath in abspaths:
+                if '_full.' in abspath:
+                    full_abspath = abspath
+                    break
+
+            if full_abspath:
+                abspaths.remove(full_abspath)
+
+            # Create the viewset organized by size
             viewables = PdsFile.pdsfiles_for_abspaths(abspaths, must_exist=True)
-            return pdsviewable.PdsViewSet.from_pdsfiles(viewables)
+            viewset = pdsviewable.PdsViewSet.from_pdsfiles(viewables)
+
+            # Append the full viewable by name
+            if full_abspath:
+                pdsf = PdsFile.from_abspath(full_abspath)
+                full_viewable = pdsviewable.PdsViewable.from_pdsfile(pdsf,
+                                                                    name='full')
+                viewset.append(full_viewable)
+
+            return viewset
 
         # We are out of options
         return pdsviewable.PdsViewSet([])
@@ -1883,7 +1990,8 @@ class PdsFile(object):
 
         The dictionary returns a list of sublists because it is possible for
         multiple data products to have the same OPUS product type. However, most
-        of the time, the list contains only one sublist.
+        of the time, the list contains only one sublist. The list is sorted
+        with the most recent versions first.
         """
 
         opus_pdsfiles = {}
@@ -1963,6 +2071,21 @@ class PdsFile(object):
                 opus_pdsfiles[opus_type] = [sublist]
             else:
                 opus_pdsfiles[opus_type].append(sublist)
+
+        # Sort versions
+        for (header, sublists) in opus_pdsfiles.items():
+            if len(sublists) == 1: continue
+
+            tuples = []
+            for sublist in sublists:
+                tuples.append((-sublist[0].version_rank, sublist))
+
+            tuples.sort()
+            opus_pdsfiles[header] = [t[1] for t in tuples]
+
+        # Call a special product prioritizer if available
+        if hasattr(self, 'opus_prioritizer'):
+            self.opus_prioritizer(opus_pdsfiles)
 
         return opus_pdsfiles
 
@@ -2688,12 +2811,37 @@ class PdsFile(object):
         """The PdsFile of the primary data file associated with this OPUS ID.
         """
 
-        with_slashes = opus_id.replace('-','/').replace('//', '-')
-        filespec = PdsFile.OPUS_ID_TO_FILESPEC.first(with_slashes)
-        if not filespec:
-            raise ValueError('Unrecognized OPUS ID: ' + opus_id)
+        try:
+            abspaths = PdsFile.OPUS_ID_ABSPATHS[opus_id]
+        except KeyError:
+            raise ValueError('Invalid OPUS ID: ' + opus_id)
 
-        return PdsFile.from_filespec(filespec)
+        regexes = PdsFile.OPUS_ID_TO_FILESPEC.first(opus_id)
+        if not isinstance(regexes, tuple):
+            regexes = (regexes,)
+
+        matches = []
+        for regex in regexes:
+            for abspath in abspaths:
+                if regex.match(abspath): matches.append(abspath)
+
+        # No matches is a problem
+        if len(matches) == 0:
+            raise ValueError('No primary data product for OPUS ID: ' + opus_id)
+
+        # One match is easy
+        if len(matches) == 1:
+            return PdsFile.from_abspath(matches[0])
+
+        # Otherwise we might have multiple versions; choose the one without a
+        # version number
+        unversioned = [p for p in matches if 'x_v' not in p]
+        if len(unversioned) == 1:
+            return PdsFile.from_abspath(unversioned[0])
+
+        # Otherwise choose the one with the highest version number
+        matches.sort()
+        return PdsFile.from_abspath(matches[-1])
 
     def volume_pdsfile(self):
         """PdsFile object for the root volume."""
@@ -2937,7 +3085,13 @@ class PdsFile(object):
     def shelf_path_and_lskip(self, id='info', volname=''):
         """The absolute path to the shelf file associated with this PdsFile.
         Also return the number of characters to skip over in that absolute
-        path to obtain the basename of the shelf file."""
+        path to obtain the basename of the shelf file.
+
+        Inputs:
+            id          shelf type, 'info' or 'link'.
+            volname     an optional volume name to append to the end of a this
+                        path, which can be used if this is a volset.
+        """
 
         if self.checksums_:
             raise ValueError('No shelf files for checksums: ' +
@@ -2984,6 +3138,8 @@ class PdsFile(object):
         """Internal method to open a shelf file or pickle file. A limited number
         of shelf files are kept open at all times to reduce file IO."""
 
+        global USE_PICKLES, SUPPORT_OPUS_LOOKUPS
+
         # Open and cache the shelf
         if USE_PICKLES:
             shelf_path = shelf_path.rpartition('.')[0] + '.pickle'
@@ -3016,6 +3172,19 @@ class PdsFile(object):
 
         except Exception as e:
             raise IOError('Unable to open %s file: %s' % (name, shelf_path))
+
+        # If this is an info file, save the OPUS IDs...
+        else:
+            if SUPPORT_OPUS_LOOKUPS and '/shelves/info/volumes/' in shelf_path:
+                parts = shelf_path.partition('_info.')
+
+                # volume_abspath is the abspath to the volume root directory
+                # with no trailing slash
+                volume_abspath = parts[0].replace('/shelves/info/',
+                                                  '/holdings/')
+                # The keys of the shelf are interior paths
+                PdsFile.load_opus_ids_for_volume_interiors(volume_abspath,
+                                                           shelf)
 
         # Save the null key values from the shelves. This can save a lot of
         # shelf open/close operations.

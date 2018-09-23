@@ -102,19 +102,30 @@ opus_products = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# FILESPEC_TO_OPUS_ID
+####################################################################################################################################
+
+# filespec_to_opus_id = translator.TranslatorByRegex([
+#     (r'COUVIS_0001/DATA/w+/(\w+)\.(DAT|LBL)$',                0, r'cassini.uvis.jupiter_cruise..\1'),
+#     (r'COUVIS_0002/DATA/D2001_00[0-9]/(\w+)\.(DAT|LBL)$',     0, r'cassini.uvis.jupiter_cruise..\1'),
+#     (r'COUVIS_0002/DATA/D2001_01[0-3]/(\w+)\.(DAT|LBL)$',     0, r'cassini.uvis.jupiter_cruise..\1'),
+#     (r'COUVIS_0002/DATA/D2001_01[4-9]/(\w+)\.(DAT|LBL)$',     0, r'cassini.uvis.jupiter..\1'),
+#     (r'COUVIS_0002/DATA/D2001_0[2-9][0-9]/(\w+)\.(DAT|LBL)$', 0, r'cassini.uvis.jupiter..\1'),
+#     (r'COUVIS_000[3-5]/DATA/\w+/(\w+)\.(DAT|LBL)$',           0, r'cassini.uvis.saturn_cruise..\1'),
+#     (r'COUVIS_000[6-9]/DATA/\w+/(\w+)\.(DAT|LBL)$',           0, r'cassini.uvis.saturn..\1'),
+#     (r'COUVIS_00[1-9]./DATA/\w+/(\w+)\.(DAT|LBL)$',           0, r'cassini.uvis.saturn../\1'),
+# ])
+
+filespec_to_opus_id = translator.TranslatorByRegex([
+    (r'COUVIS_00../DATA/\w+/(\w+)\.(DAT|LBL)$',  0, r'co.uvis.\1'),
+])
+
+####################################################################################################################################
 # OPUS_ID_TO_FILESPEC
 ####################################################################################################################################
 
 opus_id_to_filespec = translator.TranslatorByRegex([
-    (r'(COUVIS_0...)/(.*)$', 0, r'\1/DATA/\2.DAT'),
-])
-
-####################################################################################################################################
-# FILESPEC_TO_OPUS_ID
-####################################################################################################################################
-
-filespec_to_opus_id = translator.TranslatorByRegex([
-    (r'(COUVIS_0...)/(DATA|data)/(.*)\.(DAT|LBL)$', 0, r'\1/\3'),
+    (r'co.uvis.\.*', 0, re.compile(r'.*\.LBL')),
 ])
 
 ####################################################################################################################################

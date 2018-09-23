@@ -11,7 +11,7 @@ import re
 ####################################################################################################################################
 
 # Define the priority among file types
-FILE_TYPE_PRIORITY = {
+FILE_CODE_PRIORITY = {
 
     # LORRI codes
     '630': 0,  #- LORRI High-res Lossless (CDH 1)/LOR
@@ -61,12 +61,27 @@ FILE_TYPE_PRIORITY = {
     '54A': 29, #- MVIC Panchromatic Frame Transfer Lossy (CDH 2)/MPF
 }
 
-FILE_TYPE_LOOKUP = (2 * [''] + 2 * ['PACKETIZED_'] + 2 * ['LOSSY_'] +   # LORRI
-                    2 * [''] + 2 * ['PACKETIZED_'] + 2 * ['LOSSY_'] +   # LORRI
-                    6 * [''] + 6 * ['PACKETIZED_'] + 6 * ['LOSSY_'] +   # MVIC
-                    2 * [''] + 2 * ['PACKETIZED_'] + 2 * ['LOSSY_'])    # MVIC
+def description(code):
+    desc = []
+    if code in {'630', '633', '636', '639',
+                '530', '533', '536', '539', '53F', '542', '545', '548'}:
+        desc.append('Lossless')
 
-BINNED_TYPE_LOOKUP = 6 * [False] + 6 * [True] + 18 * [False] + 6 * [True]
+    if code in {'631', '634', '637', '63A',
+                '531', '534', '537', '53A', '540', '543', '546', '549'}:
+        desc.append('Packetized')
+
+    if code in {'632', '635', '638', '63B',
+                '532', '535', '538', '53B', '541', '544', '547', '54A'}:
+        desc.append('Lossy')
+
+    if code in {'633', '634', '635',
+                '533', '534', '535', '542', '543', '544'}:
+        desc.append('Binned')
+    else:
+        desc.append('Unbinned')
+
+    return ', '.join(desc)
 
 ####################################################################################################################################
 # DESCRIPTION_AND_ICON
@@ -146,10 +161,12 @@ sort_key = translator.TranslatorByRegex([
 opus_type = translator.TranslatorByRegex([
 
     # Hide calibrated previews because the raw previews are fine
-    (r'previews/NHxx.._xxxx(|_v[1-9][0-9]*)/NH...._2xxx/.*$', 0, ''),
+    (r'previews/NHxx.._xxxx(|_v.+)/NH...._2xxx/.*$', 0, ''),
 
-    (r'volumes/NHxx.._xxxx(|_v[1-9][0-9]*)/NH...._1.../data/.*eng(|_[1-9])\.(fit|lbl)$', re.I, 'Raw Data'),
-    (r'volumes/NHxx.._xxxx(|_v[1-9][0-9]*)/NH...._2.../data/.*sci(|_[1-9])\.(fit|lbl)$', 0, 'Calibrated Data'),
+    (r'volumes/NHxx.._xxxx(|_v.+)/NH...._1.../data/.*_eng(|_[1-9])\.(fit|lbl)$', re.I,
+                                            ('standard',   0, 'raw',   'Raw Data')),
+    (r'volumes/NHxx.._xxxx(|_v.+)/NH...._2.../data/.*_sci(|_[1-9])\.(fit|lbl)$', re.I,
+                                            ('standard', 100, 'calib', 'Calibrated Data'))
 ])
 
 ####################################################################################################################################
@@ -159,15 +176,15 @@ opus_type = translator.TranslatorByRegex([
 # NOTE: Entries supporting versions are commented out; nncomment when OPUS is ready to support version numbers in shopping carts
 
 opus_products = translator.TranslatorByRegex([
-    (r'.*volumes/(NH..LO_xxxx)/(NH..LO)_[12](...)/(.*)_(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
-                                                                [r'volumes/\1/\2_1\3/\4_eng*.[fl][ib][tl]',
-#                                                                  r'volumes/\1_v*/\2_1\3/\4_eng*.[fl][ib][tl]',
-                                                                 r'volumes/\1/\2_2\3/\4_sci*.[fl][ib][tl]',
-#                                                                  r'volumes/\1_v*/\2_2\3/\4_sci*.[fl][ib][tl]',
-                                                                 r'previews/\1/\2_1\3/\4_eng*_thumb.jpg',
-                                                                 r'previews/\1/\2_1\3/\4_eng*_small.jpg',
-                                                                 r'previews/\1/\2_1\3/\4_eng*_med.jpg',
-                                                                 r'previews/\1/\2_1\3/\4_eng*_full.jpg',
+    (r'.*volumes/(NH..LO_xxxx)(?:|_v.+)/(NH..LO)_[12](...)/(.*)_0x..._(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
+                                                                [r'volumes/\1/\2_1\3/\4_0x???_eng*.[fl][ib][tl]',
+                                                                 r'volumes/\1_v*/\2_1\3/\4_0x???_eng*.[fl][ib][tl]',
+                                                                 r'volumes/\1/\2_2\3/\4_0x???_sci*.[fl][ib][tl]',
+                                                                 r'volumes/\1_v*/\2_2\3/\4_0x???_sci*.[fl][ib][tl]',
+                                                                 r'previews/\1/\2_1\3/\4_0x???_eng*_thumb.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_0x???_eng*_small.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_0x???_eng*_med.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_0x???_eng*_full.jpg',
                                                                  r'metadata/\1/\2_1\3/\2_1\3_jupiter_summary.lbl',
                                                                  r'metadata/\1/\2_1\3/\2_1\3_jupiter_summary.tab',
                                                                  r'metadata/\1/\2_1\3/\2_1\3_pluto_summary.lbl',
@@ -182,59 +199,81 @@ opus_products = translator.TranslatorByRegex([
                                                                  r'metadata/\1/\2_1\3/\2_1\3_inventory.tab']),
 
     # These two entries are necessary because NHxxMV_xxxx_v1/NHJUMV_1001 uses uppercase file names
-#     (r'.*volumes/(NH..MV_xxxx)/(NH..MV)_[12](...)/data/(.*)/mc(.*)_0x(...)_(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
-#                                                                 [r'volumes/\1/\2_1\3/data/\4/mc\5_0x\6_eng*.[fl][ib][tl]',
-#                                                                  r'volumes/\1_v1/\2_1\3/DATA/\4/MC\5_0X\6_ENG*.[FL][IB][TL]',
-#                                                                  r'volumes/\1_v*/\2_1\3/data/\4/mc\5_0x\6_eng*.[fl][ib][tl]',
-#                                                                  r'volumes/\1/\2_2\3/data/\4/mc\5_0x\6_sci*.[fl][ib][tl]',
-#                                                                  r'volumes/\1_v*/\2_2\3/data/\4/mc\5_0x\6_sci*.[fl][ib][tl]',
-#                                                                  r'previews/\1/\2_1\3/data/\4/mc\5_0x\6_eng*_thumb.jpg',
-#                                                                  r'previews/\1/\2_1\3/data/\4/mc\5_0x\6_eng*_small.jpg',
-#                                                                  r'previews/\1/\2_1\3/data/\4/mc\5_0x\6_eng*_med.jpg',
-#                                                                  r'previews/\1/\2_1\3/data/\4/mc\5_0x\6_eng*_full.jpg']),
-# 
-#     (r'.*volumes/(NH..MV_xxxx)/(NH..MV)_[12](...)/data/(.*)/mpf(.*)_0x(...)_(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
-#                                                                 [r'volumes/\1/\2_1\3/data/\4/mpf\5_0x\6_eng*.[fl][ib][tl]',
-#                                                                  r'volumes/\1_v1/\2_1\3/DATA/\4/MPF\5_0X\6_ENG*.[FL][IB][TL]',
-#                                                                  r'volumes/\1_v*/\2_1\3/data/\4/mpf\5_0x\6_eng*.[fl][ib][tl]',
-#                                                                  r'volumes/\1/\2_2\3/data/\4/mpf\5_0x\6_sci*.[fl][ib][tl]',
-#                                                                  r'volumes/\1_v*/\2_2\3/data/\4/mpf\5_0x\6_sci*.[fl][ib][tl]',
-#                                                                  r'previews/\1/\2_1\3/data/\4/mpf\5_0x\6_eng*_thumb.jpg',
-#                                                                  r'previews/\1/\2_1\3/data/\4/mpf\5_0x\6_eng*_small.jpg',
-#                                                                  r'previews/\1/\2_1\3/data/\4/mpf\5_0x\6_eng*_med.jpg',
-#                                                                  r'previews/\1/\2_1\3/data/\4/mpf\5_0x\6_eng*_full.jpg']),
+    (r'.*volumes/(NH..MV_xxxx)(?:|_v.+)/(NH..MV)_[12](...)/data/(.*)/mc(.*)_0x..._(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
+                                                                [r'volumes/\1/\2_1\3/data/\4/mc\5_0x???_eng*.[fl][ib][tl]',
+                                                                 r'volumes/\1_v1/\2_1\3/DATA/\4/MC\5_0X???_ENG*.[FL][IB][TL]',
+                                                                 r'volumes/\1_v*/\2_1\3/data/\4/mc\5_0x???_eng*.[fl][ib][tl]',
+                                                                 r'volumes/\1/\2_2\3/data/\4/mc\5_0x???_sci*.[fl][ib][tl]',
+                                                                 r'volumes/\1_v*/\2_2\3/data/\4/mc\5_0x???_sci*.[fl][ib][tl]',
+                                                                 r'previews/\1/\2_1\3/data/\4/mc\5_0x???_eng*_thumb.jpg',
+                                                                 r'previews/\1/\2_1\3/data/\4/mc\5_0x???_eng*_small.jpg',
+                                                                 r'previews/\1/\2_1\3/data/\4/mc\5_0x???_eng*_med.jpg',
+                                                                 r'previews/\1/\2_1\3/data/\4/mc\5_0x???_eng*_full.jpg']),
 
-    (r'.*volumes/(NH..MV_xxxx)/(NH..MV)_[12](...)/(.*)_(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
-                                                                [r'volumes/\1/\2_1\3/\4_eng*.[fl][ib][tl]',
-#                                                                  r'volumes/\1_v*/\2_1\3/\4_eng*.[fl][ib][tl]',
-                                                                 r'volumes/\1/\2_2\3/\4_sci*.[fl][ib][tl]',
-#                                                                  r'volumes/\1_v*/\2_2\3/\4_sci*.[fl][ib][tl]',
-                                                                 r'previews/\1/\2_1\3/\4_eng*_thumb.jpg',
-                                                                 r'previews/\1/\2_1\3/\4_eng*_small.jpg',
-                                                                 r'previews/\1/\2_1\3/\4_eng*_med.jpg',
-                                                                 r'previews/\1/\2_1\3/\4_eng*_full.jpg']),
+    (r'.*volumes/(NH..MV_xxxx)(?:|_v.+)/(NH..MV)_[12](...)/data/(.*)/mpf(.*)_0x..._(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
+                                                                [r'volumes/\1/\2_1\3/data/\4/mpf\5_0x???_eng*.[fl][ib][tl]',
+                                                                 r'volumes/\1_v1/\2_1\3/DATA/\4/MPF\5_0X???_ENG*.[FL][IB][TL]',
+                                                                 r'volumes/\1_v*/\2_1\3/data/\4/mpf\5_0x???_eng*.[fl][ib][tl]',
+                                                                 r'volumes/\1/\2_2\3/data/\4/mpf\5_0x???_sci*.[fl][ib][tl]',
+                                                                 r'volumes/\1_v*/\2_2\3/data/\4/mpf\5_0x???_sci*.[fl][ib][tl]',
+                                                                 r'previews/\1/\2_1\3/data/\4/mpf\5_0x???_eng*_thumb.jpg',
+                                                                 r'previews/\1/\2_1\3/data/\4/mpf\5_0x???_eng*_small.jpg',
+                                                                 r'previews/\1/\2_1\3/data/\4/mpf\5_0x???_eng*_med.jpg',
+                                                                 r'previews/\1/\2_1\3/data/\4/mpf\5_0x???_eng*_full.jpg']),
 
-])
-
-####################################################################################################################################
-# OPUS_ID_TO_FILESPEC
-####################################################################################################################################
-
-opus_id_to_filespec = translator.TranslatorByRegex([
-    # Raw and calibrated NH volumes share common OPUS IDs, where "x" replaces the leading "1" or "2" in the volume ID and
-    # "eng" or "sci" at the end of the file name is removed. The filespec returned points to the raw file. Note that some
-    # releases of the data set have a downlink number following "eng" or "sci"; others do not.
-    (r'(NH....)_x(...)/(.*)$', 0, r'\1_1\2/data/\3_eng*.fit'),
+    (r'.*volumes/(NH..MV_xxxx)(?:|_v.+)/(NH..MV)_[12](...)/(.*)_0x..._(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
+                                                                [r'volumes/\1/\2_1\3/\4_0x???_eng*.[fl][ib][tl]',
+                                                                 r'volumes/\1_v*/\2_1\3/\4_0x???_eng*.[fl][ib][tl]',
+                                                                 r'volumes/\1/\2_2\3/\4_0x???_sci*.[fl][ib][tl]',
+                                                                 r'volumes/\1_v*/\2_2\3/\4_0x???_sci*.[fl][ib][tl]',
+                                                                 r'previews/\1/\2_1\3/\4_0x???_eng*_thumb.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_0x???_eng*_small.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_0x???_eng*_med.jpg',
+                                                                 r'previews/\1/\2_1\3/\4_0x???_eng*_full.jpg']),
 ])
 
 ####################################################################################################################################
 # FILESPEC_TO_OPUS_ID
 ####################################################################################################################################
 
+# filespec_to_opus_id = translator.TranslatorByRegex([
+#     # Raw and calibrated NH volumes (series *_1001 and *_2001) share common OPUS IDs.
+#     (r'NHJULO_[12].*/data/\w+/(lor_[0-9]{10})_.*$', re.I, r'new_horizons.lorri.jupiter..\1'),
+#     (r'NHPELO_[12].*/data/\w+/(lor_[0-9]{10})_.*$', 0,    r'new_horizons.lorri.pluto..\1'),
+#     (r'NHPCLO_[12].*/data/\w+/(lor_[0-9]{10})_.*$', 0,    r'new_horizons.lorri.pluto_cruise..\1'),
+#     (r'NHLULO_[12].*/data/\w+/(lor_[0-9]{10})_.*$', 0,    r'new_horizons.lorri.jupiter_cruise..\1'),
+# 
+#     (r'NHJUMV_[12].*/data/\w+/(m.._[0-9]{10})_.*$', re.I, r'new_horizons.mvic.jupiter..\1'),
+#     (r'NHPEMV_[12].*/data/\w+/(m.._[0-9]{10})_.*$', 0,    r'new_horizons.mvic.pluto..\1'),
+#     (r'NHPCMV_[12].*/data/\w+/(m.._[0-9]{10})_.*$', 0,    r'new_horizons.mvic.pluto_cruise..\1'),
+#     (r'NHLAMV_[12].*/data/\w+/(m.._[0-9]{10})_.*$', 0,    r'new_horizons.mvic.jupiter_cruise..\1'),
+# ])
+
 filespec_to_opus_id = translator.TranslatorByRegex([
-    # Raw and calibrated NH volumes (series *_1001 and *_2001) share common OPUS IDs. The OPUS ID replaces the leading
-    # "1" or "2" by "x" and removes the final "eng" or "sci". It strips away a downlink number if necessary.
-    (r'(NH....)_[12](...)(|_v[1-9])/data/(.*)_(eng|sci)(|_[1-9][0-9]*).(fit|lbl)$', 0, r'\1_x\2/\4'),
+    # Raw and calibrated NH volumes (series *_1001 and *_2001) share common OPUS IDs.
+    (r'NH..LO_[12].*/data/\w+/(lor_[0-9]{10})_.*$', re.I, r'nh.lorri.\1'),
+    (r'NH..MV_[12].*/data/\w+/(m.._[0-9]{10})_.*$', re.I, r'nh.mvic.\1'),
+])
+
+####################################################################################################################################
+# OPUS_ID_TO_FILESPEC
+####################################################################################################################################
+
+# Organized giving priority to lossless, full-resolution
+opus_id_to_filespec = translator.TranslatorByRegex([
+    (r'nh\.lorri\..*', 0, (re.compile('.*_0[xX]63[06]_(eng|ENG)\.(lbl|LBL)'),     # High-res lossless
+                           re.compile('.*_0[xX]63[17]_(eng|ENG)\.(lbl|LBL)'),     # High-res packetized
+                           re.compile('.*_0[xX]63[28]_(eng|ENG)\.(lbl|LBL)'),     # High-res lossy
+                           re.compile('.*_0[xX]63[39]_(eng|ENG)\.(lbl|LBL)'),     # 4x4 lossless
+                           re.compile('.*_0[xX]63[4aA]_(eng|ENG)\.(lbl|LBL)'),    # 4x4 packetized
+                           re.compile('.*_0[xX]63[5bB]_(eng|ENG)\.(lbl|LBL)'))),  # 4x4 lossy
+
+    (r'nh\.mvic\..*', 0,  (re.compile('.*_0[xX]5(30|36|3F|45|48)_(eng|ENG)\.(lbl|LBL)'),  # High-res lossless
+                           re.compile('.*_0[xX]5(31|37|40|46|49)_(eng|ENG)\.(lbl|LBL)'),  # High-res packetized
+                           re.compile('.*_0[xX]5(32|38|41|47|4A)_(eng|ENG)\.(lbl|LBL)'),  # High-res lossy
+                           re.compile('.*_0[xX]5(33|42)_(eng|ENG)\.(lbl|LBL)'),           # 3x3 lossless
+                           re.compile('.*_0[xX]5(34|43)_(eng|ENG)\.(lbl|LBL)'),           # 3x3 packetized
+                           re.compile('.*_0[xX]5(35|44)_(eng|ENG)\.(lbl|LBL)'))),         # 3x3 lossy
 ])
 
 ####################################################################################################################################
@@ -268,6 +307,44 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
 
     VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
     VOLUMES_TO_ASSOCIATIONS['volumes'] = volumes_to_volumes + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['volumes']
+
+    def opus_prioritizer(self, pdsfiles):
+        """Prioritizes items that have been downlinked in multiple ways."""
+
+        for (header, sublists) in pdsfiles.items():
+            if len(sublists) == 1: continue
+            if header[0] != 'standard': continue
+
+            priority = []
+            for sublist in sublists:
+                code = sublist[0].basename.partition('_0x')[2][:3]
+                rank = sublist[0].version_rank
+                priority.append((FILE_CODE_PRIORITY[code],
+                                code, -rank, sublist))
+
+            priority.sort()
+            code0 = priority[0][1]
+            list0 = [priority[0][3]]
+
+            new_codes = []
+            for (prio, code, _, sublist) in priority[1:]:
+                if code == code0:
+                    list0.append(sublist)
+                    continue
+
+                if code not in new_codes:
+                    desc = description(code)
+                    new_header = ('New Horizons',
+                                  100 + prio,
+                                  'nh-' + desc.replace(', ', '-').lower(),
+                                  'Duplicate Image: ' + desc)
+                    pdsfiles[new_header] = []
+                    new_codes.append(code)
+
+                pdsfiles[new_header].append(sublist)
+            pdsfiles[header] = list0
+
+        return pdsfiles
 
 # Global attributes shared by all subclasses
 pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC

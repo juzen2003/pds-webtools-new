@@ -110,12 +110,16 @@ default_viewables = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/C[0-9]{7}_RAW\..*$',     0, 'Raw Data'),
-    (r'volumes/.*/C[0-9]{7}_CLEANED\..*$', 0, 'VGISS Cleaned Data'),
-    (r'volumes/.*/C[0-9]{7}_CALIB\..*$',   0, 'Calibrated Data'),
-    (r'volumes/.*/C[0-9]{7}_GEOMED\..*$',  0, 'VGISS Geometrically Corrected Data'),
-    (r'volumes/.*/C[0-9]{7}_RESLOC\..*$',  0, 'VGISS Reseau Table'),
-    (r'volumes/.*/C[0-9]{7}_GEOMA\..*$',   0, 'VGISS Geometric Tiepoint Table'),
+    (r'volumes/.*/C[0-9]{7}_RAW\..*$',     0, ('standard',   0, 'raw',   'Raw Data')),
+    (r'volumes/.*/C[0-9]{7}_CALIB\..*$',   0, ('standard', 100, 'calib', 'Calibrated Data')),
+
+    (r'volumes/.*/C[0-9]{7}_CLEANED\..*$', 0, ('Voyager ISS', 10, 'vgiss-cleaned', 'Cleaned Data')),
+    (r'volumes/.*/C[0-9]{7}_GEOMED\..*$',  0, ('Voyager ISS', 20, 'vgiss-geomed',  'Geometrically Corrected Data')),
+    (r'volumes/.*/C[0-9]{7}_RESLOC\..*$',  0, ('Voyager ISS', 30, 'vgiss-resloc',  'Reseau Table')),
+    (r'volumes/.*/C[0-9]{7}_GEOMA\..*$',   0, ('Voyager ISS', 40, 'vgiss-geoma',   'Geometric Tiepoint Table')),
+
+    (r'volumes/.*/C[0-9]{7}\.IMQ$',        0, ('Voyager ISS', 110, 'vgiss-imq', 'Compressed Raw (IMQ)')),
+    (r'volumes/.*/C[0-9]{7}\.IBQ$',        0, ('Voyager ISS', 120, 'vgiss-ibq', 'Small Preview (IBQ)')),
 ])
 
 ####################################################################################################################################
@@ -125,6 +129,8 @@ opus_type = translator.TranslatorByRegex([
 opus_format = translator.TranslatorByRegex([
     (r'.*\.IMG$', 0, ('Binary', 'VICAR')),
     (r'.*\.DAT$', 0, ('Binary', 'VICAR')),
+    (r'.*\.IMQ$', 0, ('Binary', 'Compressed EDR')),
+    (r'.*\.IBQ$', 0, ('Binary', 'PDS1 Attached Label')),
 ])
 
 ####################################################################################################################################
@@ -167,22 +173,23 @@ opus_products = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
-# OPUS_ID_TO_FILESPEC
-####################################################################################################################################
-
-opus_id_to_filespec = translator.TranslatorByRegex([
-    # All the associated versions of VGISS files have a common OPUS ID. The filespec returned points to the raw image.
-    (r'(VGISS_[5-8]...)/(.*)$', 0, r'\1/DATA/\2_RAW.IMG'),
-])
-
-####################################################################################################################################
 # FILESPEC_TO_OPUS_ID
 ####################################################################################################################################
 
 filespec_to_opus_id = translator.TranslatorByRegex([
-    # All the associated versions of VGISS files have a common OPUS ID based on the seven-digit FDS count plus '_xxx' to
-    # indicate something is missing.
-    (r'(VGISS_[5-8]...)/DATA/(C.....XX/C[0-9]{7})_[A-Z]+\....$', 0, r'\1/\2'),
+    (r'VGISS_5([12])../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$', 0, r'vg.iss.\1.j.\2'),
+    (r'VGISS_6([12])../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$', 0, r'vg.iss.\1.s.\2'),
+    (r'VGISS_7.../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$',      0, r'vg.iss.2.u.\1'),
+    (r'VGISS_8.../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$',      0, r'vg.iss.2.n.\1'),
+])
+
+####################################################################################################################################
+# OPUS_ID_TO_FILESPEC
+####################################################################################################################################
+
+# Return a regular expression that selects the primary data product associated with an OPUS ID
+opus_id_to_filespec = translator.TranslatorByRegex([
+    (r'vg\.iss\..*', 0, re.compile('.*_RAW\.LBL')),
 ])
 
 ####################################################################################################################################

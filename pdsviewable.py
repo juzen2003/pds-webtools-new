@@ -13,13 +13,18 @@ class PdsViewable(object):
     """Contains the minimum information needed to show an image in HTML."""
 
     def __init__(self, abspath, url, width, height, alt, size_bytes,
-                 pdsf=None):
+                 name='', pdsf=None):
+
+        # Core properties of a viewable
         self.abspath = abspath
         self.url = url
         self.width = width
         self.height = height
         self.alt = alt
         self.bytes = size_bytes
+
+        # Optional
+        self.name = name    # Named viewables cannot be looked up by size
         self.pdsf = pdsf
 
         self.width_over_height = float(self.width) / float(self.height)
@@ -27,60 +32,86 @@ class PdsViewable(object):
 
     def copy(self):
         return PdsViewable(self.abspath, self.url, self.width, self.height,
-                           self.alt, self.bytes, self.pdsf)
+                           self.alt, self.bytes, self.name, self.pdsf)
+
+    def assign_name(self, name):
+        self.name = name
 
     @staticmethod
-    def from_pdsfile(pdsf):
+    def from_pdsfile(pdsf, name=''):
         if not pdsf.width:
             raise ValueError('PdsFile is not viewable: ' + pdsf.abspath)
 
         return PdsViewable(pdsf.abspath, pdsf.url, pdsf.width, pdsf.height,
-                           pdsf.logical_path, pdsf.size_bytes, pdsf)
+                           pdsf.logical_path, pdsf.size_bytes, name, pdsf)
 
 ################################################################################
 ################################################################################
 ################################################################################
 
 class PdsViewSet(object):
-    """Viewables selectable by size."""
+    """Viewables selectable by size or name."""
 
     def __init__(self, viewables=[], priority=0):
         self.priority = priority        # Used to prioritize among icon sets
 
         self.viewables_by_width = {}
         self.viewables_by_height = {}
+        self.viewables_by_name = {}     # Special viewables, no lookup by size
 
         for viewable in viewables:
+            if viewable.name:
+                self.viewables_by_name[name] = viewable
+
+            # Unnamed viewables get precedence
             if viewable.width not in self.viewables_by_width:
                 self.viewables_by_width[viewable.width] = viewable
+                self.widths = self.viewables_by_width.keys()
+                self.widths.sort()
+
+            elif self.viewables_by_width[viewable.width].name:
+                self.viewables_by_width[viewable.width] = viewable
+
             if viewable.height not in self.viewables_by_height:
                 self.viewables_by_height[viewable.height] = viewable
+                self.heights = self.viewables_by_height.keys()
+                self.heights.sort()
 
-        self.widths = self.viewables_by_width.keys()
-        self.widths.sort()
-
-        self.heights = self.viewables_by_height.keys()
-        self.heights.sort()
+            elif self.viewables_by_width[viewable.height].name:
+                self.viewables_by_width[viewable.height] = viewable
 
     def append(self, viewable):
+
+        # If the arg is a viewset, not a viewable, append recursively
         if type(viewable) == PdsViewSet:
             for view in self.viewables_by_width:
                 self.append(view)
             return
 
-        if viewable.width in self.viewables_by_width: return
-        if viewable.height in self.viewables_by_height: return
+        if viewable.name:
+            self.viewables_by_name[viewable.name] = viewable
 
-        self.viewables_by_width[viewable.width] = viewable
-        self.widths.append(viewable.width)
-        self.widths.sort()
+        # Unnamed viewables get precedence
+        if viewable.width not in self.viewables_by_width:
+            self.viewables_by_width[viewable.width] = viewable
+            self.widths.append(viewable.width)
+            self.widths.sort()
 
-        self.viewables_by_height[viewable.height] = viewable
-        self.heights.append(viewable.height)
-        self.height.sort()
+        elif self.viewables_by_width[viewable.width].name:
+            self.viewables_by_width[viewable.width] = viewable
+
+        if viewable.height not in self.viewables_by_height:
+            self.viewables_by_height[viewable.height] = viewable
+            self.heights.append(viewable.height)
+            self.heights.sort()
+
+        elif self.viewables_by_width[viewable.height].name:
+            self.viewables_by_width[viewable.height] = viewable
 
     @property
     def viewables(self):
+        # A list of viewables in order of increasing width
+
         results = []
         for width in self.widths:
             results.append(self.viewables_by_width[width])
@@ -88,6 +119,9 @@ class PdsViewSet(object):
 
     @property
     def full_size(self):
+        if 'full' in self.viewables_by_name:
+            return self.viewables_by_name['full']
+
         return self.viewables_by_height[self.heights[-1]]
 
     def __len__(self):
