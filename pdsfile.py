@@ -2074,14 +2074,7 @@ class PdsFile(object):
 
         # Sort versions
         for (header, sublists) in opus_pdsfiles.items():
-            if len(sublists) == 1: continue
-
-            tuples = []
-            for sublist in sublists:
-                tuples.append((-sublist[0].version_rank, sublist))
-
-            tuples.sort()
-            opus_pdsfiles[header] = [t[1] for t in tuples]
+            sublists.sort(key=lambda x: -x[0].version_rank)
 
         # Call a special product prioritizer if available
         if hasattr(self, 'opus_prioritizer'):
