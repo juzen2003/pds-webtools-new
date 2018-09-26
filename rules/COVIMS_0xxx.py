@@ -93,9 +93,9 @@ opus_format = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini VIMS', 10, 'coiss-thumb',  'Extra preview (thumbnail)')),
-    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini VIMS', 20, 'coiss-medium', 'Extra preview (medium)')),
-    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini VIMS', 30, 'coiss-full',   'Extra preview (full)')),
+    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini VIMS', 10, 'covims-thumb',  'Extra preview (thumbnail)')),
+    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini VIMS', 20, 'covims-medium', 'Extra preview (medium)')),
+    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini VIMS', 30, 'covims-full',   'Extra preview (full)')),
 ])
 
 ####################################################################################################################################

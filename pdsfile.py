@@ -158,6 +158,21 @@ def support_opus_lookups(status=True):
     SUPPORT_OPUS_LOOKUPS = status
 
 ################################################################################
+# Permanent storage of file info
+################################################################################
+
+CACHE_ALL_INFO = False
+
+def cache_all_info(status=True):
+    """Call before preload(). Status=True to support the permanent caching of
+    file information (bytes, child_count, timestring, checksum, size). for all
+    existing files in a big dictionary."""
+
+    global CACHE_ALL_INFO
+
+    CACHE_ALL_INFO = status
+
+################################################################################
 # Memcached support
 ################################################################################
 
@@ -253,7 +268,7 @@ def preload(holdings_list, port=0, clear=False):
     """
 
     global CACHE, MEMCACHE_PORT, DEFAULT_CACHING, LOCAL_PRELOADED, FILESYSTEM
-    global SUPPORT_OPUS_LOOKUPS
+    global SUPPORT_OPUS_LOOKUPS, CACHE_ALL_INFO
 
     FILESYSTEM = True
 
@@ -333,7 +348,7 @@ def preload(holdings_list, port=0, clear=False):
                 pdsdir._volume_data_set_ids_filled = dsids
 
         if pdsdir.volname:
-            if SUPPORT_OPUS_LOOKUPS:            # load OPUS IDs if necessary
+            if SUPPORT_OPUS_LOOKUPS or CACHE_ALL_INFO:
                 (shelf_path, _) = pdsdir.shelf_path_and_key('info')
                 _ = PdsFile._get_shelf(shelf_path)
 
@@ -595,12 +610,13 @@ class PdsFile(object):
     # OPUS_ID support
     ############################################################################
 
-    # We track all abspaths associated with an OPUS ID. These data structures
-    # are used for this purpose. Each call to load_opus_ids adds() results to
-    # these two structures if the information has not already been loaded.
+    # If SUPPORT_OPUS_LOOKUPS is True, we track all abspaths associated with an
+    # OPUS ID. These data structures are used for this purpose. Each call to
+    # load_opus_ids_for_volume_interiors() adds results to these two structures
+    # if the information has not already been loaded.
 
     # This dictionary returns a set of abspaths given an OPUS ID.
-    OPUS_ID_ABSPATHS = {}
+    OPUS_ID_ABSPATHS = {}       # filled if SUPPORT_OPUS_LOOKUPS is True
 
     # This set contains abspaths of all the volumes that have had their OPUS IDs
     # loaded.
@@ -649,6 +665,23 @@ class PdsFile(object):
 
         # Note that this volume has now been added
         PdsFile.OPUS_ID_VOLUMES_LOADED.add(volume_abspath)
+
+    ############################################################################
+    # INFO_DICT 
+    ############################################################################
+
+    # If CACHE_ALL_INFO is True, we track maintain a dictionary of key
+    # information (size in bytes, child count, modification date, checksum,
+    # display size (w,h)) for each absolute path in the holdings/volumes tree.
+    # This takes up memory but reduces the frequency at which shelves are
+    # opened or closed.
+
+    # This dictionary returns a set of abspaths given an OPUS ID.
+    ABSPATH_INFO = {}       # filled if CACHE_ALL_INFO is True
+
+    # This set contains abspaths of all the volumes that have had their info
+    # loaded.
+    ABSPATH_INFO_VOLUMES_LOADED = set()
 
     ############################################################################
     # Constructor
@@ -3138,7 +3171,9 @@ class PdsFile(object):
         """Internal method to open a shelf file or pickle file. A limited number
         of shelf files are kept open at all times to reduce file IO."""
 
-        global USE_PICKLES, SUPPORT_OPUS_LOOKUPS
+        global USE_PICKLES, SUPPORT_OPUS_LOOKUPS, CACHE_ALL_INFO
+
+        fully_cached = False
 
         # Open and cache the shelf
         if USE_PICKLES:
@@ -3173,23 +3208,38 @@ class PdsFile(object):
         except Exception as e:
             raise IOError('Unable to open %s file: %s' % (name, shelf_path))
 
-        # If this is an info file, save the OPUS IDs...
-        else:
-            if SUPPORT_OPUS_LOOKUPS and '/shelves/info/volumes/' in shelf_path:
-                parts = shelf_path.partition('_info.')
+        # If this is an info file, save the OPUS IDs and/or info...
+        if (SUPPORT_OPUS_LOOKUPS or CACHE_ALL_INFO) and \
+            '/shelves/info/volumes/' in shelf_path:
 
-                # volume_abspath is the abspath to the volume root directory
-                # with no trailing slash
-                volume_abspath = parts[0].replace('/shelves/info/',
-                                                  '/holdings/')
-                # The keys of the shelf are interior paths
+            parts = shelf_path.partition('_info.')
+
+            # volume_abspath is the abspath to the volume root directory
+            # with no trailing slash
+            volume_abspath = parts[0].replace('/shelves/info/',
+                                              '/holdings/')
+            # The keys of the shelf are interior paths
+            if SUPPORT_OPUS_LOOKUPS:
                 PdsFile.load_opus_ids_for_volume_interiors(volume_abspath,
                                                            shelf)
+
+            if CACHE_ALL_INFO and (volume_abspath not in
+                                   PdsFile.ABSPATH_INFO_VOLUMES_LOADED):
+                volume_prefix = volume_abspath + '/'
+                for key in shelf:
+                    PdsFile.ABSPATH_INFO[volume_prefix + key] = shelf[key]
+
+                fully_cached = True
+                PdsFile.ABSPATH_INFO_VOLUMES_LOADED.add(volume_abspath)
 
         # Save the null key values from the shelves. This can save a lot of
         # shelf open/close operations.
         if '' in shelf:
             PdsFile.SHELF_NULL_KEY_VALUES[shelf_path] = shelf['']
+
+        if fully_cached:
+            if not USE_PICKLES: shelf.close()
+            return
 
         PdsFile.SHELF_ACCESS[shelf_path] = PdsFile.SHELF_ACCESS_COUNT
         PdsFile.SHELF_ACCESS_COUNT += 1
@@ -3249,6 +3299,16 @@ class PdsFile(object):
     def shelf_lookup(self, id='info', volname=''):
         """Return the contents of the id'd shelf file associated with this
         object."""
+
+        global CACHE_ALL_INFO
+
+        if CACHE_ALL_INFO and id == 'info':
+            if volname:
+                abspath = self.abspath + '/' + volname
+            else:
+                abspath = self.abspath
+
+            return PdsFile.ABSPATH_INFO[abspath]
 
         (shelf_path, key) = self.shelf_path_and_key(id, volname)
 
