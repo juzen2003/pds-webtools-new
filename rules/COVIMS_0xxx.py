@@ -131,19 +131,19 @@ opus_products = translator.TranslatorByRegex([
 #     # There are up to two OPUS IDs associated with each VIMS file, one for the VIS channel and one for the IR channel.
 #     # This translator returns the OPUS ID without the suffix "_IR" or "_VIS" used by OPUS. That must be handled separately
 #     (r'COVIMS_0001/(data|extras)/.*/(v[0-9]{10})_[0-9]+\..+$',  0, r'cassini.vims.jupiter_cruise..\2'),
-# 
+#
 #     (r'COVIMS_0002/(data|extras)/.*/(v135[0-7][0-9]{6})_[0-9]+\..+$',  0, r'cassini.vims.jupiter_cruise..\2'),
 #     (r'COVIMS_0002/(data|extras)/.*/(v13580[0-9]{5})_[0-9]+\..+$',     0, r'cassini.vims.jupiter_cruise..\2'),
 #     (r'COVIMS_0002/(data|extras)/.*/(v1358[1-9][0-9]{5})_[0-9]+\..+$', 0, r'cassini.vims.jupiter..\2'),
 #     (r'COVIMS_0002/(data|extras)/.*/(v1359[0-9]{6})_[0-9]+\..+$',      0, r'cassini.vims.jupiter..\2'),
 #     (r'COVIMS_0002/(data|extras)/.*/(v13[6-9]{8})_[0-9]+\..+$',        0, r'cassini.vims.jupiter..\2'),
-# 
+#
 #     (r'COVIMS_0003/(data|extras)/.*/(v13[6-9]{8})_[0-9]+\..+$',        0, r'cassini.vims.saturn_cruise..\2'),
 #     (r'COVIMS_0003/(data|extras)/.*/(v14[0-4]{8})_[0-9]+\..+$',        0, r'cassini.vims.saturn_cruise..\2'),
 #     (r'COVIMS_0003/(data|extras)/.*/(v145[0-4][0-9]{6})_[0-9]+\..+$',  0, r'cassini.vims.saturn_cruise..\2'),
 #     (r'COVIMS_0003/(data|extras)/.*/(v145[5-9][0-9]{6})_[0-9]+\..+$',  0, r'cassini.vims.saturn..\2'),
 #     (r'COVIMS_0003/(data|extras)/.*/(v14[6-9][0-9]{7})_[0-9]+\..+$',   0, r'cassini.vims.saturn..\2'),
-# 
+#
 #     (r'COVIMS_000[4-9]/(data|extras)/.*/(v[0-9]{10})_[0-9]+\..+$',     0, r'cassini.vims.saturn..\2'),
 #     (r'COVIMS_00[1-9]./(data|extras)/.*/(v[0-9]{10})_[0-9]+\..+$',     0, r'cassini.vims.saturn..\2'),
 # ])
@@ -152,6 +152,7 @@ filespec_to_opus_id = translator.TranslatorByRegex([
     # There are up to two OPUS IDs associated with each VIMS file, one for the VIS channel and one for the IR channel.
     # This translator returns the OPUS ID without the suffix "_IR" or "_VIS" used by OPUS. That must be handled separately
     (r'COVIMS_00../(data|extras)/.*/(v[0-9]{10})_[0-9]+\..+$',  0, r'co.vims.\2'),
+    (r'COVIMS_00../(data|extras)/.*/(v[0-9]{10})_[0-9]+(_[0-9]{3})\..+$',  0, r'co.vims.\2\3'),
 ])
 
 ####################################################################################################################################
