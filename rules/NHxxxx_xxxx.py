@@ -242,7 +242,7 @@ opus_products = translator.TranslatorByRegex([
 #     (r'NHPELO_[12].*/data/\w+/(lor_[0-9]{10})_.*$', 0,    r'new_horizons.lorri.pluto..\1'),
 #     (r'NHPCLO_[12].*/data/\w+/(lor_[0-9]{10})_.*$', 0,    r'new_horizons.lorri.pluto_cruise..\1'),
 #     (r'NHLULO_[12].*/data/\w+/(lor_[0-9]{10})_.*$', 0,    r'new_horizons.lorri.jupiter_cruise..\1'),
-# 
+#
 #     (r'NHJUMV_[12].*/data/\w+/(m.._[0-9]{10})_.*$', re.I, r'new_horizons.mvic.jupiter..\1'),
 #     (r'NHPEMV_[12].*/data/\w+/(m.._[0-9]{10})_.*$', 0,    r'new_horizons.mvic.pluto..\1'),
 #     (r'NHPCMV_[12].*/data/\w+/(m.._[0-9]{10})_.*$', 0,    r'new_horizons.mvic.pluto_cruise..\1'),
@@ -311,13 +311,15 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
     def opus_prioritizer(self, pdsfiles):
         """Prioritizes items that have been downlinked in multiple ways."""
 
-        for (header, sublists) in pdsfiles.items():
+        for header in list(pdsfiles.keys()): # We change pdsfiles in the loop!
+            sublists = pdsfiles[header]
             if len(sublists) == 1: continue
             if header[0] != 'standard': continue
 
             priority = []
             for sublist in sublists:
-                code = sublist[0].basename.partition('_0x')[2][:3]
+                code = (sublist[0].basename.replace('X','x')
+                        .partition('_0x')[2][:3]).upper()
                 rank = sublist[0].version_rank
                 priority.append((FILE_CODE_PRIORITY[code],
                                 code, -rank, sublist))
