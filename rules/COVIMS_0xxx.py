@@ -151,8 +151,8 @@ opus_products = translator.TranslatorByRegex([
 filespec_to_opus_id = translator.TranslatorByRegex([
     # There are up to two OPUS IDs associated with each VIMS file, one for the VIS channel and one for the IR channel.
     # This translator returns the OPUS ID without the suffix "_IR" or "_VIS" used by OPUS. That must be handled separately
-    (r'COVIMS_00../(data|extras)/.*/(v[0-9]{10})_[0-9]+\..+$',  0, r'co.vims.\2'),
-    (r'COVIMS_00../(data|extras)/.*/(v[0-9]{10})_[0-9]+(_[0-9]{3})\..+$',  0, r'co.vims.\2\3'),
+    (r'COVIMS_00../(data|extras)/.*/(v[0-9]{10}_[0-9]+)\..+$',  0, r'co.vims.\2'),
+    (r'COVIMS_00../(data|extras)/.*/(v[0-9]{10}_[0-9]+_[0-9]{3})\..+$',  0, r'co.vims.\2'),
 ])
 
 ####################################################################################################################################
