@@ -237,6 +237,10 @@ opus_type = translator.TranslatorByRegex([
     (r'volumes/.*/DATA/POIDATA/POI.*',   0, ('Cassini CIRS', 30, 'cirs-poi',  'Footprint Geometry on Bodies')),
     (r'volumes/.*/DATA/RINDATA/RIN.*',   0, ('Cassini CIRS', 40, 'cirs-rin',  'Footprint Geometry on Rings')),
     (r'volumes/.*/DATA/TARDATA/TAR.*',   0, ('Cassini CIRS', 50, 'cirs-tar',  'Target Body Identifications')),
+    (r'diagrams/.*\_thumb\..*$',         0, ('browse', 10, 'browse-thumb', 'Browse Image (thumbnail)')),
+    (r'diagrams/.*\_small\..*$',         0, ('browse', 20, 'browse-small', 'Browse Image (small)')),
+    (r'diagrams/.*\_med\..*$',           0, ('browse', 30, 'browse-medium', 'Browse Image (medium)')),
+    (r'diagrams/.*\_full\..*$',          0, ('browse', 40, 'browse-full', 'Browse Image (full-size)')),
 ])
 
 ####################################################################################################################################
@@ -269,7 +273,7 @@ opus_products = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 filespec_to_opus_id = translator.TranslatorByRegex([
-    (r'COCIRS_[56].../DATA/\w+/[A-Z]+([0-9]{10})_FP(.)\.(DAT|TAB|LBL)$', 0, r'co-cirs-\1.fp\2'),
+    (r'COCIRS_[56].../DATA/\w+/[A-Z]+([0-9]{10})_FP(.)\.(DAT|TAB|LBL)$', 0, r'co-cirs-\1-fp\2'),
 ])
 
 ####################################################################################################################################
