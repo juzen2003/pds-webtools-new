@@ -177,10 +177,10 @@ opus_products = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 filespec_to_opus_id = translator.TranslatorByRegex([
-    (r'VGISS_5([12])../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$', 0, r'vg.iss.\1.j.\2'),
-    (r'VGISS_6([12])../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$', 0, r'vg.iss.\1.s.\2'),
-    (r'VGISS_7.../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$',      0, r'vg.iss.2.u.\1'),
-    (r'VGISS_8.../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$',      0, r'vg.iss.2.n.\1'),
+    (r'VGISS_5([12])../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$', 0, r'vg-iss-\1-j-\2'),
+    (r'VGISS_6([12])../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$', 0, r'vg-iss-\1-s-\2'),
+    (r'VGISS_7.../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$',      0, r'vg-iss-2-u-\1'),
+    (r'VGISS_8.../DATA/C.....XX/(C[0-9]{7})_[A-Z]+\....$',      0, r'vg-iss-2-n-\1'),
 ])
 
 ####################################################################################################################################
@@ -189,7 +189,7 @@ filespec_to_opus_id = translator.TranslatorByRegex([
 
 # Return a regular expression that selects the primary data product associated with an OPUS ID
 opus_id_to_filespec = translator.TranslatorByRegex([
-    (r'vg\.iss\..*', 0, re.compile('.*_RAW\.LBL')),
+    (r'vg-iss-.*', 0, re.compile('.*_RAW\.IMG$')),
 ])
 
 ####################################################################################################################################

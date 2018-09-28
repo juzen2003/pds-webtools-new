@@ -108,11 +108,11 @@ opus_products = translator.TranslatorByRegex([
 
 filespec_to_opus_id = translator.TranslatorByRegex([
     # Associated HST products share an OPUS ID based on the first nine characters of the file's basename.
-    (r'HSTI(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',  0, r'hst.\1\2.wfc3.\4'),
-    (r'HSTJ(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',  0, r'hst.\1\2.acs.\4'),
-    (r'HSTN(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',  0, r'hst.\1\2.nicmos.\4'),
-    (r'HSTO(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',  0, r'hst.\1\2.stis.\4'),
-    (r'HSTU(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',  0, r'hst.\1\2.wfpc2.\4'),
+    (r'HSTI(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',  0, r'hst-\1\2-wfc3-\4'),
+    (r'HSTJ(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',  0, r'hst-\1\2-acs-\4'),
+    (r'HSTN(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',  0, r'hst-\1\2-nicmos-\4'),
+    (r'HSTO(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',  0, r'hst-\1\2-stis-\4'),
+    (r'HSTU(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',  0, r'hst-\1\2-wfpc2-\4'),
 ])
 
 ####################################################################################################################################
@@ -121,7 +121,7 @@ filespec_to_opus_id = translator.TranslatorByRegex([
 
 opus_id_to_filespec = translator.TranslatorByRegex([
     # The filespec returned points to the combined-detached label.
-    (r'hst\..*', 0,  re.compile(r'.*\.LBL')),
+    (r'hst-.*', 0,  re.compile(r'.*\.LBL$')),
 ])
 
 ####################################################################################################################################

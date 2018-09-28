@@ -393,7 +393,7 @@ SPLIT_RULES = translator.TranslatorByRegex([
 #   category is 'standard', 'browse', 'diagram', or a meaningful header for special cases like 'Voyager ISS', 'Cassini CIRS'
 #   rank is the sort order within the category
 #   slug is a short string that will appear in URLs
-#   title is a meaning title for product, e.g., 'Raw Data (calibrated unavailable)'
+#   title is a meaning title for product, e.g., 'Raw Data (when calibrated is unavailable)'
 #
 # These translations take a file's logical path and return a string indicating the file's OPUS_TYPE.
 ####################################################################################################################################
@@ -401,7 +401,7 @@ SPLIT_RULES = translator.TranslatorByRegex([
 OPUS_TYPE = translator.TranslatorByRegex([
 
     # Default for a volumes directory is raw data with an indication that calibrated products are unavailable
-    (r'volumes/[^/]+/[^/]+/data/.*\..*', re.I, ('standard', 10, 'raw', 'Raw Data (calibrated unavailable)')),
+    (r'volumes/[^/]+/[^/]+/data/.*\..*', re.I, ('standard', 10, 'raw', 'Raw Data (if calibrated is unavailable)')),
 
     # Previews
     (r'previews/.*\_thumb\..*$', 0, ('browse', 10, 'browse-thumb', 'Browse Image (thumbnail)')),

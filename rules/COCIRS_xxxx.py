@@ -231,7 +231,7 @@ split_rules = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/DATA/APODSPEC/ISPM.*', 0, ('standard', 110, 'calib',  'Calibrated Data (raw unavailable)')),
+    (r'volumes/.*/DATA/APODSPEC/ISPM.*', 0, ('standard', 110, 'calib',  'Calibrated Data (if raw is unavailable)')),
     (r'volumes/.*/DATA/GEODATA/GEO.*',   0, ('Cassini CIRS', 10, 'cirs-geo',  'Planetary System Geometry')),
     (r'volumes/.*/DATA/ISPMDATA/ISPM.*', 0, ('Cassini CIRS', 20, 'cirs-ispm', 'Observation Metadata')),
     (r'volumes/.*/DATA/POIDATA/POI.*',   0, ('Cassini CIRS', 30, 'cirs-poi',  'Footprint Geometry on Bodies')),
@@ -269,7 +269,7 @@ opus_products = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 filespec_to_opus_id = translator.TranslatorByRegex([
-    (r'COCIRS_[56].../DATA/\w+/[A-Z]+([0-9]{10})_FP(.)\.(DAT|TAB|LBL)$', 0, r'co.cirs.\1.fp\2'),
+    (r'COCIRS_[56].../DATA/\w+/[A-Z]+([0-9]{10})_FP(.)\.(DAT|TAB|LBL)$', 0, r'co-cirs-\1.fp\2'),
 ])
 
 ####################################################################################################################################
@@ -277,7 +277,7 @@ filespec_to_opus_id = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_id_to_filespec = translator.TranslatorByRegex([
-    (r'co\.cirs\..*', 0, re.compile(r'.*ISPM[0-9]{10}_FP.\.LBL')),
+    (r'co-cirs-.*', 0, re.compile(r'.*ISPM[0-9]{10}_FP.\.LBL')),
 ])
 
 ####################################################################################################################################

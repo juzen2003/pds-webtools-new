@@ -251,8 +251,8 @@ opus_products = translator.TranslatorByRegex([
 
 filespec_to_opus_id = translator.TranslatorByRegex([
     # Raw and calibrated NH volumes (series *_1001 and *_2001) share common OPUS IDs.
-    (r'NH..LO_[12].*/data/\w+/(lor_[0-9]{10})_.*$', re.I, r'nh.lorri.\1'),
-    (r'NH..MV_[12].*/data/\w+/(m.._[0-9]{10})_.*$', re.I, r'nh.mvic.\1'),
+    (r'NH..LO_[12].*/data/\w+/(lor_[0-9]{10})_.*$', re.I, r'nh-lorri-\1'),
+    (r'NH..MV_[12].*/data/\w+/(m.._[0-9]{10})_.*$', re.I, r'nh-mvic-\1'),
 ])
 
 ####################################################################################################################################
@@ -261,19 +261,19 @@ filespec_to_opus_id = translator.TranslatorByRegex([
 
 # Organized giving priority to lossless, full-resolution
 opus_id_to_filespec = translator.TranslatorByRegex([
-    (r'nh\.lorri\..*', 0, (re.compile('.*_0[xX]63[06]_(eng|ENG)\.(lbl|LBL)'),     # High-res lossless
-                           re.compile('.*_0[xX]63[17]_(eng|ENG)\.(lbl|LBL)'),     # High-res packetized
-                           re.compile('.*_0[xX]63[28]_(eng|ENG)\.(lbl|LBL)'),     # High-res lossy
-                           re.compile('.*_0[xX]63[39]_(eng|ENG)\.(lbl|LBL)'),     # 4x4 lossless
-                           re.compile('.*_0[xX]63[4aA]_(eng|ENG)\.(lbl|LBL)'),    # 4x4 packetized
-                           re.compile('.*_0[xX]63[5bB]_(eng|ENG)\.(lbl|LBL)'))),  # 4x4 lossy
+    (r'nh-lorri-.*', 0, (re.compile('.*_0[xX]63[06]_(eng|ENG)\.(fit|FIT)$'),    # High-res lossless
+                         re.compile('.*_0[xX]63[17]_(eng|ENG)\.(fit|FIT)$'),    # High-res packetized
+                         re.compile('.*_0[xX]63[28]_(eng|ENG)\.(fit|FIT)$'),    # High-res lossy
+                         re.compile('.*_0[xX]63[39]_(eng|ENG)\.(fit|FIT)$'),    # 4x4 lossless
+                         re.compile('.*_0[xX]63[4aA]_(eng|ENG)\.(fit|FIT)$'),   # 4x4 packetized
+                         re.compile('.*_0[xX]63[5bB]_(eng|ENG)\.(fit|FIT)$'))), # 4x4 lossy
 
-    (r'nh\.mvic\..*', 0,  (re.compile('.*_0[xX]5(30|36|3F|45|48)_(eng|ENG)\.(lbl|LBL)'),  # High-res lossless
-                           re.compile('.*_0[xX]5(31|37|40|46|49)_(eng|ENG)\.(lbl|LBL)'),  # High-res packetized
-                           re.compile('.*_0[xX]5(32|38|41|47|4A)_(eng|ENG)\.(lbl|LBL)'),  # High-res lossy
-                           re.compile('.*_0[xX]5(33|42)_(eng|ENG)\.(lbl|LBL)'),           # 3x3 lossless
-                           re.compile('.*_0[xX]5(34|43)_(eng|ENG)\.(lbl|LBL)'),           # 3x3 packetized
-                           re.compile('.*_0[xX]5(35|44)_(eng|ENG)\.(lbl|LBL)'))),         # 3x3 lossy
+    (r'nh-mvic-.*', 0,  (re.compile('.*_0[xX]5(30|36|3F|45|48)_(eng|ENG)\.(fit|FIT)$'), # High-res lossless
+                         re.compile('.*_0[xX]5(31|37|40|46|49)_(eng|ENG)\.(fit|FIT)$'), # High-res packetized
+                         re.compile('.*_0[xX]5(32|38|41|47|4A)_(eng|ENG)\.(fit|FIT)$'), # High-res lossy
+                         re.compile('.*_0[xX]5(33|42)_(eng|ENG)\.(fit|FIT)$'),          # 3x3 lossless
+                         re.compile('.*_0[xX]5(34|43)_(eng|ENG)\.(fit|FIT)$'),          # 3x3 packetized
+                         re.compile('.*_0[xX]5(35|44)_(eng|ENG)\.(fit|FIT)$'))),        # 3x3 lossy
 ])
 
 ####################################################################################################################################

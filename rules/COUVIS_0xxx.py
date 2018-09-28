@@ -117,7 +117,7 @@ opus_products = translator.TranslatorByRegex([
 # ])
 
 filespec_to_opus_id = translator.TranslatorByRegex([
-    (r'COUVIS_00../DATA/\w+/(\w+)\.(DAT|LBL)$',  0, r'co.uvis.\1'),
+    (r'COUVIS_00../DATA/\w+/(\w+)\.(DAT|LBL)$',  0, r'co-uvis-\1'),
 ])
 
 ####################################################################################################################################
@@ -125,7 +125,7 @@ filespec_to_opus_id = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_id_to_filespec = translator.TranslatorByRegex([
-    (r'co.uvis.\.*', 0, re.compile(r'.*\.LBL')),
+    (r'co-uvis-\.*', 0, re.compile(r'.*\.DAT$')),
 ])
 
 ####################################################################################################################################

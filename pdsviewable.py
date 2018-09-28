@@ -12,33 +12,83 @@ from PIL import Image
 class PdsViewable(object):
     """Contains the minimum information needed to show an image in HTML."""
 
-    def __init__(self, abspath, url, width, height, alt, size_bytes,
-                 name='', pdsf=None):
+    def __init__(self, abspath, url, width, height, size_bytes, alt='', 
+                       name='', pdsf=None):
 
         # Core properties of a viewable
         self.abspath = abspath
         self.url = url
         self.width = width
         self.height = height
-        self.alt = alt
         self.bytes = size_bytes
+        self.alt = alt
 
         # Optional
         self.name = name    # Named viewables cannot be looked up by size
-        self.pdsf = pdsf
+        self.pdsf = pdsf    # Optional
 
         self.width_over_height = float(self.width) / float(self.height)
         self.height_over_width = float(self.height) / float(self.width)
 
-    def copy(self):
-        return PdsViewable(self.abspath, self.url, self.width, self.height,
-                           self.alt, self.bytes, self.name, self.pdsf)
-
     def assign_name(self, name):
+        """Assign a name to this PdsViewable"""
+
         self.name = name
+
+    def copy(self):
+        """An exact copy of this PdsViewable"""
+
+        return PdsViewable(self.abspath, self.url, self.width, self.height,
+                           self.bytes, self.alt, self.name, self.pdsf)
+
+    def to_dict(self, exclude=[]):
+        """Return the attributes of a PdsViewable object as a dictionary
+        suitable for JSON.
+
+        The abspath, url, and alt, and attributes can optionally be excluded.
+        If the name attribute is blank, it is excluded."""
+
+        d = {'width':  self.width,
+             'height': self.height,
+             'bytes':  self.bytes}
+
+        # Include optional parts optionally
+        if 'abspath' not in exclude:
+            d['abspath'] = self.abspath
+
+        if 'url' not in exclude:
+            d['url'] = self.url
+
+        if 'alt' not in exclude:
+            d['alt'] = self.alt
+
+        if self.name:
+            d['name'] = self.name
+
+        return d
+
+    @staticmethod
+    def from_dict(d):
+        """Construct a PdsViewable object from the dictionary returned by
+        to_dict.
+
+        If the alt attribute is missing, the basename of the abspath or url
+        is used in its place.
+        """
+
+        abspath = d.get('abspath', '')
+        url     = d.get('url',  '')
+        alt     = d.get('alt',  os.path.basename(abspath or url))
+        name    = d.get('name', '')
+
+        return PdsViewable(abspath, url, d['width'], d['height'], d['bytes'],
+                           alt, name)
 
     @staticmethod
     def from_pdsfile(pdsf, name=''):
+        """Construct a PdsViewable object from a PdsFile representing a file
+        that happens to be viewable, such as a JPEG or PNG."""
+
         if not pdsf.width:
             raise ValueError('PdsFile is not viewable: ' + pdsf.abspath)
 
@@ -53,103 +103,156 @@ class PdsViewSet(object):
     """Viewables selectable by size or name."""
 
     def __init__(self, viewables=[], priority=0):
+
         self.priority = priority        # Used to prioritize among icon sets
 
-        self.viewables_by_width = {}
-        self.viewables_by_height = {}
-        self.viewables_by_name = {}     # Special viewables, no lookup by size
+        self.by_width = {}          # Keyed by width in pixels
+        self.by_height = {}         # Keyed by height in pixels
+        self.by_name = {}           # Keyed by name; these PdsViewables might
+                                    # not appear in other dictionaries
 
         for viewable in viewables:
+
+            # Update the dictionary by name if it has a name
             if viewable.name:
-                self.viewables_by_name[name] = viewable
+                self.by_name[name] = viewable
 
-            # Unnamed viewables get precedence
-            if viewable.width not in self.viewables_by_width:
-                self.viewables_by_width[viewable.width] = viewable
-                self.widths = self.viewables_by_width.keys()
-                self.widths.sort()
+            # Update the dictionary by width
+            # Unnamed viewables take precedence; named ones are overridden
+            if (viewable.width not in self.by_width) or (not viewable.name):
+                self.by_width[viewable.width] = viewable
 
-            elif self.viewables_by_width[viewable.width].name:
-                self.viewables_by_width[viewable.width] = viewable
+            # Update the dictionary by height
+            if (viewable.height not in self.by_height) or (not viewable.name):
+                self.by_height[viewable.height] = viewable
 
-            if viewable.height not in self.viewables_by_height:
-                self.viewables_by_height[viewable.height] = viewable
-                self.heights = self.viewables_by_height.keys()
-                self.heights.sort()
+            # Sort lists of widths and heights
+            self.widths = self.by_width.keys()
+            self.widths.sort()
 
-            elif self.viewables_by_width[viewable.height].name:
-                self.viewables_by_width[viewable.height] = viewable
+            self.heights = self.by_height.keys()
+            self.heights.sort()
+
+    @staticmethod
+    def from_dict(d):
+        """Alternative constructor from a JSON-friendly dictionary generated by
+        from_dict()."""
+
+        obj = PdsViewSet(priority=d.get('priority', 0))
+
+        obj.by_width = {k:PdsViewable.from_dict(v)
+                                for (k,v) in d['by_width'].items()}
+        obj.widths = obj.by_width.keys()
+        obj.widths.sort()
+
+        obj.by_height = {k:PdsViewable.from_dict(v)
+                                for (k,v) in d['by_height'].items()}
+        obj.heights = obj.by_height.keys()
+        obj.heights.sort()
+
+        obj.by_name = {k:PdsViewable.from_dict(v)
+                                for (k,v) in d['by_name'].items()}
+
+        return obj
+
+    def to_dict(self, exclude=[]):
+        """Return a the info in this PdsViewSet encoded into JSON-friendly
+        dictionaries."""
+
+        by_width  = {k:v.to_dict(exclude) for (k,v) in self.by_width.items()}
+        by_height = {k:v.to_dict(exclude) for (k,v) in self.by_height.items()}
+        by_name   = {k:v.to_dict(exclude) for (k,v) in self.by_name.items()}
+
+        d = {'by_width' : by_width,
+             'by_height': by_height,
+             'by_name'  : by_name}
+    
+        if self.priority != 0:
+            d['priority'] = self.priority       # defaults to zero
+
+        return d
 
     def append(self, viewable):
+        """Add one more PdsViewable to this PdsViewSet."""
 
         # If the arg is a viewset, not a viewable, append recursively
         if type(viewable) == PdsViewSet:
-            for view in self.viewables_by_width:
+            for view in self.by_width:
                 self.append(view)
             return
 
         if viewable.name:
-            self.viewables_by_name[viewable.name] = viewable
+            self.by_name[viewable.name] = viewable
 
         # Unnamed viewables get precedence
-        if viewable.width not in self.viewables_by_width:
-            self.viewables_by_width[viewable.width] = viewable
+        if viewable.width not in self.by_width:
+            self.by_width[viewable.width] = viewable
             self.widths.append(viewable.width)
             self.widths.sort()
 
-        elif self.viewables_by_width[viewable.width].name:
-            self.viewables_by_width[viewable.width] = viewable
+        elif self.by_width[viewable.width].name:
+            self.by_width[viewable.width] = viewable
 
-        if viewable.height not in self.viewables_by_height:
-            self.viewables_by_height[viewable.height] = viewable
+        if viewable.height not in self.by_height:
+            self.by_height[viewable.height] = viewable
             self.heights.append(viewable.height)
             self.heights.sort()
 
-        elif self.viewables_by_width[viewable.height].name:
-            self.viewables_by_width[viewable.height] = viewable
+        elif self.by_width[viewable.height].name:
+            self.by_width[viewable.height] = viewable
 
     @property
     def viewables(self):
-        # A list of viewables in order of increasing width
+        """A list of viewables in order of increasing width."""
 
         results = []
         for width in self.widths:
-            results.append(self.viewables_by_width[width])
+            results.append(self.by_width[width])
         return results
 
     @property
     def full_size(self):
-        if 'full' in self.viewables_by_name:
-            return self.viewables_by_name['full']
+        """The viewable designated as "full" or else the largest."""
 
-        return self.viewables_by_height[self.heights[-1]]
+        if 'full' in self.by_name:
+            return self.by_name['full']
+
+        return self.by_height[self.heights[-1]]
 
     def __len__(self):
+        """Number of PdsViewables organized by size in this PdsViewSet."""
+
         return len(self.widths)
 
     def for_width(self, size):
+        """The PdsViewable for the specified width."""
+
         for key in self.widths:
             if key >= size:
                 break
 
-        pdsview = self.viewables_by_width[key]
+        pdsview = self.by_width[key]
         result = pdsview.copy()
         result.height = max(1, int(pdsview.height_over_width * size + 0.5))
         result.width = size
         return result
 
     def for_height(self, size):
+        """The PdsViewable for the specified height."""
+
         for key in self.heights:
             if key >= size:
                 break
 
-        pdsview = self.viewables_by_height[key]
+        pdsview = self.by_height[key]
         result = pdsview.copy()
         result.width = max(1, int(pdsview.width_over_height * size + 0.5))
         result.height = size
         return result
 
     def for_frame(self, width, height=None):
+        """The PdsViewable to fit inside the specified rectangle."""
+
         if height is None:
             height = width
 
@@ -162,6 +265,7 @@ class PdsViewSet(object):
 
     @staticmethod
     def from_pdsfiles(pdsfiles, validate=False):
+        """A PdsViewSet constructed from a list of viewable PdsFile objects."""
 
         if type(pdsfiles) not in (list,tuple):
             pdsfiles = [pdsfiles]
