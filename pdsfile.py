@@ -1537,7 +1537,7 @@ class PdsFile(object):
         elif self.voltype_ not in ('volumes/', 'calibrated/', 'metadata/'):
             self._internal_links_filled = []
 
-        # Otherwise, lookup the info in the shelf file
+        # Otherwise, look up the info in the shelf file
         else:
             try:
                 values = self.shelf_lookup('links')
@@ -1580,7 +1580,7 @@ class PdsFile(object):
 
     @property
     def linked_abspaths(self):
-        """Returns a list of absolute paths linked this PdsFile."""
+        """Returns a list of absolute paths linked to this PdsFile."""
 
         abspaths = [self.abspath]
         for (_, _, abspath) in self.internal_link_info:
@@ -2031,15 +2031,31 @@ class PdsFile(object):
 
         # Get the associated absolute paths
         patterns = self.OPUS_PRODUCTS.all(self.logical_path)
-        patterns = [self.root_ + p for p in patterns]
 
-        abspaths = []
+        abs_patterns_and_opus_types = []
         for pattern in patterns:
+            if isinstance(pattern, str):    # match string only
+                abs_patterns_and_opus_types.append((self.root_ + pattern, None))
+            else:                           # (match string, opus_type)
+                (p, opus_type) = pattern
+                abs_patterns_and_opus_types.append((self.root_ + p, opus_type))
+
+        # Construct a complete list of matching abspaths.
+        # Create a dictionary of opus_types based on abspaths where opus_types
+        # have already been specified.
+        abspaths = []
+        opus_type_for_abspath = {}
+        for (pattern, opus_type) in abs_patterns_and_opus_types:
             if '*' in pattern or '?' in pattern or '[' in pattern:
-                abspaths += glob.glob(pattern)
-            else:
-                if os.path.exists(pattern):
-                    abspaths.append(pattern)
+                these_abspaths = glob.glob(pattern)
+            elif os.path.exists(pattern):
+                these_abspaths = [pattern]
+
+            if opus_type:
+                for abspath in these_abspaths:
+                    opus_type_for_abspath[abspath] = opus_type
+
+            abspaths += these_abspaths
 
         # Sort into disjoint sets of labels and data files
         abspaths = set(abspaths)
@@ -2083,7 +2099,8 @@ class PdsFile(object):
                             continue
 
                 # Update the dictionary with the datafile, label, and FMT files
-                opus_type = data_pdsfile.opus_type
+                opus_type = opus_type_for_abspath.get(data_pdsfile.abspath,
+                                                      data_pdsfile.opus_type)
                 sublist = [data_pdsfile, label_pdsfile] + fmt_pdsfiles
 
                 if opus_type not in opus_pdsfiles:
@@ -2097,7 +2114,8 @@ class PdsFile(object):
         data_abspaths_remaining = data_abspaths - data_abspaths_handled
         for datapath in data_abspaths_remaining:
             data_pdsfile = PdsFile.from_abspath(datapath)
-            opus_type = data_pdsfile.opus_type
+            opus_type = opus_type_for_abspath.get(data_pdsfile.abspath,
+                                                  data_pdsfile.opus_type)
             sublist = [data_pdsfile]
 
             if opus_type not in opus_pdsfiles:
@@ -2105,9 +2123,10 @@ class PdsFile(object):
             else:
                 opus_pdsfiles[opus_type].append(sublist)
 
-        # Sort versions
+        # Sort by version and filepath
         for (header, sublists) in opus_pdsfiles.items():
-            sublists.sort(key=lambda x: -x[0].version_rank)
+            sublists.sort(key=lambda x: (x[0].version_rank, x[0].abspath))
+            sublists.reverse()
 
         # Call a special product prioritizer if available
         if hasattr(self, 'opus_prioritizer'):
@@ -2843,6 +2862,8 @@ class PdsFile(object):
             raise ValueError('Invalid OPUS ID: ' + opus_id)
 
         regexes = PdsFile.OPUS_ID_TO_FILESPEC.first(opus_id)
+        if isinstance(regexes, str):
+            regexes = (re.compile(regexes),)
         if not isinstance(regexes, tuple):
             regexes = (regexes,)
 

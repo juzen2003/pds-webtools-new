@@ -102,25 +102,34 @@ opus_type = translator.TranslatorByRegex([
 # OPUS_PRODUCTS
 ####################################################################################################################################
 
+PACKED_OPUS_TYPE = ('Cassini VIMS', 0, 'covims-packed', 'Packed version of unpacked raw data')
+
 opus_products = translator.TranslatorByRegex([
-    (r'.*volumes/(COVIMS_0xxx)/(COVIMS_0...)/data/(.*)\.(qub|lbl)', 0, [r'volumes/\1/\2/data/\3.qub',
-                                                                        r'volumes/\1/\2/data/\3.lbl',
-                                                                        r'volumes/\1/\2/extras/thumbnail/\3.qub.jpeg_small',
-                                                                        r'volumes/\1/\2/extras/browse/\3.qub.jpeg',
-                                                                        r'volumes/\1/\2/extras/full/\3.qub.png',
-                                                                        r'volumes/\1/\2/extras/tiff/\3.qub.tiff',
-                                                                        r'previews/\1/\2/data/\3_thumb.png',
-                                                                        r'previews/\1/\2/data/\3_small.png',
-                                                                        r'previews/\1/\2/data/\3_med.png',
-                                                                        r'previews/\1/\2/data/\3_full.png',
-                                                                        r'metadata/\1/\2/\2_saturn_summary.lbl',
-                                                                        r'metadata/\1/\2/\2_saturn_summary.tab',
-                                                                        r'metadata/\1/\2/\2_moon_summary.lbl',
-                                                                        r'metadata/\1/\2/\2_moon_summary.tab',
-                                                                        r'metadata/\1/\2/\2_ring_summary.lbl',
-                                                                        r'metadata/\1/\2/\2_ring_summary.tab',
-                                                                        r'metadata/\1/\2/\2_inventory.lbl',
-                                                                        r'metadata/\1/\2/\2_inventory.tab']),
+    (r'.*volumes/(COVIMS_0xxx)/(COVIMS_0...)/data/(\w+/v[0-9]{10})_[0-9]+(|_[0-9]{3})\.(qub|lbl)', 0,
+                                                                    [r'volumes/\1/\2/data/\3_*\4.qub',
+                                                                     r'volumes/\1/\2/data/\3_*\4.lbl',
+                                                                     r'volumes/\1/\2/extras/thumbnail/\3_*\4.qub.jpeg_small',
+                                                                     r'volumes/\1/\2/extras/browse/\3_*\4.qub.jpeg',
+                                                                     r'volumes/\1/\2/extras/full/\3_*\4.qub.png',
+                                                                     r'volumes/\1/\2/extras/tiff/\3_*\4.qub.tiff',
+                                                                     r'previews/\1/\2/data/\3_*\4_thumb.png',
+                                                                     r'previews/\1/\2/data/\3_*\4_small.png',
+                                                                     r'previews/\1/\2/data/\3_*\4_med.png',
+                                                                     r'previews/\1/\2/data/\3_*\4_full.png',
+                                                                     r'metadata/\1/\2/\2_saturn_summary.lbl',
+                                                                     r'metadata/\1/\2/\2_saturn_summary.tab',
+                                                                     r'metadata/\1/\2/\2_moon_summary.lbl',
+                                                                     r'metadata/\1/\2/\2_moon_summary.tab',
+                                                                     r'metadata/\1/\2/\2_ring_summary.lbl',
+                                                                     r'metadata/\1/\2/\2_ring_summary.tab',
+                                                                     r'metadata/\1/\2/\2_inventory.lbl',
+                                                                     r'metadata/\1/\2/\2_inventory.tab']),
+    # packed versions of unpacked files
+    (r'.*volumes/(COVIMS_0xxx)/(COVIMS_0...)/data/(\w+/v[0-9]{10})_[0-9]+_[0-9]{3}\.(qub|lbl)', 0,
+                                                                    [(r'volumes/\1/\2/data/\3_?.qub', PACKED_OPUS_TYPE),
+                                                                     (r'volumes/\1/\2/data/\3_?.lbl', PACKED_OPUS_TYPE),
+                                                                     (r'volumes/\1/\2/data/\3_??.qub', PACKED_OPUS_TYPE),
+                                                                     (r'volumes/\1/\2/data/\3_??.lbl', PACKED_OPUS_TYPE)]),
 ])
 
 ####################################################################################################################################
@@ -159,7 +168,7 @@ filespec_to_opus_id = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_id_to_filespec = translator.TranslatorByRegex([
-    (r'co-vims-.*', 0, re.compile(r'.*\.qub$')),
+    (r'co-vims-(v[0-9]{10})(|_...)', 0, r'.*\1_[0-9]+\2\.qub$'),
 ])
 
 ####################################################################################################################################
