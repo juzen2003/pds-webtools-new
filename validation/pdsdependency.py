@@ -462,6 +462,17 @@ _ = PdsDependency(
     suite='couvis', newer=True,
 )
 
+_ = PdsDependency(
+    'Previews of every COUVIS data file',
+    'volumes/$/$/DATA/*/*.DAT',
+    r'volumes/(.*)\.DAT',
+    [r'previews/\1_thumb.png',
+     r'previews/\1_small.png',
+     r'previews/\1_med.png',
+     r'previews/\1_full.png'],
+    suite='couvis', newer=False,
+)
+
 # For COVIMS_0xxx and COVIMS_UNKS
 _ = PdsDependency(
     'Previews and calibrated versions of every COVIMS cube',
