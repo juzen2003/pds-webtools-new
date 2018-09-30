@@ -105,15 +105,18 @@ class PdsViewSet(object):
 
     def __init__(self, viewables=[], priority=0):
 
-        self.priority = priority            # Used to prioritize among icon sets
-        self.viewables = set(viewables)     # All the PdsViewable objects
+        self.priority = priority    # Used to prioritize among icon sets
+        self.viewables = set()      # All the PdsViewable objects
 
         self.by_width = {}          # Keyed by width in pixels
         self.by_height = {}         # Keyed by height in pixels
         self.by_name = {}           # Keyed by name; these PdsViewables might
                                     # not appear in other dictionaries
 
-        for viewable in self.viewables:
+        self.widths = []            # sorted smallest to largest
+        self.heights = []           # ditto
+
+        for viewable in viewables:
             self.append(viewable)
 
     def append(self, viewable):
@@ -190,7 +193,7 @@ class PdsViewSet(object):
         return self.by_match('_med')
 
     @property
-    def full(self):
+    def full_size(self):
         """The viewable designated as "full" or else the largest."""
 
         if 'full' in self.by_name:
@@ -206,6 +209,9 @@ class PdsViewSet(object):
     def for_width(self, size):
         """The PdsViewable for the specified width."""
 
+        if not self.widths:
+            raise IOError('No viewables have been defined')
+
         for key in self.widths:
             if key >= size:
                 break
@@ -218,6 +224,9 @@ class PdsViewSet(object):
 
     def for_height(self, size):
         """The PdsViewable for the specified height."""
+
+        if not self.heights:
+            raise IOError('No viewables have been defined')
 
         for key in self.heights:
             if key >= size:
