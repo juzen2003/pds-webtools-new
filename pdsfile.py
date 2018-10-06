@@ -521,7 +521,7 @@ def get_permanent_values(holdings_list, port):
     except KeyError as e:
         if LOGGER:
             LOGGER.warn('Permanent value "%s" missing from Memcache; '
-                        'preloading again')
+                        'preloading again' % category)
         preload(holdings_list, port, clear=True)
 
     else:
