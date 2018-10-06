@@ -30,6 +30,18 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'diagrams/COCIRS_[56].*\.png',         re.I, ('Observation diagram',          'DIAGRAM' )),
     (r'volumes/COCIRS_[56].*/BROWSE',        re.I, ('Observation diagrams',         'DIAGDIR' )),
     (r'diagrams/COCIRS_[56].*/BROWSE',       re.I, ('Observation diagrams',         'DIAGDIR' )),
+
+    (r'volumes/.*/data/geodata/.*',          re.I, ('System geometry index',        'INDEX')),
+    (r'volumes/.*/data/ispmdata/.*',         re.I, ('Interferogram metadata index', 'INDEX')),
+    (r'volumes/.*/data/poidata/.*',          re.I, ('Surface geometry index',       'INDEX')),
+    (r'volumes/.*/data/rindata/.*',          re.I, ('Ring geometry index',          'INDEX')),
+    (r'volumes/.*/data/tardata/.*',          re.I, ('Target body index',            'INDEX')),
+
+    (r'volumes/.*/data/geodat*',             re.I, ('System geometry metadata',     'GEOMDIR')),
+    (r'volumes/.*/data/ispmdat*',            re.I, ('Interferogram metadata',       'INDEXDIR')),
+    (r'volumes/.*/data/poidata',             re.I, ('Surface intercept geometry',   'GEOMDIR')),
+    (r'volumes/.*/data/rindata',             re.I, ('Ring intercept geometry',      'GEOMDIR')),
+    (r'volumes/.*/data/tardata',             re.I, ('Target indentifications',      'GEOMDIR')),
 ])
 
 ####################################################################################################################################
@@ -37,97 +49,152 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
-    # COCIRS_[56]xxx, diagrams to volumes
-    (r'diagrams/(COCIRS_[56].*)/BROWSE',                                0, [r'volumes/\1/BROWSE',
-                                                                            r'volumes/\1/DATA']),
-    (r'diagrams/(COCIRS_[56].*)/BROWSE/(\w+)',                          0, [r'volumes/\1/BROWSE/\2',
-                                                                            r'volumes/\1/DATA']),
-    (r'diagrams/(COCIRS_[56].*)/BROWSE/(\w+/\w+)_\w+\.jpg',             0,  r'volumes/\1/BROWSE/\2.*'),
+    # COCIRS_[56]xxx, volumes/DATA to volumes/DATA and volumes/BROWSE
+    (r'volumes/(COCIRS_[56]xxx/COCIRS_[56].*)/DATA/(\w+/[A-Z]+)([0-9]+)_(FP.).*',
+                                                                            0, [r'volumes/\1/DATA/GEODATA/GEO\3_*',
+                                                                                r'volumes/\1/DATA/APODSPEC/SPEC\3_\4.DAT',
+                                                                                r'volumes/\1/DATA/APODSPEC/SPEC\3_\4.LBL',
+                                                                                r'volumes/\1/DATA/ISPMDATA/ISPM\3_\4.TAB',
+                                                                                r'volumes/\1/DATA/ISPMDATA/ISPM\3_\4.LBL',
+                                                                                r'volumes/\1/DATA/POIDATA/POI\3_\4.TAB',
+                                                                                r'volumes/\1/DATA/POIDATA/POI\3_\4.LBL',
+                                                                                r'volumes/\1/DATA/RINDATA/RIN\3_\4.TAB',
+                                                                                r'volumes/\1/DATA/RINDATA/RIN\3_\4.LBL',
+                                                                                r'volumes/\1/DATA/TARDATA/TAR\3_\4.TAB',
+                                                                                r'volumes/\1/DATA/TARDATA/TAR\3_\4.LBL',
+                                                                                r'volumes/\1/BROWSE/*/*\3_\4*']),
 
-    (r'diagrams/(COCIRS_[56].*)/BROWSE/\w+/RIN(\w+)_(FP.)\..*',         0, [r'volumes/\1/DATA/*/RIN\2_\3.*',
-                                                                            r'volumes/\1/DATA/*/ISPM\2_\3.*',
-                                                                            r'volumes/\1/DATA/*/SPEC\2_\3.*',
-                                                                            r'volumes/\1/DATA/*/TAR\2_\3.*',
-                                                                            r'volumes/\1/DATA/*/GEO\2_699.*']),
+    (r'volumes/(COCIRS_[56]xxx/COCIRS_[56].*)/DATA/(\w+/[A-Z]+)([0-9]+)_(6..).*',
+                                                                            0, [r'volumes/\1/DATA/GEODATA/GEO\3_\4.TAB',
+                                                                                r'volumes/\1/DATA/GEODATA/GEO\3_\4.LBL',
+                                                                                r'volumes/\1/DATA/*/*\3_FP*',
+                                                                                r'volumes/\1/BROWSE/*/*\3_FP?_\4.*']),
 
-    (r'diagrams/(COCIRS_[56].*)/BROWSE/\w+/POI(\w+)_(FP.)_(6..)\..*',   0, [r'volumes/\1/DATA/*/GEO\2_\4.*',
-                                                                            r'volumes/\1/DATA/*/ISPM\2_\3.*',
-                                                                            r'volumes/\1/DATA/*/SPEC\2_\3.*',
-                                                                            r'volumes/\1/DATA/*/TAR\2_\3.*',
-                                                                            r'volumes/\1/DATA/*/POI\2_\3.*']),
+    (r'volumes/(COCIRS_[56]xxx/COCIRS_[56].*)/DATA/(\w+/[A-Z]+)([0-9]+)_699.*',
+                                                                            0,  r'volumes/\1/BROWSE/*/*\3_FP?.*'),
 
-    (r'diagrams/(COCIRS_[56].*)/BROWSE/\w+/IMG(\w+)_(FP.)\..*',         0, [r'volumes/\1/DATA/*/GEO\2_*.*',
-                                                                            r'volumes/\1/DATA/*/ISPM\2_\3.*',
-                                                                            r'volumes/\1/DATA/*/SPEC\2_\3.*',
-                                                                            r'volumes/\1/DATA/*/TAR\2_\3.*',
-                                                                            r'volumes/\1/DATA/*/POI\2_\3.*',
-                                                                            r'volumes/\1/DATA/*/RIN\2_\3.*']),
+    (r'volumes/(COCIRS_[56]xxx/COCIRS_[56].*)/DATA/(|\w+)$',                0,  r'volumes/\1/BROWSE'),
 
-    # COCIRS_[01]xxx, previews to volumes
-    (r'previews/(COCIRS_[01].*)/DATA/CUBE',                             0, [r'volumes/\1/DATA/CUBE',
-                                                                            r'volumes/\1/EXTRAS/CUBE_OVERVIEW']),
-    (r'previews/(COCIRS_[01].*)/DATA/CUBE/(\w+)',                       0, [r'volumes/\1/DATA/CUBE/\2',
-                                                                            r'volumes/\1/EXTRAS/CUBE_OVERVIEW/\2']),
-    (r'previews/(COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)_\w+.jpg',           0, [r'volumes/\1/DATA/CUBE/\2*',
-                                                                            r'volumes/\1/EXTRAS/CUBE_OVERVIEW/\2*']),
+    # COCIRS_[56]xxx, diagrams and volumes/BROWSE to volumes/DATA and volumes/BROWSE
+    (r'.*/(COCIRS_[56]xxx/COCIRS_[56].*)/BROWSE/\w+/[A-Z]+([0-9]+)_(FP.).*',
+                                                                            0, [r'volumes/\1/DATA/APODSPEC/SPEC\2_\3.DAT',
+                                                                                r'volumes/\1/DATA/APODSPEC/SPEC\2_\3.LBL',
+                                                                                r'volumes/\1/DATA/ISPMDATA/ISPM\2_\3.TAB',
+                                                                                r'volumes/\1/DATA/ISPMDATA/ISPM\2_\3.LBL',
+                                                                                r'volumes/\1/DATA/TARDATA/TAR\2_\3.TAB',
+                                                                                r'volumes/\1/DATA/TARDATA/TAR\2_\3.LBL']),
+
+    (r'.*/(COCIRS_[56]xxx/COCIRS_[56].*)/BROWSE/\w+/[A-Z]+([0-9]+)_(FP.)_(6..).*',
+                                                                            0, [r'volumes/\1/DATA/GEODATA/GEO\2_\4.TAB',
+                                                                                r'volumes/\1/DATA/GEODATA/GEO\2_\4.LBL',
+                                                                                r'volumes/\1/DATA/POIDATA/POI\2_\3.TAB',
+                                                                                r'volumes/\1/DATA/POIDATA/POI\2_\3.LBL',
+                                                                                r'volumes/\1/BROWSE/*/*\2_\3_\4.PNG',
+                                                                                r'volumes/\1/BROWSE/*/*\2_\3_\4.LBL']),
+
+    (r'.*/(COCIRS_[56]xxx/COCIRS_[56].*)/BROWSE/TARGET/[A-Z]+([0-9]+)_(FP.).*',
+                                                                            0, [r'volumes/\1/DATA/GEODATA/GEO\2_*',
+                                                                                r'volumes/\1/DATA/POIDATA/POI\2_\3.TAB',
+                                                                                r'volumes/\1/DATA/POIDATA/POI\2_\3.LBL',
+                                                                                r'volumes/\1/DATA/RINDATA/RIN\2_\3.TAB',
+                                                                                r'volumes/\1/DATA/RINDATA/RIN\2_\3.LBL',
+                                                                                r'volumes/\1/BROWSE/*/*\2_\3*']),
+
+    (r'.*/(COCIRS_[56]xxx/COCIRS_[56].*)/BROWSE/SATURN/POI([0-9]+)_(FP.).*',
+                                                                            0, [r'volumes/\1/DATA/GEODATA/GEO\2_699.TAB',
+                                                                                r'volumes/\1/DATA/GEODATA/GEO\2_699.LBL',
+                                                                                r'volumes/\1/DATA/POIDATA/POI\2_\3.TAB',
+                                                                                r'volumes/\1/DATA/POIDATA/POI\2_\3.LBL',
+                                                                                r'volumes/\1/BROWSE/SATURN/POI\2_\3.PNG',
+                                                                                r'volumes/\1/BROWSE/SATURN/POI\2_\3.LBL']),
+
+    (r'.*/(COCIRS_[56]xxx/COCIRS_[56].*)/BROWSE/S_RINGS/RIN([0-9]+)_(FP.).*',
+                                                                            0, [r'volumes/\1/DATA/GEODATA/GEO\2_699.TAB',
+                                                                                r'volumes/\1/DATA/GEODATA/GEO\2_699.LBL',
+                                                                                r'volumes/\1/DATA/RINDATA/RIN\2_\3.TAB',
+                                                                                r'volumes/\1/DATA/RINDATA/RIN\2_\3.LBL',
+                                                                                r'volumes/\1/BROWSE/S_RINGS/RIN\2_\3.PNG',
+                                                                                r'volumes/\1/BROWSE/S_RINGS/RIN\2_\3.LBL']),
+
+    (r'.*/(COCIRS_[56]xxx/COCIRS_[56].*)/BROWSE(|/\w+)$',                   0, [r'volumes/\1/DATA',
+                                                                                r'volumes/\1/BROWSE\2']),
+
+    # COCIRS_[01]xxx, previews to volumes/DATA and volumes/EXTRAS
+    (r'previews/(COCIRS_[01]xxx.*/COCIRS_....)/DATA/CUBE/(\w+/\w+_F[134]_[^_\.]+).*',
+                                                                            0, [r'volumes/\1/DATA/CUBE/\2.tar.gz',
+                                                                                r'volumes/\1/DATA/CUBE/\2.lbl',
+                                                                                r'volumes/\1/EXTRAS/CUBE_OVERVIEW/\2.JPG',
+                                                                                r'volumes/\1/EXTRAS/CUBE_OVERVIEW/\2.LBL']),
+    (r'previews/(COCIRS_[01]xxx.*/COCIRS_....)/DATA/CUBE/(\w+)$',           0, [r'volumes/\1/DATA/CUBE/\2',
+                                                                                r'volumes/\1/EXTRAS/CUBE_OVERVIEW/\2']),
+    (r'previews/(COCIRS_[01]xxx.*/COCIRS_....)/DATA/CUBE$',                 0, [r'volumes/\1/DATA/CUBE',
+                                                                                r'volumes/\1/EXTRAS/CUBE_OVERVIEW']),
+
+    # COCIRS_[01]xxx, volumes/DATA to volumes/DATA and volumes/EXTRAS
+    (r'(volumes/COCIRS_[01]xxx.*/COCIRS_....)/DATA/CUBE/\w+/(\w+_F[134]).*',
+                                                                            0, [r'\1/DATA/CUBE/*/\2*',
+                                                                                r'\1/DATA/EXTRAS/*/\2*']),
+    (r'(volumes/COCIRS_[01]xxx.*/COCIRS_....)/DATA/CUBE/(\w+/\w+)\..*',     0, [r'\1/EXTRAS/CUBE_OVERVIEW/\2.JPG',
+                                                                                r'\1/EXTRAS/CUBE_OVERVIEW/\2.LBL']),
+    (r'(volumes/COCIRS_[01]xxx.*/COCIRS_....)/DATA/CUBE/(\w+)$',            0,  r'\1/EXTRAS/CUBE_OVERVIEW/\2'),
+    (r'(volumes/COCIRS_[01]xxx.*/COCIRS_....)/DATA/CUBE$',                  0,  r'\1/EXTRAS/CUBE_OVERVIEW'),
+
+    # COCIRS_[01]xxx, volumes/EXTRAS to volumes/DATA and volumes/EXTRAS
+    (r'(volumes/COCIRS_[01]xxx.*/COCIRS_....)/EXTRAS/CUBE_OVERVIEW/\w+/(\w+_F[134]).*',
+                                                                            0, [r'\1/DATA/CUBE/*/\2*',
+                                                                                r'\1/EXTRAS/CUBE_OVERVIEW/*/\2*']),
+    (r'(volumes/COCIRS_[01]xxx.*/COCIRS_....)/EXTRAS/CUBE_OVERVIEW/(\w+)$', 0,  r'\1/DATA/CUBE/\2'),
+    (r'(volumes/COCIRS_[01]xxx.*/COCIRS_....)/EXTRAS/CUBE_OVERVIEW$',       0,  r'\1/DATA/CUBE'),
+    (r'(volumes/COCIRS_[01]xxx.*/COCIRS_....)/EXTRAS$',                     0,  r'\1/DATA'),
 ])
 
-volumes_to_volumes = translator.TranslatorByRegex([
-
-    # COCIRS_[56]xxx, BROWSE directory to DATA directory
-    (r'(volumes/COCIRS_[56].*)/BROWSE(|/\w+)',                              0,  r'\1/DATA'),
-    (r'(volumes/COCIRS_[56].*)/BROWSE/\w+/[A-Z]+([0-9]+)(_FP.)\..*',        0, [r'\1/DATA/*/*\2\3*',
-                                                                                r'\1/DATA/GEODATA/GEO\2*']),
-    (r'(volumes/COCIRS_[56].*)/BROWSE/\w+/[A-Z]+([0-9]+)(_FP.)(_6..)\..*',  0, [r'\1/DATA/*/*\2\3*',
-                                                                                r'\1/DATA/*/*/GEO\2\4*']),
-    # COCIRS_[56]xxx, BROWSE directory to BROWSE directory
-    (r'(volumes/COCIRS_[56].*)/BROWSE/\w+/[A-Z]+([0-9]+)(_FP.)(|_6..)\..*', 0, r'\1/BROWSE/*/*\2\3*.*'),
-
-    # COCIRS_[56]xxx, DATA directory to DATA directory
-    (r'(volumes/COCIRS_[56].*/DATA/\w+/[A-Z]+[0-9]+)_FP.(.*)',              0, r'\1_FP*'),                      # other focal planes
-    (r'(volumes/COCIRS_[56].*/DATA)/\w+/[A-Z]+([0-9]+_FP.).*',              0, [r'\1/*/*\2*',                   # same FP, other file types
-                                                                                r'\1/GEODATA/GEO\2_6??.*']),    # related GEO files
-    (r'(volumes/COCIRS_[56].*/DATA)/\w+/GEO(\w+)_6.*',                      0, r'\1/*/*\2*.*'),                 # ignore FPs for GEO files
-
-    # COCIRS_[56]xxx, DATA directory to BROWSE directory
-    (r'(volumes/COCIRS_[56].*)/DATA(|/\w+)',                                0, r'\1/BROWSE'),
-    (r'(volumes/COCIRS_[56].*)/DATA/\w+/[A-Z]+([0-9]+_FP.)\..*',            0, r'\1/BROWSE/*/*\2*'),
-    (r'(volumes/COCIRS_[56].*)/DATA/\w+/[A-Z]+([0-9]+)_6..\..*',            0, r'\1/BROWSE/*/*\2*'),
-
-    # COCIRS_[01]xxx, DATA to EXTRAS
-    (r'(volumes/COCIRS_[01].*)/DATA/CUBE',                              0,  r'\1/EXTRAS/CUBE_OVERVIEW'),
-    (r'(volumes/COCIRS_[01].*)/DATA/CUBE/(\w+)',                        0,  r'\1/EXTRAS/CUBE_OVERVIEW/\2'),
-    (r'(volumes/COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)\..*',                0,  r'\1/EXTRAS/CUBE_OVERVIEW/\2*.*'),
-
-    # COCIRS_[01]xxx, EXTRAS to DATA
-    (r'(volumes/COCIRS_[01].*)/EXTRAS/CUBE_OVERVIEW',                   0,  r'\1/DATA/CUBE'),
-    (r'(volumes/COCIRS_[01].*)/EXTRAS/CUBE_OVERVIEW/(\w+)',             0,  r'\1/DATA/CUBE/\2'),
-    (r'(volumes/COCIRS_[01].*)/EXTRAS/CUBE_OVERVIEW/(\w+/\w+)\..*',     0,  r'\1/DATA/CUBE/\2*.*'),
+associations_to_previews = translator.TranslatorByRegex([
+    (r'.*/(COCIRS_[01]xxx)(|_v2)/(COCIRS_[01]...)/(DATA/CUBE|EXTRAS/CUBE_OVERVIEW)/(\w+/\w+_F[134]_\w+).*',
+                                                                            0, [r'previews/\1/\3/DATA/CUBE/\5_full.jpg',
+                                                                                r'previews/\1/\3/DATA/CUBE/\5_med.jpg',
+                                                                                r'previews/\1/\3/DATA/CUBE/\5_small.jpg',
+                                                                                r'previews/\1/\3/DATA/CUBE/\5_thumb.jpg']),
+    (r'.*/(COCIRS_[01]xxx_v3/COCIRS_[01]...)/(DATA/CUBE|EXTRAS/CUBE_OVERVIEW)/(\w+/\w+_F[134]_\w+).*',
+                                                                            0, [r'previews/\1/DATA/CUBE/\3_full.jpg',
+                                                                                r'previews/\1/DATA/CUBE/\3_med.jpg',
+                                                                                r'previews/\1/DATA/CUBE/\3_small.jpg',
+                                                                                r'previews/\1/DATA/CUBE/\3_thumb.jpg']),
+    (r'.*/(COCIRS_[01]xxx)(|v2)/(COCIRS_[01]...)/(DATA/CUBE|EXTRAS/CUBE_OVERVIEW)/(\w+)$',
+                                                                            0,  r'previews/\1/\3/DATA/CUBE/\5'),
+    (r'.*/(COCIRS_[01]xxx_v3/COCIRS_[01]...)/(DATA/CUBE|EXTRAS/CUBE_OVERVIEW)/(\w+)$',
+                                                                            0,  r'previews/\1/DATA/CUBE/\3'),
+    (r'.*/(COCIRS_[01]xxx)(|v2)/(COCIRS_[01]...)/(DATA/CUBE|EXTRAS/CUBE_OVERVIEW)$',
+                                                                            0,  r'previews/\1/\3/DATA/CUBE'),
+    (r'.*/(COCIRS_[01]xxx_v3/COCIRS_[01]...)/(DATA/CUBE|EXTRAS/CUBE_OVERVIEW)$',
+                                                                            0,  r'previews/\1/DATA/CUBE'),
 ])
 
-volumes_to_previews = translator.TranslatorByRegex([
-    (r'volumes/(COCIRS_[01].*)/DATA/CUBE',                              0,  r'previews/\1/DATA/CUBE'),
-    (r'volumes/(COCIRS_[01].*)/DATA/CUBE/(\w+)',                        0,  r'previews/\1/DATA/CUBE/\2'),
-    (r'volumes/(COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)\..*',                0,  r'previews/\1/DATA/CUBE/\2*.*'),
+associations_to_diagrams = translator.TranslatorByRegex([
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/BROWSE/(\w+/[A-Z]+[0-9]{10}_FP._6..).*',
+                                                                            0, [r'diagrams/\1/BROWSE/\2_full.jpg',
+                                                                                r'diagrams/\1/BROWSE/\2_thumb.jpg',
+                                                                                r'diagrams/\1/BROWSE/\2_small.jpg',
+                                                                                r'diagrams/\1/BROWSE/\2_med.jpg']),
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/BROWSE/(\w+/[A-Z]+[0-9]{10}_FP.).*',
+                                                                            0, [r'diagrams/\1/BROWSE/\2_full.jpg',
+                                                                                r'diagrams/\1/BROWSE/\2_thumb.jpg',
+                                                                                r'diagrams/\1/BROWSE/\2_small.jpg',
+                                                                                r'diagrams/\1/BROWSE/\2_med.jpg']),
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/BROWSE/(\w+)$',                  0,  r'diagrams/\1/BROWSE/\2'),
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/BROWSE$',                        0,  r'diagrams/\1/BROWSE'),
 
-    (r'volumes/(COCIRS_[01].*)/EXTRAS/CUBE_OVERVIEW',                   0,  r'previews/\1/DATA/CUBE'),
-    (r'volumes/(COCIRS_[01].*)/EXTRAS/CUBE_OVERVIEW/(\w+)',             0,  r'previews/\1/DATA/CUBE/\2'),
-    (r'volumes/(COCIRS_[01].*)/EXTRAS/CUBE_OVERVIEW/(\w+/\w+)\..*',     0,  r'previews/\1/DATA/CUBE/\2*.*'),
-])
-
-volumes_to_diagrams = translator.TranslatorByRegex([
-    (r'volumes/(COCIRS_[56].*)/BROWSE',                             0,  r'diagrams/\1/BROWSE'),
-    (r'volumes/(COCIRS_[56].*)/BROWSE/(\w+)',                       0,  r'diagrams/\1/BROWSE/\2'),
-    (r'volumes/(COCIRS_[56].*)/BROWSE/(.*)\..*',                    0,  r'diagrams/\1/BROWSE/\2*'),
-
-    (r'volumes/(COCIRS_[56].*)/DATA(|\w+)',                         0,  r'diagrams/\1/BROWSE'),
-    (r'volumes/(COCIRS_[56].*)/DATA/RINDATA/RIN(\w+).*',            0,  r'diagrams/\1/BROWSE/*/RIN\2*'),
-    (r'volumes/(COCIRS_[56].*)/DATA/GEODATA/GEO(\w+)_(6..).*',      0,  r'diagrams/\1/BROWSE/*/POI\2_FP?_\3*'),
-    (r'volumes/(COCIRS_[56].*)/DATA/GEODATA/GEO(\w+)_699.*',        0,  r'diagrams/\1/BROWSE/SATURN/POI\2_FP?*'),
-    (r'volumes/(COCIRS_[56].*)/DATA/APODSPEC/SPEC(\w+).*',          0,  r'diagrams/\1/BROWSE/*/*\2*'),
-    (r'volumes/(COCIRS_[56].*)/DATA/ISPMDATA/ISPM(\w+).*',          0,  r'diagrams/\1/BROWSE/*/*\2*'),
-    (r'volumes/(COCIRS_[56].*)/DATA/TARDATA/TAR(\w+).*',            0,  r'diagrams/\1/BROWSE/*/*\2*'),
-    (r'volumes/(COCIRS_[56].*)/DATA/POIDATA/POI(\w+).*',            0,  r'diagrams/\1/BROWSE/*/*\2*'),
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/DATA/RINDATA/RIN(\w+)\..*',      0, [r'diagrams/\1/BROWSE/S_RINGS/RIN\2_full.jpg',
+                                                                                r'diagrams/\1/BROWSE/S_RINGS/RIN\2_thumb.jpg',
+                                                                                r'diagrams/\1/BROWSE/S_RINGS/RIN\2_small.jpg',
+                                                                                r'diagrams/\1/BROWSE/S_RINGS/RIN\2_med.jpg']),
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/DATA/GEODATA/GEO(\w+)_(6[^9].)\..*',
+                                                                            0,  r'diagrams/\1/BROWSE/*/POI\2_FP?_\3*'),
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/DATA/GEODATA/GEO(\w+)_699.*',    0,  r'diagrams/\1/BROWSE/SATURN/POI\2_FP?*'),
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/DATA/APODSPEC/SPEC(\w+).*',      0,  r'diagrams/\1/BROWSE/*/*\2*'),
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/DATA/ISPMDATA/ISPM(\w+).*',      0,  r'diagrams/\1/BROWSE/*/*\2*'),
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/DATA/TARDATA/TAR(\w+).*',        0,  r'diagrams/\1/BROWSE/*/*\2*'),
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/DATA/POIDATA/POI(\w+).*',        0,  r'diagrams/\1/BROWSE/*/*\2*'),
+    (r'.*/(COCIRS_[56]xxx.*/COCIRS_[56].*)/DATA(|/\w+)$',                   0,  r'diagrams/\1/BROWSE'),
 ])
 
 ####################################################################################################################################
@@ -135,6 +202,8 @@ volumes_to_diagrams = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
+    (r'.*\.lbl',  re.I, ''),
+
     (r'volumes/(COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)\.tar\.gz',        0, r'previews/\1/DATA/CUBE/\2_*.jpg'),
     (r'volumes/(COCIRS_[01].*)/EXTRAS/CUBE_OVERVIEW/(\w+/\w+)\.JPG', 0, r'previews/\1/DATA/CUBE/\2_*.jpg'),
 
@@ -231,16 +300,38 @@ split_rules = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/DATA/APODSPEC/ISPM.*', 0, ('standard', 110, 'calib',  'Calibrated Data (if raw is unavailable)')),
-    (r'volumes/.*/DATA/GEODATA/GEO.*',   0, ('Cassini CIRS', 10, 'cirs-geo',  'Planetary System Geometry')),
-    (r'volumes/.*/DATA/ISPMDATA/ISPM.*', 0, ('Cassini CIRS', 20, 'cirs-ispm', 'Observation Metadata')),
-    (r'volumes/.*/DATA/POIDATA/POI.*',   0, ('Cassini CIRS', 30, 'cirs-poi',  'Footprint Geometry on Bodies')),
-    (r'volumes/.*/DATA/RINDATA/RIN.*',   0, ('Cassini CIRS', 40, 'cirs-rin',  'Footprint Geometry on Rings')),
-    (r'volumes/.*/DATA/TARDATA/TAR.*',   0, ('Cassini CIRS', 50, 'cirs-tar',  'Target Body Identifications')),
-    (r'diagrams/.*\_thumb\..*$',         0, ('browse', 10, 'browse-thumb', 'Browse Image (thumbnail)')),
-    (r'diagrams/.*\_small\..*$',         0, ('browse', 20, 'browse-small', 'Browse Image (small)')),
-    (r'diagrams/.*\_med\..*$',           0, ('browse', 30, 'browse-medium', 'Browse Image (medium)')),
-    (r'diagrams/.*\_full\..*$',          0, ('browse', 40, 'browse-full', 'Browse Image (full-size)')),
+    (r'volumes/.*/DATA/APODSPEC/SPEC.*',    0, ('Cassini CIRS',   0, 'cirs-spec', 'Calibrated Interferograms')),
+    (r'volumes/.*/DATA/GEODATA/GEO.*',      0, ('Cassini CIRS', 110, 'cirs-geo',  'System Geometry')),
+    (r'volumes/.*/DATA/ISPMDATA/ISPM.*',    0, ('Cassini CIRS', 120, 'cirs-ispm', 'Observation Metadata')),
+    (r'volumes/.*/DATA/POIDATA/POI.*',      0, ('Cassini CIRS', 130, 'cirs-poi',  'Footprint Geometry on Bodies')),
+    (r'volumes/.*/DATA/RINDATA/RIN.*',      0, ('Cassini CIRS', 140, 'cirs-rin',  'Footprint Geometry on Rings')),
+    (r'volumes/.*/DATA/TARDATA/TAR.*',      0, ('Cassini CIRS', 150, 'cirs-tar',  'Target Body Identifications')),
+    (r'volumes/.*/BROWSE/TARGETS/IMG.*',    0, ('Cassini CIRS', 510, 'cirs-browse-target',     'Extra Browse Diagram (default)')),
+    (r'volumes/.*/BROWSE/SATURN/POI.*',     0, ('Cassini CIRS', 520, 'cirs-browse-saturn',     'Extra Browse Diagram (Saturn)')),
+    (r'volumes/.*/BROWSE/S_RINGS/RIN.*',    0, ('Cassini CIRS', 530, 'cirs-browse-rings',      'Extra Browse Diagram (rings)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_601.*',   0, ('Cassini CIRS', 601, 'cirs-browse-mimas',      'Extra Browse Diagram (Mimas)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_602.*',   0, ('Cassini CIRS', 602, 'cirs-browse-enceladus',  'Extra Browse Diagram (Enceladus)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_603.*',   0, ('Cassini CIRS', 603, 'cirs-browse-tethys',     'Extra Browse Diagram (Tethys)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_604.*',   0, ('Cassini CIRS', 604, 'cirs-browse-dione',      'Extra Browse Diagram (Dione)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_605.*',   0, ('Cassini CIRS', 605, 'cirs-browse-rhea',       'Extra Browse Diagram (Rhea)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_606.*',   0, ('Cassini CIRS', 606, 'cirs-browse-titan',      'Extra Browse Diagram (Titan)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_607.*',   0, ('Cassini CIRS', 607, 'cirs-browse-hyperion',   'Extra Browse Diagram (Hyperion)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_608.*',   0, ('Cassini CIRS', 608, 'cirs-browse-iapetus',    'Extra Browse Diagram (Iapetus)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_609.*',   0, ('Cassini CIRS', 609, 'cirs-browse-phoebe',     'Extra Browse Diagram (Phoebe)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_610.*',   0, ('Cassini CIRS', 610, 'cirs-browse-janus',      'Extra Browse Diagram (Janus)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_611.*',   0, ('Cassini CIRS', 611, 'cirs-browse-epimetheus', 'Extra Browse Diagram (Epimetheus)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_612.*',   0, ('Cassini CIRS', 612, 'cirs-browse-helene',     'Extra Browse Diagram (Helene)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_613.*',   0, ('Cassini CIRS', 613, 'cirs-browse-telesto',    'Extra Browse Diagram (Telesto)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_614.*',   0, ('Cassini CIRS', 614, 'cirs-browse-calypso',    'Extra Browse Diagram (Calypso)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_615.*',   0, ('Cassini CIRS', 615, 'cirs-browse-atlas',      'Extra Browse Diagram (Atlas)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_616.*',   0, ('Cassini CIRS', 616, 'cirs-browse-prometheus', 'Extra Browse Diagram (Prometheus)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_617.*',   0, ('Cassini CIRS', 617, 'cirs-browse-pandora',    'Extra Browse Diagram (Pandora)')),
+    (r'volumes/.*/BROWSE/.*/POI.*_618.*',   0, ('Cassini CIRS', 618, 'cirs-browse-pan',        'Extra Browse Diagram (Pan)')),
+
+    (r'diagrams/.*/TARGETS/.*_thumb\..*',   0, ('browse', 10, 'browse-thumb',  'Browse Image (thumbnail)')),
+    (r'diagrams/.*/TARGETS/.*_small\..*',   0, ('browse', 20, 'browse-small',  'Browse Image (small)')),
+    (r'diagrams/.*/TARGETS/.*_med\..*',     0, ('browse', 30, 'browse-medium', 'Browse Image (medium)')),
+    (r'diagrams/.*/TARGETS/.*_full\..*',    0, ('browse', 40, 'browse-full',   'Browse Image (full-size)')),
 ])
 
 ####################################################################################################################################
@@ -258,8 +349,9 @@ opus_format = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(COCIRS_[56]xxx/COCIRS_[56]...)/DATA/.\w+/[A-Z]+([0-9]{10})_(FP.)\.(TAB|DAT|LBL)', 0,
-            [r'volumes/\1/DATA/APODSPEC/SPEC\2_\3.*',
-             r'volumes/\1/DATA/GEODATA/GEO\2_6??.*',
+            [r'volumes/\1/DATA/APODSPEC/SPEC\2_\3.DAT',
+             r'volumes/\1/DATA/APODSPEC/SPEC\2_\3.LBL',
+             r'volumes/\1/DATA/GEODATA/GEO\2_6*',
              r'volumes/\1/DATA/POIDATA/POI\2_\3.*',
              r'volumes/\1/DATA/RINDATA/RIN\2_\3.*',
              r'volumes/\1/DATA/TARDATA/TAR\2_\3.*',
@@ -293,7 +385,6 @@ class COCIRS_xxxx(pdsfile.PdsFile):
     pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('COCIRS_[0156]xxx', re.I, 'COCIRS_xxxx')]) + \
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
 
-    ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
@@ -306,10 +397,10 @@ class COCIRS_xxxx(pdsfile.PdsFile):
 
     VIEWABLES = viewables
 
-    VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
-    VOLUMES_TO_ASSOCIATIONS['volumes'] = volumes_to_volumes + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['volumes']
-    VOLUMES_TO_ASSOCIATIONS['diagrams'] = volumes_to_diagrams + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['diagrams']
-    VOLUMES_TO_ASSOCIATIONS['previews'] = volumes_to_previews + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['previews']
+    ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
+    ASSOCIATIONS['volumes']  = associations_to_volumes
+    ASSOCIATIONS['previews'] = associations_to_previews
+    ASSOCIATIONS['diagrams'] = associations_to_diagrams
 
 pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
 

@@ -37,14 +37,26 @@ split_rules = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
-    (r'previews/(.*)_(thumb|small|med|full)\.jpg', 0, r'volumes/\1_*.*'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_../\w{9}).*',   0, r'volumes/\1/\3*'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_..)$',          0, r'volumes/\1/\3'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA)$',                   0, r'volumes/\1/\3'),
 ])
 
-volumes_to_previews = translator.TranslatorByRegex([
-    (r'volumes/(.*/DATA/VISIT_..)/([IJUO]\w{8})(|_\w+)\.(.*)', 0, [r'previews/\1/\2_thumb.jpg',
-                                                                   r'previews/\1/\2_small.jpg',
-                                                                   r'previews/\1/\2_med.jpg',
-                                                                   r'previews/\1/\2_full.jpg']),
+associations_to_previews = translator.TranslatorByRegex([
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_../\w{9}).*',   0, [r'previews/\1/\3_full.jpg',
+                                                                        r'previews/\1/\3_thumb.jpg',
+                                                                        r'previews/\1/\3_small.jpg',
+                                                                        r'previews/\1/\3_med.jpg']),
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_..)$',          0,  r'previews/\1/\3'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA)$',                   0,  r'previews/\1/\3'),
+])
+
+associations_to_metadata = translator.TranslatorByRegex([
+    (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA/VISIT_../(\w{9}).*', 0, [r'metadata/\1/\3/\3_index.tab/\4',
+                                                                        r'metadata/\1/\3/\3_hstfiles.tab/\4',
+                                                                        r'metadata/\1/\3']),
+    (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA/VISIT_..$',          0,  r'metadata/\1/\3'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA$',                   0,  r'metadata/\1/\3'),
 ])
 
 ####################################################################################################################################
@@ -52,10 +64,10 @@ volumes_to_previews = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'volumes/(.*/DATA/VISIT_..)/([IJUO]\w{8})(|_\w+)\.(.*)', 0, (r'previews/\1/\2_thumb.jpg',
-                                                                   r'previews/\1/\2_small.jpg',
-                                                                   r'previews/\1/\2_med.jpg',
-                                                                   r'previews/\1/\2_full.jpg')),
+    (r'volumes/(.*/DATA/VISIT_..)/([IJUON]\w{8})(|_\w+)\.(.*)', 0, [r'previews/\1/\2_thumb.jpg',
+                                                                    r'previews/\1/\2_small.jpg',
+                                                                    r'previews/\1/\2_med.jpg',
+                                                                    r'previews/\1/\2_full.jpg']),
 ])
 
 ####################################################################################################################################
@@ -146,16 +158,17 @@ class HSTxx_xxxx(pdsfile.PdsFile):
     SPLIT_RULES = split_rules + pdsfile.PdsFile.SPLIT_RULES
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
-    ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_PRODUCTS = opus_products
     FILESPEC_TO_OPUS_ID = filespec_to_opus_id
 
-    VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
-    VOLUMES_TO_ASSOCIATIONS['previews'] = volumes_to_previews + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['previews']
-
     VIEWABLES = {'default': default_viewables}
+
+    ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
+    ASSOCIATIONS['volumes']  = associations_to_volumes
+    ASSOCIATIONS['previews'] = associations_to_previews
+    ASSOCIATIONS['metadata'] = associations_to_metadata
 
     FILENAME_KEYLEN = 9     # trim off suffixes
 

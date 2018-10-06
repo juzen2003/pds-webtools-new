@@ -125,20 +125,79 @@ neighbors = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'volumes/(NHxx.._xxxx)(|_.*)/(NH.*/data/\w+/.*)\.(\w+)', 0, (r'previews/\1/\3_thumb.jpg',
-                                                                   r'previews/\1/\3_small.jpg',
-                                                                   r'previews/\1/\3_med.jpg',
-                                                                   r'previews/\1/\3_full.jpg')),
+    (r'.*\.lbl',  re.I, ''),
+
+    (r'.*/(NHxx.._xxxx)(_v1)/(NH.*)/data/\w+/(\w{3}_[0-9]{10}).*',    0, r'previews/\1/\3/data/*/\4'),
+    (r'.*/(NHxx.._xxxx)(_v2)/(NH.*)/data/\w+/(\w{3}_[0-9]{10}).*',    0, r'previews/\1/\3/data/*/\4'),
+    (r'.*/(NHxx.._xxxx)(_v1)/(NH.*)/DATA/\w+/MC([0-9]_[0-9]{10}).*',  0, r'previews/\1/\3/data/*/mc\4_*'),
+    (r'.*/(NHxx.._xxxx)(_v1)/(NH.*)/DATA/\w+/MP([0-9]_[0-9]{10}).*',  0, r'previews/\1/\3/data/*/mp\4_*'),
+    (r'.*/(NHxx.._xxxx)(_v1)/(NH.*)/DATA/\w+/MPF([0-9]_[0-9]{10}).*', 0, r'previews/\1/\3/data/*/mpf\4_*'),
+
+    (r'.*/(NHxx.._xxxx)(|_.*)/(NH.*/data/\w+/\w{3}_[0-9]{10}).*',     0, r'previews/\1/\3_*'),
+    (r'.*/(NHxx.._xxxx)(|_.*)/(NH.*/data/\w+/\w{3}_[0-9]{10}).*',     0, r'previews/\1/\3_*'),
 ])
 
 ####################################################################################################################################
 # ASSOCIATIONS
 ####################################################################################################################################
 
-volumes_to_volumes = translator.TranslatorByRegex([
-    (r'volumes/(\w+/NH...._)[12](.../.*)_(sci|eng).*\.fit', 0, r'volumes/\1?\2*.*'),
-    (r'volumes/(\w+/NH...._)[12](...)',                     0, r'volumes/\1?\2'),
-    (r'volumes/(\w+/NH...._)[12](.../data[^.]*)',           0, r'volumes/\1?\2'),
+associations_to_volumes = translator.TranslatorByRegex([
+    (r'.*/(NHxx.._xxxx)(|_v[2-9])/(NH....)_[12](...)/data/(\w+)/([a-z0-9]+_[0-9]{10}).*',
+                                                                    0,    [r'volumes/\1\2/\3_1\4/data/\5/\6*',
+                                                                           r'volumes/\1\2/\3_2\4/data/\5/\6*']),
+    (r'.*/(NHxx.._xxxx)(|_v[2-9])/(NH....)_[12](...)/data/(\w+)$',  0,    [r'volumes/\1\2/\3_1\4/data/\5',
+                                                                           r'volumes/\1\2/\3_2\4/data/\5']),
+    (r'.*/(NHxx.._xxxx)(|_v[2-9])/(NH....)_[12](...)/data$',        0,    [r'volumes/\1\2/\3_1\4/data',
+                                                                           r'volumes/\1\2/\3_2\4/data']),
+
+    # Special rules to deal with one uppercase volume, NHJUMV_1001
+    (r'.*/(NHxxMV_xxxx_v1/NHJUMV)_[12](001)/DATA/(\w+)/mc([0-9]_[0-9]{10}).*',
+                                                                    re.I, [r'volumes/\1_1\2/DATA/\3/MC\4*',
+                                                                           r'volumes/\1_2\2/data/\3/mc\4*']),
+    (r'.*/(NHxxMV_xxxx_v1/NHJUMV)_[12](001)/DATA/(\w+)/mp([0-9]_[0-9]{10}).*',
+                                                                    re.I, [r'volumes/\1_1\2/DATA/\3/MP\4*',
+                                                                           r'volumes/\1_2\2/data/\3/mp\4*']),
+    (r'.*/(NHxxMV_xxxx_v1/NHJUMV)_[12](001)/DATA/(\w+)/mpf(_[0-9]{10}).*',
+                                                                    re.I, [r'volumes/\1_1\2/DATA/\3/MPF\4*',
+                                                                           r'volumes/\1_2\2/data/\3/mpf\4*']),
+    (r'.*/(NHxxMV_xxxx_v1/NHJUMV)_[12](001)/DATA/(\w+)$',           re.I, [r'volumes/\1_1\2/DATA/\3',
+                                                                           r'volumes/\1_2\2/data/\3']),
+    (r'.*/(NHxxMV_xxxx_v1/NHJUMV)_[12](001)/DATA$',                 re.I, [r'volumes/\1_1\2/DATA',
+                                                                           r'volumes/\1_2\2/data']),
+])
+
+associations_to_previews = translator.TranslatorByRegex([
+    (r'.*/(NHxx.._xxxx)(|_v[2-9])/(NH....)_[12](.../data/\w+)/([a-z0-9]+_[0-9]{10}).*',
+                                                                    0,    [r'previews/\1/\3_1\4/\5*',
+                                                                           r'previews/\1/\3_2\4/\5*']),
+    # Special rules to deal with one uppercase volume, NHJUMV_1001
+    (r'.*/NHxxMV_xxxx_v1/NHJUMV_[12]001/DATA/(\w+)/MC([0-9]_[0-9]{10}).*',
+                                                                    re.I, [r'previews/NHxxMV_xxxx/NHJUMV_1001/data/\1/mc\2*',
+                                                                           r'previews/NHxxMV_xxxx/NHJUMV_2001/data/\1/mc\2*']),
+    (r'.*/NHxxMV_xxxx_v1/NHJUMV_[12]001/DATA/(\w+)/MP([0-9]_[0-9]{10}).*',
+                                                                    re.I, [r'previews/NHxxMV_xxxx/NHJUMV_1001/data/\1/mp\2*',
+                                                                           r'previews/NHxxMV_xxxx/NHJUMV_2001/data/\1/mp\2*']),
+    (r'.*/NHxxMV_xxxx_v1/NHJUMV_[12]001/DATA/(\w+)/MPF(_[0-9]{10}).*',
+                                                                    re.I, [r'previews/NHxxMV_xxxx/NHJUMV_1001/data/\1/mpf\2*',
+                                                                           r'previews/NHxxMV_xxxx/NHJUMV_2001/data/\1/mpf\2*']),
+
+    (r'.*/(NHxx.._xxxx)(|_.*)/(NH....)_[12](.../data/\w+)$',        re.I, [r'previews/\1/\3_1\4',
+                                                                           r'previews/\1/\3_2\4']),
+    (r'.*/(NHxx.._xxxx)(|_.*)/(NH....)_[12](.../data)$',            re.I, [r'previews/\1/\3_1\4',
+                                                                           r'previews/\1/\3_2\4']),
+])
+
+associations_to_metadata = translator.TranslatorByRegex([
+    (r'.*/(NHxx.._xxxx)(|_.*)/(NH...._....)/data/\w+/([a-z0-9]+_[0-9]{10}).*',
+                                                                    re.I, [r'metadata/\1/\3/\3_index.tab/\4',
+                                                                           r'metadata/\1/\3/\3_supplemental_index.tab/\4',
+                                                                           r'metadata/\1/\3/\3_moon_summary.tab/\4',
+                                                                           r'metadata/\1/\3/\3_ring_summary.tab/\4',
+                                                                           r'metadata/\1/\3/\3_charon_summary.tab/\4',
+                                                                           r'metadata/\1/\3/\3_pluto_summary.tab/\4',
+                                                                           r'metadata/\1/\3/\3_jupiter_summary.tab/\4',
+                                                                           r'metadata/\1/\3']),
+    (r'.*/(NHxx.._xxxx)(|_.*)/(NH...._....)/data/(|\w+)$',          re.I,  r'metadata/\1/\3'),
 ])
 
 ####################################################################################################################################
@@ -164,9 +223,9 @@ opus_type = translator.TranslatorByRegex([
     (r'previews/NHxx.._xxxx(|_v.+)/NH...._2xxx/.*$', 0, ''),
 
     (r'volumes/NHxx.._xxxx(|_v.+)/NH...._1.../data/.*_eng(|_[1-9])\.(fit|lbl)$', re.I,
-                                            ('standard',   0, 'raw',   'Raw Data')),
+                                            ('New Horizons',   0, 'nh-raw',   'Raw Image')),
     (r'volumes/NHxx.._xxxx(|_v.+)/NH...._2.../data/.*_sci(|_[1-9])\.(fit|lbl)$', re.I,
-                                            ('standard', 100, 'calib', 'Calibrated Data'))
+                                            ('New Horizons', 100, 'nh-calib', 'Calibrated Image'))
 ])
 
 ####################################################################################################################################
@@ -305,8 +364,12 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
 
     VIEWABLES = {'default': default_viewables}
 
-    VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
-    VOLUMES_TO_ASSOCIATIONS['volumes'] = volumes_to_volumes + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['volumes']
+    ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
+    ASSOCIATIONS['volumes']  = associations_to_volumes
+    ASSOCIATIONS['previews'] = associations_to_previews
+    ASSOCIATIONS['metadata'] = associations_to_metadata
+
+    FILENAME_KEYLEN = 14    # trim off suffixes
 
     def opus_prioritizer(self, pdsfiles):
         """Prioritizes items that have been downlinked in multiple ways."""
@@ -314,7 +377,7 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
         for header in list(pdsfiles.keys()): # We change pdsfiles in the loop!
             sublists = pdsfiles[header]
             if len(sublists) == 1: continue
-            if header[0] != 'standard': continue
+            if header[0] != 'New Horizons': continue
 
             priority = []
             for sublist in sublists:
@@ -339,7 +402,7 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
                     new_header = ('New Horizons',
                                   100 + prio,
                                   'nh-' + desc.replace(', ', '-').lower(),
-                                  'Duplicate Image: ' + desc)
+                                  'Duplicate Image (' + desc + ')')
                     pdsfiles[new_header] = []
                     new_codes.append(code)
 

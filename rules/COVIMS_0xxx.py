@@ -32,6 +32,8 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
+    (r'.*\.lbl',  re.I, ''),
+
     (r'volumes/(.*/data/\w+/.*)\.(\w+)', 0, (r'previews/\1_thumb.png',
                                              r'previews/\1_small.png',
                                              r'previews/\1_med.png',
@@ -42,20 +44,62 @@ default_viewables = translator.TranslatorByRegex([
 # ASSOCIATIONS
 ####################################################################################################################################
 
-volumes_to_volumes = translator.TranslatorByRegex([
-    (r'volumes/(.*)/extras/\w+/(.*)(\..*)\.(jpeg|jpeg_small|tiff)', 0, [r'volumes/\1/data/\2.*',
-                                                                        r'volumes/\1/extras/*/\2.*']),
-    (r'volumes/(.*)/extras/\w+(|/.*)',                              0, [r'volumes/\1/data\2',
-                                                                        r'volumes/\1/extras/*\2']),
-    (r'volumes/(.*)/extras',                                        0,  r'volumes/\1/data'),
-    (r'volumes/(.*)/data/(.*)',                                     0,  r'volumes/\1/extras/*/\2*'),
-    (r'volumes/(.*)/data/(.*)\.(.*)',                               0,  r'volumes/\1/extras/*/\2*'),
-    (r'volumes/(.*)/data',                                          0,  r'volumes/\1/extras/*'),
+associations_to_volumes = translator.TranslatorByRegex([
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)/(data|extras/\w+)/(\w+/v[0-9]{10})_[0-9](|_[0-9]{3}).*',
+                                                                        0, [r'volumes/\1/\2/data/\4_*\5.qub',
+                                                                            r'volumes/\1/\2/data/\4_*\5.lbl',
+                                                                            r'volumes/\1/\2/data/\4_?.qub',
+                                                                            r'volumes/\1/\2/data/\4_?.lbl',
+                                                                            r'volumes/\1/\2/data/\4_??.qub',
+                                                                            r'volumes/\1/\2/data/\4_??.lbl',
+                                                                            r'volumes/\1/\2/extras/thumbnail/\4_*\5.IMG.jpeg_small',
+                                                                            r'volumes/\1/\2/extras/browse/\4_*\5.IMG.jpeg',
+                                                                            r'volumes/\1/\2/extras/full/\4_*\5.IMG.png',
+                                                                            r'volumes/\1/\2/extras/tiff/\4_*\5.IMG.tiff']),
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)/(data|extras|extras/\w+)/(\w+)$', 0, [r'volumes/\1/\2/data/\4',
+                                                                            r'volumes/\1/\2/extras/thumbnail/\4',
+                                                                            r'volumes/\1/\2/extras/browse/\4',
+                                                                            r'volumes/\1/\2/extras/full/\4',
+                                                                            r'volumes/\1/\2/extras/tiff/\4']),
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)/(data|extras/\w+)$',              0, [r'volumes/\1/\2/data',
+                                                                            r'volumes/\1/\2/extras/thumbnail',
+                                                                            r'volumes/\1/\2/extras/browse',
+                                                                            r'volumes/\1/\2/extras/full',
+                                                                            r'volumes/\1/\2/extras/tiff']),
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)/extras$',                         0,  r'volumes/\1/\2/data'),
+    (r'metadata/(COVIMS_0xxx/COVIMS_....)/COVIMS_...._index\.\w+$',     0, [r'volumes/\1/index/index.tab',
+                                                                            r'volumes/\1/index/index.lbl']),
+    (r'metadata/COVIMS_0xxx/COVIMS_0999/COVIMS_...._index\.\w+$',       0, [r'volumes/COVIMS_0xxx/COVIMS_0094/index/cumindex.tab',
+                                                                            r'volumes/COVIMS_0xxx/COVIMS_0094/index/cumindex.lbl']),
 ])
 
-associations_to_volumes = translator.TranslatorByRegex([
-    (r'previews/(.*)_(\w+\.png)',      0, r'volumes/\1.*'),
-    (r'previews/(\w+/\w+/data/\w+)',   0, r'volumes/\1'),
+associations_to_previews = translator.TranslatorByRegex([
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)/(data|extras/\w+)/(\w+/v[0-9]{10}_[0-9]+).*',
+                                                                       0, [r'previews/\1/\2/data/\4_full.jpg',
+                                                                           r'previews/\1/\2/data/\4_med.jpg',
+                                                                           r'previews/\1/\2/data/\4_small.jpg',
+                                                                           r'previews/\1/\2/data/\4_thumb.jpg']),
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)/(data|extras/\w+)/(\w+)$',       0,  r'previews/\1/\2/data/\4'),
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)/(data|extras|extras/\w+)$',      0,  r'previews/\1/\2/data'),
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)',                                0,  r'previews/\1/\2'),
+])
+
+associations_to_metadata = translator.TranslatorByRegex([
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)/(data|extras/\w+)/\w+/(v[0-9]{10}_[0-9]+).*',
+                                                                       0, [r'metadata/\1/\2/\2_index.tab/\4',
+                                                                           r'metadata/\1/\2/\2_ring_summary.tab/\4',
+                                                                           r'metadata/\1/\2/\2_moon_summary.tab/\4',
+                                                                           r'metadata/\1/\2/\2_saturn_summary.tab/\4',
+                                                                           r'metadata/\1/\2/\2_jupiter_summary.tab/\4',
+                                                                           r'metadata/\1/\2']),
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)/(|data|extras|extras/\w+)$',     0,  r'metadata/\1/\2/'),
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)/index/index\.\w+$',              0, [r'metadata/\1/\2/\2_index.tab',
+                                                                           r'metadata/\1/\2/\2_index.lbl']),
+    (r'.*/(COVIMS_0xxx)/(COVIMS_....)/index/cumindex\.\w+$',           0, [r'metadata/\1/COVIMS_0999/COVIMS_0999_index.tab',
+                                                                           r'metadata/\1/COVIMS_0999/COVIMS_0999_index.lbl']),
+    (r'metadata/(COVIMS_0xxx)/(COVIMS_....)/(\w+)\.\w+$',              0, [r'metadata/\1/COVIMS_0999/\3.tab',
+                                                                           r'metadata/\1/COVIMS_0999/\3.lbl']),
+    (r'metadata/(COVIMS_0xxx)/(COVIMS_....)$',                         0,  r'metadata/\1/COVIMS_0999'),
 ])
 
 ####################################################################################################################################
@@ -93,9 +137,10 @@ opus_format = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini VIMS', 10, 'covims-thumb',  'Extra preview (thumbnail)')),
-    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini VIMS', 20, 'covims-medium', 'Extra preview (medium)')),
-    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini VIMS', 30, 'covims-full',   'Extra preview (full)')),
+    (r'volumes/.*\.(qub|lbl)$',                      0, ('Cassini VIMS',   0, 'covims-raw',    'Raw cube')),
+    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini VIMS', 110, 'covims-thumb',  'Extra preview (thumbnail)')),
+    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini VIMS', 120, 'covims-medium', 'Extra preview (medium)')),
+    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini VIMS', 130, 'covims-full',   'Extra preview (full)')),
 ])
 
 ####################################################################################################################################
@@ -181,7 +226,6 @@ class COVIMS_0xxx(pdsfile.PdsFile):
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
-    ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
 
@@ -192,8 +236,18 @@ class COVIMS_0xxx(pdsfile.PdsFile):
 
     VIEWABLES = {'default': default_viewables}
 
-    VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
-    VOLUMES_TO_ASSOCIATIONS['volumes'] = volumes_to_volumes + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['volumes']
+    ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
+    ASSOCIATIONS['volumes']  = associations_to_volumes
+    ASSOCIATIONS['previews'] = associations_to_previews
+    ASSOCIATIONS['metadata'] = associations_to_metadata
+
+    def FILENAME_KEYLEN(self):
+        parts = self.basename.split('_')
+        if len(parts) == 3:
+            return 0
+        else:
+            return 11   # trim off suffixes at least without _nnn line number
+
 
 # Global attribute shared by all subclasses
 pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC

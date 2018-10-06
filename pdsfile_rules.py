@@ -227,53 +227,18 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
 ####################################################################################################################################
 # ASSOCIATIONS
 #
-# Used for defining the default places of directories associated with a particular directory elsewhere in the tree, as part of
-# another version or category of file.
+# Defines files associated with a given file. A dictionary of Translators keyed by 'volumes', 'calibrated', 'browse', 'diagrams',
+# or 'metadata'.
+#
+# These Translators take a logical path and return logical paths of associated files based on the key.
 ####################################################################################################################################
 
-ASSOCIATIONS_TO_VOLUMES = translator.TranslatorByRegex([
-    (r'metadata/(\w+)/.*999.*', 0, r'volumes/\1'),
-    (r'[a-z]+/(.*)',            0, r'volumes/\1')
-])
-
-VOLUMES_TO_CALIBRATED = translator.TranslatorByRegex([
-    (r'volumes/(.*)', 0, r'calibrated/\1')
-])
-
-VOLUMES_TO_DIAGRAMS = translator.TranslatorByRegex([
-    (r'volumes/(.*)\.(\w+)', 0, [r'diagrams/\1_thumb.*',
-                                 r'diagrams/\1_small.*',
-                                 r'diagrams/\1_med.*',
-                                 r'diagrams/\1_full.*']),
-    (r'volumes/(.*)', 0, r'diagrams/\1')
-])
-
-VOLUMES_TO_METADATA = translator.TranslatorByRegex([
-    (r'volumes/(\w+)/(\w+)/data/.*/(\w+)\.\w+', re.I,  r'metadata/\1/\2/\2_*.tab/\3'),
-    (r'volumes/(\w+)/(\w+)/data/.*',            re.I,  r'metadata/\1/\2/\2_*.tab'),
-    (r'volumes/(\w+)/(\w+)/data',               re.I,  r'metadata/\1/\2'),
-    (r'volumes/(\w+)',                          0,    [r'metadata/\1',
-                                                       r'metadata/\1/*999*']),
-    (r'volumes/(\w+)/(\w+)(|/index.*)',         re.I,  r'metadata/\1/*999*'),
-])
-
-VOLUMES_TO_PREVIEWS = translator.TranslatorByRegex([
-    (r'volumes/(.*)\.(\w+)', 0,  [r'previews/\1_thumb.*',
-                                  r'previews/\1_small.*',
-                                  r'previews/\1_med.*',
-                                  r'previews/\1_full.*']),
-    (r'volumes/(.*)', 0, r'previews/\1')
-])
-
-VOLUMES_TO_VOLUMES = translator.SelfTranslator()
-
-# Group translators into dictionaries
-VOLUMES_TO_ASSOCIATIONS = {
-    'calibrated': VOLUMES_TO_CALIBRATED,
-    'diagrams':   VOLUMES_TO_DIAGRAMS,
-    'metadata':   VOLUMES_TO_METADATA,
-    'previews':   VOLUMES_TO_PREVIEWS,
-    'volumes':    VOLUMES_TO_VOLUMES,
+ASSOCIATIONS = {
+    'volumes'   : translator.NullTranslator(),
+    'previews'  : translator.NullTranslator(),
+    'calibrated': translator.NullTranslator(),
+    'diagrams'  : translator.NullTranslator(),
+    'metadata'  : translator.NullTranslator(),
 }
 
 ####################################################################################################################################
@@ -390,7 +355,7 @@ SPLIT_RULES = translator.TranslatorByRegex([
 #
 # Used for indicating the type of a data file as it will appear in OPUS, e.g., "Raw Data", "Calibrated Data", etc. The tuple
 # returned is (category, rank, slug, title) where:
-#   category is 'standard', 'browse', 'diagram', or a meaningful header for special cases like 'Voyager ISS', 'Cassini CIRS'
+#   category is 'browse', 'diagram', or a meaningful header for special cases like 'Voyager ISS', 'Cassini CIRS'
 #   rank is the sort order within the category
 #   slug is a short string that will appear in URLs
 #   title is a meaning title for product, e.g., 'Raw Data (when calibrated is unavailable)'
@@ -400,20 +365,17 @@ SPLIT_RULES = translator.TranslatorByRegex([
 
 OPUS_TYPE = translator.TranslatorByRegex([
 
-    # Default for a volumes directory is raw data with an indication that calibrated products are unavailable
-    (r'volumes/[^/]+/[^/]+/data/.*\..*', re.I, ('standard', 10, 'raw', 'Raw Data (if calibrated is unavailable)')),
-
     # Previews
-    (r'previews/.*\_thumb\..*$', 0, ('browse', 10, 'browse-thumb', 'Browse Image (thumbnail)')),
-    (r'previews/.*\_small\..*$', 0, ('browse', 20, 'browse-small', 'Browse Image (small)')),
+    (r'previews/.*\_thumb\..*$', 0, ('browse', 10, 'browse-thumb',  'Browse Image (thumbnail)')),
+    (r'previews/.*\_small\..*$', 0, ('browse', 20, 'browse-small',  'Browse Image (small)')),
     (r'previews/.*\_med\..*$',   0, ('browse', 30, 'browse-medium', 'Browse Image (medium)')),
-    (r'previews/.*\_full\..*$',  0, ('browse', 40, 'browse-full', 'Browse Image (full-size)')),
+    (r'previews/.*\_full\..*$',  0, ('browse', 40, 'browse-full',   'Browse Image (full-size)')),
 
     # Diagrams
-    (r'diagrams/.*\_thumb\..*$', 0, ('diagram', 10, 'diagram-thumb', 'Browse Diagram (thumbnail)')),
-    (r'diagrams/.*\_small\..*$', 0, ('diagram', 20, 'diagram-small', 'Browse Diagram (small)')),
+    (r'diagrams/.*\_thumb\..*$', 0, ('diagram', 10, 'diagram-thumb',  'Browse Diagram (thumbnail)')),
+    (r'diagrams/.*\_small\..*$', 0, ('diagram', 20, 'diagram-small',  'Browse Diagram (small)')),
     (r'diagrams/.*\_med\..*$',   0, ('diagram', 30, 'diagram-medium', 'Browse Diagram (medium)')),
-    (r'diagrams/.*\_full\..*$',  0, ('diagram', 40, 'diagram-full', 'Browse Diagram (full-size)')),
+    (r'diagrams/.*\_full\..*$',  0, ('diagram', 40, 'diagram-full',   'Browse Diagram (full-size)')),
 
     # Metadata
     (r'metadata/.*_inventory\..*',             0, ('metadata', 10, 'inventory',       'Target Body Inventory')),

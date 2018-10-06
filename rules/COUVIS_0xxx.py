@@ -25,8 +25,27 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
-    (r'previews/(.*)_(\w+\.png)',    0, r'volumes/\1.*'),
-    (r'previews/(\w+/\w+/DATA/\w+)', 0, r'volumes/\1'),
+    (r'.*/(COUVIS_0xxx/COUVIS_0.../DATA/\w+/\w+[0-9])(|_\w+)\..*',  0, [r'volumes/\1.DAT', r'volumes/\1.LBL']),
+    (r'.*/(COUVIS_0xxx/COUVIS_0.../DATA)(|/\w+)$',                  0,  r'volumes/\1/\2'),
+])
+
+associations_to_previews = translator.TranslatorByRegex([
+    (r'.*/(COUVIS_0xxx/COUVIS_0.../DATA/\w+/\w+[0-9])(|_\w+)\..*',  0, [r'previews/\1_full.png',
+                                                                        r'previews/\1_thumb.png',
+                                                                        r'previews/\1_small.png',
+                                                                        r'previews/\1_med.png']),
+    (r'.*/(COUVIS_0xxx/COUVIS_0.../DATA)(|/\w+)$',                  0,  r'previews/\1/\2'),
+])
+
+associations_to_metadata = translator.TranslatorByRegex([
+    (r'.*/(COUVIS_0xxx)/(COUVIS_0...)/DATA/\w+/(\w+[0-9])(|_\w+)\..*',
+                                                                    0, [r'metadata/\1/\2/\2_index.tab/\3',
+                                                                        r'metadata/\1/\2/\2_supplemental_index.tab/\3',
+                                                                        r'metadata/\1/\2/\2_ring_summary.tab/\3',
+                                                                        r'metadata/\1/\2/\2_moon_summary.tab/\3',
+                                                                        r'metadata/\1/\2/\2_saturn_summary.tab/\3',
+                                                                        r'metadata/\1/\2']),
+    (r'.*/(COUVIS_0xxx)/(COUVIS_0...)/DATA(|/\w+)$',                0,  r'metadata/\1/\2'),
 ])
 
 ####################################################################################################################################
@@ -51,10 +70,12 @@ neighbors = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'volumes/(.*/DATA/\w+/.*)\.(\w+)', 0, (r'previews/\1_thumb.png',
+    (r'.*\.lbl',  re.I, ''),
+
+    (r'volumes/(.*/DATA/\w+/.*)\.(\w+)', 0, (r'previews/\1_full.png',
+                                             r'previews/\1_thumb.png',
                                              r'previews/\1_small.png',
-                                             r'previews/\1_med.png',
-                                             r'previews/\1_full.png')),
+                                             r'previews/\1_med.png')),
 ])
 
 ####################################################################################################################################
@@ -62,11 +83,11 @@ default_viewables = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 sort_key = translator.TranslatorByRegex([
-    (r'^(EUV|FUV|HSP|HDAC)([0-9]{4}_[0-9]{3}_[0-9]{2}_[0-9]{2}.*)_thumb(\..*)', 0, r'\2\1_1thumb\3'),
-    (r'^(EUV|FUV|HSP|HDAC)([0-9]{4}_[0-9]{3}_[0-9]{2}_[0-9]{2}.*)_small(\..*)', 0, r'\2\1_2small\3'),
-    (r'^(EUV|FUV|HSP|HDAC)([0-9]{4}_[0-9]{3}_[0-9]{2}_[0-9]{2}.*)_med(\..*)',   0, r'\2\1_3med\3'),
-    (r'^(EUV|FUV|HSP|HDAC)([0-9]{4}_[0-9]{3}_[0-9]{2}_[0-9]{2}.*)_full(\..*)',  0, r'\2\1_4full\3'),
-    (r'^(EUV|FUV|HSP|HDAC)([0-9]{4}_[0-9]{3}_[0-9]{2}_[0-9]{2}.*)(\.DAT|LBL)',  0, r'\2\1\3'),
+    (r'(EUV|FUV|HSP|HDAC)([0-9]{4}_[0-9]{3}_[0-9]{2}_[0-9]{2}.*)_thumb(\..*)', 0, r'\2\1_1thumb\3'),
+    (r'(EUV|FUV|HSP|HDAC)([0-9]{4}_[0-9]{3}_[0-9]{2}_[0-9]{2}.*)_small(\..*)', 0, r'\2\1_2small\3'),
+    (r'(EUV|FUV|HSP|HDAC)([0-9]{4}_[0-9]{3}_[0-9]{2}_[0-9]{2}.*)_med(\..*)',   0, r'\2\1_3med\3'),
+    (r'(EUV|FUV|HSP|HDAC)([0-9]{4}_[0-9]{3}_[0-9]{2}_[0-9]{2}.*)_full(\..*)',  0, r'\2\1_4full\3'),
+    (r'(EUV|FUV|HSP|HDAC)([0-9]{4}_[0-9]{3}_[0-9]{2}_[0-9]{2}.*)(\.DAT|LBL)',  0, r'\2\1\3'),
 ])
 
 ####################################################################################################################################
@@ -141,13 +162,17 @@ class COUVIS_0xxx(pdsfile.PdsFile):
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
     SORT_KEY = sort_key + pdsfile.PdsFile.SORT_KEY
-    ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
 
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
     OPUS_PRODUCTS = opus_products
     FILESPEC_TO_OPUS_ID = filespec_to_opus_id
 
     VIEWABLES = {'default': default_viewables}
+
+    ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
+    ASSOCIATIONS['volumes']  = associations_to_volumes
+    ASSOCIATIONS['previews'] = associations_to_previews
+    ASSOCIATIONS['metadata'] = associations_to_metadata
 
 # Global attribute shared by all subclasses
 pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC

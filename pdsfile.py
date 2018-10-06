@@ -585,8 +585,7 @@ class PdsFile(object):
 
     # Default translators, can be overridden by volset-specific subclasses
     DESCRIPTION_AND_ICON = pdsfile_rules.DESCRIPTION_AND_ICON
-    VOLUMES_TO_ASSOCIATIONS = pdsfile_rules.VOLUMES_TO_ASSOCIATIONS
-    ASSOCIATIONS_TO_VOLUMES = pdsfile_rules.ASSOCIATIONS_TO_VOLUMES
+    ASSOCIATIONS = pdsfile_rules.ASSOCIATIONS
     INFO_FILE_BASENAMES = pdsfile_rules.INFO_FILE_BASENAMES
     NEIGHBORS = pdsfile_rules.NEIGHBORS
     SORT_KEY = pdsfile_rules.SORT_KEY
@@ -714,8 +713,12 @@ class PdsFile(object):
         self.volname      = ''
 
         self.interior     = ''
-        self.row_dicts    = []
-        self.column_names = []
+
+        self.is_index_row = False
+        self.row_dicts    = []      # List of row dictionaries if this is an
+                                    # index row.
+        self.column_names = []      # Ordered list of column names for an index
+                                    # row or its parent.
 
         self.permanent    = False
         self.is_virtual   = False
@@ -752,6 +755,7 @@ class PdsFile(object):
         self._exact_archive_url_filled       = None
         self._exact_checksum_url_filled      = None
         self._associated_parallels_filled    = None
+        self._filename_keylen_filled         = None
 
     @staticmethod
     def new_virtual(basename):
@@ -788,6 +792,8 @@ class PdsFile(object):
         this.volname      = ''
 
         this.interior     = ''
+
+        this.is_index_row = False
         this.row_dicts    = []
         this.column_names = []
 
@@ -824,10 +830,11 @@ class PdsFile(object):
         this._exact_archive_url_filled       = ''
         this._exact_checksum_url_filled      = ''
         this._associated_parallels_filled    = None
+        this._filename_keylen_filled         = 0
 
         return this
 
-    def new_index_row_pdsfile(self, filename_key):
+    def new_index_row_pdsfile(self, filename_key, row_dicts, column_names):
         """A PdsFile representing the content of one row of an index file. Used
         to enable views of individual rows of large index files."""
 
@@ -870,6 +877,14 @@ class PdsFile(object):
         this._exact_archive_url_filled       = ''
         this._exact_checksum_url_filled      = ''
         this._associated_parallels_filled    = {}
+        this._filename_keylen_filled         = 0
+
+        this.is_index_row = True
+        this.row_dicts = row_dicts
+        this.column_names = column_names
+
+        # Special attribute just for index rows
+        this.parent_basename = self.basename
 
         return this
 
@@ -1041,6 +1056,10 @@ class PdsFile(object):
         """The anchor for this object. Objects with the same anchor are grouped
         together in the same row of a Viewmaster table."""
 
+        # We need a better anchor for index row PdsFiles
+        if self.is_index_row:
+            return self.parent().split[0] + '-' + self.split[0]
+
         return self.split[0]
 
     @property
@@ -1084,8 +1103,6 @@ class PdsFile(object):
             return self._childnames_filled
 
         self._childnames_filled = []
-        logical_path_lc = self.logical_path.lower()
-
         if self.isdir and self.abspath:
             self._childnames_filled = get_childnames(self.abspath)
 
@@ -1093,97 +1110,10 @@ class PdsFile(object):
         # For the sake of efficiency, we generate all the child objects at once
         # and allow them to be cached for at least a few days.
         if self.is_index:
-            self.cache_child_row_dicts()
+            self.cache_child_row_pdsfiles()
 
         self._recache()
         return self._childnames_filled
-
-    def cache_child_row_dicts(self, selection=None):
-        """Fill in the child names and cache all the rows of an index file as
-        row dictionaries.
-
-        If a row selection is specified, return the PdsFile for that row.
-        """
-
-        CACHE.pause()       # wait till all the changes are ready
-        try:
-            table = pdstable.PdsTable(self.label_abspath,
-                                      filename_keylen=self.FILENAME_KEYLEN)
-
-        # Not a valid index table; that means it has no children
-        except (IOError, KeyError):
-            PdsFile.LAST_EXC_INFO = sys.exc_info()
-            self._childnames_filled = []
-            if selection:
-                raise IOError('Rows unavailable; not an index file: ' +
-                              self.logical_path + '/' + selection)
-            return
-
-        # Otherwise generate and cache all child objects
-        else:
-
-            table.index_rows_by_filename_key()
-            self._childnames_filled = table.filename_keys
-            self.column_names = table.get_keys()
-
-            children = []
-            for childname in self._childnames_filled:
-                child = self.new_index_row_pdsfile(childname)
-                child.row_dicts = table.rows_by_filename_key(childname)
-                child.column_names = self.column_names
-                child._complete(must_exist=True, caching='all',
-                                lifetime=3*86400)   # cache for 3 days
-                children.append(child)
-
-            # Cache the table too because it contains all the childnames
-            self._complete(caching='all', lifetime=0)
-            self._recache()
-
-        finally:
-            CACHE.resume()
-
-        if selection:
-            row_index = self.find_selected_row_index(selection)
-            return children[row_index]
-        else:
-            return
-
-    def find_selected_row_index(self, selection):
-        """Return the index of this selection among the rows of an index."""
-
-        # Try the most obvious answer
-        try:
-            return self.childnames.index(selection)
-        except ValueError:
-            pass
-
-        # Clean up selection and search in lower case
-        selection_lc = selection.lower()
-        selection_lc = selection_lc.rstrip('/')
-        selection_lc = os.path.basename(selection_lc)
-        selection_lc = os.path.splitext(selection_lc)[0]
-
-        childnames = self.childnames
-        childnames_lc = [c.lower() for c in childnames]
-
-        # Find the index of this selection among the rows
-        child_index = None
-        try:
-            child_index = childnames_lc.index(selection_lc)
-
-        except ValueError:  # If the test childname is not in the list
-
-            # Maybe the key is shorter than the filename
-            for k in range(len(childnames_lc)):
-                if childnames_lc[k] in selection_lc:
-                    child_index = k
-                    break
-
-        if child_index is None:
-            raise IOError('Index row does not exist: ' +
-                          self.logical_path + '/' + selection)
-
-        return child_index
 
     @property
     def parent_logical_path(self):
@@ -1397,12 +1327,11 @@ class PdsFile(object):
             elif self.category_ == 'metadata/' and 'metadata' not in pair[0]:
                 pair = ('Metadata for ' + pair[0], 'INDEXDIR')
 
-        elif self.row_dicts:
-            table_name = self.parent().basename
+        elif self.is_index_row:
             if len(self.row_dicts) == 1:
-                pair = ('Selected row of ' + table_name, 'INFO')
+                pair = ('Selected row of index', 'INFO')
             else:
-                pair = ('Selected rows of ' + table_name, 'INFO')
+                pair = ('Selected rows of index', 'INFO')
 
         else:
             pair = self.DESCRIPTION_AND_ICON.first(self.logical_path)
@@ -1603,6 +1532,18 @@ class PdsFile(object):
         if self._label_basename_filled is not None:
             return self._label_basename_filled
 
+        # Quick test
+        if self.extension.upper() == self.extension:
+            ext = '.LBL'
+        else:
+            ext = '.lbl'
+
+        test_basename = self.basename[:-len(self.extension)] + ext
+        test_abspath = self.abspath.rpartition('/')[0] + '/' + test_basename
+        if os.path.exists(test_abspath):
+            return test_basename
+
+        # Otherwise, check the link shelf
         _ = self.internal_link_info
 
         if _isstr(self._internal_links_filled):
@@ -1882,6 +1823,16 @@ class PdsFile(object):
         else:
             return False
 
+    @property
+    def filename_keylen(self):
+        if self._filename_keylen_filled is None:
+            if isinstance(self.FILENAME_KEYLEN, int):
+                self._filename_keylen_filled = self.FILENAME_KEYLEN
+            else:
+                self._filename_keylen_filled = self.FILENAME_KEYLEN()
+
+        return self._filename_keylen_filled
+
     LATEST_VERSION_RANKS = [990100, 990200, 990300, 990400, 999999]
 
     @staticmethod
@@ -2009,130 +1960,203 @@ class PdsFile(object):
         # We are out of options
         return pdsviewable.PdsViewSet([])
 
-    def opus_products(self):
-        """For this primary data product or label, return a dictionary keyed
-        by the OPUS product type ("Raw Data", "Calibrated Data", etc.). For any
-        key, this dictionary returns a list of sublists. Each sublist has the
-        form:
-            [PdsFile for a data product,
-             PdsFile for its label (if any),
-             PdsFile for the first embedded .FMT file (if any),
-             PdsFile for the second embedded .FMT file (if any), etc.]
-        This sublist contains every file that should be added to the OPUS
-        results if that data product is requested.
+    ############################################################################
+    # Associated volumes and volsets
+    ############################################################################
 
-        The dictionary returns a list of sublists because it is possible for
-        multiple data products to have the same OPUS product type. However, most
-        of the time, the list contains only one sublist. The list is sorted
-        with the most recent versions first.
+    def volume_pdsfile(self):
+        """PdsFile object for the root volume."""
+
+        abspath = self.volume_abspath()
+        if abspath:
+            return PdsFile.from_abspath(abspath)
+        else:
+            raise ValueError('No associated volume for ' + self.abspath)
+
+    def volume_pdsdir(self):
+        """PdsFile object for the root volume, if it is a directory."""
+
+        pdsf = self.volume_pdsfile()
+        if pdsf.isdir:
+            return pdsf
+        else:
+            raise ValueError('No associated volume directory for ' +
+                             self.abspath)
+
+    def volset_pdsfile(self):
+        """PdsFile object for the root volume set."""
+
+        abspath = self.volset_abspath()
+        if abspath:
+            return PdsFile.from_abspath(abspath)
+        else:
+            raise ValueError('No associated volume set for ' + self.abspath)
+
+    def volset_pdsdir(self):
+        """PdsFile object for the root volume set."""
+
+        pdsf = self.volset_pdsfile()
+        if pdsf.isdir:
+            return pdsf
+        else:
+            raise ValueError('No associated volume set directory for ' +
+                             self.abspath)
+
+    def is_volume_dir(self):
+        return (self.volname_ and not self.interior)
+
+    def is_volume_file(self):
+        return (self.volname and not self.volname_)
+
+    def is_volume(self):
+        return self.is_volume_dir() or self.is_volume_file()
+
+    def is_volset_dir(self):
+        return (self.volset_ and not self.volname)
+
+    def is_volset_file(self):
+        return (self.volset and not self.volset_)
+
+    def is_volset(self):
+        return self.is_volset_dir() or self.is_volset_file()
+
+    def is_category_dir(self):
+        return (self.volset == '')
+
+    def volume_abspath(self):
+        """Return the absolute path to the volume associated with this object.
         """
 
-        opus_pdsfiles = {}
+        if not self.volname:
+            return None
+        elif self.volname_:
+            return ''.join([self.root_, self.category_, self.volset_,
+                            self.volname])
+        else:
+            return ''.join([self.root_, self.category_, self.volset_,
+                            self.interior])
 
-        # Get the associated absolute paths
-        patterns = self.OPUS_PRODUCTS.all(self.logical_path)
+    def volset_abspath(self):
+        """Return the absolute path to the volset associated with this object.
+        """
 
-        abs_patterns_and_opus_types = []
-        for pattern in patterns:
-            if isinstance(pattern, str):    # match string only
-                abs_patterns_and_opus_types.append((self.root_ + pattern, None))
-            else:                           # (match string, opus_type)
-                (p, opus_type) = pattern
-                abs_patterns_and_opus_types.append((self.root_ + p, opus_type))
+        if not self.volset:
+            return None
+        elif self.volset_:
+            return ''.join([self.root_, self.category_, self.volset,
+                            self.suffix])
+        else:
+            return ''.join([self.root_, self.category_, self.interior])
 
-        # Construct a complete list of matching abspaths.
-        # Create a dictionary of opus_types based on abspaths where opus_types
-        # have already been specified.
-        abspaths = []
-        opus_type_for_abspath = {}
-        for (pattern, opus_type) in abs_patterns_and_opus_types:
-            if '*' in pattern or '?' in pattern or '[' in pattern:
-                these_abspaths = glob.glob(pattern)
-            elif os.path.exists(pattern):
-                these_abspaths = [pattern]
+    ############################################################################
+    # Support for PdsFile objects representing index rows
+    ############################################################################
 
-            if opus_type:
-                for abspath in these_abspaths:
-                    opus_type_for_abspath[abspath] = opus_type
+    def find_selected_row_number(self, selection):
+        """Return the row number of this selection among the children of an
+        index file."""
 
-            abspaths += these_abspaths
+        if not self.exists:
+            raise IOError('Index file does not exist: ' + self.logical_path)
 
-        # Sort into disjoint sets of labels and data files
-        abspaths = set(abspaths)
-        label_pdsfiles = set()
-        data_abspaths  = set()
-        for abspath in abspaths:
-            pdsf = PdsFile.from_abspath(abspath)
-            if pdsf.islabel:
-                label_pdsfiles.add(pdsf)
-            else:
-                data_abspaths.add(abspath)
+        if not self.is_index:
+            raise IOError('Row selections are not supported: ' +
+                          self.logical_path)
 
-        data_abspaths_handled = set()
+        if self.filename_keylen:
+            selection = selection[:self.filename_keylen]
 
-        # Get the info about each labeled product
-        for label_pdsfile in label_pdsfiles:
-            linked_abspaths = set(label_pdsfile.linked_abspaths)
-            fmts = [f for f in linked_abspaths if f[-4:] in ('.fmt', '.FMT')]
-            fmts.sort()
-            fmt_pdsfiles = PdsFile.pdsfiles_for_abspaths(fmts, must_exist=True)
-            datapaths = linked_abspaths - set(fmts)
+        # Try the most obvious answer
+        try:
+            return self.childnames.index(selection)
+        except ValueError:
+            pass
 
-            label_prefix = os.path.splitext(label_pdsfile.abspath)[0]
-            for datapath in datapaths:
-                data_pdsfile = PdsFile.from_abspath(datapath)
+        # Clean up selection and search in lower case
+        selection_lc = selection.lower()
+        selection_lc = selection_lc.rstrip('/')
+        selection_lc = os.path.basename(selection_lc)
+        selection_lc = os.path.splitext(selection_lc)[0]
 
-                # Ignore links to this or other label files
-                if data_pdsfile.islabel:
-                    data_abspaths_handled.add(datapath)
-                    continue
+        childnames_lc = [c.lower() for c in self.childnames]
 
-                # Be skeptical if datafile and label prefixes don't match
-                # because it could be a random cross-reference in the label
-                data_prefix = os.path.splitext(datapath)[0]
-                if data_prefix != label_prefix:
+        # Find the indices of this selection among the rows
+        try:
+            return childnames_lc.index(selection_lc)
+        except ValueError:
+            pass
 
-                    # Check for a better label filename
-                    if (data_prefix + '.lbl') in abspaths or \
-                       (data_prefix + '.LBL') in abspaths:
-                            data_abspaths_handled.add(datapath)
-                            continue
+        # Allow for one selection inside the key or the key inside the selection
+        indices = []
+        for k in range(len(childnames_lc)):
+            key = childnames_lc[k]
+            if selection_lc.startswith(key) or key.startswith(selection_lc):
+                indices.append(k)
 
-                # Update the dictionary with the datafile, label, and FMT files
-                opus_type = opus_type_for_abspath.get(data_pdsfile.abspath,
-                                                      data_pdsfile.opus_type)
-                sublist = [data_pdsfile, label_pdsfile] + fmt_pdsfiles
+        if len(indices) == 1:
+            return indices[0]
 
-                if opus_type not in opus_pdsfiles:
-                    opus_pdsfiles[opus_type] = [sublist]
-                else:
-                    opus_pdsfiles[opus_type].append(sublist)
+        raise IOError('Index row not found: ' +
+                       self.logical_path + '/' + selection)
 
-                data_abspaths_handled.add(datapath)
+    def cache_child_row_pdsfiles(self, selection=None):
+        """Fill in the child names and cache all the rows of an index file as
+        pdsfiles.
 
-        # Any remaining files are unlabeled
-        data_abspaths_remaining = data_abspaths - data_abspaths_handled
-        for datapath in data_abspaths_remaining:
-            data_pdsfile = PdsFile.from_abspath(datapath)
-            opus_type = opus_type_for_abspath.get(data_pdsfile.abspath,
-                                                  data_pdsfile.opus_type)
-            sublist = [data_pdsfile]
+        If a row selection is specified, return the PdsFile for this selection.
+        """
 
-            if opus_type not in opus_pdsfiles:
-                opus_pdsfiles[opus_type] = [sublist]
-            else:
-                opus_pdsfiles[opus_type].append(sublist)
+        CACHE.pause()       # wait till all the changes are ready
+        try:
+            table = pdstable.PdsTable(self.label_abspath,
+                                      filename_keylen=self.filename_keylen)
 
-        # Sort by version and filepath
-        for (header, sublists) in opus_pdsfiles.items():
-            sublists.sort(key=lambda x: (x[0].version_rank, x[0].abspath))
-            sublists.reverse()
+        # Not a valid index table; that means it has no children
+        except IOError:
+            PdsFile.LAST_EXC_INFO = sys.exc_info()
+            self._childnames_filled = []
+            if selection:
+                raise IOError('Rows unavailable; not an index file: ' +
+                              self.logical_path + '/' + selection)
+            return
 
-        # Call a special product prioritizer if available
-        if hasattr(self, 'opus_prioritizer'):
-            self.opus_prioritizer(opus_pdsfiles)
+        # Otherwise generate and cache all child objects
+        else:
 
-        return opus_pdsfiles
+            table.index_rows_by_filename_key()
+            self._childnames_filled = table.filename_keys
+            self.column_names = table.get_keys()
+
+            children = []
+            for childname in self._childnames_filled:
+                row_dicts = table.rows_by_filename_key(childname)
+                child = self.new_index_row_pdsfile(childname,
+                                                   row_dicts, self.column_names)
+                child._complete(must_exist=True, caching='all',
+                                lifetime=3*86400)   # cache for 3 days
+                children.append(child)
+
+            # Cache the table too because it contains all the childnames
+            self._complete(caching='all', lifetime=0)
+            self._recache()
+
+        finally:
+            CACHE.resume()
+
+        if selection:
+            index = self.find_selected_row_number(selection)
+            return children[index]
+
+    def row_pdsfile(self, selection):
+        """Return the PdsFile associated with a selected row of an index."""
+
+        index = self.find_selected_row_number(selection)
+        abspath = self.abspath + '/' + self.childnames[index]
+
+        try:
+            return CACHE[abspath]
+        except KeyError:
+            return self.cache_child_row_pdsfiles(selection)
 
     ############################################################################
     # Support for alternative constructors
@@ -2274,34 +2298,8 @@ class PdsFile(object):
         # Handle the special case of index rows
         if self.is_index and allow_index_row:
             childnames = self.childnames    # This will cache the children if
-                                            # this is the first time called.
-
-            try:
-                child_index = self.find_selected_row_index(basename)
-            except IOError:
-                if must_exist: raise
-                return self.child(basename, fix_case=fix_case, must_exist=False,
-                                  caching=caching, lifetime=lifetime,
-                                  allow_index_row=False)
-
-            # Determine the new logical path
-            logical_path = self.logical_path + '/' + childnames[child_index]
-
-            # Check the cache
-            try:
-                return CACHE[logical_path]
-            except KeyError:
-                pass
-
-            # Maybe this child has been removed from the cache. If so, restore
-            # the cache and return the selection
-            try:
-                return self.cache_child_row_dicts(selection=basename)
-            except IOError:
-                if must_exist: raise
-                return self.child(basename, fix_case=fix_case, must_exist=False,
-                                  caching=caching, lifetime=lifetime,
-                                  allow_index_row=False)
+                                            # the first time it is called.
+            return self.row_pdsfile(basename)
 
         # Fix the case if possible
         if fix_case:
@@ -2839,6 +2837,10 @@ class PdsFile(object):
 
         return this
 
+    ############################################################################
+    # OPUS support methods
+    ############################################################################
+
     @staticmethod
     def from_filespec(filespec):
         """The PdsFile object based on a volume name plus file specification
@@ -2904,93 +2906,130 @@ class PdsFile(object):
         matches.sort()
         return PdsFile.from_abspath(matches[-1])
 
-    def volume_pdsfile(self):
-        """PdsFile object for the root volume."""
+    def opus_products(self):
+        """For this primary data product or label, return a dictionary keyed
+        by the OPUS product type ("Raw Data", "Calibrated Data", etc.). For any
+        key, this dictionary returns a list of sublists. Each sublist has the
+        form:
+            [PdsFile for a data product,
+             PdsFile for its label (if any),
+             PdsFile for the first embedded .FMT file (if any),
+             PdsFile for the second embedded .FMT file (if any), etc.]
+        This sublist contains every file that should be added to the OPUS
+        results if that data product is requested.
 
-        abspath = self.volume_abspath()
-        if abspath:
-            return PdsFile.from_abspath(abspath)
-        else:
-            raise ValueError('No associated volume for ' + self.abspath)
-
-    def volume_pdsdir(self):
-        """PdsFile object for the root volume, if it is a directory."""
-
-        pdsf = self.volume_pdsfile()
-        if pdsf.isdir:
-            return pdsf
-        else:
-            raise ValueError('No associated volume directory for ' +
-                             self.abspath)
-
-    def volset_pdsfile(self):
-        """PdsFile object for the root volume set."""
-
-        abspath = self.volset_abspath()
-        if abspath:
-            return PdsFile.from_abspath(abspath)
-        else:
-            raise ValueError('No associated volume set for ' + self.abspath)
-
-    def volset_pdsdir(self):
-        """PdsFile object for the root volume set."""
-
-        pdsf = self.volset_pdsfile()
-        if pdsf.isdir:
-            return pdsf
-        else:
-            raise ValueError('No associated volume set directory for ' +
-                             self.abspath)
-
-    ############################################################################
-    # Path tests
-    ############################################################################
-
-    def is_volume_dir(self):
-        return (self.volname_ and not self.interior)
-
-    def is_volume_file(self):
-        return (self.volname and not self.volname_)
-
-    def is_volume(self):
-        return self.is_volume_dir() or self.is_volume_file()
-
-    def is_volset_dir(self):
-        return (self.volset_ and not self.volname)
-
-    def is_volset_file(self):
-        return (self.volset and not self.volset_)
-
-    def is_volset(self):
-        return self.is_volset_dir() or self.is_volset_file()
-
-    def is_category_dir(self):
-        return (self.volset == '')
-
-    def volume_abspath(self):
-        """Return the absolute path to the volume associated with this object.
+        The dictionary returns a list of sublists because it is possible for
+        multiple data products to have the same OPUS product type. However, most
+        of the time, the list contains only one sublist. The list is sorted
+        with the most recent versions first.
         """
 
-        if not self.volname:
-            return None
-        elif self.volname_:
-            return ''.join([self.root_, self.category_, self.volset_,
-                            self.volname])
-        else:
-            return ''.join([self.root_, self.category_, self.volset_,
-                            self.interior])
+        opus_pdsfiles = {}
 
-    def volset_abspath(self):
-        """Return the absolute path to the volset associated with this object.
-        """
+        # Get the associated absolute paths
+        patterns = self.OPUS_PRODUCTS.all(self.logical_path)
 
-        if not self.volset:
-            return None
-        elif self.volset_:
-            return ''.join([self.root_, self.category_, self.volset,
-                            self.suffix])
-        else:
-            return ''.join([self.root_, self.category_, self.interior])
+        abs_patterns_and_opus_types = []
+        for pattern in patterns:
+            if isinstance(pattern, str):    # match string only
+                abs_patterns_and_opus_types.append((self.root_ + pattern, None))
+            else:                           # (match string, opus_type)
+                (p, opus_type) = pattern
+                abs_patterns_and_opus_types.append((self.root_ + p, opus_type))
+
+        # Construct a complete list of matching abspaths.
+        # Create a dictionary of opus_types based on abspaths where opus_types
+        # have already been specified.
+        abspaths = []
+        opus_type_for_abspath = {}
+        for (pattern, opus_type) in abs_patterns_and_opus_types:
+            if '*' in pattern or '?' in pattern or '[' in pattern:
+                these_abspaths = glob.glob(pattern)
+            elif os.path.exists(pattern):
+                these_abspaths = [pattern]
+
+            if opus_type:
+                for abspath in these_abspaths:
+                    opus_type_for_abspath[abspath] = opus_type
+
+            abspaths += these_abspaths
+
+        # Sort into disjoint sets of labels and data files
+        abspaths = set(abspaths)
+        label_pdsfiles = set()
+        data_abspaths  = set()
+        for abspath in abspaths:
+            pdsf = PdsFile.from_abspath(abspath)
+            if pdsf.islabel:
+                label_pdsfiles.add(pdsf)
+            else:
+                data_abspaths.add(abspath)
+
+        data_abspaths_handled = set()
+
+        # Get the info about each labeled product
+        for label_pdsfile in label_pdsfiles:
+            linked_abspaths = set(label_pdsfile.linked_abspaths)
+            fmts = [f for f in linked_abspaths if f[-4:] in ('.fmt', '.FMT')]
+            fmts.sort()
+            fmt_pdsfiles = PdsFile.pdsfiles_for_abspaths(fmts, must_exist=True)
+            datapaths = linked_abspaths - set(fmts)
+
+            label_prefix = os.path.splitext(label_pdsfile.abspath)[0]
+            for datapath in datapaths:
+                data_pdsfile = PdsFile.from_abspath(datapath)
+
+                # Ignore links to this or other label files
+                if data_pdsfile.islabel:
+                    data_abspaths_handled.add(datapath)
+                    continue
+
+                # Be skeptical if datafile and label prefixes don't match
+                # because it could be a random cross-reference in the label
+                data_prefix = os.path.splitext(datapath)[0]
+                if data_prefix != label_prefix:
+
+                    # Check for a better label filename
+                    if (data_prefix + '.lbl') in abspaths or \
+                       (data_prefix + '.LBL') in abspaths:
+                            data_abspaths_handled.add(datapath)
+                            continue
+
+                # Update the dictionary with the datafile, label, and FMT files
+                opus_type = opus_type_for_abspath.get(data_pdsfile.abspath,
+                                                      data_pdsfile.opus_type)
+                sublist = [data_pdsfile, label_pdsfile] + fmt_pdsfiles
+
+                if opus_type not in opus_pdsfiles:
+                    opus_pdsfiles[opus_type] = [sublist]
+                else:
+                    opus_pdsfiles[opus_type].append(sublist)
+
+                data_abspaths_handled.add(datapath)
+
+        # Any remaining files are unlabeled
+        data_abspaths_remaining = data_abspaths - data_abspaths_handled
+        for datapath in data_abspaths_remaining:
+            data_pdsfile = PdsFile.from_abspath(datapath)
+            opus_type = opus_type_for_abspath.get(data_pdsfile.abspath,
+                                                  data_pdsfile.opus_type)
+            sublist = [data_pdsfile]
+
+            if opus_type not in opus_pdsfiles:
+                opus_pdsfiles[opus_type] = [sublist]
+            else:
+                opus_pdsfiles[opus_type].append(sublist)
+
+        # Sort by version and filepath
+        for (header, sublists) in opus_pdsfiles.items():
+            sublists.sort(key=lambda x: (x[0].version_rank, x[0].abspath))
+            sublists.reverse()
+
+        # Call a special product prioritizer if available
+        if hasattr(self, 'opus_prioritizer'):
+            self.opus_prioritizer(opus_pdsfiles)
+
+        return opus_pdsfiles
 
     ############################################################################
     # Checksum path associations
@@ -3010,19 +3049,15 @@ class PdsFile(object):
         else:
             suffix = '_' + self.voltype_[:-1]
 
-        if self.volname:
-            abspath = ''.join([self.root_, 'checksums-', self.category_,
-                               self.volset_, self.volname, suffix, '_md5.txt'])
-            lskip = (len(self.root_) + len(self.category_) +
-                     len(self.volset_))
-        else:
-            if not self.archives_:
-                raise ValueError('Non-archive checksums require volumes: ' +
-                                 self.logical_path)
-
+        if self.archives_:
             abspath = ''.join([self.root_, 'checksums-', self.category_,
                                self.volset, self.suffix, suffix, '_md5.txt'])
-            lskip = (len(self.root_) + len(self.category_) +
+            lskip = (len(self.root_) + len('checksums_') + len(self.category_))
+
+        else:
+            abspath = ''.join([self.root_, 'checksums-', self.category_,
+                               self.volset_, self.volname, suffix, '_md5.txt'])
+            lskip = (len(self.root_) + len('checksums_') + len(self.category_) +
                      len(self.volset_))
 
         return (abspath, lskip)
@@ -3627,6 +3662,14 @@ class PdsFile(object):
 
         return sorted_paths
 
+    def sort_by_logical_path(self, pdsfiles):
+        """Sort a list of PdsFile object based on their logical paths."""
+
+        temp_dict = {p.logical_path:p for p in pdsfiles}
+        logical_paths = temp_dict.keys()
+        logical_paths = self.sort_logical_paths(logical_paths)
+        return [temp_dict[k] for k in logical_paths]
+
     def sort_childnames(self, labels_after=None, dirs_first=None):
         """A sorted list of the contents of this directory."""
 
@@ -3699,7 +3742,7 @@ class PdsFile(object):
         if must_exist:
             abspaths = [p for p in abspaths if os.path.exists(p)]
 
-        return [logical_path_from_path(p) for p in abspaths]
+        return [logical_path_from_abspath(p) for p in abspaths]
 
     @staticmethod
     def basenames_for_abspaths(abspaths, must_exist=False):
@@ -3720,9 +3763,11 @@ class PdsFile(object):
 
     @staticmethod
     def abspaths_for_logicals(logical_paths, must_exist=False):
-        pdsfiles = PdsFile.pdsfiles_for_logicals(logical_paths,
-                                                 must_exist=must_exist)
-        return [pdsf.abspath for pdsf in pdsfiles]
+        abspaths = [abspath_for_logical_path(p) for p in logical_paths]
+        if must_exist:
+            abspaths = [p for p in abspaths if os.path.exists(p)]
+
+        return abspaths
 
     @staticmethod
     def basenames_for_logicals(logical_paths, must_exist=False):
@@ -3764,43 +3809,142 @@ class PdsFile(object):
     # Associations
     ############################################################################
 
-    def associated_logical_paths(self, category, must_exist=True,
-                                                 primary=False):
+    def volume_pdsfile_for_index_row(self):
+        """Attempt to infer the volume PdsFile object associated with an index
+        row PdsFile. None on failure"""
+
+        parent = self.parent()
+        if not parent.is_index: return None
+
+        filespec = ''
+        for guess in ('FILE_SPECIFICATION_NAME',
+                      'FILE SPECIFICATION NAME',
+                      'FILE_NAME', 'FILE NAME', 'FILENAME',
+                      'PRODUCT_ID', 'PRODUCT ID', 'STSCI_GROUP_ID'):
+            if guess in self.row_dicts[0]:
+                filespec = self.row_dicts[0][guess]
+                break
+
+        if filespec:
+            for guess in ('VOLUME_ID', 'VOLUME ID',
+                          'VOLUME_NAME', 'VOLUME NAME'):
+                if guess in self.row_dicts[0]:
+                    volume_id = self.row_dicts[0][guess]
+                    if filespec.startswith(volume_id): break
+                    filespec = os.path.join(volume_id, filespec)
+
+        if filespec.startswith('/'):
+            filespec = filespec[1:]
+
+        if not filespec:
+            return None
+
+        try:
+            pdsf = PdsFile.from_path('volumes/' + filespec)
+            if pdsf.exists:
+                return pdsf
+        except Exception:
+            return
+
+    def associated_logical_paths(self, category, must_exist=True):
 
         if not self.volset: return []   # Not for virtual paths
 
         return self._associated_paths(category, must_exist=must_exist,
-                                                primary=primary,
                                                 use_abspaths=False)
 
-    def associated_abspaths(self, category, must_exist=True,
-                                            primary=False):
+    def associated_abspaths(self, category, must_exist=True):
 
         return self._associated_paths(category, must_exist=must_exist,
-                                                primary=primary,
                                                 use_abspaths=True)
 
     def _associated_paths(self, category, must_exist=True,
-                                          primary=False, use_abspaths=True):
+                                          use_abspaths=True):
         """A list of logical or absolute paths to files in the specified
         category.
 
         Inputs:
             category        the category of the associated paths.
             must_exist      True to return only paths that exist.
-            primary         True to limit the list to the primary or best
-                            match based on filename criteria.
             use_abspaths    True to return absolute paths; False to return
                             logical paths
         """
 
-        def test_pattern(pattern):
+        category = category.strip('/')
+
+        # Handle special case of an index row pointing
+        # Replace self by either the file associated with the row or else by
+        # the parent index file.
+        if self.is_index_row:
+            if category.endswith('metadata'):
+                self = self.parent()
+            else:
+                test = self.volume_pdsfile_for_index_row()
+                if test:
+                    self = test
+                else:
+                    self = self.parent()
+
+        # Handle checksums by finding associated files in subcategory
+        if category.startswith('checksums-'):
+            subcategory = category[len('checksums-'):]
+            abspaths = self.associated_abspaths(subcategory,
+                                                must_exist=must_exist)
+
+            new_abspaths = []
+            for abspath in abspaths:
+                pdsf = PdsFile.from_abspath(abspath)
+                new_abspaths.append(pdsf.checksum_path_and_lskip()[0])
+
+            # Remove duplicates
+            abspaths = list(set(new_abspaths))
+
+            if use_abspaths:
+                return abspaths
+            else:
+                return PdsFile.logicals_for_abspaths(abspaths)
+
+        # Handle archives by finding associated files in subcategory
+        if category.startswith('archives-'):
+            subcategory = category[len('archives-'):]
+            abspaths = self.associated_abspaths(subcategory,
+                                                must_exist=must_exist)
+
+            new_abspaths = []
+            for abspath in abspaths:
+                pdsf = PdsFile.from_abspath(abspath)
+                new_abspaths.append(pdsf.archive_path_and_lskip()[0])
+
+            # Remove duplicates
+            abspaths = list(set(new_abspaths))
+
+            if use_abspaths:
+                return abspaths
+            else:
+                return PdsFile.logicals_for_abspaths(abspaths)
+
+        # No more recursive calls...
+
+        # Define the associated parallel
+        logical_paths = self.ASSOCIATIONS[category].all(self.logical_path)
+
+        patterns = PdsFile.abspaths_for_logicals(logical_paths)
+
+        if not patterns:
+            pdsf = self.associated_parallel(category)
+            if pdsf:
+                patterns = [pdsf.abspath]
+            else:
+                patterns = []
+
+        abspaths = []
+        for pattern in patterns:
 
             # Handle an index row by separating the filepath from the suffix
             if '.tab/' in pattern:
-                parts = pattern.partition('.tab')
+                parts = pattern.rpartition('.tab')
                 pattern = parts[0] + parts[1]
-                suffix = parts[2]
+                suffix = parts[2][1:]
             else:
                 suffix = ''
 
@@ -3812,182 +3956,24 @@ class PdsFile(object):
             else:
                 test_abspaths = [pattern]
 
-            # Without a suffix, we're done
-            if not suffix:
-                return test_abspaths
-
             # With a suffix, make sure it matches a row of the index
-            filtered_abspaths = []
-            for abspath in test_abspaths:
-                pdsf = PdsFile.from_abspath(abspath)
-                try:
-                    row = pdsf.child(suffix[1:])
-                    if row.exists:
-                        filtered_abspaths.append(row.abspath)
-                except Exception:
-                    pass
+            if suffix:
+                filtered_abspaths = []
+                for abspath in test_abspaths:
+                    try:
+                        parent = PdsFile.from_abspath(abspath)
+                        pdsf = parent.row_pdsfile(suffix)
+                        filtered_abspaths.append(pdsf.abspath)
+                    except IOError:
+                        pass
 
-            return filtered_abspaths
+                test_abspaths = filtered_abspaths
 
-        # Begin active code...
+            abspaths += test_abspaths
 
-        category = category.strip('/')
-
-        # Handle checksums by finding associated files in subcategory
-        if category.startswith('checksums-'):
-            subcategory = category[len('checksums-'):]
-            paths = self._associated_paths(subcategory,
-                                           must_exist=must_exist,
-                                           primary=primary,
-                                           use_abspaths=use_abspaths)
-            if not paths: return []
-
-            this = PdsFile._from_absolute_or_logical_path(paths[0])
-            try:
-                checksum_abspath = this.checksum_path_and_lskip()[0]
-            except ValueError:
-                return []
-
-            if must_exist and not os.path.exists(checksum_abspath):
-                return []
-
-            return [selected_path_from_path(checksum_abspath, use_abspaths)]
-
-        # Handle archives by finding associated files in subcategory
-        if category.startswith('archives-'):
-            subcategory = category[len('archives-'):]
-            paths = self._associated_paths(subcategory,
-                                           must_exist=must_exist,
-                                           primary=primary,
-                                           use_abspaths=use_abspaths)
-            if not paths: return []
-
-            this = PdsFile._from_absolute_or_logical_path(paths[0])
-            try:
-                archive_abspath = this.archive_path_and_lskip()[0]
-            except ValueError:
-                return []
-
-            if  must_exist and not os.path.exists(archive_abspath):
-                return []
-
-            return [selected_path_from_path(archive_abspath, use_abspaths)]
-
-        # Get rid of checksums-
-        if self.checksums_:
-            if not self.volset:
-                path = self.archives_ + self.voltype
-            else:
-                path = self.dirpath_and_prefix_for_checksum()[0]
-
-            pdsf = PdsFile._from_absolute_or_logical_path(path)
-            return pdsf._associated_paths(category,
-                                          must_exist=must_exist,
-                                          primary=primary,
-                                          use_abspaths=use_abspaths)
-
-        # Get rid of archives-
-        if self.archives_:
-            if not self.volset:
-                path = self.voltype
-            else:
-                path = self.dirpath_and_prefix_for_archive()[0]
-
-            pdsf = PdsFile._from_absolute_or_logical_path(path)
-            return pdsf._associated_paths(category,
-                                          must_exist=must_exist,
-                                          primary=primary,
-                                          use_abspaths=use_abspaths)
-
-        # No more recursive calls...
-        # Every path from here on is an abspath; translation to logical is only
-        # upon return
-
-        # Get the associated parallel inside volumes
-        if self.category_ == 'volumes/':
-            parallel_volume_pdsf = self
-        else:
-            parallel_volume_pdsf = self.associated_parallel('volumes')
-            if parallel_volume_pdsf is None:
-                return []
-
-        # If our target is a volume, return results
-        if category == 'volumes':
-            abspaths = [parallel_volume_pdsf.abspath]
-
-            patterns = self.ASSOCIATIONS_TO_VOLUMES.all(self.logical_path)
-            patterns = [self.root_ + p for p in patterns]
-            for pattern in patterns:
-                abspaths += test_pattern(pattern)
-
-            # Translate to additional volumes files if necessary
-            if not primary:
-                logical_paths = self.logicals_for_abspaths(abspaths)
-                trans = self.VOLUMES_TO_ASSOCIATIONS['volumes']
-                patterns = trans.all(logical_paths)
-                patterns = [self.root_ + p for p in patterns]
-                for pattern in patterns:
-                    abspaths += test_pattern(pattern)
-
-                # Add the linked abspaths to the set of matches
-                if self.islabel:
-                    abspaths += self.linked_abspaths
-
-            # Remove duplicates and return
-            abspaths = list(set(abspaths))
-            if use_abspaths:
-                return abspaths
-            else:
-                return PdsFile.logicals_for_abspaths(abspaths)
-
-        # Translate to alternative voltypes as needed
-        logical_paths = [parallel_volume_pdsf.logical_path]
-
-        voltype = category.split('-')[-1]
-        trans = parallel_volume_pdsf.VOLUMES_TO_ASSOCIATIONS[voltype]
-        patterns = trans.all(logical_paths)
-        patterns = [parallel_volume_pdsf.root_ + p for p in patterns]
-
-        abspaths = []
-        for pattern in patterns:
-            abspaths += test_pattern(pattern)
-
-        # Without checksums- or archives-, we're done
-        if voltype == category:
-
-            # Always include the associated parallel
-            pdsf = parallel_volume_pdsf.associated_parallel(category=voltype)
-            if pdsf:
-                abspaths += [pdsf.abspath]
-
-            # Remove duplicates and return
-            abspaths = list(set(abspaths))
-            if use_abspaths:
-                return abspaths
-            else:
-                return PdsFile.logicals_for_abspaths(abspaths)
-
-        # Handle archives-
-        if 'archives-' in category:
-            new_abspaths = []
-            for abspath in abspaths:
-                pdsf = PdsFile.from_abspath(abspath)
-                new_abspaths.append(pdsf.archive_path_and_lskip()[0])
-
-            abspaths = list(set(new_abspaths))
-
-        # Without checksums-, we're done
-        if 'checksums-' not in category:
-            return abspaths
-
-        # Handle checksums-
-        new_abspaths = []
-        for abspath in abspaths:
-            pdsf = PdsFile.from_abspath(abspath)
-            new_abspaths.append(pdsf.checksum_path_and_lskip())
-
-        # Remove duplicates and return
+        # Remove duplicates
         abspaths = list(set(abspaths))
+
         if use_abspaths:
             return abspaths
         else:
@@ -4055,17 +4041,17 @@ class PdsFile(object):
                 elif rank == 'next':
                     rank = self.version_ranks[k+1]
 
-            except (IndexError, ValueError):
+            except (IndexError, ValueError, IOError):
                 PdsFile.LAST_EXC_INFO = sys.exc_info()
-                self._associated_parallels_filled[category, rank] = None
-                self._associated_parallels_filled[category, original_rank] = None
+                self._associated_parallels_filled[category,rank] = None
+                self._associated_parallels_filled[category,original_rank] = None
                 self._recache()
                 return None
 
         # If interpreted rank is in dictionary, return lookup
         if (category, rank) in self._associated_parallels_filled:
             self._associated_parallels_filled[category, original_rank] = \
-                                self._associated_parallels_filled[category, rank]
+                            self._associated_parallels_filled[category, rank]
             path = self._associated_parallels_filled[category, rank]
             return PdsFile.from_logical_path(path)
 
@@ -4085,7 +4071,10 @@ class PdsFile(object):
         except KeyError:
             target = None
         else:
-            target = PdsFile.from_abspath(target_abspath)
+            try:
+                target = PdsFile.from_abspath(target_abspath)
+            except IOError:
+                target = None
 
         if target is None:
             self._associated_parallels_filled[category, rank] = None
@@ -4095,7 +4084,11 @@ class PdsFile(object):
 
         if target.isdir:
             for part in parts:
-                child = target.child(part, fix_case=True)
+                try:
+                    child = target.child(part, fix_case=True)
+                except IOError:
+                    break
+
                 if os.path.exists(child.abspath):
                     target = child
                 else:
@@ -4153,8 +4146,8 @@ class PdsFile(object):
 ################################################################################
 # File grouping class. An ordered set of PdsFiles, some of which may be hidden.
 # They must share a common parent and anchor. In Viewmaster, they appear on the
-# same row of a table, where a row is identified by alternation between gray
-# and white.
+# same row of a table, where a row boundaries are identified by transition
+# between gray and white.
 ################################################################################
 
 class PdsGroup(object):
@@ -4307,17 +4300,26 @@ class PdsGroup(object):
 
     def append(self, pdsf, hidden=False):
 
+        # Select the parent if this is an index row
+        if pdsf.is_index_row:
+            this = pdsf.parent()
+        else:
+            this = pdsf
+
         # Initialize if necessary
         if self.parent_pdsf is False:
-            self.parent_pdsf = pdsf.parent()
+            self.parent_pdsf = this.parent()
             self.rows = [pdsf]
             self.anchor = pdsf.anchor
             return
 
+        if self.anchor is None:
+            self.anchor = pdsf.anchor
+
         # Same parent required
-        if pdsf.parent_logical_path != self.parent_logical_path:
+        if this.parent_logical_path != self.parent_logical_path:
             raise ValueError('PdsFile does not match parent of PdsGroup: ' +
-                             pdsf.parent_logical_path + ', ' +
+                             this.parent_logical_path + ', ' +
                              self.parent_logical_path)
 
         # Same anchor required
@@ -4495,7 +4497,11 @@ class PdsGroupTable(object):
 
     def insert_file(self, pdsf, hidden=False):
 
-        parent_pdsf = pdsf.parent()
+        if pdsf.is_index_row:
+            parent_pdsf = pdsf.parent().parent()
+        else:
+            parent_pdsf = pdsf.parent()
+
         if self.parent_pdsf is False:
             self.parent_pdsf = parent_pdsf
 
@@ -4507,9 +4513,10 @@ class PdsGroupTable(object):
 
         # Otherwise, append a new group
         if hidden:
-            self.insert_group(PdsGroup([pdsf], hidden=[pdsf.logical_path]))
+            self.insert_group(PdsGroup([pdsf], parent=parent_pdsf,
+                                               hidden=[pdsf.logical_path]))
         else:
-            self.insert_group(PdsGroup([pdsf]))
+            self.insert_group(PdsGroup([pdsf], parent=parent_pdsf))
 
     def insert(self, things):
 
@@ -4559,7 +4566,13 @@ class PdsGroupTable(object):
         group_dict = {}
         for group in self.groups:
             if group.rows:          # delete empty groups
-                first_basename = group.rows[0].basename
+                first_pdsf = group.rows[0]
+                if first_pdsf.is_index_row:
+                    first_basename = (first_pdsf.parent().basename + '/' +
+                                      first_pdsf.basename)
+                else:
+                    first_basename = first_pdsf.basename
+
                 first_basenames.append(first_basename)
                 group_dict[first_basename] = group
 
@@ -4626,8 +4639,12 @@ class PdsGroupTable(object):
             if pdsf.logical_path in exclusions: continue
             if pdsf.abspath in exclusions: continue
 
-            parent_pdsf = pdsf.parent()
-            parent_path = pdsf.parent_logical_path
+            if pdsf.is_index_row:   # index rows are grouped by grandparent
+                parent_pdsf = pdsf.parent().parent()
+            else:
+                parent_pdsf = pdsf.parent()
+
+            parent_path = parent_pdsf.logical_path
 
             if parent_path not in table_dict:
                 table_dict[parent_path] = PdsGroupTable(parent=parent_pdsf)
@@ -4646,8 +4663,9 @@ class PdsGroupTable(object):
 #                 table_dict[parent_path].insert_file(
 #                                         PdsFile.from_logical_path(exclusion))
 
-        tables = table_dict.values()
-        for table in tables:
+        for (key, table) in table_dict.items():
+            if key.lower().endswith('.tab'): continue
+
             table.sort_in_groups(labels_after=labels_after,
                                  dirs_first=dirs_first,
                                  dirs_last=dirs_last,
@@ -4658,6 +4676,7 @@ class PdsGroupTable(object):
                               dirs_last=dirs_last,
                               info_first=info_first)
 
+        tables = table_dict.values()
         tables = PdsGroupTable.sort_tables(tables)
         return tables
 
@@ -4772,28 +4791,72 @@ def is_logical_path(path):
     """Quick test returns True if this appears to be a logical path; False
     otherwise."""
 
-    return ('/holdings/' in path)
+    return ('/holdings/' not in path)
 
-def logical_path_from_path(abspath):
-    """Logical path derived from either a logical or an absolute path."""
+def logical_path_from_abspath(abspath):
+    """Logical path derived from either an absolute path."""
 
     parts = abspath.partition('/holdings/')
     if parts[1]:
         return parts[2]
-    else:
-        return abspath
+
+    raise ValueError('Not an absolute path: ', abspath)
+
+UNIQUE_HOLDINGS_ = None
+
+def abspath_for_logical_path(path):
+    """Absolute path derived from a logical path."""
+
+    global UNIQUE_HOLDINGS_
+
+    parts = path.split('/')
+    if parts[0] not in CATEGORIES:
+        raise ValueError('Not a logical path: ', path)
+
+    if len(parts) > 2:
+        try:
+            pdsf = CACHE['/'.join(parts[:3])]
+            if len(parts) == 3:
+                return pdsf.abspath
+            else:
+                return pdsf.abspath + '/' + '/'.join(parts[3:])
+        except KeyError:
+            pass
+
+    if len(parts) > 1:
+        try:
+            pdsf = CACHE['/'.join(parts[:2])]
+            return pdsf.abspath + '/' + '/'.join(parts[2:])
+        except KeyError:
+            pass
+
+    if UNIQUE_HOLDINGS_ is None:
+        test = glob.glob('/Volumes/pdsdata*/holdings')
+        if len(test) == 1:
+            UNIQUE_HOLDINGS_ = test[0] + '/'
+        else:
+            UNIQUE_HOLDINGS_ = ''
+
+    if UNIQUE_HOLDINGS_:
+        return UNIQUE_HOLDINGS_ + path
+
+    raise ValueError('Unable to derive absolute path for ' + path)
 
 def selected_path_from_path(path, abspaths=True):
     """Logical path or absolute path derived from a logical or an absolute
     path."""
 
-    if abspaths:
-        if is_logical_path(path):
-            raise ValueError('Unable to derive absolute path for ' + path)
-        return path
+    if is_logical_path(path):
+        if abspaths:
+            return abspath_for_logical_path(path)
+        else:
+            return path
 
     else:
-        return logical_path_from_path(path)
+        if abspaths:
+            return path
+        else:
+            return logical_path_from_abspath(path)
 
 ################################################################################
 # PdsFile subclass support. Only imported when needed.

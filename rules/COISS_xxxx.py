@@ -40,14 +40,32 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'volumes/(.*/data/\w+/.*)\.(\w+)',  0, (r'previews/\1_thumb.*',
-                                              r'previews/\1_small.*',
-                                              r'previews/\1_med.*',
-                                              r'previews/\1_full.*')),
-    (r'calibrated/(COISS_....)(|_.*?)/(\w+/data/\w+/.*)_CALIB\.(\w+)', 0, (r'previews/\1/\3_thumb.*',
-                                                                           r'previews/\1/\3_small.*',
-                                                                           r'previews/\1/\3_med.*',
-                                                                           r'previews/\1/\3_full.*')),
+    (r'.*\.lbl',  re.I, ''),
+
+    (r'\w+/(.*/data/images/[^\.]+)\.\w+',  0, (r'previews/\1_full.jpg',
+                                               r'previews/\1_thumb.jpg',
+                                               r'previews/\1_small.jpg',
+                                               r'previews/\1_med.jpg')),
+
+    (r'\w+/(.*/data/maps/[^\.]+)\.\w+',    0, (r'previews/\1_full.png',
+                                               r'previews/\1_thumb.png',
+                                               r'previews/\1_small.png',
+                                               r'previews/\1_med.png')),
+
+    (r'\w+/(.*)/extras/\w+/(\w+/[^\.]+)\.\w+',  0, (r'previews/\1/data/\2_full.jpg',
+                                                    r'previews/\1/data/\2_thumb.jpg',
+                                                    r'previews/\1/data/\2_small.jpg',
+                                                    r'previews/\1/data/\2_med.jpg')),
+
+    (r'volumes/(COISS_....)/(\w+/data/\w+/[^\.]+)\.\w+', 0, (r'previews/\1/\2_full.jpg',
+                                                             r'previews/\1/\2_thumb.jpg',
+                                                             r'previews/\1/\2_small.jpg',
+                                                             r'previews/\1/\2_med.jpg')),
+
+    (r'calibrated/(COISS_....)(|_.*?)/(\w+/data/\w+/[^\.]+)_CALIB\.\w+', 0, (r'previews/\1/\3_full.jpg',
+                                                                             r'previews/\1/\3_thumb.jpg',
+                                                                             r'previews/\1/\3_small.jpg',
+                                                                             r'previews/\1/\3_med.jpg')),
 ])
 
 ####################################################################################################################################
@@ -55,41 +73,113 @@ default_viewables = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
-    (r'previews/(.*)_(\w+\..*)',     0, r'volumes/\1.*'),
-    (r'previews/(\w+/\w+/data/\w+)', 0, r'volumes/\1'),
-    (r'previews/(\w+/\w+/data)',     0, r'volumes/\1'),
-    (r'calibrated/(COISS_....)(|_.*?)/(\w+/data/\w+/\w+)_(CALIB\..*)', 0, r'volumes/\1/\3.*'),
-    (r'calibrated/(COISS_....)(|_.*?)/(\w+/data/\w+)',                 0, r'volumes/\1/\3'),
-    (r'calibrated/(COISS_....)(|_.*?)/(\w+/data)',                     0, r'volumes/\1/\3'),
-    (r'calibrated/(COISS_....)(|_.*?)/(\w+)',                          0, r'volumes/\1/\3'),
-    (r'calibrated/(COISS_....)(|_.*?)',                                0, r'volumes/\1'),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras/\w+)/(\w+/[NW][0-9]{10}_[0-9]+).*',
+                                                                                0, [r'volumes/\1/\3/data/\5.IMG',
+                                                                                    r'volumes/\1/\3/data/\5.LBL',
+                                                                                    r'volumes/\1/\3/extras/thumbnail/\5.IMG.jpeg_small',
+                                                                                    r'volumes/\1/\3/extras/browse/\5.IMG.jpeg',
+                                                                                    r'volumes/\1/\3/extras/full/\5.IMG.png',
+                                                                                    r'volumes/\1/\3/extras/tiff/\5.IMG.tiff']),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras|extras/\w+)/(\w+)$', 0, [r'volumes/\1/\3/data/\5',
+                                                                                    r'volumes/\1/\3/extras/thumbnail/\5',
+                                                                                    r'volumes/\1/\3/extras/browse/\5',
+                                                                                    r'volumes/\1/\3/extras/full/\5',
+                                                                                    r'volumes/\1/\3/extras/tiff/\5']),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras/\w+)$',              0, [r'volumes/\1/\3/data',
+                                                                                    r'volumes/\1/\3/extras/thumbnail',
+                                                                                    r'volumes/\1/\3/extras/browse',
+                                                                                    r'volumes/\1/\3/extras/full',
+                                                                                    r'volumes/\1/\3/extras/tiff']),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/extras$',                         0, [r'volumes/\1/\3/data',
+                                                                                    r'volumes/\1/\3/extras']),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)$',                                0,  r'volumes/\1/\3'),
+    (r'metadata/(COISS_.xxx/COISS_....)/COISS_...._index\..*',                  0, [r'volumes/\1/INDEX/INDEX.TAB',
+                                                                                    r'volumes/\1/INDEX/INDEX.LBL']),
+    (r'metadata/COISS_1xxx/COISS_1999/COISS_...._index\..*',                    0, [r'volumes/COISS_1xxx/COISS_1009/INDEX/CUMINDEX.TAB',
+                                                                                    r'volumes/COISS_1xxx/COISS_1009/INDEX/CUMINDEX.LBL']),
+    (r'metadata/COISS_2xxx/COISS_2999/COISS_...._index\..*',                    0, [r'volumes/COISS_2xxx/COISS_2116/INDEX/CUMINDEX.TAB',
+                                                                                    r'volumes/COISS_2xxx/COISS_2116/INDEX/CUMINDEX.LBL']),
+
+    (r'.*/(COISS_3xxx.*)/(COISS_30..)/.*/images/(SM_[^\.]+)\..*',               0, [r'volumes/\1/\2/data/images/\3.IMG',
+                                                                                    r'volumes/\1/\2/data/full/images/\3.IMG.png',
+                                                                                    r'volumes/\1/\2/extras/browse/images/\3.IMG.jpeg',
+                                                                                    r'volumes/\1/\2/extras/full/images/\3.IMG.png',
+                                                                                    r'volumes/\1/\2/img_index.tab/\3']),
+
+    (r'.*/(COISS_3xxx.*)/(COISS_30..)/.*/maps/(SM_[^\.]+)\..*',                 0, [r'volumes/\1/\2/data/maps/\3.PDF',
+                                                                                    r'volumes/\1/\2/data/maps/\3.lbl',
+                                                                                    r'volumes/\1/\2/data/full/maps/\3.PDF.png',
+                                                                                    r'volumes/\1/\2/extras/browse/maps/\3.PDF.jpeg',
+                                                                                    r'volumes/\1/\2/extras/full/maps/\3.PDF.png',
+                                                                                    r'volumes/\1/\2/img_index.tab/\3']),
+
+    (r'.*/(COISS_3xxx.*)/(COISS_30..)/.*/images$',                              0, [r'volumes/\1/\2/data/images',
+                                                                                    r'volumes/\1/\2/extras/browse/images',
+                                                                                    r'volumes/\1/\2/extras/full/images']),
+
+    (r'.*/(COISS_3xxx.*)/(COISS_30..)/.*/maps$',                                0, [r'volumes/\1/\2/data/maps',
+                                                                                    r'volumes/\1/\2/extras/browse/maps',
+                                                                                    r'volumes/\1/\2/extras/full/maps']),
 ])
 
-volumes_to_calibrated = translator.TranslatorByRegex([
-    (r'volumes/(.*)\..*',             0, r'calibrated/\1_CALIB.*'),
-    (r'volumes/(\w+/\w+/data)',       0, r'calibrated/\1'),
-    (r'volumes/(\w+/\w+/data/\w+)',   0, r'calibrated/\1'),
-    (r'volumes/(\w+)(/\w+/data)',     0, r'calibrated/\1_v1.0\2'),
-    (r'volumes/(\w+)(/\w+/data/\w+)', 0, r'calibrated/\1_v1.0\2'),
+associations_to_calibrated = translator.TranslatorByRegex([
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras/\w+)/(\w+/[NW][0-9]{10}_[0-9]+).*',
+                                                                                0, [r'calibrated/\1/\3/data/\5_CALIB.IMG',
+                                                                                    r'calibrated/\1/\3/data/\5_CALIB.LBL']),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras/\w+)(\w+)$',         0,  r'calibrated/\1/\3/data/\5'),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras|extras/\w+)$',       0,  r'calibrated/\1/\3/data'),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)$',                                0,  r'calibrated/\1/\3'),
 ])
 
-volumes_to_previews = translator.TranslatorByRegex([
-    (r'volumes/(.*)\..*',           0, r'previews/\1_*.*'),
-    (r'volumes/(\w+/\w+/data)',     0, r'previews/\1'),
-    (r'volumes/(\w+/\w+/data/\w+)', 0, r'previews/\1'),
+associations_to_previews = translator.TranslatorByRegex([
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras/\w+)/(\w+/[NW][0-9]{10}_[0-9]+).*',
+                                                                                0, [r'previews/\1/\3/data/\5_full.jpg',
+                                                                                    r'previews/\1/\3/data/\5_med.jpg',
+                                                                                    r'previews/\1/\3/data/\5_small.jpg',
+                                                                                    r'previews/\1/\3/data/\5_thumb.jpg']),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras/\w+)/(\w+)$',        0,  r'previews/\1/\3/data/\5'),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras|extras/\w+)$',       0,  r'previews/\1/\3/data'),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)$',                                0,  r'previews/\1/\3'),
+
+    (r'.*/(COISS_3xxx.*)/(COISS_30..)/.*/images/(SM_[^\.]+)\..*',               0, [r'previews/\1/\2/data/images/\3_full.jpg',
+                                                                                    r'previews/\1/\2/data/images/\3_thumb.jpg',
+                                                                                    r'previews/\1/\2/data/images/\3_small.jpg',
+                                                                                    r'previews/\1/\2/data/images/\3_med.jpg']),
+
+    (r'.*/(COISS_3xxx.*)/(COISS_30..)/.*/maps/(SM_[^\.]+)\..*',                 0, [r'previews/\1/\2/data/maps/\3_full.png',
+                                                                                    r'previews/\1/\2/data/maps/\3_thumb.png',
+                                                                                    r'previews/\1/\2/data/maps/\3_small.png',
+                                                                                    r'previews/\1/\2/data/maps/\3_med.png']),
+
+    (r'.*/(COISS_3xxx.*)/(COISS_30..)/.*/images$',                              0,  r'previews/\1/\2/data/images'),
+
+    (r'.*/(COISS_3xxx.*)/(COISS_30..)/.*/maps$',                                0,  r'previews/\1/\2/data/maps'),
+
+    (r'.*/(COISS_3xxx.*)/(COISS_30..)/.*/browse$',                                0,  r'previews/\1/\2/data'),
 ])
 
-volumes_to_volumes = translator.TranslatorByRegex([
-    (r'(volumes/.*)/extras/\w+/(\w+)\.(.*)', 0, [r'\1/data/\2.*',
-                                                 r'\1/extras/*/\2.*']),
-    (r'(volumes/.*)/data/(\w+)\.(.*)',       0,  r'volumes/\1/extras/*/\2.*'),
-
-    (r'(volumes/.*)/extras/\w+/(\w+)',       0, [r'\1/data/\2',
-                                                 r'\1/extras/*/\2']),
-    (r'(volumes/.*)/data/(\w+)',             0,  r'\1/extras/*/\2'),
-
-    (r'(volumes/.*)/extras(|/\w+)',          0, [r'\1/data', r'\1/extras/*']),
-    (r'(volumes/.*)/data',                   0,  r'\1/extras/*'),
+associations_to_metadata = translator.TranslatorByRegex([
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras/w+)/\w+/([NW][0-9]{10}_[0-9]+).*',
+                                                                                0, [r'metadata/\1/\3/\3_index.tab/\5',
+                                                                                    r'metadata/\1/\3/\3_ring_summary.tab/\5',
+                                                                                    r'metadata/\1/\3/\3_moon_summary.tab/\5',
+                                                                                    r'metadata/\1/\3/\3_saturn_summary.tab/\5',
+                                                                                    r'metadata/\1/\3/\3_jupiter_summary.tab/\5',
+                                                                                    r'metadata/\1/\3/']),
+    (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(|data|extras|extras/\w+)(|/\w+)$',
+                                                                                0,  r'metadata/\1/\3'),
+    (r'.*/(COISS_[12]xxx)/(COISS_....)/index/index\..*',                        0, [r'metadata/\1/\2/\2_index.tab',
+                                                                                    r'metadata/\1/\2/\2_index.lbl']),
+    (r'.*/(COISS_1xxx)/(COISS_1...)/index/cumindex\..*',                        0, [r'metadata/\1/COISS_1999/COISS_1999_index.tab',
+                                                                                    r'metadata/\1/COISS_1999/COISS_1999_index.lbl']),
+    (r'.*/(COISS_2xxx)/(COISS_2...)/index/cumindex\..*',                        0, [r'metadata/\1/COISS_2999/COISS_2999_index.tab',
+                                                                                    r'metadata/\1/COISS_2999/COISS_2999_index.lbl']),
+    (r'metadata/(COISS_1xxx)/(COISS_....)/(COISS_....)_(\w+)\..*',              0, [r'metadata/\1/COISS_1999/COISS_1999_\4.tab',
+                                                                                    r'metadata/\1/COISS_1999/COISS_1999_\4.lbl']),
+    (r'metadata/(COISS_2xxx)/(COISS_....)/(COISS_....)_(\w+)\..*',              0, [r'metadata/\1/COISS_2999/COISS_2999_\4.tab',
+                                                                                    r'metadata/\1/COISS_2999/COISS_2999_\4.lbl']),
+    (r'metadata/(COISS_1xxx)/(COISS_....)$',                                    0,  r'metadata/\1/COISS_1999'),
+    (r'metadata/(COISS_2xxx)/(COISS_....)$',                                    0,  r'metadata/\1/COISS_2999'),
 ])
 
 ####################################################################################################################################
@@ -109,26 +199,25 @@ view_options = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 neighbors = translator.TranslatorByRegex([
-    (r'volumes/COISS_0xxx(|_\w+)/COISS_....',                    0, r'volumes/COISS_0xxx\1/*'),
     (r'volumes/COISS_0xxx(|_\w+)/COISS_..../data',               0, r'volumes/COISS_0xxx\1/*/data'),
     (r'volumes/COISS_0xxx(|_\w+)/COISS_..../data/(\w+)',         0, r'volumes/COISS_0xxx\1/*/data/\2'),
     (r'volumes/COISS_0xxx(|_\w+)/COISS_..../data/(\w+/\w+)',     0, r'volumes/COISS_0xxx\1/*/data/\2'),
     (r'volumes/COISS_0xxx(|_\w+)/COISS_..../data/(\w+/\w+)/\w+', 0, r'volumes/COISS_0xxx\1/*/data/\2/*'),
 
-    (r'(volumes|previews)/COISS_3xxx(|_\w+)/COISS_....',                    0, r'\1/COISS_3xxx\2/*'),
     (r'(volumes|previews)/COISS_3xxx(|_\w+)/COISS_..../data',               0, r'\1/COISS_3xxx\2/*/data'),
     (r'(volumes|previews)/COISS_3xxx(|_\w+)/COISS_..../data/(\w+)',         0, r'\1/COISS_3xxx\2/*/data/\3'),
     (r'(volumes|previews)/COISS_3xxx(|_\w+)/COISS_..../extras',             0, r'\1/COISS_3xxx\2/*/extras'),
     (r'(volumes|previews)/COISS_3xxx(|_\w+)/COISS_..../extras/(\w+)',       0, r'\1/COISS_3xxx\2/*/extras/\3'),
     (r'(volumes|previews)/COISS_3xxx(|_\w+)/COISS_..../extras/(\w+)/\w+',   0, r'\1/COISS_3xxx\2/*/extras/\3/*'),
 
-    (r'(volumes|previews|calibrated)/(COISS_[12]...)(|_.*?)/COISS_....',            0, r'\1/\2\3/*'),
     (r'(volumes|previews|calibrated)/(COISS_[12]...)(|_.*?)/COISS_..../data',       0, r'\1/\2\3/*/data'),
     (r'(volumes|previews|calibrated)/(COISS_[12]...)(|_.*?)/COISS_..../data/(\w+)', 0, r'\1/\2\3/*/data/*'),
 
-    (r'volumes/(COISS_[12]xxx)/COISS_..../extras/(\w+)/\w+', 0, r'volumes/\1/*/extras/\2/*'),
-    (r'volumes/(COISS_[12]xxx)/COISS_..../extras/(\w+)',     0, r'volumes/\1/*/extras/\2'),
-    (r'volumes/(COISS_[12]xxx)/COISS_..../(\w+)',            0, r'volumes/\1/*/\2'),
+    (r'volumes/(COISS_[12]xxx)/COISS_..../extras/(\w+)/\w+',     0, r'volumes/\1/*/extras/\2/*'),
+    (r'volumes/(COISS_[12]xxx)/COISS_..../extras/(\w+)',         0, r'volumes/\1/*/extras/\2'),
+    (r'volumes/(COISS_[12]xxx)/COISS_..../(\w+)',                0, r'volumes/\1/*/\2'),
+
+    (r'metadata/(COISS_[12]xxx)/(COISS_....)/(COISS_....)(_.*)', 0, r'metadata/\1/*/*\4'),
 ])
 
 ####################################################################################################################################
@@ -146,11 +235,11 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*\.(IMG|LBL)$',          0, ('standard',   0, 'raw',   'Raw Data')),
-    (r'calibrated/.*_CALIB\.(IMG|LBL)$', 0, ('standard', 100, 'calib', 'Calibrated Data')),
-    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini ISS', 10, 'coiss-thumb',  'Extra preview (thumbnail)')),
-    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini ISS', 20, 'coiss-medium', 'Extra preview (medium)')),
-    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini ISS', 30, 'coiss-full',   'Extra preview (full)')),
+    (r'volumes/.*\.(IMG|LBL)$',                      0, ('Cassini ISS',   0, 'coiss-raw',    'Raw image')),
+    (r'calibrated/.*_CALIB\.(IMG|LBL)$',             0, ('Cassini ISS',  10, 'coiss-calib',  'Calibrated image')),
+    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini ISS', 110, 'coiss-thumb',  'Extra preview (thumbnail)')),
+    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini ISS', 120, 'coiss-medium', 'Extra preview (medium)')),
+    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini ISS', 130, 'coiss-full',   'Extra preview (full)')),
 ])
 
 ####################################################################################################################################
@@ -222,7 +311,7 @@ filespec_to_opus_id = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_id_to_filespec = translator.TranslatorByRegex([
-    (r'co-iss-.*', 0, re.compile(r'.*_[0-9]+\.IMG$')),
+    (r'co-iss-[nw][0-9]{10}', 0, re.compile(r'.*_[0-9]+\.IMG$')),
 ])
 
 ####################################################################################################################################
@@ -238,7 +327,6 @@ class COISS_xxxx(pdsfile.PdsFile):
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
     SORT_KEY = sort_key + pdsfile.PdsFile.SORT_KEY
-    ASSOCIATIONS_TO_VOLUMES = associations_to_volumes + pdsfile.PdsFile.ASSOCIATIONS_TO_VOLUMES
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
@@ -247,10 +335,17 @@ class COISS_xxxx(pdsfile.PdsFile):
 
     VIEWABLES = {'default': default_viewables}
 
-    VOLUMES_TO_ASSOCIATIONS = pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS.copy()
-    VOLUMES_TO_ASSOCIATIONS['volumes'] = volumes_to_volumes + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['volumes']
-    VOLUMES_TO_ASSOCIATIONS['calibrated'] = volumes_to_calibrated + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['calibrated']
-    VOLUMES_TO_ASSOCIATIONS['previews'] = volumes_to_previews + pdsfile.PdsFile.VOLUMES_TO_ASSOCIATIONS['previews']
+    ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
+    ASSOCIATIONS['volumes']    = associations_to_volumes
+    ASSOCIATIONS['calibrated'] = associations_to_calibrated
+    ASSOCIATIONS['previews']   = associations_to_previews
+    ASSOCIATIONS['metadata']   = associations_to_metadata
+
+    def FILENAME_KEYLEN(self):
+        if self.volset[:10] == 'COISS_3xxx':
+            return 0
+        else:
+            return 11   # trim off suffixes
 
 # Global attribute shared by all subclasses
 pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC

@@ -103,7 +103,7 @@ class PdsViewable(object):
 class PdsViewSet(object):
     """Viewables selectable by size or name."""
 
-    def __init__(self, viewables=[], priority=0):
+    def __init__(self, viewables=[], priority=0, include_named_in_sizes=False):
 
         self.priority = priority    # Used to prioritize among icon sets
         self.viewables = set()      # All the PdsViewable objects
@@ -117,18 +117,29 @@ class PdsViewSet(object):
         self.heights = []           # ditto
 
         for viewable in viewables:
-            self.append(viewable)
+            self.append(viewable, include_named_in_sizes=include_named_in_sizes)
 
-    def append(self, viewable):
-        """Append the given PdsViewable to this PdsViewSet."""
+    def append(self, viewable, include_named_in_sizes=False):
+        """Append the given PdsViewable to this PdsViewSet.
+
+        If include_named_in_sizes is True, then a named viewable is added to the
+        dictionaries keyed by size. Otherwise, not.
+        """
 
         if viewable in self.viewables: return
+
+        # Allow a recursive call
+        if isinstance(viewable, PdsViewSet):
+            for viewable in viewable.viewables:
+                self.append(viewable)
+                return
 
         self.viewables.add(viewable)
 
         # Update the dictionary by name if it has a name
         if viewable.name:
             self.by_name[viewable.name] = viewable
+            if not include_named_in_sizes: return
 
         # Update the dictionary by width
         # Unnamed viewables take precedence; named ones are overridden

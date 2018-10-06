@@ -68,12 +68,12 @@ class PdsDirIterator(object):
         self.sign = -1 if sign < 0 else +1
         self.current_logical_path = pdsf.logical_path
 
+        self.neighbor_index = logical_paths.index(pdsf.logical_path)
         self.neighbors = logical_paths
         self.neighbors_lc = [p.lower() for p in logical_paths]
 
         # Case-insensitive search
         logical_path_lc = pdsf.logical_path.lower()
-        self.neighbor_index = self.neighbors_lc.index(logical_path_lc)
 
     def copy(self, sign=None):
         """Return a clone of this iterator, possibly reversed."""
@@ -140,7 +140,7 @@ class PdsFileIterator(object):
         parent = pdsf.parent()
         self.dir_iterator = PdsDirIterator(parent, sign)
 
-        self.pattern = pattern
+        self.pattern = pattern or self.NEIGHBORS.first(self.logical_path)
         self.exclude = exclude
         self.filter = filter
         self.sign = self.dir_iterator.sign
@@ -148,12 +148,12 @@ class PdsFileIterator(object):
 
         basenames = parent.sort_childnames()
         basenames = self._filter_names(parent, basenames)
-        self.siblings = parent.logicals_for_basenames(basenames)
-        self.siblings_lc = [p.lower() for p in self.siblings]
+        self.sibnames = parent.logicals_for_basenames(basenames)
+        self.sibnames_lc = [p.lower() for p in self.sibnames]
 
         # Case-insensitive search
         logical_path_lc = pdsf.logical_path.lower()
-        self.sibling_index = self.siblings_lc.index(logical_path_lc)
+        self.sibling_index = self.sibnames_lc.index(logical_path_lc)
 
     def copy(self, sign=None):
         """Return a clone of this iterator."""
@@ -204,7 +204,7 @@ class PdsFileIterator(object):
             self.sibling_index += self.sign
             if self.sibling_index < 0: raise IndexError()
 
-            sibling = self.sibnames[self.sibling_index]
+            sibname = self.sibnames[self.sibling_index]
 
         # Jump to adjacent directory if necessary
         except IndexError:
@@ -212,8 +212,8 @@ class PdsFileIterator(object):
 
         # Otherwise return the next sibling
         else:
-            self.current_logical_path = sibling
-            return (sibling, os.path.basename(sibling), 0)
+            self.current_logical_path = sibname
+            return (sibname, os.path.basename(sibname), 0)
 
     def next_cousin(self):
         """Move the iteration into the adjacent parent directory."""
@@ -221,19 +221,19 @@ class PdsFileIterator(object):
         prev_logical_path = self.current_logical_path
 
         # Go to the next parent
-        (parent_logical_path, parent_display_path) = self.dir_iterator.next()
+        (parent_logical_path, parent_display_path, _) = self.dir_iterator.next()
         parent = pdsfile.PdsFile.from_logical_path(parent_logical_path)
 
         # Load the next set of siblings
         basenames = parent.sort_childnames()
         basenames = self._filter_names(parent, basenames)
-        self.siblings = parent.logicals_for_basenames(basenames)
+        self.sibnames = parent.logicals_for_basenames(basenames)
 
         # Return the first new sibling
         if self.sign > 0:
             self.sibling_index = -1
         else:
-            self.sibling_index = len(self.siblings)
+            self.sibling_index = len(self.sibnames)
 
         (logical_path, basename, _) = self.next()
         return (logical_path, parent_display_path + '/' + basename, 1)
@@ -250,7 +250,7 @@ class PdsRowIterator(object):
         self.parent_logical_path_ = self.parent_pdsf.logical_path + '/'
 
         self.sign = sign
-        self.sibnames = list(self.parent_pdsf.childnames)
+        self.sibnames = self.parent_pdsf.sort_childnames()
         self.sibnames_lc = [n.lower() for n in self.sibnames]
 
         # Case-insensitive search
