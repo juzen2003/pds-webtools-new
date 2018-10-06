@@ -12,7 +12,7 @@ from PIL import Image
 class PdsViewable(object):
     """Contains the minimum information needed to show an image in HTML."""
 
-    def __init__(self, abspath, url, width, height, bytes, alt='', 
+    def __init__(self, abspath, url, width, height, bytes, alt='',
                        name='', pdsf=None):
 
         # Core properties of a viewable
@@ -151,10 +151,10 @@ class PdsViewSet(object):
             self.by_height[viewable.height] = viewable
 
         # Sort lists of widths and heights
-        self.widths = self.by_width.keys()
+        self.widths = list(self.by_width.keys())
         self.widths.sort()
 
-        self.heights = self.by_height.keys()
+        self.heights = list(self.by_height.keys())
         self.heights.sort()
 
     @staticmethod
