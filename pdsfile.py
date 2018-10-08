@@ -898,9 +898,9 @@ class PdsFile(object):
         this.basename     = filename_key
 
         _filename_key = '/' + filename_key
-        this.abspath      += _filename_key
-        this.logical_path += _filename_key
-        this.interior     += _filename_key
+        this.abspath      = this.abspath      + _filename_key
+        this.logical_path = this.logical_path + _filename_key
+        this.interior     = this.interior     + _filename_key
 
         this._exists_filled         = True
         this._islabel_filled        = False
@@ -4426,7 +4426,7 @@ class PdsGroup(object):
             basename_dict[pdsf.basename] = pdsf
 
         if self.parent_pdsf:
-            sorted = self.parent_pdsf.sort_basenames(basename_dict.keys(),
+            sorted = self.parent_pdsf.sort_basenames(list(basename_dict.keys()),
                                                 labels_after=labels_after,
                                                 dirs_first=dirs_first,
                                                 dirs_last=dirs_last,
@@ -4533,7 +4533,6 @@ class PdsGroupTable(object):
 
         self.parent_pdsf = parent   # False for un-initialized; None for virtual
         self.groups = []
-
         self._levels_filled = None
 
         for group in pdsgroups:
@@ -4630,11 +4629,7 @@ class PdsGroupTable(object):
 
     def insert_file(self, pdsf, hidden=False):
 
-        if pdsf.is_index_row:
-            parent_pdsf = pdsf.parent().parent()
-        else:
-            parent_pdsf = pdsf.parent()
-
+        parent_pdsf = pdsf.parent()
         if self.parent_pdsf is False:
             self.parent_pdsf = parent_pdsf
 
@@ -4700,12 +4695,7 @@ class PdsGroupTable(object):
         for group in self.groups:
             if group.rows:          # delete empty groups
                 first_pdsf = group.rows[0]
-                if first_pdsf.is_index_row:
-                    first_basename = (first_pdsf.parent().basename + '/' +
-                                      first_pdsf.basename)
-                else:
-                    first_basename = first_pdsf.basename
-
+                first_basename = first_pdsf.basename
                 first_basenames.append(first_basename)
                 group_dict[first_basename] = group
 
@@ -4772,11 +4762,7 @@ class PdsGroupTable(object):
             if pdsf.logical_path in exclusions: continue
             if pdsf.abspath in exclusions: continue
 
-            if pdsf.is_index_row:   # index rows are grouped by grandparent
-                parent_pdsf = pdsf.parent().parent()
-            else:
-                parent_pdsf = pdsf.parent()
-
+            parent_pdsf = pdsf.parent()
             parent_path = parent_pdsf.logical_path
 
             if parent_path not in table_dict:
@@ -4827,6 +4813,51 @@ class PdsGroupTable(object):
 
         new_table.groups = new_groups
         return new_table
+
+    @staticmethod
+    def merge_index_row_tables(tables):
+        """Returns a modified list of tables in which index rows are organized
+        by grandparent rather than by parent. The given list of tables must
+        already by sorted.
+        """
+
+        # Location for a table in the process of being merged
+        merged_table_path = ''
+        merged_table = None
+
+        # Copy given tables into the new list...
+        new_tables = []
+        for table in tables:
+
+            # Save this in the merged table if appropriate
+            if (table.parent_pdsf.is_index and
+                table.parent_pdsf.parent_logical_path == merged_table_path):
+                    merged_table.groups += table.groups
+                    continue
+
+            # Otherwise, we're done with this merged table
+            if merged_table:
+                new_tables.append(merged_table)
+                merged_table = None
+                merged_table_path = ''
+
+            # If this table does not contain an index row, we're done
+            if not table.parent_pdsf.is_index:
+                new_tables.append(table)
+                continue
+
+            # Start a new merged table
+            merged_table_path = table.parent_pdsf.parent_logical_path
+            merged_table = table
+            merged_table.parent_pdsf = table.parent_pdsf.parent()
+            merged_table_path = merged_table.parent_pdsf.logical_path
+            merged_table._levels_filled = None
+
+        # If we still have a merged table in reserve, append it to the list
+        if merged_table:
+            new_tables.append(merged_table)
+
+        return new_tables
 
 ################################################################################
 # Initialize the global registry of subclasses
