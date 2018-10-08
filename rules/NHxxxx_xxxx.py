@@ -127,8 +127,8 @@ neighbors = translator.TranslatorByRegex([
 default_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl',  re.I, ''),
 
-    (r'.*/(NHxx.._xxxx)(_v1)/(NH.*)/data/\w+/(\w{3}_[0-9]{10}).*',    0, r'previews/\1/\3/data/*/\4'),
-    (r'.*/(NHxx.._xxxx)(_v2)/(NH.*)/data/\w+/(\w{3}_[0-9]{10}).*',    0, r'previews/\1/\3/data/*/\4'),
+    (r'.*/(NHxx.._xxxx)(_v1)/(NH.*)/data/\w+/(\w{3}_[0-9]{10}).*',    0, r'previews/\1/\3/data/*/\4*'),
+    (r'.*/(NHxx.._xxxx)(_v2)/(NH.*)/data/\w+/(\w{3}_[0-9]{10}).*',    0, r'previews/\1/\3/data/*/\4*'),
     (r'.*/(NHxx.._xxxx)(_v1)/(NH.*)/DATA/\w+/MC([0-9]_[0-9]{10}).*',  0, r'previews/\1/\3/data/*/mc\4_*'),
     (r'.*/(NHxx.._xxxx)(_v1)/(NH.*)/DATA/\w+/MP([0-9]_[0-9]{10}).*',  0, r'previews/\1/\3/data/*/mp\4_*'),
     (r'.*/(NHxx.._xxxx)(_v1)/(NH.*)/DATA/\w+/MPF([0-9]_[0-9]{10}).*', 0, r'previews/\1/\3/data/*/mpf\4_*'),
@@ -211,6 +211,7 @@ sort_key = translator.TranslatorByRegex([
     (r'NHJU(.._[0-9]{4}.*)', 0, r'NH2JU\1'),
     (r'NHPC(.._[0-9]{4}.*)', 0, r'NH3PC\1'),
     (r'NHPE(.._[0-9]{4}.*)', 0, r'NH4PE\1'),
+    (r'(\w{3})_([0-9]{10})(.*)', re.I, r'\2\1\3'),
 ])
 
 ####################################################################################################################################

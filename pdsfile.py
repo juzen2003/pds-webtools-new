@@ -112,6 +112,23 @@ for checksums in ('', 'checksums-'):
         for voltype in VOLTYPES:
             CATEGORIES.add(checksums + archives + voltype)
 
+FILE_SPECIFICATION_COLUMN_NAMES = (
+    'FILE_SPECIFICATION_NAME',
+    'FILE SPECIFICATION NAME',
+    'FILE_NAME',
+    'FILE NAME',
+    'FILENAME',
+    'PRODUCT_ID',
+    'PRODUCT ID',
+    'STSCI_GROUP_ID'
+)
+
+VOLUME_ID_COLUMN_NAMES = (
+    'VOLUME_ID',
+    'VOLUME ID',
+    'VOLUME_NAME','VOLUME NAME'
+)
+
 ################################################################################
 # PdsLogger support
 ################################################################################
@@ -683,6 +700,44 @@ class PdsFile(object):
     ABSPATH_INFO_VOLUMES_LOADED = set()
 
     ############################################################################
+    # DEFAULT FILE SORT ORDER
+    ############################################################################
+
+    SORT_ORDER = {
+        'labels_after': True,
+        'dirs_first'  : False,
+        'dirs_last'   : False,
+        'info_first'  : True,
+    }
+
+    def sort_labels_after(self, labels_after):
+        """If True, all label files will appear after their associated data
+        files when sorted."""
+
+        self.SORT_ORDER = self.SORT_ORDER.copy()
+        self.SORT_ORDER['labels_after'] = labels_after
+
+    def sort_dirs_first(self, dirs_first):
+        """If True, directories will appear before all files in a sorted list.
+        """
+
+        self.SORT_ORDER = self.SORT_ORDER.copy()
+        self.SORT_ORDER['dirs_first'] = dirs_first
+
+    def sort_dirs_last(self, dirs_last):
+        """If True, directories will appear after all files in a sorted list.
+        """
+
+        self.SORT_ORDER = self.SORT_ORDER.copy()
+        self.SORT_ORDER['dirs_last'] = dirs_last
+
+    def sort_info_first(self, info_first):
+        """If True, info files will be listed first in all sorted lists."""
+
+        self.SORT_ORDER = self.SORT_ORDER.copy()
+        self.SORT_ORDER['info_first'] = info_first
+
+    ############################################################################
     # Constructor
     ############################################################################
 
@@ -834,7 +889,7 @@ class PdsFile(object):
 
         return this
 
-    def new_index_row_pdsfile(self, filename_key, row_dicts, column_names):
+    def new_index_row_pdsfile(self, filename_key, row_dicts):
         """A PdsFile representing the content of one row of an index file. Used
         to enable views of individual rows of large index files."""
 
@@ -881,7 +936,7 @@ class PdsFile(object):
 
         this.is_index_row = True
         this.row_dicts = row_dicts
-        this.column_names = column_names
+        this.column_names = self.column_names
 
         # Special attribute just for index rows
         this.parent_basename = self.basename
@@ -1097,14 +1152,16 @@ class PdsFile(object):
 
     @property
     def childnames(self):
-        """A list of all the child names if this is a directory."""
+        """A list of all the child names if this is a directory or an index.
+        Names are kept in sorted order."""
 
         if self._childnames_filled is not None:
             return self._childnames_filled
 
         self._childnames_filled = []
         if self.isdir and self.abspath:
-            self._childnames_filled = get_childnames(self.abspath)
+            childnames = get_childnames(self.abspath)
+            self._childnames_filled = self.sort_basenames(childnames)
 
         # Support for table row views as "children" of index tables
         # For the sake of efficiency, we generate all the child objects at once
@@ -1581,6 +1638,23 @@ class PdsFile(object):
             return ''
 
     @property
+    def data_abspaths(self):
+        """Returns a list of the targets of a label file; otherwise
+        [self.abspath]."""
+
+        if not self.islabel: return self
+
+        pattern = self.abspath.rpartition('.')[0] + '.*'
+        regex = re.compile(pattern)
+
+        abspaths = []
+        for abspath in self.linked_abspaths:
+            if regex.match(abspath) and abspath != self.abspath:
+                abspaths.append(abspath)
+
+        return abspaths
+
+    @property
     def viewset(self):
         """PdsViewSet to use for this object."""
 
@@ -1889,8 +1963,7 @@ class PdsFile(object):
 
         # If this is a directory, return the PdsViewSet of the first child
         if self.isdir:
-            basenames = self.sort_childnames()
-            basenames = [b for b in basenames
+            basenames = [b for b in self.childnames
                          if os.path.splitext(b)[1][1:].lower() in
                             (VIEWABLE_EXTS | DATAFILE_EXTS)]
             if len(basenames) > 20:     # Stop after 20 files max
@@ -2099,6 +2172,34 @@ class PdsFile(object):
         raise IOError('Index row not found: ' +
                        self.logical_path + '/' + selection)
 
+    def find_row_number_at_or_below(self, selection=None):
+        """Return the row number whose index is before or equal to this
+        selection. The selection need not exist. -1 means the selection is
+        before the first row in the index.
+
+        This object can be either an index row (in which case selection is
+        ignored) or else an index.
+        """
+
+        if self.is_index_row:
+            index_pdsfile = self.parent()
+            selection = self.basename
+        else:
+            index_pdsfile = self
+
+        try:
+            return index_pdsfile.find_selected_row_number(selection)
+        except IOError as e:
+            if 'Index row not found' not in str(e):
+                raise
+            pass
+
+        childnames = index_pdsfile.childnames + [selection]
+        childnames = index_pdsfile.sort_basenames(childnames)
+
+        indx = childnames.index(selection)
+        return (indx - 1)
+
     def cache_child_row_pdsfiles(self, selection=None):
         """Fill in the child names and cache all the rows of an index file as
         pdsfiles.
@@ -2124,14 +2225,14 @@ class PdsFile(object):
         else:
 
             table.index_rows_by_filename_key()
-            self._childnames_filled = table.filename_keys
+            childnames = table.filename_keys
+            self._childnames_filled = self.sort_basenames(childnames)
             self.column_names = table.get_keys()
 
             children = []
             for childname in self._childnames_filled:
                 row_dicts = table.rows_by_filename_key(childname)
-                child = self.new_index_row_pdsfile(childname,
-                                                   row_dicts, self.column_names)
+                child = self.new_index_row_pdsfile(childname, row_dicts)
                 child._complete(must_exist=True, caching='all',
                                 lifetime=3*86400)   # cache for 3 days
                 children.append(child)
@@ -2147,16 +2248,134 @@ class PdsFile(object):
             index = self.find_selected_row_number(selection)
             return children[index]
 
-    def row_pdsfile(self, selection):
-        """Return the PdsFile associated with a selected row of an index."""
+    def row_pdsfile(self, selection, must_exist=True):
+        """Return the PdsFile associated with a selected row of an index. This
+        could represent a nonexistent row."""
 
-        index = self.find_selected_row_number(selection)
-        abspath = self.abspath + '/' + self.childnames[index]
+        # Determine the row number of the object
+        indx = None
+        try:
+            indx = self.find_selected_row_number(selection)
+        except IOError:
+            if must_exist:
+                raise
+            pass
+
+        # Construct the object
+        if indx is None:        # If selection not found
+            pdsf = self.new_index_row_pdsfile(selection, [])
+            pdsf._exists_filled = False
+        else:
+            abspath = self.abspath + '/' + self.childnames[indx]
+
+            try:
+                pdsf = CACHE[abspath]
+            except KeyError:
+                pdsf = self.cache_child_row_pdsfiles(selection)
+
+        return pdsf
+
+    def nearest_row_pdsfile(self, selection=None):
+        """Return the selected row PdsFile if present, otherwise one of the
+        adjacent ones.
+
+        This object can be either an index row (in which case the selection
+        is ignored) or else an index.
+        """
+
+        if self.is_index_row:
+            index_pdsfile = self.parent()
+            selection = self.basename
+        else:
+            index_pdsfile = self
+
+        indx = index_pdsfile.find_row_number_at_or_below(selection)
+        selection = index_pdsfile.childnames[max(0,indx)]
+
+        return index_pdsfile.row_pdsfile(selection, must_exist=True)
+
+    def data_pdsfile_for_index_and_selection(self, selection):
+        """Attempt to infer the data PdsFile object associated with this index
+        file and a specified suffix. None on failure.
+
+        If the selected row is missing, the associated data file might still
+        exist. In this case, it conducts a search for a data file assuming it
+        is in the same volume and parallel to the files in the index.
+        """
+
+        if not self.is_index: return None
+        _ = self.childnames         # load row info if necessary
+
+        # Identify the selected row or else any row will do
+        try:
+            row_pdsf = self.row_pdsfile(selection)
+            found = True
+        except IOError:
+            row_pdsf = self.row_pdsfile(self.childnames[0])
+            found = False
+
+        row_dict = row_pdsf.row_dicts[0]
+
+        # Get the filespec
+        filespec = ''
+        for guess in FILE_SPECIFICATION_COLUMN_NAMES:
+            if guess in row_dict:
+                filespec = row_dict[guess]
+                break
+
+        if filespec:
+            for guess in VOLUME_ID_COLUMN_NAMES:
+                if guess in row_dict:
+                    volume_id = row_dict[guess]
+                    if filespec.startswith(volume_id): break
+                    filespec = os.path.join(volume_id, filespec)
+
+        if filespec.startswith('/'):
+            filespec = filespec[1:]
+
+        if not filespec:
+            return None
 
         try:
-            return CACHE[abspath]
-        except KeyError:
-            return self.cache_child_row_pdsfiles(selection)
+            data_pdsfile = PdsFile.from_path('volumes/' + filespec,
+                                             must_exist=True)
+        except IOError:
+            return None
+
+        # Locate the data file and return the PdsFile if found
+        if found:
+            return data_pdsfile
+
+        # Otherwise, conduct a search of this directory and also its parents
+        parts = data_pdsfile.logical_path.split('/')
+        parts[-2] = '*'
+        parts[-1] = selection + '*'
+        pattern = '/'.join(parts)
+
+        abspaths = glob.glob(self.root_ + pattern)
+
+        if len(abspaths) == 0:              # no match found
+            return None
+
+        if len(abspaths) == 1:              # one match found
+            datafile_abspath = abspaths[0]
+        elif abspaths[0].lower().endswith('.lbl'):
+            datafile_abspath = abspaths[1]  # choose the data file
+        else:
+            datafile_abspath = abspaths[0]
+
+        try:
+            data_pdsfile = PdsFile.from_abspath(datafile_abspath)
+            if data_pdsfile.exists:
+                return data_pdsfile
+        except IOError:
+            return None
+
+    def data_pdsfile_for_index_row(self):
+        """Attempt to infer the volume PdsFile object associated with an index
+        row PdsFile. None on failure"""
+
+        return self.parent().data_pdsfile_for_index_and_selection(self.basename)
 
     ############################################################################
     # Support for alternative constructors
@@ -2297,9 +2516,9 @@ class PdsFile(object):
 
         # Handle the special case of index rows
         if self.is_index and allow_index_row:
-            childnames = self.childnames    # This will cache the children if
-                                            # the first time it is called.
-            return self.row_pdsfile(basename)
+            childnames = self.childnames    # This will cache the children the
+                                            # first time it is called.
+            return self.row_pdsfile(basename, must_exist=must_exist)
 
         # Fix the case if possible
         if fix_case:
@@ -2617,7 +2836,7 @@ class PdsFile(object):
                                              caching='default', lifetime=None)
 
     @staticmethod
-    def from_path(path, caching='default', lifetime=None):
+    def from_path(path, must_exist=False, caching='default', lifetime=None):
         """Find the PdsFile, if possible based on anything roughly resembling
         an actual path in the filesystem, using sensible defaults for missing
         components."""
@@ -2634,14 +2853,6 @@ class PdsFile(object):
 
         path = path.rstrip('/')
         path_lc = path.lower()
-
-        # Reserve a row indicator for later
-        k = path_lc.find('.tab/')
-        if k >= 0:
-            row_designator = path[k+5:]
-            path = path[:k+4]
-        else:
-            row_designator = ''
 
         # Interpret the URL part by part
         parts = path.split('/')
@@ -2782,7 +2993,7 @@ class PdsFile(object):
                     raise ValueError('Suffix "%s" not found: %s' %
                                      (this.suffix, path))
 
-            this = PdsFile.from_abspath(this_abspath)
+            this = PdsFile.from_abspath(this_abspath, must_exist=must_exist)
 
         elif this.volset:
             volset = this.volset.lower()
@@ -2817,7 +3028,7 @@ class PdsFile(object):
                     raise ValueError('Suffix "%s" not found: %s' %
                                      (this.suffix, path))
 
-            this = PdsFile.from_abspath(this_abspath)
+            this = PdsFile.from_abspath(this_abspath, must_exist=must_exist)
 
         else:
             this = CACHE[this.category_[:-1]]
@@ -2827,13 +3038,8 @@ class PdsFile(object):
 
         # Resolve the path below
         for part in parts:
-            this = this.child(part, fix_case=True,
+            this = this.child(part, fix_case=True, must_exist=must_exist,
                                     caching=caching, lifetime=lifetime)
-
-        # If we have a row_designator, apply it now
-        if row_designator:
-            _ = this.childnames     # Fill in the child objectes
-            this = this.child(row_designator, fix_case=False, must_exist=True)
 
         return this
 
@@ -3518,35 +3724,6 @@ class PdsFile(object):
 
         return self.SPLIT_RULES.first(basename)
 
-    # Global default settings for sort ordering
-    _LABELS_AFTER = True
-    _DIRS_FIRST = False
-    _DIRS_LAST = False
-    _INFO_FIRST = True
-
-    def sort_labels_after(labels_after):
-        """If True, all label files will appear after their associated data
-        files when sorted."""
-
-        PdsFile._LABELS_AFTER = labels_after
-
-    def sort_dirs_first(dirs_first):
-        """If True, directories will appear before all files in a sorted list.
-        """
-
-        PdsFile._DIRS_FIRST = dirs_first
-
-    def sort_dirs_last(dirs_last):
-        """If True, directories will appear after all files in a sorted list.
-        """
-
-        PdsFile._DIRS_LAST = dirs_last
-
-    def sort_info_first(info_first):
-        """If True, info files will be listed first in all sorted lists."""
-
-        PdsFile._INFO_FIRST = info_first
-
     def basename_is_label(self, basename):
         """True if this basename is a label. Override if label identification
         ever depends on the data set."""
@@ -3604,16 +3781,16 @@ class PdsFile(object):
             parent_abspath = self.abspath
 
         if labels_after is None:
-            labels_after = PdsFile._LABELS_AFTER
+            labels_after = self.SORT_ORDER['labels_after']
 
         if dirs_first is None:
-            dirs_first = PdsFile._DIRS_FIRST
+            dirs_first = self.SORT_ORDER['dirs_first']
 
         if dirs_last is None:
-            dirs_last = PdsFile._DIRS_LAST
+            dirs_last = self.SORT_ORDER['dirs_last']
 
         if info_first is None:
-            info_first = PdsFile._INFO_FIRST
+            info_first = self.SORT_ORDER['info_first']
 
         basenames = list(basenames)
         basenames.sort(key=modified_sort_key)
@@ -3640,7 +3817,7 @@ class PdsFile(object):
 
         # Sort the basenames
         if parent is None:
-            sorted_basenames = subpaths.keys()
+            sorted_basenames = list(subpaths.keys())
             sorted_basenames.sort()
         else:
             sorted_basenames = parent.sort_basenames(subpaths.keys())
@@ -3649,7 +3826,7 @@ class PdsFile(object):
         sorted_paths = []
         for basename in sorted_basenames:
 
-            if parent is None:
+            if parent is None:      # virtual directories
                 pdsf = PdsFile.from_logical_path(basename)
                 sorted_paths += PdsFile.sort_logical_paths(subpaths[basename],
                                                            pdsf)
@@ -3679,8 +3856,7 @@ class PdsFile(object):
     def viewable_childnames(self):
         """A sorted list of the files in this directory that are viewable."""
 
-        basenames = self.sort_childnames()
-        return [b for b in basenames if self.basename_is_viewable(b)]
+        return [b for b in self.childnames if self.basename_is_viewable(b)]
 
     def childnames_by_anchor(self, anchor):
         """A list of child basenames having the given anchor."""
@@ -3691,7 +3867,7 @@ class PdsFile(object):
             if parts[0] == anchor:
                 matches.append(basename)
 
-        return self.sort_basenames(matches)
+        return matches
 
     def viewable_childnames_by_anchor(self, anchor):
         """A list of viewable child names having the given anchor."""
@@ -3809,43 +3985,6 @@ class PdsFile(object):
     # Associations
     ############################################################################
 
-    def volume_pdsfile_for_index_row(self):
-        """Attempt to infer the volume PdsFile object associated with an index
-        row PdsFile. None on failure"""
-
-        parent = self.parent()
-        if not parent.is_index: return None
-
-        filespec = ''
-        for guess in ('FILE_SPECIFICATION_NAME',
-                      'FILE SPECIFICATION NAME',
-                      'FILE_NAME', 'FILE NAME', 'FILENAME',
-                      'PRODUCT_ID', 'PRODUCT ID', 'STSCI_GROUP_ID'):
-            if guess in self.row_dicts[0]:
-                filespec = self.row_dicts[0][guess]
-                break
-
-        if filespec:
-            for guess in ('VOLUME_ID', 'VOLUME ID',
-                          'VOLUME_NAME', 'VOLUME NAME'):
-                if guess in self.row_dicts[0]:
-                    volume_id = self.row_dicts[0][guess]
-                    if filespec.startswith(volume_id): break
-                    filespec = os.path.join(volume_id, filespec)
-
-        if filespec.startswith('/'):
-            filespec = filespec[1:]
-
-        if not filespec:
-            return None
-
-        try:
-            pdsf = PdsFile.from_path('volumes/' + filespec)
-            if pdsf.exists:
-                return pdsf
-        except Exception:
-            return
-
     def associated_logical_paths(self, category, must_exist=True):
 
         if not self.volset: return []   # Not for virtual paths
@@ -3879,7 +4018,7 @@ class PdsFile(object):
             if category.endswith('metadata'):
                 self = self.parent()
             else:
-                test = self.volume_pdsfile_for_index_row()
+                test = self.data_pdsfile_for_index_row()
                 if test:
                     self = test
                 else:
@@ -4300,15 +4439,9 @@ class PdsGroup(object):
 
     def append(self, pdsf, hidden=False):
 
-        # Select the parent if this is an index row
-        if pdsf.is_index_row:
-            this = pdsf.parent()
-        else:
-            this = pdsf
-
         # Initialize if necessary
         if self.parent_pdsf is False:
-            self.parent_pdsf = this.parent()
+            self.parent_pdsf = pdsf.parent()
             self.rows = [pdsf]
             self.anchor = pdsf.anchor
             return
@@ -4317,9 +4450,9 @@ class PdsGroup(object):
             self.anchor = pdsf.anchor
 
         # Same parent required
-        if this.parent_logical_path != self.parent_logical_path:
+        if pdsf.parent_logical_path != self.parent_logical_path:
             raise ValueError('PdsFile does not match parent of PdsGroup: ' +
-                             this.parent_logical_path + ', ' +
+                             pdsf.parent_logical_path + ', ' +
                              self.parent_logical_path)
 
         # Same anchor required

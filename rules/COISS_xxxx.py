@@ -227,7 +227,11 @@ neighbors = translator.TranslatorByRegex([
 sort_key = translator.TranslatorByRegex([
 
     # Skips over N or W, placing files into chronological order
-    (r'([NW])([0-9]{10}_[0-9]+(?:|_\w+))\.(.*)', 0, r'\2\1\3'),
+    (r'([NW])([0-9]{10})(.*)_full.jpg', 0, r'\2\1\3_1full.jpg'),
+    (r'([NW])([0-9]{10})(.*)_med.jpg', 0, r'\2\1\3_2med.jpg'),
+    (r'([NW])([0-9]{10})(.*)_small.jpg', 0, r'\2\1\3_3small.jpg'),
+    (r'([NW])([0-9]{10})(.*)_thumb.jpg', 0, r'\2\1\3_4thumb.jpg'),
+    (r'([NW])([0-9]{10})(.*)', 0, r'\2\1\3'),
 ])
 
 ####################################################################################################################################

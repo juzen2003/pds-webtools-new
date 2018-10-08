@@ -8,6 +8,9 @@ import fnmatch
 import glob
 import pdsfile
 
+# Python 2 and 3 compatible, byte strings and unicode
+def _isstr(x): return isinstance(x, ("".__class__, u"".__class__))
+
 # Useful filters
 def dirs_only(parent_pdsfile, basename):
     if parent_pdsfile is None: return True
@@ -33,6 +36,8 @@ class PdsDirIterator(object):
 
     def __init__(self, pdsf, sign=1):
 
+        global DIRECTORY_CACHE
+
         if pdsf is None:
             self.neighbors = []
             self.neighbor_index = 0
@@ -40,27 +45,30 @@ class PdsDirIterator(object):
             self.sign = 1
 
         fnmatch_patterns = pdsf.NEIGHBORS.first(pdsf.logical_path)
-        if type(fnmatch_patterns) == str:
-            fnmatch_patterns = [fnmatch_patterns]
+        if _isstr(fnmatch_patterns):
+            fnmatch_patterns = (fnmatch_patterns,)
 
         if fnmatch_patterns:
-            logical_paths = []
-            for fnmatch_pattern in fnmatch_patterns:
-                if fnmatch_pattern in DIRECTORY_CACHE:
-                    logical_paths += DIRECTORY_CACHE[fnmatch_pattern]
-                else:
+            if fnmatch_patterns in DIRECTORY_CACHE:
+                logical_paths = DIRECTORY_CACHE[fnmatch_patterns]
+            else:
+                paths = []
+                for fnmatch_pattern in fnmatch_patterns:
                     abspaths = glob.glob(pdsf.root_ + fnmatch_pattern)
                     abspaths = [pdsfile.repair_case(p) for p in abspaths]
                     abspaths = [a for a in abspaths if os.path.isdir(a)]
-                    paths = pdsfile.PdsFile.logicals_for_abspaths(abspaths)
-                    DIRECTORY_CACHE[fnmatch_pattern] = paths
-                    logical_paths += paths
+                    paths += pdsfile.PdsFile.logicals_for_abspaths(abspaths)
 
-            # Remove duplicates
-            logical_paths = list(set(logical_paths))
+                # Remove duplicates
+                paths = list(set(paths))
 
-            # Sort based on the rules
-            logical_paths = pdsfile.PdsFile.sort_logical_paths(logical_paths)
+                # Remove blanks (although they shouldn't be there)
+                if '' in paths:
+                    paths.remove('')
+
+                # Sort based on the rules
+                logical_paths = pdsfile.PdsFile.sort_logical_paths(paths)
+                DIRECTORY_CACHE[fnmatch_patterns] = logical_paths
 
         else:
             logical_paths = [pdsf.logical_path]
@@ -146,8 +154,7 @@ class PdsFileIterator(object):
         self.sign = self.dir_iterator.sign
         self.current_logical_path = pdsf.logical_path
 
-        basenames = parent.sort_childnames()
-        basenames = self._filter_names(parent, basenames)
+        basenames = self._filter_names(parent, parent.childnames)
         self.sibnames = parent.logicals_for_basenames(basenames)
         self.sibnames_lc = [p.lower() for p in self.sibnames]
 
@@ -225,8 +232,7 @@ class PdsFileIterator(object):
         parent = pdsfile.PdsFile.from_logical_path(parent_logical_path)
 
         # Load the next set of siblings
-        basenames = parent.sort_childnames()
-        basenames = self._filter_names(parent, basenames)
+        basenames = self._filter_names(parent, parent.childnames)
         self.sibnames = parent.logicals_for_basenames(basenames)
 
         # Return the first new sibling
@@ -250,7 +256,7 @@ class PdsRowIterator(object):
         self.parent_logical_path_ = self.parent_pdsf.logical_path + '/'
 
         self.sign = sign
-        self.sibnames = self.parent_pdsf.sort_childnames()
+        self.sibnames = self.parent_pdsf.childnames
         self.sibnames_lc = [n.lower() for n in self.sibnames]
 
         # Case-insensitive search

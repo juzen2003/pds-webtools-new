@@ -298,10 +298,10 @@ INFO_FILE_BASENAMES = translator.TranslatorByRegex([
 SORT_KEY = translator.TranslatorByRegex([
 
     # Previews sort into increasing size
-    (r'(.*)_thumb\.(jpg|png)', 0, r'\1_1thumb.\2'),
-    (r'(.*)_small\.(jpg|png)', 0, r'\1_2small.\2'),
-    (r'(.*)_med\.(jpg|png)',   0, r'\1_3med.\2'  ),
-    (r'(.*)_full\.(jpg|png)',  0, r'\1_9full.\2' ),
+    (r'(.*)_thumb\.(jpg|png)', 0, r'\1_4thumb.\2'),
+    (r'(.*)_small\.(jpg|png)', 0, r'\1_3small.\2'),
+    (r'(.*)_med\.(jpg|png)',   0, r'\1_2med.\2'  ),
+    (r'(.*)_full\.(jpg|png)',  0, r'\1_1full.\2' ),
 
     # Sort volume sets with version numbers decreasing
     (r'([A-Z0-9x]+_[0-9x]{3}x)(_lien_resolution)', 0, r'\1_002\2'),
