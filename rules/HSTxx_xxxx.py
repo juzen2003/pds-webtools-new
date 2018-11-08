@@ -64,10 +64,10 @@ associations_to_metadata = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'volumes/(.*/DATA/VISIT_..)/([IJUON]\w{8})(|_\w+)\.(.*)', 0, [r'previews/\1/\2_thumb.jpg',
+    (r'volumes/(.*/DATA/VISIT_..)/([IJUON]\w{8})(|_\w+)\.(.*)', 0, (r'previews/\1/\2_thumb.jpg',
                                                                     r'previews/\1/\2_small.jpg',
                                                                     r'previews/\1/\2_med.jpg',
-                                                                    r'previews/\1/\2_full.jpg']),
+                                                                    r'previews/\1/\2_full.jpg')),
 ])
 
 ####################################################################################################################################
