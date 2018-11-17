@@ -91,6 +91,14 @@ sort_key = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# OPUS_TYPE
+####################################################################################################################################
+
+opus_type = translator.TranslatorByRegex([
+    (r'.*\.DAT$', 0, ('Cassini UVIS', 10, 'couvis-raw', 'Raw Data')),
+])
+
+####################################################################################################################################
 # OPUS_FORMAT
 ####################################################################################################################################
 
@@ -163,6 +171,7 @@ class COUVIS_0xxx(pdsfile.PdsFile):
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
     SORT_KEY = sort_key + pdsfile.PdsFile.SORT_KEY
 
+    OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
     OPUS_PRODUCTS = opus_products
     FILESPEC_TO_OPUS_ID = filespec_to_opus_id
