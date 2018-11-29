@@ -683,7 +683,7 @@ class PdsFile(object):
         PdsFile.OPUS_ID_VOLUMES_LOADED.add(volume_abspath)
 
     ############################################################################
-    # INFO_DICT 
+    # INFO_DICT
     ############################################################################
 
     # If CACHE_ALL_INFO is True, we track maintain a dictionary of key
@@ -3153,6 +3153,8 @@ class PdsFile(object):
                 these_abspaths = glob.glob(pattern)
             elif os.path.exists(pattern):
                 these_abspaths = [pattern]
+            else:
+                these_abspaths = []
 
             if opus_type:
                 for abspath in these_abspaths:
