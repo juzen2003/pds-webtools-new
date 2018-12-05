@@ -116,7 +116,7 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/GO_0xxx/GO_0.../(?!CATALOG|DOCUMENT|INDEX|LABEL).*\.(IMG|LBL)', 0, ('Galileo SSI', 10, 'gossi-raw', 'Raw Image')),
+    (r'volumes/GO_0xxx(|_v[1-9])/GO_0.../(?!CATALOG|DOCUMENT|INDEX|LABEL).*\.(IMG|LBL)', 0, ('Galileo SSI', 10, 'gossi-raw', 'Raw Image')),
 ])
 
 ####################################################################################################################################
@@ -132,12 +132,18 @@ opus_format = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_products = translator.TranslatorByRegex([
-    (r'.*volumes/(GO_0xxx)/(GO_0...)/(.*/C[0-9]{10}[A-Z])\.(IMG|LBL)', 0, [r'volumes/\1/\2/\3.IMG',
-                                                                           r'volumes/\1/\2/\3.LBL',
-                                                                           r'previews/\1/\2/\3_thumb.jpg',
-                                                                           r'previews/\1/\2/\3_small.jpg',
-                                                                           r'previews/\1/\2/\3_med.jpg',
-                                                                           r'previews/\1/\2/\3_full.jpg']),
+    (r'.*volumes/(GO_0xxx)/(GO_0...)/(.*/C[0-9]{6})([0-9]{4}[A-Z])\.(IMG|LBL)', 0, [r'volumes/\1/\2/\3\4.IMG',
+                                                                           r'volumes/\1/\2/\3\4.LBL',
+                                                                           r'volumes/\1_v1/\2/\3/\4.IMG',
+                                                                           r'volumes/\1_v1/\2/\3/\4.LBL',
+                                                                           r'previews/\1/\2/\3\4_thumb.jpg',
+                                                                           r'previews/\1/\2/\3\4_small.jpg',
+                                                                           r'previews/\1/\2/\3\4_med.jpg',
+                                                                           r'previews/\1/\2/\3\4_full.jpg',
+                                                                           r'previews/\1_v1/\2/\3/\4_thumb.jpg',
+                                                                           r'previews/\1_v1/\2/\3/\4_small.jpg',
+                                                                           r'previews/\1_v1/\2/\3/\4_med.jpg',
+                                                                           r'previews/\1_v1/\2/\3/\4_full.jpg']),
 ])
 
 ####################################################################################################################################
