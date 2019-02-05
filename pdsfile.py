@@ -2000,7 +2000,7 @@ class PdsFile(object):
             abspaths = []
             for pattern in patterns:
                 if '*' in pattern or '?' in pattern or '[' in pattern:
-                    matches = glob.glob(self.root_ + pattern)
+                    matches = _clean_glob(self.root_ + pattern)
                     if not matches and LOGGER:
                         LOGGER.warn('No matching files', pattern)
                     abspaths += matches
@@ -2352,7 +2352,7 @@ class PdsFile(object):
         parts[-1] = selection + '*'
         pattern = '/'.join(parts)
 
-        abspaths = glob.glob(self.root_ + pattern)
+        abspaths = _clean_glob(self.root_ + pattern)
 
         if len(abspaths) == 0:              # no match found
             return None
@@ -3066,7 +3066,7 @@ class PdsFile(object):
             volset_logical_path = '/'.join(parts[:2])
             volset_pdsf = PdsFile.from_logical_path(volset_logical_path)
             abspath_pattern = volset_pdsf.abspath + '/' + '/'.join(parts[2:])
-            abspaths = glob.glob(abspath_pattern)
+            abspaths = _clean_glob(abspath_pattern)
             if not abspaths:
                 raise ValueError('No matches for regex: '+abspath_pattern)
             return PdsFile.from_abspath(abspaths[0])
@@ -3150,7 +3150,7 @@ class PdsFile(object):
         opus_type_for_abspath = {}
         for (pattern, opus_type) in abs_patterns_and_opus_types:
             if '*' in pattern or '?' in pattern or '[' in pattern:
-                these_abspaths = glob.glob(pattern)
+                these_abspaths = _clean_glob(pattern)
             elif os.path.exists(pattern):
                 these_abspaths = [pattern]
             else:
@@ -4093,7 +4093,7 @@ class PdsFile(object):
             if must_exist or ('*' in pattern or
                               '?' in pattern or
                               '[' in pattern):
-                test_abspaths = glob.glob(pattern)
+                test_abspaths = _clean_glob(pattern)
             else:
                 test_abspaths = [pattern]
 
@@ -4888,6 +4888,10 @@ for category in CATEGORIES:
 def _clean_join(a, b):
     return os.path.join(a,b).replace('\\', '/')
 
+def _clean_glob(a):
+    g = glob.glob(a)
+    return [x.replace('\\', '/') for x in g]
+
 def repair_case(abspath):
     """Return a file's absolute path with capitalization exactly as it appears
     in the file system. Raises IOError if the file is not found.
@@ -4997,7 +5001,7 @@ def abspath_for_logical_path(path):
             pass
 
     if UNIQUE_HOLDINGS_ is None:
-        test = glob.glob('/Volumes/pdsdata*/holdings')
+        test = _clean_glob('/Volumes/pdsdata*/holdings')
         if len(test) == 1:
             UNIQUE_HOLDINGS_ = test[0] + '/'
         else:
