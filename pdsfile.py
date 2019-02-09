@@ -3543,7 +3543,7 @@ class PdsFile(object):
                 else:
                     LOGGER.error('Cannot close shelf; not currently open',
                                  shelf_path)
-                return
+            return
 
         # Close the shelf and remove from the cache
         if not USE_PICKLES:
