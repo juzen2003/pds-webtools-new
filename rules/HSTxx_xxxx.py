@@ -93,7 +93,7 @@ neighbors = translator.TranslatorByRegex([
 
 opus_type = translator.TranslatorByRegex([
     (r'volumes/.*\.ASC$',               0, ('HST', 10, 'hst-text',  'FITS Header Text')),
-    (r'volumes/.*\.LBL$',               0, ('HST', 10, 'hst-text',  'HST Preview Products')),
+    (r'volumes/.*\.LBL$',               0, ('HST', 10, 'hst-label',  'HST Preview Products')),
     (r'volumes/.*\.TIF$',               0, ('HST', 20, 'hst-tiff',  'Raw Data Preview (lossless)')),
     (r'volumes/.*_(RAW|D0M_...)\.JPG$', 0, ('HST', 30, 'hst-raw',   'Raw Data Preview')),
     (r'volumes/.*_(FLT|CAL)\.JPG$',     0, ('HST', 40, 'hst-calib', 'Calibrated Data Preview')),
