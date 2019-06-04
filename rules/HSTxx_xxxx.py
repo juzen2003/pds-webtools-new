@@ -92,16 +92,17 @@ neighbors = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*\.ASC$',               0, ('HST', 10, 'hst-text',  'FITS Header Text')),
-    (r'volumes/.*\.LBL$',               0, ('HST', 10, 'hst-label', 'HST Preview Products')),
-    (r'volumes/.*\.TIF$',               0, ('HST', 20, 'hst-tiff',  'Raw Data Preview (lossless)')),
-    (r'volumes/.*_(RAW|D0M_...)\.JPG$', 0, ('HST', 30, 'hst-raw',   'Raw Data Preview')),
-    (r'volumes/.*_(FLT|CAL)\.JPG$',     0, ('HST', 40, 'hst-calib', 'Calibrated Data Preview')),
-    (r'volumes/.*_DRZ\.JPG$',           0, ('HST', 50, 'hst-drizzled', 'Drizzled Image Preview')),
-    (r'volumes/.*_IMA\.JPG$',           0, ('HST', 60, 'hst-ima',      'Pre-mosaic Image Preview')),
-    (r'volumes/.*_MOS\.JPG$',           0, ('HST', 70, 'hst-mosaic',   'Mosaic Image Preview')),
-    (r'volumes/.*_X1D\.JPG$',           0, ('HST', 80, 'hst-1d-spectrum', '1-D Spectrum Preview')),
-    (r'volumes/.*_X2D\.JPG$',           0, ('HST', 90, 'hst-2d-spectrum', '2-D Spectrum Preview')),
+    (r'volumes/.*\.ASC$',                 0, ('HST',  10, 'hst-text',  'FITS Header Text')),
+    (r'volumes/.*\.LBL$',                 0, ('HST',  10, 'hst-label', 'HST Preview Products')),
+    (r'volumes/.*\.TIF$',                 0, ('HST',  20, 'hst-tiff',  'Raw Data Preview (lossless)')),
+    (r'volumes/.*_(RAW.*|D0M_...)\.JPG$', 0, ('HST',  30, 'hst-raw',   'Raw Data Preview')),
+    (r'volumes/.*_(FLT.*|CAL)\.JPG$',     0, ('HST',  40, 'hst-calib', 'Calibrated Data Preview')),
+    (r'volumes/.*_SFL\.JPG$',             0, ('HST',  50, 'hst-summed', 'Calibrated Summed Data Preview')),
+    (r'volumes/.*_DRZ\.JPG$',             0, ('HST',  60, 'hst-drizzled', 'Drizzled Image Preview')),
+    (r'volumes/.*_IMA\.JPG$',             0, ('HST',  70, 'hst-ima',      'Pre-mosaic Image Preview')),
+    (r'volumes/.*_MOS\.JPG$',             0, ('HST',  80, 'hst-mosaic',   'Mosaic Image Preview')),
+    (r'volumes/.*_(X1D|SX1)\.JPG$',       0, ('HST',  90, 'hst-1d-spectrum', '1-D Spectrum Preview')),
+    (r'volumes/.*_(X2D|SX2)\.JPG$',       0, ('HST', 100, 'hst-2d-spectrum', '2-D Spectrum Preview')),
 ])
 
 ####################################################################################################################################
