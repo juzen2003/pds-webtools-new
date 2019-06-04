@@ -531,6 +531,7 @@ class MemcachedCache(PdsCache):
                 self.permanent_values[k] = self.local_value_by_key[k]
 
         # Cache items grouped by lifetime
+        failures = []
         for lifetime in self.local_keys_by_lifetime:
 
             # Save tuples (value, lifetime)
