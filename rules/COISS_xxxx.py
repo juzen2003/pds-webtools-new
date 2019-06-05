@@ -42,7 +42,7 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 default_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl',  re.I, ''),
 
-    (r'\w+/(.*/data/images/[^\.]+)\.\w+',  0, (r'previews/\1_full.jpg',
+    (r'\w+/(.*/data/images/[^\.]+)\.\w+',  0, (r'previews/\1_full.png',
                                                r'previews/\1_thumb.jpg',
                                                r'previews/\1_small.jpg',
                                                r'previews/\1_med.jpg')),
@@ -52,17 +52,17 @@ default_viewables = translator.TranslatorByRegex([
                                                r'previews/\1_small.png',
                                                r'previews/\1_med.png')),
 
-    (r'\w+/(.*)/extras/\w+/(\w+/[^\.]+)\.\w+',  0, (r'previews/\1/data/\2_full.jpg',
+    (r'\w+/(.*)/extras/\w+/(\w+/[^\.]+)\.\w+',  0, (r'previews/\1/data/\2_full.png',
                                                     r'previews/\1/data/\2_thumb.jpg',
                                                     r'previews/\1/data/\2_small.jpg',
                                                     r'previews/\1/data/\2_med.jpg')),
 
-    (r'volumes/(COISS_....)/(\w+/data/\w+/[^\.]+)\.\w+', 0, (r'previews/\1/\2_full.jpg',
+    (r'volumes/(COISS_....)/(\w+/data/\w+/[^\.]+)\.\w+', 0, (r'previews/\1/\2_full.png',
                                                              r'previews/\1/\2_thumb.jpg',
                                                              r'previews/\1/\2_small.jpg',
                                                              r'previews/\1/\2_med.jpg')),
 
-    (r'calibrated/(COISS_....)(|_.*?)/(\w+/data/\w+/[^\.]+)_CALIB\.\w+', 0, (r'previews/\1/\3_full.jpg',
+    (r'calibrated/(COISS_....)(|_.*?)/(\w+/data/\w+/[^\.]+)_CALIB\.\w+', 0, (r'previews/\1/\3_full.png',
                                                                              r'previews/\1/\3_thumb.jpg',
                                                                              r'previews/\1/\3_small.jpg',
                                                                              r'previews/\1/\3_med.jpg')),
@@ -133,7 +133,7 @@ associations_to_calibrated = translator.TranslatorByRegex([
 
 associations_to_previews = translator.TranslatorByRegex([
     (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras/\w+)/(\w+/[NW][0-9]{10}_[0-9]+).*',
-                                                                                0, [r'previews/\1/\3/data/\5_full.jpg',
+                                                                                0, [r'previews/\1/\3/data/\5_full.png',
                                                                                     r'previews/\1/\3/data/\5_med.jpg',
                                                                                     r'previews/\1/\3/data/\5_small.jpg',
                                                                                     r'previews/\1/\3/data/\5_thumb.jpg']),
@@ -141,7 +141,7 @@ associations_to_previews = translator.TranslatorByRegex([
     (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)/(data|extras|extras/\w+)$',       0,  r'previews/\1/\3/data'),
     (r'.*/(COISS_[12]xxx)(|_.*?)/(COISS_....)$',                                0,  r'previews/\1/\3'),
 
-    (r'.*/(COISS_3xxx.*)/(COISS_30..)/.*/images/(SM_[^\.]+)\..*',               0, [r'previews/\1/\2/data/images/\3_full.jpg',
+    (r'.*/(COISS_3xxx.*)/(COISS_30..)/.*/images/(SM_[^\.]+)\..*',               0, [r'previews/\1/\2/data/images/\3_full.png',
                                                                                     r'previews/\1/\2/data/images/\3_thumb.jpg',
                                                                                     r'previews/\1/\2/data/images/\3_small.jpg',
                                                                                     r'previews/\1/\2/data/images/\3_med.jpg']),
@@ -227,7 +227,7 @@ neighbors = translator.TranslatorByRegex([
 sort_key = translator.TranslatorByRegex([
 
     # Skips over N or W, placing files into chronological order
-    (r'([NW])([0-9]{10})(.*)_full.jpg', 0, r'\2\1\3_1full.jpg'),
+    (r'([NW])([0-9]{10})(.*)_full.png', 0, r'\2\1\3_1full.jpg'),
     (r'([NW])([0-9]{10})(.*)_med.jpg', 0, r'\2\1\3_2med.jpg'),
     (r'([NW])([0-9]{10})(.*)_small.jpg', 0, r'\2\1\3_3small.jpg'),
     (r'([NW])([0-9]{10})(.*)_thumb.jpg', 0, r'\2\1\3_4thumb.jpg'),
@@ -274,7 +274,7 @@ opus_products = translator.TranslatorByRegex([
                                                                      r'previews/\1/\2/data/\3_*_thumb.jpg',
                                                                      r'previews/\1/\2/data/\3_*_small.jpg',
                                                                      r'previews/\1/\2/data/\3_*_med.jpg',
-                                                                     r'previews/\1/\2/data/\3_*_full.jpg',
+                                                                     r'previews/\1/\2/data/\3_*_full.png',
                                                                      r'metadata/\1/\2/\2_jupiter_summary.lbl',
                                                                      r'metadata/\1/\2/\2_jupiter_summary.tab',
                                                                      r'metadata/\1/\2/\2_saturn_summary.lbl',
