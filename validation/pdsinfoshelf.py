@@ -91,6 +91,7 @@ def generate_infodict(pdsdir, selection, old_infodict={},
                 try:
                     im = Image.open(abspath)
                     size = im.size
+                    im.close()
                 except Exception:
                     logger.error('Preview size not found', abspath)
 

@@ -425,7 +425,7 @@ _ = PdsDependency(
     [r'previews/\1_thumb.jpg',
      r'previews/\1_small.jpg',
      r'previews/\1_med.jpg',
-     r'previews/\1_full.jpg',
+     r'previews/\1_full.png',
      r'calibrated/\1_CALIB.IMG'],
     suite='coiss12', newer=False,
 )
