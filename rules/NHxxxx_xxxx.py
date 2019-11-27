@@ -61,28 +61,6 @@ FILE_CODE_PRIORITY = {
     '54A': 29, #- MVIC Panchromatic Frame Transfer Lossy (CDH 2)/MPF
 }
 
-def description(code):
-    desc = []
-    if code in {'630', '633', '636', '639',
-                '530', '533', '536', '539', '53F', '542', '545', '548'}:
-        desc.append('Lossless')
-
-    if code in {'631', '634', '637', '63A',
-                '531', '534', '537', '53A', '540', '543', '546', '549'}:
-        desc.append('Packetized')
-
-    if code in {'632', '635', '638', '63B',
-                '532', '535', '538', '53B', '541', '544', '547', '54A'}:
-        desc.append('Lossy')
-
-    if code in {'633', '634', '635',
-                '533', '534', '535', '542', '543', '544'}:
-        desc.append('Binned')
-    else:
-        desc.append('Unbinned')
-
-    return ', '.join(desc)
-
 ####################################################################################################################################
 # DESCRIPTION_AND_ICON
 ####################################################################################################################################
@@ -392,21 +370,17 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
             code0 = priority[0][1]
             list0 = [priority[0][3]]
 
-            new_codes = []
             for (prio, code, _, sublist) in priority[1:]:
                 if code == code0:
                     list0.append(sublist)
                     continue
 
-                if code not in new_codes:
-                    desc = description(code)
-                    new_header = ('New Horizons',
-                                  100 + prio,
-                                  'nh-' + desc.replace(', ', '-').lower(),
-                                  'Duplicate Image (' + desc + ')')
+                new_header = ('New Horizons',
+                              header[1]+50,
+                              header[2]+'-alternate',
+                              header[3]+' Alternate Downlink')
+                if new_header not in pdsfiles:
                     pdsfiles[new_header] = []
-                    new_codes.append(code)
-
                 pdsfiles[new_header].append(sublist)
             pdsfiles[header] = list0
 
