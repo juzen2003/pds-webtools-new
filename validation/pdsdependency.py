@@ -42,7 +42,7 @@ TESTS = translator.TranslatorByRegex([
     ('.*/COVIMS_0xxx/COVIMS_0.*',   0, ['covims', 'cumindex', 'metadata']),
     ('.*/COVIMS_0xxx/COVIMS_UNKS',  0, ['covims', 'cumindex', 'metadata']),
     ('.*/GO_0xxx.*',                0, ['go', 'cumindex', 'metadata']),
-    ('.*/HST.x_xxxx/.*',            0,  'hst'),
+    ('.*/HST.x_xxxx/.*',            0,  'hst', 'cumindex99'),
     ('.*/NH(JU|LA)MV_xxxx.*',       0,  'nh', 'nhbrowse_vx'),
     ('.*/NH(PC|PE)MV_xxxx.*',       0,  'nh', 'nhbrowse'),
     ('.*/NH..(LO|MV)_xxxx.*',       0,  'nh'),
@@ -311,8 +311,9 @@ _ = PdsDependency(
     r'metadata/\1/\3/\3_index.tab',
     suite='metadata', newer=True,
 )
+
 ################################################################################
-# Cumulative index tests
+# Cumulative index tests where "_x999" is the suffix
 ################################################################################
 
 _ = PdsDependency(
@@ -370,7 +371,7 @@ _ = PdsDependency(
 )
 
 ################################################################################
-# Cumulative index tests for COVIMS_UNKS
+# Cumulative index tests where "9_9999" is the suffix
 ################################################################################
 
 _ = PdsDependency(
@@ -378,16 +379,74 @@ _ = PdsDependency(
     'metadata/$/$/*.tab',
     r'metadata/(.*?)/(.*?)/(.*)\.tab',
     r'metadata/\1/\2/\3.lbl',
-    suite='cumindex_unks', newer=False,
+    suite='cumindex99', newer=False,
 )
 
 _ = PdsDependency(
     'Newer cumulative version for every metadata table',
-    'metadata/$/$/COVIMS_UNKS*.tab',
-    r'metadata/(.*?)/COVIMS_UNKS/COVIMS_UNKS(.*).tab',
-    r'metadata/\1/COVIMS_0999/COVIMS_0999\2.tab',
-    suite='cumindex_unks', newer=True,
+    'metadata/$/$/*.tab',
+    r'metadata/(.*?)/(.*?)._..../(.*?)._....(.*).tab',
+    r'metadata/\1/\g<2>9_9999/\g<3>9_9999\4.tab',
+    suite='cumindex99', newer=True,
 )
+
+_ = PdsDependency(
+    'Newer archives and checksums of every cumulative metadata table',
+    'metadata/$/*9_9999/*.tab',
+    r'metadata/(.*?)/(.*?)/.*\.tab',
+    [r'archives-metadata/\1/\2_metadata.tar.gz',
+     r'checksums-metadata/\1/\2_metadata_md5.txt',
+     r'checksums-archives-metadata/\1_metadata_md5.txt'],
+    suite='cumindex99', newer=True,
+)
+
+_ = PdsDependency(
+    'Newer checksums of cumulative index archives',
+    'archives-metadata/$/*9_9999_metadata.tar.gz',
+    r'archives-metadata/(.*?)/(.*?)9_9999_metadata.tar.gz',
+    r'checksums-archives-metadata/\g<2>x_xxxx_metadata_md5.txt',
+    suite='cumindex99', newer=True,
+)
+
+_ = PdsDependency(
+    'Newer info shelf files for every cumulative metadata checksum file',
+    'metadata/$/*9_9999/*.tab',
+    r'metadata/(.*?)/(.*?)/(.*)\.tab',
+    [r'metadata/\1/\2_info.shelf',
+     r'metadata/\1/\2_info.py',
+     r'archives-metadata/\1_info.shelf',
+     r'archives-metadata/\1_info.py'],
+    suite='cumindex99', newer=True, dir='shelves/info'
+)
+
+_ = PdsDependency(
+    'Newer info shelf files for every cumulative metadata archive',
+    'checksums-archives-metadata/$_metadata_md5.txt',
+    r'checksums-archives-metadata/(.*?)_metadata_md5.txt',
+    [r'archives-metadata/\g<1>_info.shelf',
+     r'archives-metadata/\g<1>_info.py'],
+    suite='cumindex99', newer=True, dir='shelves/info'
+)
+
+################################################################################
+# Cumulative index tests for COVIMS_UNKS
+################################################################################
+
+# _ = PdsDependency(
+#     'PDS3 label for every metadata table',
+#     'metadata/$/$/*.tab',
+#     r'metadata/(.*?)/(.*?)/(.*)\.tab',
+#     r'metadata/\1/\2/\3.lbl',
+#     suite='cumindex_unks', newer=False,
+# )
+# 
+# _ = PdsDependency(
+#     'Newer cumulative version for every metadata table',
+#     'metadata/$/$/COVIMS_UNKS*.tab',
+#     r'metadata/(.*?)/COVIMS_UNKS/COVIMS_UNKS(.*).tab',
+#     r'metadata/\1/COVIMS_0999/COVIMS_0999\2.tab',
+#     suite='cumindex_unks', newer=True,
+# )
 
 ################################################################################
 # Preview tests
