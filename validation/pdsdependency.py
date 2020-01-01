@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################################
 # pdsdependency.py library and main program
 #
@@ -621,14 +621,14 @@ if __name__ == '__main__':
         path = os.path.abspath(path)
         pdsdir = pdsfile.PdsFile.from_abspath(path)
         if not pdsdir.is_volume_dir() and not pdsdir.is_volset_dir():
-            print 'pdsdependency error: ' + \
-                  'not a volume or volume set directory: ' + pdsdir.logical_path
-            sys.exit(1)
+          print('pdsdependency error: ' + \
+                'not a volume or volume set directory: ' + pdsdir.logical_path)
+          sys.exit(1)
 
         if pdsdir.category_ != 'volumes/':
-            print 'pdsdependency error: ' + \
-                  'not a volume or volume set directory: ' + pdsdir.logical_path
-            sys.exit(1)
+          print('pdsdependency error: ' + \
+                'not a volume or volume set directory: ' + pdsdir.logical_path)
+          sys.exit(1)
 
     # Initialize the logger
     logger = pdslogger.PdsLogger(LOGNAME)
@@ -650,18 +650,18 @@ if __name__ == '__main__':
     for path in args.volume:
 
         if not os.path.exists(path):
-            print 'No such file or directory: ' + path
+            print('No such file or directory: ' + path)
             sys.exit(1)
 
         path = os.path.abspath(path)
         pdsf = pdsfile.PdsFile.from_abspath(path)
 
         if pdsf.checksums_:
-            print 'No pdsdependency for checksum files: ' + path
+            print('No pdsdependency for checksum files: ' + path)
             sys.exit(1)
 
         if pdsf.archives_:
-            print 'No pdsdependency for archive files: ' + path
+            print('No pdsdependency for archive files: ' + path)
             sys.exit(1)
 
         if pdsf.is_volset_dir():

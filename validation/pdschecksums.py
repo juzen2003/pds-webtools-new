@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################################
 # pdschecksums.py library and main program
 #
@@ -306,7 +306,7 @@ def validate_pairs(pairs1, pairs2, selection=None, limits={}, logger=None):
                 logger.normal('Validated', abspath)
 
         if not selection:
-            abspaths = checksum_dict.keys()
+            abspaths = list(checksum_dict.keys())
             abspaths.sort()
             for abspath in abspaths:
                 logger.error('Extra file', abspath)
@@ -537,7 +537,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not args.task:
-        print 'pdschecksums error: Missing task'
+        print('pdschecksums error: Missing task')
         sys.exit(1)
 
     status = 0
@@ -569,7 +569,7 @@ if __name__ == '__main__':
     for path in args.volume:
 
         if not os.path.exists(path):
-            print 'No such file or directory: ' + path
+            print('No such file or directory: ' + path)
             sys.exit(1)
 
         # Convert to a list of absolute paths that exist
@@ -603,7 +603,7 @@ if __name__ == '__main__':
 
         pdsf = pdsfile.PdsFile.from_abspath(path)
         if pdsf.checksums_:
-            print 'No checksums for checksum files: ' + path
+            print('No checksums for checksum files: ' + path)
             sys.exit(1)
 
         if pdsf.is_volset_dir():
@@ -619,7 +619,7 @@ if __name__ == '__main__':
             info.append((pdsf, None))
 
         elif pdsf.isdir:
-            print 'Invalid directory for checksumming: ' + pdsf.logical_path
+            print('Invalid directory for checksumming: ' + pdsf.logical_path)
             sys.exit(1)
 
         else:
@@ -631,7 +631,7 @@ if __name__ == '__main__':
                 # Checksum one top-level file in volume
                 info.append((pdsdir, pdsf.basename))
             else:
-                print 'Invalid file for checksumming: ' + pdsf.logical_path
+                print('Invalid file for checksumming: ' + pdsf.logical_path)
                 sys.exit(1)
 
     # Begin logging and loop through tuples...

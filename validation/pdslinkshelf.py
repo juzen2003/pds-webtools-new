@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################################
 # # pdslinkshelf.py library and main program
 #
@@ -21,7 +21,10 @@ import pdslogger
 import pdsfile
 import translator
 
-GDBM_MODULE = __import__("gdbm")
+try:
+    GDBM_MODULE = __import__("gdbm")
+except ImportError:
+    GDBM_MODULE = __import__("dbm.gnu")
 
 LOGNAME = 'pds.validation.links'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
@@ -201,7 +204,7 @@ def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
         # Walk of tree is now complete
 
         # Update absolute paths to non-local files (.FMT for example)
-        for (key, tuples) in link_dict.iteritems():
+        for (key, tuples) in link_dict.items():
             if type(tuples) == str: continue
 
             key_basename = os.path.basename(key)
@@ -366,7 +369,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
 
         # Create a dictionary using interior paths instead of absolute paths
         interior_dict = {}
-        for (key, values) in link_dict.iteritems():
+        for (key, values) in link_dict.items():
             if type(values) == str:
                 interior_dict[key[lskip:]] = values[lskip:]
             else:
@@ -380,7 +383,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
         # shelf = shelve.open(shelf_path, flag='n')
         shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'n'))
 
-        for (key, values) in interior_dict.iteritems():
+        for (key, values) in interior_dict.items():
             shelf[key] = values
 
         shelf.close()
@@ -390,7 +393,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
         with open(pickle_path, 'wb') as f:
             pickle.dump(interior_dict, f)
 
-    except (Exception, KeyboardInterrupt), e:
+    except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
         raise
 
@@ -402,7 +405,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
         # Determine the maximum length of the file path and basename
         len_key = 0
         len_base = 0
-        for (key, value) in interior_dict.iteritems():
+        for (key, value) in interior_dict.items():
             len_key = max(len_key, len(key))
             if type(value) != str:
                 tuples = value
@@ -416,7 +419,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
         name = os.path.basename(python_path)
         parts = name.split('_')
         name = '_'.join(parts[:2]) + '_links'
-        keys = interior_dict.keys()
+        keys = list(interior_dict.keys())
         keys.sort()
 
         with open(python_path, 'w') as f:
@@ -452,7 +455,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
 
             f.write('}\n\n')
 
-    except (Exception, KeyboardInterrupt), e:
+    except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
         raise
 
@@ -505,7 +508,7 @@ def load_links(dirpath, limits={}, logger=None):
 
         # Convert interior paths to absolute paths
         link_dict = {}
-        for (key, values) in interior_dict.iteritems():
+        for (key, values) in interior_dict.items():
             long_key = dirpath_ + key
 
             if type(values) == str:
@@ -543,7 +546,7 @@ def validate_links(dirpath, dirdict, shelfdict, limits={}, logger=None):
     logger.open('Validating link file info for', dirpath, limits=limits)
 
     try:
-        keys = dirdict.keys()
+        keys = list(dirdict.keys())
         for key in keys:
             if key in shelfdict:
                 dirinfo = dirdict[key]
@@ -558,12 +561,12 @@ def validate_links(dirpath, dirdict, shelfdict, limits={}, logger=None):
                 del shelfdict[key]
                 del dirdict[key]
 
-        keys = dirdict.keys()
+        keys = list(dirdict.keys())
         keys.sort()
         for key in keys:
             logger.error('Missing link info for', key)
 
-        keys = shelfdict.keys()
+        keys = list(shelfdict.keys())
         keys.sort()
         for key in keys:
             logger.error('Shelf link info found for missing file', key)
@@ -739,7 +742,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not args.task:
-        print 'pdslinkshelf error: Missing task'
+        print('pdslinkshelf error: Missing task')
         sys.exit(1)
 
     status = 0
@@ -772,18 +775,18 @@ if __name__ == '__main__':
     for path in args.volume:
 
         if not os.path.exists(path):
-            print 'No such file or directory: ' + path
+            print('No such file or directory: ' + path)
             sys.exit(1)
 
         path = os.path.abspath(path)
         pdsf = pdsfile.PdsFile.from_abspath(path)
 
         if pdsf.checksums_:
-            print 'No infoshelves for checksum files: ' + path
+            print('No infoshelves for checksum files: ' + path)
             sys.exit(1)
 
         if pdsf.archives_:
-            print 'No linkshelves for archive files: ' + path
+            print('No linkshelves for archive files: ' + path)
             sys.exit(1)
 
         if pdsf.is_volset_dir():

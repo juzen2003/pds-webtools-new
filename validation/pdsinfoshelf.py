@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################################
 # pdsinfoshelf.py library and main program
 #
@@ -22,7 +22,10 @@ import pdslogger
 import pdsfile
 import pdschecksums
 
-GDBM_MODULE = __import__("gdbm")
+try:
+    GDBM_MODULE = __import__("gdbm")
+except ImportError:
+    GDBM_MODULE = __import__("dbm.gnu")
 
 # Holds log file directories temporarily, used by move_old_info()
 LOGDIRS = []
@@ -50,6 +53,7 @@ def generate_infodict(pdsdir, selection, old_infodict={},
     """
 
     def get_info(abspath, infodict, checkdict):
+        """Info about the given abspath."""
 
         if os.path.isdir(abspath):
             bytes = 0
@@ -83,7 +87,11 @@ def generate_infodict(pdsdir, selection, old_infodict={},
             children = 0
             dt = datetime.datetime.fromtimestamp(os.path.getmtime(abspath))
             modtime = dt.strftime('%Y-%m-%d %H:%M:%S.%f')
-            checksum = checkdict[abspath]
+            try:
+                checksum = checkdict[abspath]
+            except KeyError:
+                logger.fatal('Missing entry in checksum file', abspath)
+                raise
 
             size = (0,0)
             ext = os.path.splitext(abspath)[1]
@@ -139,7 +147,7 @@ def generate_infodict(pdsdir, selection, old_infodict={},
             merged[root] = infodict[root]
 
         else:
-            for (key, value) in infodict.iteritems():
+            for (key, value) in infodict.items():
                 if key not in merged:
                     merged[key] = infodict[key]
 
@@ -175,7 +183,7 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
         shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'n'))
 
         pickle_dict = {}
-        for (key, values) in infodict.iteritems():
+        for (key, values) in infodict.items():
             short_key = key[lskip:]
             shelf[short_key] = values
             pickle_dict[short_key] = values
@@ -197,7 +205,7 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
     try:
         # Determine the maximum length of the file path
         len_path = 0
-        for (abspath, values) in infodict.iteritems():
+        for (abspath, values) in infodict.items():
             len_path = max(len_path, len(abspath))
 
         len_path -= lskip
@@ -207,7 +215,7 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
         name = os.path.basename(python_path)
         parts = name.split('_')
         name = '_'.join(parts[:2]) + '_info'
-        abspaths = infodict.keys()
+        abspaths = list(infodict.keys())
         abspaths.sort()
 
         with open(python_path, 'w') as f:
@@ -284,17 +292,30 @@ def load_infodict(pdsdir, logger=None):
 
 ################################################################################
 
-def validate_infodict(pdsdir, dirdict, shelfdict,
-                               limits={'normal': 0}, logger=None):
+def validate_infodict(pdsdir, dirdict, shelfdict, selection,
+                      limits={'normal': 0}, logger=None):
 
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
 
     logger.replace_root(pdsdir.root_)
-    logger.open('Validating file info for', pdsdir.abspath, limits=limits)
+
+    if selection:
+        logger.open('Validating file info for selection %s' % selection,
+                    pdsdir.abspath, limits=limits)
+    else:
+        logger.open('Validating file info for', pdsdir.abspath, limits=limits)
+
+    # Prune the shelf dictionary if necessary
+    if selection:
+        keys = list(shelfdict.keys())
+        full_path = os.path.join(pdsdir.abspath, selection)
+        for key in keys:
+            if key != full_path:
+                del shelfdict[key]
 
     try:
-        keys = dirdict.keys()
+        keys = list(dirdict.keys())
         for key in keys:
             if key in shelfdict:
                 dirinfo = dirdict[key]
@@ -337,12 +358,12 @@ def validate_infodict(pdsdir, dirdict, shelfdict,
                 del shelfdict[key]
                 del dirdict[key]
 
-        keys = dirdict.keys()
+        keys = list(dirdict.keys())
         keys.sort()
         for key in keys:
             logger.error('Missing shelf info for', key)
 
-        keys = shelfdict.keys()
+        keys = list(shelfdict.keys())
         keys.sort()
         for key in keys:
             logger.error('Shelf info for missing file', key)
@@ -445,7 +466,8 @@ def validate(pdsdir, selection=None, logger=None):
     dir_infodict = generate_infodict(pdsdir, selection, logger=logger)
 
     # Validate
-    validate_infodict(pdsdir, dir_infodict, shelf_infodict, logger=logger)
+    validate_infodict(pdsdir, dir_infodict, shelf_infodict, selection=selection,
+                      logger=logger)
 
 def repair(pdsdir, selection=None, logger=None):
 
@@ -456,7 +478,7 @@ def repair(pdsdir, selection=None, logger=None):
 
     # For a single selection, use the old information
     if selection:
-        key = dir_infodict.keys()[0]
+        key = list(dir_infodict.keys())[0]
         value = dir_infodict[key]
         dir_infodict = shelf_infodict.copy()
         dir_infodict[key] = value
@@ -566,7 +588,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not args.task:
-        print 'pdsinfoshelf error: Missing task'
+        print('pdsinfoshelf error: Missing task')
         sys.exit(1)
 
     status = 0
@@ -598,13 +620,13 @@ if __name__ == '__main__':
     for path in args.volume:
 
         if not os.path.exists(path):
-            print 'No such file or directory: ' + path
+            print('No such file or directory: ' + path)
             sys.exit(1)
 
         path = os.path.abspath(path)
         pdsf = pdsfile.PdsFile.from_abspath(path)
         if pdsf.checksums_:
-            print 'No infoshelves for checksum files: ' + path
+            print('No infoshelves for checksum files: ' + path)
             sys.exit(1)
 
         if pdsf.is_volset_dir():
@@ -621,7 +643,7 @@ if __name__ == '__main__':
             info.append((pdsf, None))
 
         elif pdsf.isdir:
-            print 'Invalid directory for an infoshelf: ' + pdsf.logical_path
+            print('Invalid directory for an infoshelf: ' + pdsf.logical_path)
             sys.exit(1)
 
         else:
@@ -633,7 +655,7 @@ if __name__ == '__main__':
                 # Shelve one top-level file in volume
                 info.append((pdsdir, pdsf.basename))
             else:
-                print 'Invalid file for an infoshelf: ' + pdsf.logical_path
+                print('Invalid file for an infoshelf: ' + pdsf.logical_path)
                 sys.exit(1)
 
     # Open logger and loop through tuples...
@@ -695,7 +717,10 @@ if __name__ == '__main__':
                     initialize(pdsdir, selection)
 
                 elif args.task == 'reinitialize':
-                    reinitialize(pdsdir, selection)
+                    if selection:       # don't erase everything else!
+                        update(pdsdir, selection)
+                    else:
+                        reinitialize(pdsdir, selection)
 
                 elif args.task == 'validate':
                     validate(pdsdir, selection)
@@ -706,7 +731,7 @@ if __name__ == '__main__':
                 else:   # update
                     update(pdsdir, selection)
 
-            except (Exception, KeyboardInterrupt), e:
+            except (Exception, KeyboardInterrupt) as e:
                 logger.exception(e)
                 raise
 
@@ -715,7 +740,7 @@ if __name__ == '__main__':
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
-        print sys.exc_info()[2]
+        print(sys.exc_info()[2])
         status = 1
         raise
 

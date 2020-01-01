@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################################
 # re-validate.py
 #
@@ -78,7 +78,7 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
             if not os.path.exists(abspath): continue
 
             temp_pdsdir = pdsfile.PdsFile.from_abspath(abspath)
-            if args.checksums and not args.targz_only:
+            if args.checksums:
                 logger.open('Checksum re-validatation for', abspath)
                 try:
                     pdschecksums.validate(temp_pdsdir, logger=logger)
@@ -86,7 +86,7 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
                     tests_performed += 1
                     logger.close()
 
-            if args.archives and not args.targz_only:
+            if args.archives:
                 logger.open('Archive re-validatation for', abspath)
                 try:
                     pdsarchives.validate(temp_pdsdir, logger=logger)
@@ -95,7 +95,7 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
                     logger.close()
 
         # Checksums for each 'archive-' + voltype...
-        if checksums and targz:
+        if checksums and args.archives:
             for voltype in voltypes:
                 abspath = pdsdir.abspath.replace('/volumes/',
                                                  '/archives-' + voltype + '/')
@@ -103,13 +103,13 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
                 abspath = glob.glob(abspath)
                 if not abspath: continue
 
-                abspath = abspath[0]
+                abspath = abspath[0]    # there should only be one
 
                 (prefix, basename) = os.path.split(abspath)
                 temp_pdsdir = pdsfile.PdsFile.from_abspath(prefix)
                 logger.open('Checksum re-validatation for', abspath)
                 try:
-                    pdschecksums.validate(temp_pdsdir, logger=logger)
+                    pdschecksums.validate(temp_pdsdir, basename, logger)
                 finally:
                     tests_performed += 1
                     logger.close()
@@ -121,7 +121,7 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
             if not os.path.exists(abspath): continue
 
             temp_pdsdir = pdsfile.PdsFile.from_abspath(abspath)
-            if args.infoshelves and not args.targz_only:
+            if args.infoshelves:
                 logger.open('Infoshelf re-validatation for', abspath)
                 try:
                     pdsinfoshelf.validate(temp_pdsdir, logger=logger)
@@ -129,7 +129,7 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
                     tests_performed += 1
                     logger.close()
 
-            if (args.linkshelves and not args.targz_only and
+            if (args.linkshelves and
                 voltype in ('volumes', 'calibrated', 'metadata')):
                     logger.open('Linkshelf re-validatation for', abspath)
                     try:
@@ -139,7 +139,7 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
                         logger.close()
 
         # Infoshelves for each 'archive-' + voltype...
-        if args.infoshelves and targz:
+        if args.infoshelves and args.archives:
             for voltype in voltypes:
                 abspath = pdsdir.abspath.replace('/volumes/',
                                                  '/archives-' + voltype + '/')
@@ -147,19 +147,19 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
                 abspath = glob.glob(abspath)
                 if not abspath: continue
 
-                abspath = abspath[0]
+                abspath = abspath[0]    # there should only be one
 
                 (prefix, basename) = os.path.split(abspath)
                 temp_pdsdir = pdsfile.PdsFile.from_abspath(prefix)
                 logger.open('Infoshelf re-validatation for', abspath)
                 try:
-                    pdsinfoshelf.validate(temp_pdsdir, logger=logger)
+                    pdsinfoshelf.validate(temp_pdsdir, basename, logger)
                 finally:
                     tests_performed += 1
                     logger.close()
 
         # Dependencies
-        if args.dependencies and not args.targz_only:
+        if args.dependencies:
             logger.open('Dependency re-validation for', abspath)
             try:
                 pdsdependency.test(pdsdir, logger)
@@ -242,7 +242,7 @@ def get_all_log_info(logroot):
                 info = get_log_info(logfile)
             except Exception as e:
                 if not isinstance(e, ValueError):
-                    print logfile, e
+                    print(logfile, e)
                 continue
 
             info_list.append(info)
@@ -263,7 +263,7 @@ def sort_log_info(info_list):
 
         last_info_for_abspath[abspath] = info
 
-    new_info = last_info_for_abspath.values()
+    new_info = list(last_info_for_abspath.values())
     new_info.sort()
     return new_info
 
@@ -309,7 +309,7 @@ def find_modified_volumes(holdings_info, log_info):
             del log_dict[key]
 
     # Sort the logged volumes from oldest to newest
-    current_log_info = log_dict.values()
+    current_log_info = list(log_dict.values())
     current_log_info.sort()
 
     return (modified_holdings, current_log_info)
@@ -411,7 +411,9 @@ parser.add_argument('--dependencies', '-D', action='store_true',
                     help='Validate dependencies.')
 
 parser.add_argument('--full', '-F', action='store_true',
-                    help='Perform the full set of validation tests.')
+                    help='Perform the full set of validation tests '           +
+                         '(checksums, archives, infoshelves, linkshelves, '    +
+                         'dependencies). This is the default.')
 
 parser.add_argument('--volumes', '-v', action='store_true',
                     help='Check volume directories.')
@@ -428,16 +430,10 @@ parser.add_argument('--metadata', '-m', action='store_true',
 parser.add_argument('--previews', '-p', action='store_true',
                     help='Check preview directories.')
 
-parser.add_argument('--targz', '-t', action='store_true',
-                    help='Check .tar.gz archives in addition to directories.')
-
-parser.add_argument('--targz-only', '-T', action='store_true',
-                    help='Only check .tar.gz checksums, not other files or '   +
-                         'directories.')
-
 parser.add_argument('--all', '-a', action='store_true',
                     help='Check all directories and files related to the '     +
-                         'volume.')
+                         'volume (volumes, calibrated, diagrams, metadata, '   +
+                         'previews). This is the default.')
 
 # Parse and validate the command line
 args = parser.parse_args()
@@ -458,8 +454,6 @@ if args.calibrated:
 if voltypes == [] or args.all:
     voltypes = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews']
 
-targz = args.all or args.targz or args.targz_only
-
 if args.pickles:
     pdsfile.use_pickles()
 
@@ -471,19 +465,16 @@ linkshelves  = args.links
 dependencies = args.dependencies
 
 if args.full or not (checksums or archives or infoshelves or linkshelves or
-                          dependencies):
+                     dependencies):
     checksums    = True
     archives     = True
     infoshelves  = True
     linkshelves  = True
     dependencies = True
 
-checksums    |= (args.targz_only and not infoshelves)
-archives     &= not args.targz_only
-dependencies &= ('volumes' in voltypes and not args.targz_only)
+dependencies &= ('volumes' in voltypes)
 linkshelves  &= (('volumes' in voltypes or 'metadata' in voltypes or
-                                           'calibrated' in voltypes) and
-                 not args.targz_only)
+                                           'calibrated' in voltypes))
 
 args.checksums    = checksums
 args.archives     = archives
@@ -497,7 +488,6 @@ if archives    : tests.append('archives')
 if infoshelves : tests.append('infoshelves')
 if linkshelves : tests.append('linkshelves')
 if dependencies: tests.append('dependencies')
-if args.targz_only: tests = ['checksums (tar.gz only)']
 
 # Define the logging directory
 if args.log == '':
@@ -537,12 +527,12 @@ if not args.batch and not args.batch_status:
 
     # Stop if a volume or volume set doesn't exist
     if not args.volume:
-        print 'Missing volume path'
+        print('Missing volume path')
         sys.exit(1)
 
     for volume in args.volume:
         if not os.path.exists(volume):
-            print 'Volume path not found: ' + volume
+            print('Volume path not found: ' + volume)
             sys.exit(1)
 
     # Convert to PdsFile objects; expand volume sets; collect holdings paths
@@ -552,7 +542,7 @@ if not args.batch and not args.batch_status:
         abspath = os.path.abspath(volume)
         pdsdir = pdsfile.PdsFile.from_abspath(abspath)
         if pdsdir.category_ != 'volumes/' or pdsdir.interior:
-            print 'Not a volume path: ', pdsdir.abspath
+            print('Not a volume path: ', pdsdir.abspath)
             sys.exit(1)
 
         logger.add_root(pdsdir.root_)
@@ -591,12 +581,12 @@ else:
         args.volume = glob.glob('/Volumes/pdsdata*/holdings')
 
     if not args.volume:
-        print 'No holdings path found'
+        print('No holdings path found')
         sys.exit(1)
 
     for holding in args.volume:
         if not os.path.exists(holding):
-            print 'Holdings path not found: ' + holding
+            print('Holdings path not found: ' + holding)
             sys.exit(1)
 
     logger.add_root(args.volume)
@@ -621,8 +611,8 @@ else:
         for (abspath, date) in modified_holdings:
             pdsdir = pdsfile.PdsFile.from_abspath(abspath)
             line_number += 1
-            print fmt % (line_number, pdsdir.volset_, pdsdir.volname,
-                         date[:10])
+            print(fmt % (line_number, pdsdir.volset_, pdsdir.volname,
+                         date[:10]))
 
         fmt ='%4d  %20s%-11s  modified %s, last validated %s, duration %s%s'
         for info in current_logs:
@@ -630,8 +620,8 @@ else:
             pdsdir = pdsfile.PdsFile.from_abspath(abspath)
             error_text = ', error logged' if had_error else ''
             line_number += 1
-            print fmt % (line_number, pdsdir.volset_, pdsdir.volname,
-                         date[:10], start[:10], elapsed[:-7], error_text)
+            print(fmt % (line_number, pdsdir.volset_, pdsdir.volname,
+                         date[:10], start[:10], elapsed[:-7], error_text))
 
         sys.exit()
 
@@ -645,7 +635,7 @@ else:
     error_messages = []
     batch_prefix = ('Batch re-validate started at %s\n' %
                     start.strftime("%Y-%m-%d %H:%M:%S"))
-    print batch_prefix
+    print(batch_prefix)
 
     # Main loop
     logger.open(' '.join(sys.argv))
@@ -660,7 +650,7 @@ else:
                 ps = 'last validated %s' % prev_validation[:10]
             batch_message = '%20s%-11s  modified %s, %s' % \
                             (pdsdir.volset_, pdsdir.volname, mod_date[:10], ps)
-            print batch_message
+            print(batch_message)
 
             (logfile,
              fatal, errors) = validate_one_volume(pdsdir, voltypes, tests,
@@ -675,7 +665,7 @@ else:
                 stringlist.append(logfile)
                 error_message = ''.join(stringlist)
 
-                print error_message
+                print(error_message)
 
             batch_messages.append(batch_message)
 
@@ -701,7 +691,7 @@ else:
         batch_suffix = ('\nTimeout at %s after %d minutes' %
                          (now.strftime("%Y-%m-%d %H:%M:%S"),
                          int((now - start).seconds/60. + 0.5)))
-        print batch_suffix
+        print(batch_suffix)
 
         if args.email:
             if error_messages:

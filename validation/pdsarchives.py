@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################################
 # pdsarchives.py library and main program
 #
@@ -247,7 +247,7 @@ def validate_tuples(dir_tuples, tar_tuples, limits={'normal':100}, logger=None):
                 logger.normal('Validated', dirpath)
                 del tardict[abspath]
 
-        keys = tardict.keys()
+        keys = list(tardict.keys())
         keys.sort()
         for abspath in keys:
             logger.error('Missing from directory', abspath)
@@ -361,7 +361,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not args.task:
-        print 'pdsarchives error: Missing task'
+        print('pdsarchives error: Missing task')
         sys.exit(1)
 
     status = 0
@@ -394,17 +394,17 @@ if __name__ == '__main__':
     for path in args.volume:
 
         if not os.path.exists(path):
-            print 'No such file or directory: ' + path
+            print('No such file or directory: ' + path)
             sys.exit(1)
 
         path = os.path.abspath(path)
         pdsf = pdsfile.PdsFile.from_abspath(path)
         if pdsf.checksums_:
-            print 'No archives for checksum files: ' + path
+            print('No archives for checksum files: ' + path)
             sys.exit(1)
 
         if pdsf.archives_:
-            print 'No archives for archive files: ' + path
+            print('No archives for archive files: ' + path)
             sys.exit(1)
 
         try:
