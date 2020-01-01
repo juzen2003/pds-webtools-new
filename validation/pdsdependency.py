@@ -30,22 +30,22 @@ LOGROOT_ENV = 'PDS_LOG_ROOT'
 ################################################################################
 
 TESTS = translator.TranslatorByRegex([
-    ('.*',                          0,  'general'),
+    ('.*',                          0, ['general']),
     ('.*/COCIRS_0xxx(|_v[3-9])/COCIRS_0[4-9].*',
-                                    0,  'cocirs01'),
-    ('.*/COCIRS_1xxx(|_v[3-9]).*',  0,  'cocirs01'),
-    ('.*/COCIRS_[56]xxx.*',         0,  'cocirs56'),
+                                    0, ['cocirs01']),
+    ('.*/COCIRS_1xxx(|_v[3-9]).*',  0, ['cocirs01']),
+    ('.*/COCIRS_[56]xxx.*',         0, ['cocirs56']),
     ('.*/COISS_[12]xxx.*',          0, ['coiss12', 'cumindex', 'metadata']),
-    ('.*/COISS_3xxx.*',             0,  'coiss3'),
-    ('.*/COISS_3xxx_v[0-9]+.*',     0,  'coiss3'),
+    ('.*/COISS_3xxx.*',             0, ['coiss3']),
+    ('.*/COISS_3xxx_v[0-9]+.*',     0, ['coiss3']),
     ('.*/COUVIS_0xxx.*',            0, ['couvis', 'cumindex', 'metadata']),
     ('.*/COVIMS_0xxx/COVIMS_0.*',   0, ['covims', 'cumindex', 'metadata']),
     ('.*/COVIMS_0xxx/COVIMS_UNKS',  0, ['covims', 'cumindex', 'metadata']),
     ('.*/GO_0xxx.*',                0, ['go', 'cumindex', 'metadata']),
-    ('.*/HST.x_xxxx/.*',            0,  'hst', 'cumindex99'),
-    ('.*/NH(JU|LA)MV_xxxx.*',       0,  'nh', 'nhbrowse_vx'),
-    ('.*/NH(PC|PE)MV_xxxx.*',       0,  'nh', 'nhbrowse'),
-    ('.*/NH..(LO|MV)_xxxx.*',       0,  'nh'),
+    ('.*/HST.x_xxxx/.*',            0, ['hst', 'cumindex99']),
+    ('.*/NH(JU|LA)MV_xxxx.*',       0, ['nh', 'nhbrowse_vx']),
+    ('.*/NH(PC|PE)MV_xxxx.*',       0, ['nh', 'nhbrowse']),
+    ('.*/NH..(LO|MV)_xxxx.*',       0, ['nh']),
     ('.*/VGISS_[5678]xxx.*',        0, ['vgiss', 'cumindex', 'metadata']),
 ])
 
