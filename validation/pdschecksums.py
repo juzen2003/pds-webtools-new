@@ -694,7 +694,10 @@ if __name__ == '__main__':
                     initialize(pdsdir, selection)
 
                 elif args.task == 'reinitialize':
-                    reinitialize(pdsdir, selection)
+                    if selection:           # don't erase everything else!
+                        update(pdsdir, selection)
+                    else:
+                        reinitialize(pdsdir, selection)
 
                 elif args.task == 'validate':
                     validate(pdsdir, selection)
