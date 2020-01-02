@@ -28,10 +28,10 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'calibrated/\w+(|/\w+)',                                re.I, ('Calibrated image collection',   'IMAGEDIR')),
 
     (r'.*/thumbnail(/\w+)*',            re.I, ('Small browse images',           'BROWDIR' )),
-    (r'.*/thumbnail/.*\.(gif|jpg|jpeg|jpeg_small|tif|tiff|png)', 
+    (r'.*/thumbnail/.*\.(gif|jpg|jpeg|jpeg_small|tif|tiff|png)',
                                         re.I, ('Small browse image',            'BROWSE'  )),
     (r'.*/(tiff|full)(/\w+)*',          re.I, ('Full-size browse images',       'BROWDIR' )),
-    (r'.*/(tiff|full)/.*\.(tif|tiff|png)', 
+    (r'.*/(tiff|full)/.*\.(tif|tiff|png)',
                                         re.I, ('Full-size browse image',        'BROWSE'  )),
 ])
 
@@ -239,11 +239,11 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*\.(IMG|LBL)$',                      0, ('Cassini ISS',   0, 'coiss-raw',    'Raw image')),
-    (r'calibrated/.*_CALIB\.(IMG|LBL)$',             0, ('Cassini ISS',  10, 'coiss-calib',  'Calibrated image')),
-    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini ISS', 110, 'coiss-thumb',  'Extra preview (thumbnail)')),
-    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini ISS', 120, 'coiss-medium', 'Extra preview (medium)')),
-    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini ISS', 130, 'coiss-full',   'Extra preview (full)')),
+    (r'volumes/.*\.(IMG|LBL)$',                      0, ('Cassini ISS',   0, 'coiss_raw',    'Raw image')),
+    (r'calibrated/.*_CALIB\.(IMG|LBL)$',             0, ('Cassini ISS',  10, 'coiss_calib',  'Calibrated image')),
+    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini ISS', 110, 'coiss_thumb',  'Extra preview (thumbnail)')),
+    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini ISS', 120, 'coiss_medium', 'Extra preview (medium)')),
+    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini ISS', 130, 'coiss_full',   'Extra preview (full)')),
 ])
 
 ####################################################################################################################################

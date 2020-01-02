@@ -202,9 +202,9 @@ opus_type = translator.TranslatorByRegex([
     (r'previews/NHxx.._xxxx(|_v.+)/NH...._2xxx/.*$', 0, ''),
 
     (r'volumes/NHxx.._xxxx(|_v.+)/NH...._1.../data/.*_eng(|_[1-9])\.(fit|lbl)$', re.I,
-                                            ('New Horizons',   0, 'nh-raw',   'Raw Image')),
+                                            ('New Horizons',   0, 'nh_raw',   'Raw Image')),
     (r'volumes/NHxx.._xxxx(|_v.+)/NH...._2.../data/.*_sci(|_[1-9])\.(fit|lbl)$', re.I,
-                                            ('New Horizons', 100, 'nh-calib', 'Calibrated Image'))
+                                            ('New Horizons', 100, 'nh_calib', 'Calibrated Image'))
 ])
 
 ####################################################################################################################################

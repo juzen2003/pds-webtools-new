@@ -116,7 +116,7 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/GO_0xxx(|_v[1-9])/GO_0.../(?!CATALOG|DOCUMENT|INDEX|LABEL).*\.(IMG|LBL)', 0, ('Galileo SSI', 10, 'gossi-raw', 'Raw Image')),
+    (r'volumes/GO_0xxx(|_v[1-9])/GO_0.../(?!CATALOG|DOCUMENT|INDEX|LABEL).*\.(IMG|LBL)', 0, ('Galileo SSI', 10, 'gossi_raw', 'Raw Image')),
 ])
 
 ####################################################################################################################################
