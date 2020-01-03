@@ -92,18 +92,18 @@ neighbors = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*\.ASC$',                 0, ('HST',  10, 'hst-text',        'FITS Header Text')),
-    (r'volumes/.*\.LBL$',                 0, ('HST',  10, 'hst-label',       'HST Preview Products')),
-    (r'volumes/.*\.TIF$',                 0, ('HST',  20, 'hst-tiff',        'Raw Data Preview (lossless)')),
-    (r'volumes/.*_(RAW.*|D0M_...)\.JPG$', 0, ('HST',  30, 'hst-raw',         'Raw Data Preview')),
-    (r'volumes/.*_(FLT.*|CAL)\.JPG$',     0, ('HST',  40, 'hst-calib',       'Calibrated Data Preview')),
-    (r'volumes/.*_SFL\.JPG$',             0, ('HST',  50, 'hst-summed',      'Calibrated Summed Preview')),
-    (r'volumes/.*_CRJ\.JPG$',             0, ('HST',  60, 'hst-cosmic-ray',  'Calibrated Cosmic Ray Cleaned Preview')),
-    (r'volumes/.*_DRZ\.JPG$',             0, ('HST',  70, 'hst-drizzled',    'Calibrated Geometrically Corrected Preview')),
-    (r'volumes/.*_IMA\.JPG$',             0, ('HST',  80, 'hst-ima',         'Pre-mosaic Preview')),
-    (r'volumes/.*_MOS\.JPG$',             0, ('HST',  90, 'hst-mosaic',      'Mosaic Preview')),
-    (r'volumes/.*_(X1D|SX1)\.JPG$',       0, ('HST', 100, 'hst-1d-spectrum', '1-D Spectrum Preview')),
-    (r'volumes/.*_(X2D|SX2)\.JPG$',       0, ('HST', 110, 'hst-2d-spectrum', '2-D Spectrum Preview')),
+    (r'volumes/.*\.ASC$',                 0, ('HST',  10, 'hst_text',        'FITS Header Text')),
+    (r'volumes/.*\.LBL$',                 0, ('HST',  10, 'hst_label',       'HST Preview Products')),
+    (r'volumes/.*\.TIF$',                 0, ('HST',  20, 'hst_tiff',        'Raw Data Preview (lossless)')),
+    (r'volumes/.*_(RAW.*|D0M_...)\.JPG$', 0, ('HST',  30, 'hst_raw',         'Raw Data Preview')),
+    (r'volumes/.*_(FLT.*|CAL)\.JPG$',     0, ('HST',  40, 'hst_calib',       'Calibrated Data Preview')),
+    (r'volumes/.*_SFL\.JPG$',             0, ('HST',  50, 'hst_summed',      'Calibrated Summed Preview')),
+    (r'volumes/.*_CRJ\.JPG$',             0, ('HST',  60, 'hst_cosmic_ray',  'Calibrated Cosmic Ray Cleaned Preview')),
+    (r'volumes/.*_DRZ\.JPG$',             0, ('HST',  70, 'hst_drizzled',    'Calibrated Geometrically Corrected Preview')),
+    (r'volumes/.*_IMA\.JPG$',             0, ('HST',  80, 'hst_ima',         'Pre-mosaic Preview')),
+    (r'volumes/.*_MOS\.JPG$',             0, ('HST',  90, 'hst_mosaic',      'Mosaic Preview')),
+    (r'volumes/.*_(X1D|SX1)\.JPG$',       0, ('HST', 100, 'hst_1d_spectrum', '1-D Spectrum Preview')),
+    (r'volumes/.*_(X2D|SX2)\.JPG$',       0, ('HST', 110, 'hst_2d_spectrum', '2-D Spectrum Preview')),
 ])
 
 ####################################################################################################################################
@@ -125,16 +125,11 @@ opus_products = translator.TranslatorByRegex([
 
 filespec_to_opus_id = translator.TranslatorByRegex([
     # Associated HST products share an OPUS ID based on the first nine characters of the file's basename.
-    (r'HSTI(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}\d).*',  0, r'hst-\1\2-wfc3-\4'),
-    (r'HSTI(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',    0, r'hst-\1\2-wfc3-\4'),
-    (r'HSTJ(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}\d).*',  0, r'hst-\1\2-acs-\4'),
-    (r'HSTJ(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',    0, r'hst-\1\2-acs-\4'),
-    (r'HSTN(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}\d).*',  0, r'hst-\1\2-nicmos-\4'),
-    (r'HSTN(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',    0, r'hst-\1\2-nicmos-\4'),
-    (r'HSTO(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}\d).*',  0, r'hst-\1\2-stis-\4'),
-    (r'HSTO(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',    0, r'hst-\1\2-stis-\4'),
-    (r'HSTU(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}\d).*',  0, r'hst-\1\2-wfpc2-\4'),
-    (r'HSTU(.)_(....)(|_v.+)/DATA/VISIT_../(\w{8}).*',    0, r'hst-\1\2-wfpc2-\4'),
+    (r'HSTI(.)_(....)(|_v.+)/DATA/VISIT_../(\w{9}).*',    0, r'hst-\1\2-wfc3-\4'),
+    (r'HSTJ(.)_(....)(|_v.+)/DATA/VISIT_../(\w{9}).*',    0, r'hst-\1\2-acs-\4'),
+    (r'HSTN(.)_(....)(|_v.+)/DATA/VISIT_../(\w{9}).*',    0, r'hst-\1\2-nicmos-\4'),
+    (r'HSTO(.)_(....)(|_v.+)/DATA/VISIT_../(\w{9}).*',    0, r'hst-\1\2-stis-\4'),
+    (r'HSTU(.)_(....)(|_v.+)/DATA/VISIT_../(\w{9}).*',    0, r'hst-\1\2-wfpc2-\4'),
 ])
 
 ####################################################################################################################################
