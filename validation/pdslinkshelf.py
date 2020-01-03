@@ -75,6 +75,13 @@ REPAIRS = translator.TranslatorByRegex([
          'XWAVDS.CAT'       : 'CATALOG/SWAVDS.CAT'}),
     ('.*/COUVIS_8.*(AAREADME|CATINFO)\.TXT', 0,
         {'INST.CAT'         : 'CATALOG/UVISINST.CAT'}),
+    ('.*/COVIMS_0001/.*\.(lbl|txt)', 0,
+        {'band_bin_center.fmt'   : '../../COVIMS_0002/label/band_bin_center.fmt',
+         'core_description.fmt'  : '../../COVIMS_0002/label/core_description.fmt',
+         'suffix_description.fmt': '../../COVIMS_0002/label/suffix_description.fmt',
+         'BAND_BIN_CENTER.FMT'   : '../../COVIMS_0002/label/band_bin_center.fmt',
+         'CORE_DESCRIPTION.FMT'  : '../../COVIMS_0002/label/core_description.fmt',
+         'SUFFIX_DESCRIPTION.FMT': '../../COVIMS_0002/label/suffix_description.fmt'}),
     ('.*/COVIMS_0.*\.txt', 0,
         {'suffix.cat'       : '',
          'center.fmt'       : 'label/band_bin_center.fmt'}),
@@ -208,7 +215,7 @@ def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
             if type(tuples) == str: continue
 
             key_basename = os.path.basename(key)
-            key_islabel = (key_basename[-4:].upper() == '.LBL')
+            key_islabel = key_basename.upper().endswith('.LBL')
 
             updates = []
             for tuple in tuples:
@@ -225,10 +232,10 @@ def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
                     if absfile:
                         logger.info('Located "%s"' % basename, absfile)
                         updates.append((recno, basename, absfile))
-                    elif key_islabel and key_basename[:-4] == basename[:-4]:
-                        logger.error('Unable to locate "%s"' % basename, key)
+                    elif basename.upper().endswith('.FMT'):
+                        logger.warn('Unable to locate .fmt file "%s"' % basename, key)
                     else:
-                        logger.warn('Filename "%s" rejected' % basename, key)
+                        logger.info('Reference to file "%s" ignored' % basename, key)
 
             link_dict[key] = updates
 
@@ -261,7 +268,7 @@ def read_links(abspath, basenames, logger=None):
 
     repair_dict = REPAIRS.first(abspath)
 
-    with open(abspath) as f:
+    with open(abspath, 'r', encoding='latin-1') as f:
         recs = f.readlines()
 
     basenames_upper = [b.upper() for b in basenames]
@@ -557,6 +564,9 @@ def validate_links(dirpath, dirdict, shelfdict, limits={}, logger=None):
 
                 if type(shelfinfo) == list:
                     shelfinfo.sort()
+
+                if dirinfo != shelfinfo:
+                    logger.error('Link target mismatch', key)
 
                 del shelfdict[key]
                 del dirdict[key]

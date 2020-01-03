@@ -236,7 +236,7 @@ def validate_tuples(dir_tuples, tar_tuples, limits={'normal':100}, logger=None):
                                  '%d (filesystem) vs. %d (tarfile)' %
                                  (bytes, tardict[abspath][1]), abspath)
 
-                if abs(modtime != tardict[abspath][2]) > 1:
+                if abs(modtime - tardict[abspath][2]) > 1:
                     logger.error('Modification time mismatch: ' +
                                  '%s (filesystem) vs. %s (tarfile)' %
                                  (modtime, tardict[abspath][2]), abspath)
