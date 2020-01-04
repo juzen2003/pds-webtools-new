@@ -4937,7 +4937,7 @@ def repair_case(abspath):
 
     # Raise an IOError if last field was not found
     if not found:
-        f = open(abspath, 'r')
+        f = open(abspath, 'rb')
 
     return abspath
 
