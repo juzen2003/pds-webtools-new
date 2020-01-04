@@ -147,7 +147,7 @@ opus_type = translator.TranslatorByRegex([
 # OPUS_PRODUCTS
 ####################################################################################################################################
 
-PACKED_OPUS_TYPE = ('Cassini VIMS', 0, 'covims-packed', 'Packed version of unpacked raw data')
+PACKED_OPUS_TYPE = ('Cassini VIMS', 0, 'covims_packed', 'Packed version of unpacked raw data')
 
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(COVIMS_0xxx)/(COVIMS_0...)/data/(\w+/v[0-9]{10})_[0-9]+(|_[0-9]{3})\.(qub|lbl)', 0,
