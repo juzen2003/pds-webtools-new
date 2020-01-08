@@ -31,25 +31,15 @@
 # #     _ = subprocess.Popen(['osascript', '-e', script], stdout=subprocess.PIPE)
 #     _ = subprocess.call(['osascript', '-e', script])
 
-
-# This does not seem to work
-# 
-# from xattr import xattr
-# 
-# def set_color(filename, color_name):
-#     print('I am running!!!', filename, color_name)
-#     colors = ['none', 'gray', 'green', 'purple', 'blue', 'yellow', 'red', 'orange']
-#     key = u'com.apple.FinderInfo'
-#     attrs = xattr(filename)
-#     current = attrs.copy().get(key, chr(0)*32)
-#     changed = current[:9] + chr(colors.index(color_name)*2) + current[10:]
-#     attrs.set(key, changed)
-# 
-
 import sys
 import xattr
+from struct import unpack, pack
 
-BYTES32 = bytes(32)
+if sys.version_info >= (3,0):
+    BYTES32 = bytes(32)
+else:
+    BYTES32 = chr(0)*32
+
 COLORS = ['none', 'gray', 'green', 'violet', 'blue', 'yellow', 'red', 'orange']
 FINDER_KEY = u'com.apple.FinderInfo'
 
@@ -57,7 +47,9 @@ def set_color(filename, color_name):
     if sys.platform != 'darwin': return
 
     attrs = xattr.xattr(filename)
-    current = attrs.copy().get(FINDER_KEY, BYTES32)
-    changed = current[:9] + bytes([COLORS.index(color_name)*2]) + current[10:]
-    attrs.set(FINDER_KEY, changed)
+    finder_attrs = attrs.copy().get(FINDER_KEY, BYTES32)
+    flags = list(unpack(32*'B', finder_attrs))
+    flags[9] = COLORS.index(color_name) * 2
+    finder_attrs = pack(32*'B', *flags)
+    attrs.set(FINDER_KEY, finder_attrs)
 
