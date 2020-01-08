@@ -616,8 +616,9 @@ class PdsLogger(object):
 
         handlers = self.local_handlers[-1]
         for handler in handlers:
-            self.handlers.remove(handler)
-            self.logger.removeHandler(handler)
+            if handler in self.handlers:
+                self.handlers.remove(handler)
+                self.logger.removeHandler(handler)
 
             try:
                 logfile = handler.baseFilename

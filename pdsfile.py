@@ -25,10 +25,18 @@ import pdstable
 try:
     GDBM_MODULE = __import__("gdbm")
 except ImportError:
-    pass
+    try:
+        GDBM_MODULE = __import__("dbm.gnu")
+    except ImportError:
+        GDBM_MODULE = None
 
 # Python 2 and 3 compatible, byte strings and unicode
 def _isstr(x): return isinstance(x, ("".__class__, u"".__class__))
+
+if sys.version_info >= (3,0):
+    ENCODING = {'encoding': 'latin-1'}  # Needed for open() of ASCII files
+else:
+    ENCODING = {}
 
 ################################################################################
 # Configuration
@@ -147,7 +155,7 @@ def set_logger(logger, debugging=False):
 # Pickle files vs. shelf files
 ################################################################################
 
-USE_PICKLES = False
+USE_PICKLES = (GDBM_MODULE is None)
 
 def use_pickles(status=True):
     """Call before preload(). Status=True to read ancillary information from
@@ -568,7 +576,7 @@ def load_volume_info(holdings):
         if not child.endswith('.tab'): continue
 
         table_path = _clean_join(volinfo_path, child)
-        with open(table_path) as f:
+        with open(table_path, 'r', **ENCODING) as f:
             recs = f.readlines()
 
         for rec in recs:
@@ -3604,7 +3612,7 @@ class PdsFile(object):
 
         (shelf_path, key) = self.shelf_path_and_key(id, volname)
         dict_path = shelf_path.rpartition('.')[0] + '.py'
-        with open(dict_path, 'r') as f:
+        with open(dict_path, 'r', **ENCODING) as f:
             rec = f.readline()
             rec = f.readline()
 
@@ -4350,15 +4358,15 @@ class PdsGroup(object):
 
         if self._iconset_filled is None:
             self._iconset_filled = {}
-            for open in (False, True):
+            for open_val in (False, True):
                 best_set = pdsviewable.ICON_SET_BY_TYPE[self.rows[0].icon_type,
-                                                        open]
+                                                        open_val]
                 for pdsf in self.rows[1:]:
-                    test = pdsviewable.ICON_SET_BY_TYPE[pdsf.icon_type, open]
-                    if test.priority > best_set.priority:
-                        best_set = test
+                  test = pdsviewable.ICON_SET_BY_TYPE[pdsf.icon_type, open_val]
+                  if test.priority > best_set.priority:
+                    best_set = test
 
-                self._iconset_filled[open] = best_set
+                self._iconset_filled[open_val] = best_set
 
         return self._iconset_filled[False]
 
@@ -4937,7 +4945,8 @@ def repair_case(abspath):
 
     # Raise an IOError if last field was not found
     if not found:
-        f = open(abspath, 'rb')
+        with open(abspath, 'rb') as f:
+            pass
 
     return abspath
 

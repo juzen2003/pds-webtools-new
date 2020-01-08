@@ -50,7 +50,7 @@ import sys
 import xattr
 
 BYTES32 = bytes(32)
-COLORS = ['none', 'gray', 'green', 'purple', 'blue', 'yellow', 'red', 'orange']
+COLORS = ['none', 'gray', 'green', 'violet', 'blue', 'yellow', 'red', 'orange']
 FINDER_KEY = u'com.apple.FinderInfo'
 
 def set_color(filename, color_name):
