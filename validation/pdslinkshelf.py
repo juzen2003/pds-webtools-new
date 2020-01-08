@@ -26,6 +26,11 @@ try:
 except ImportError:
     GDBM_MODULE = __import__("dbm.gnu")
 
+if sys.version_info >= (3,0):
+    ENCODING = {'encoding': 'latin-1'}
+else:
+    ENCODING = {}
+
 LOGNAME = 'pds.validation.links'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
 
@@ -268,7 +273,7 @@ def read_links(abspath, basenames, logger=None):
 
     repair_dict = REPAIRS.first(abspath)
 
-    with open(abspath, 'r', encoding='latin-1') as f:
+    with open(abspath, 'r', **ENCODING) as f:
         recs = f.readlines()
 
     basenames_upper = [b.upper() for b in basenames]
@@ -429,7 +434,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
         keys = list(interior_dict.keys())
         keys.sort()
 
-        with open(python_path, 'w') as f:
+        with open(python_path, 'w', **ENCODING) as f:
             f.write(name + ' = {\n')
             for valtype in (list, str):
               for key in keys:
