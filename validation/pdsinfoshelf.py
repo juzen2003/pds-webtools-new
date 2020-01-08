@@ -27,6 +27,11 @@ try:
 except ImportError:
     GDBM_MODULE = __import__("dbm.gnu")
 
+if sys.version_info >= (3,0):
+    ENCODING = {'encoding': 'latin-1'}  # For open() of ASCII files in Python 3
+else:
+    ENCODING = {}
+
 # Holds log file directories temporarily, used by move_old_info()
 LOGDIRS = []
 
@@ -192,7 +197,7 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
 
         pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
         with open(pickle_path, 'wb') as f:
-            pickle.dump(pickle_dict, f)
+            pickle.dump(pickle_dict, f, protocol=2)
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
@@ -218,7 +223,7 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
         abspaths = list(infodict.keys())
         abspaths.sort()
 
-        with open(python_path, 'w') as f:
+        with open(python_path, 'w', **ENCODING) as f:
             f.write(name + ' = {\n')
             for abspath in abspaths:
                 path = abspath[lskip:]

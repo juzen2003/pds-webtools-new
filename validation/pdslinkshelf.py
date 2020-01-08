@@ -27,7 +27,7 @@ except ImportError:
     GDBM_MODULE = __import__("dbm.gnu")
 
 if sys.version_info >= (3,0):
-    ENCODING = {'encoding': 'latin-1'}
+    ENCODING = {'encoding': 'latin-1'}  # For open() of ASCII files in Python 3
 else:
     ENCODING = {}
 
@@ -403,7 +403,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
         # Write the pickle file
         pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
         with open(pickle_path, 'wb') as f:
-            pickle.dump(interior_dict, f)
+            pickle.dump(interior_dict, f, protocol=2)
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
