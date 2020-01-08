@@ -222,14 +222,15 @@ def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
             key_basename = os.path.basename(key)
             key_islabel = key_basename.upper().endswith('.LBL')
 
-            updates = []
+            updates = []       # list of tuples to replace those already present
             for tuple in tuples:
                 if len(tuple) == 3: # Target is in this dir and already filled
                     if tuple[2]:
                         updates.append(tuple)
-                    # if third element is blank, no target was identified
+                    # if third element is blank, no target was identified, so
+                    # this is not a link
 
-                else:
+                else:           # find the non-local target of a link
                     (recno, basename) = tuple
 
                     # Locate elsewhere in the tree
@@ -238,9 +239,11 @@ def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
                         logger.info('Located "%s"' % basename, absfile)
                         updates.append((recno, basename, absfile))
                     elif basename.upper().endswith('.FMT'):
-                        logger.warn('Unable to locate .fmt file "%s"' % basename, key)
+                        logger.warn('Unable to locate .fmt file "%s"' %
+                                                                basename, key)
                     else:
-                        logger.info('Reference to file "%s" ignored' % basename, key)
+                        logger.info('Reference to file "%s" ignored' %
+                                                                basename, key)
 
             link_dict[key] = updates
 
@@ -263,9 +266,9 @@ def read_links(abspath, basenames, logger=None):
     used to associate files with their labels.
 
     abspath points to the target of the link. It is present if it was found
-    among the target's name was basenames or else if it was filled in via a
-    repair rule. Otherwise, the tuple just contains (recno, basename) and
-    another attempt will be made to fill in the path to the target.
+    among the basenames or else if it was filled in via a repair rule.
+    Otherwise, the tuple just contains (recno, basename) and another attempt
+    will be made to fill in the path to the target.
     """
 
     if logger is None:
