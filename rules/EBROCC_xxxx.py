@@ -29,7 +29,17 @@ opus_format = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*\.(tab|lbl)$',                      0, ('Earth-based',   0, 'eb_data',    'Occultation profile')),
+    (r'volumes/.*\.(TAB|LBL)$', 0, ('Ground Based', 0, 'gb_occ_profile', 'Occultation Profile')),
+])
+
+####################################################################################################################################
+# OPUS_PRODUCTS
+####################################################################################################################################
+
+# Use of explicit file names means we don't need to invoke glob.glob(); this goes much faster
+opus_products = translator.TranslatorByRegex([
+    (r'.*volumes/(EBROCC_..../.*)\.(TAB|LBL)', 0, [r'volumes/\1.TAB',
+                                                   r'volumes/\1.LBL']),
 ])
 
 ####################################################################################################################################
@@ -66,6 +76,7 @@ class EBROCC_xxxx(pdsfile.PdsFile):
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
+    OPUS_PRODUCTS = opus_products
     FILESPEC_TO_OPUS_ID = filespec_to_opus_id
 
 pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH = filespec_to_logical_path + pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH
