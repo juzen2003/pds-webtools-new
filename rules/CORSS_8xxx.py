@@ -7,14 +7,6 @@ import translator
 import re
 
 ####################################################################################################################################
-# INFO_FILE_BASENAMES
-####################################################################################################################################
-
-info_file_basenames = translator.TranslatorByRegex([
-    (r'(.*_Summary.LBL)', 0, r'\1'),
-])
-
-####################################################################################################################################
 # OPUS_TYPE
 ####################################################################################################################################
 
@@ -70,7 +62,6 @@ class CORSS_8xxx(pdsfile.PdsFile):
     pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('CORSS_8xxx', re.I, 'CORSS_8xxx')]) + \
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
 
-    INFO_FILE_BASENAMES = info_file_basenames + pdsfile.PdsFile.INFO_FILE_BASENAMES
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_PRODUCTS = opus_products
     FILESPEC_TO_OPUS_ID = filespec_to_opus_id
