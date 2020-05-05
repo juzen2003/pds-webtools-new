@@ -61,8 +61,8 @@ view_options = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 neighbors = translator.TranslatorByRegex([
-    (r'volumes/(\w+)/COUVIS_[0-9]{4}/DATA/(\w+)', 0, r'volumes/\1/*/DATA/*'),
-    (r'volumes/(\w+)/COUVIS_[0-9]{4}/DATA',       0, r'volumes/\1/*/DATA'),
+    (r'volumes/(\w+)/COUVIS_0[0-9]{3}/DATA/(\w+)', 0, r'volumes/\1/*/DATA/*'),
+    (r'volumes/(\w+)/COUVIS_0[0-9]{3}/DATA',       0, r'volumes/\1/*/DATA'),
 ])
 
 ####################################################################################################################################

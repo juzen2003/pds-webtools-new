@@ -40,8 +40,8 @@ filespec_to_opus_id = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 filespec_to_logical_path = translator.TranslatorByRegex([
-    (r'COUVIS(_..../.*_(thumb|small|med|full)\.(jpg|png))', 0, r'previews/COUVIS_8xxx/COUVIS\1'),
-    (r'COUVIS(_..../.*)$',                                  0, r'volumes/COUVIS_8xxx/COUVIS\1'),
+    (r'COUVIS(_8.../.*_(thumb|small|med|full)\.(jpg|png))', 0, r'previews/COUVIS_8xxx/COUVIS\1'),
+    (r'COUVIS(_8.../.*)$',                                  0, r'volumes/COUVIS_8xxx/COUVIS\1'),
 ])
 
 ####################################################################################################################################
