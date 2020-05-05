@@ -25,8 +25,19 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
-    (r'.*/(COUVIS_0xxx/COUVIS_0.../DATA/\w+/\w+[0-9])(|_\w+)\..*',  0, [r'volumes/\1.DAT', r'volumes/\1.LBL']),
-    (r'.*/(COUVIS_0xxx/COUVIS_0.../DATA)(|/\w+)$',                  0,  r'volumes/\1/\2'),
+    (r'.*/((COUVIS_0xxx/COUVIS_0...)/DATA/(\w+)/([\w0-9\_]+))\..*', 0, [r'volumes/\1.DAT',
+                                                                        r'volumes/\1.LBL',
+                                                                        r'volumes/\2/CALIB/VERSION_*/\3/\4_CAL_*.DAT',
+                                                                        r'volumes/\2/CALIB/VERSION_*/\3/\4_CAL_*.LBL']),
+    (r'.*/((COUVIS_0xxx/COUVIS_0...)/CALIB/VERSION_\d+/(\w+)/([\w0-9\_]+)_CAL_\d+)\..*',
+                                                                    0, [r'volumes/\2/DATA/\3/\4.DAT',
+                                                                        r'volumes/\2/DATA/\3/\4.LBL',
+                                                                        r'volumes/\2/CALIB/VERSION_*/\3/\4_CAL_*.DAT',
+                                                                        r'volumes/\2/CALIB/VERSION_*/\3/\4_CAL_*.LBL']),
+    (r'.*/(COUVIS_0xxx/COUVIS_0...)/DATA(|/\w+)/?',                 0,  [r'volumes/\1/DATA\2',
+                                                                         r'volumes/\1/CALIB/VERSION_*\2']),
+    (r'.*/(COUVIS_0xxx/COUVIS_0...)/CALIB/VERSION_\d+(|/\w+)/?',    0,  [r'volumes/\1/DATA\2',
+                                                                         r'volumes/\1/CALIB/VERSION_*\2']),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
@@ -95,7 +106,8 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'.*\.DAT$', 0, ('Cassini UVIS', 10, 'couvis_raw', 'Raw Data')),
+    (r'volumes/.*/DATA/.*\.DAT',  0, ('Cassini UVIS', 10, 'couvis_raw', 'Raw Data')),
+    (r'volumes/.*/CALIB/.*\.DAT', 0, ('Cassini UVIS', 20, 'couvis_calib_corr', 'Calibration Data')),
 ])
 
 ####################################################################################################################################
@@ -112,22 +124,25 @@ opus_format = translator.TranslatorByRegex([
 
 # Use of explicit file names means we don't need to invoke glob.glob(); this goes much faster
 opus_products = translator.TranslatorByRegex([
-    (r'.*volumes/(COUVIS_0xxx)/(COUVIS_0...)/(.*)\.(DAT|LBL)', 0, [r'volumes/\1/\2/\3.DAT',
-                                                                   r'volumes/\1/\2/\3.LBL',
-                                                                   r'previews/\1/\2/\3_thumb.png',
-                                                                   r'previews/\1/\2/\3_small.png',
-                                                                   r'previews/\1/\2/\3_med.png',
-                                                                   r'previews/\1/\2/\3_full.png',
-                                                                   r'metadata/\1/\2/\2_jupiter_summary.lbl',
-                                                                   r'metadata/\1/\2/\2_jupiter_summary.tab',
-                                                                   r'metadata/\1/\2/\2_saturn_summary.lbl',
-                                                                   r'metadata/\1/\2/\2_saturn_summary.tab',
-                                                                   r'metadata/\1/\2/\2_moon_summary.lbl',
-                                                                   r'metadata/\1/\2/\2_moon_summary.tab',
-                                                                   r'metadata/\1/\2/\2_ring_summary.lbl',
-                                                                   r'metadata/\1/\2/\2_ring_summary.tab',
-                                                                   r'metadata/\1/\2/\2_inventory.lbl',
-                                                                   r'metadata/\1/\2/\2_inventory.tab']),
+    (r'.*volumes/(COUVIS_0xxx)/(COUVIS_0...)/(DATA)/(.*)\.(DAT|LBL)',
+                                                                0, [r'volumes/\1/\2/\3/\4.DAT',
+                                                                    r'volumes/\1/\2/\3/\4.LBL',
+                                                                    r'volumes/\1/\2/CALIB/VERSION_*/\4_CAL_*.DAT',
+                                                                    r'volumes/\1/\2/CALIB/VERSION_*/\4_CAL_*.LBL',
+                                                                    r'previews/\1/\2/\3/\4_thumb.png',
+                                                                    r'previews/\1/\2/\3/\4_small.png',
+                                                                    r'previews/\1/\2/\3/\4_med.png',
+                                                                    r'previews/\1/\2/\3/\4_full.png',
+                                                                    r'metadata/\1/\2/\2_jupiter_summary.lbl',
+                                                                    r'metadata/\1/\2/\2_jupiter_summary.tab',
+                                                                    r'metadata/\1/\2/\2_saturn_summary.lbl',
+                                                                    r'metadata/\1/\2/\2_saturn_summary.tab',
+                                                                    r'metadata/\1/\2/\2_moon_summary.lbl',
+                                                                    r'metadata/\1/\2/\2_moon_summary.tab',
+                                                                    r'metadata/\1/\2/\2_ring_summary.lbl',
+                                                                    r'metadata/\1/\2/\2_ring_summary.tab',
+                                                                    r'metadata/\1/\2/\2_inventory.lbl',
+                                                                    r'metadata/\1/\2/\2_inventory.tab']),
 ])
 
 ####################################################################################################################################
