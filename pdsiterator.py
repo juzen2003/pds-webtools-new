@@ -73,15 +73,21 @@ class PdsDirIterator(object):
         else:
             logical_paths = [pdsf.logical_path]
 
-        self.sign = -1 if sign < 0 else +1
-        self.current_logical_path = pdsf.logical_path
+        # Case insensitive search
+        logical_paths_lc = [p.lower() for p in logical_paths]
+        this_path_lc = pdsf.logical_path.lower()
+        try:
+            self.neighbor_index = logical_paths_lc.index(this_path_lc)
+        except ValueError:
+            logical_paths.append(pdsf.logical_path)
+            logical_paths = pdsfile.PdsFile.sort_logical_paths(logical_paths)
+            self.neighbor_index = logical_paths.index(pdsf.logical_path)
 
-        self.neighbor_index = logical_paths.index(pdsf.logical_path)
+        self.sign = -1 if sign < 0 else +1
+
         self.neighbors = logical_paths
         self.neighbors_lc = [p.lower() for p in logical_paths]
-
-        # Case-insensitive search
-        logical_path_lc = pdsf.logical_path.lower()
+        self.current_logical_path = pdsf.logical_path
 
     def copy(self, sign=None):
         """Return a clone of this iterator, possibly reversed."""
@@ -148,15 +154,22 @@ class PdsFileIterator(object):
         parent = pdsf.parent()
         self.dir_iterator = PdsDirIterator(parent, sign)
 
-        self.pattern = pattern or self.NEIGHBORS.first(self.logical_path)
+        self.pattern = pattern
         self.exclude = exclude
         self.filter = filter
         self.sign = self.dir_iterator.sign
         self.current_logical_path = pdsf.logical_path
 
         basenames = self._filter_names(parent, parent.childnames)
+        basenames_lc = [n.lower() for n in basenames]
+
+        # If this object is missing, insert it into the list of siblings
+        if pdsf.basename.lower() not in basenames_lc:
+            basenames.append(pdsf.basename)
+            basenames = parent.sort_basenames(basenames)
+
         self.sibnames = parent.logicals_for_basenames(basenames)
-        self.sibnames_lc = [p.lower() for p in self.sibnames]
+        self.sibnames_lc = [n.lower() for n in self.sibnames]
 
         # Case-insensitive search
         logical_path_lc = pdsf.logical_path.lower()
@@ -256,12 +269,20 @@ class PdsRowIterator(object):
         self.parent_logical_path_ = self.parent_pdsf.logical_path + '/'
 
         self.sign = sign
-        self.sibnames = self.parent_pdsf.childnames
-        self.sibnames_lc = [n.lower() for n in self.sibnames]
 
-        # Case-insensitive search
-        basename_lc = pdsf.basename.lower()
-        self.sibling_index = self.sibnames_lc.index(basename_lc)
+        basenames = self.parent_pdsf.childnames
+        basenames_lc = self.parent_pdsf.childnames_lc
+
+        # If this object is missing, insert it into the list of siblings
+        this_basename_lc = pdsf.basename.lower()
+        if this_basename_lc not in basenames_lc:
+            basenames.append(pdsf.basename)
+            basenames = self.parent_pdsf.sort_basenames(basenames)
+            basenames_lc = [n.lower() for n in basenames]
+
+        self.sibnames = basenames
+        self.sibnames_lc = basenames_lc
+        self.sibling_index = basenames_lc.index(this_basename_lc)
 
     def copy(self, sign=None):
         """Return a clone of this iterator."""

@@ -264,7 +264,7 @@ VIEW_OPTIONS = translator.TranslatorByRegex([
 ####################################################################################################################################
 # NEIGHBORS
 #
-# Given a directory path, return the file fnmatch pattern to indicate other loigcal paths to directories to be treated as adjacent.
+# Given a directory path, return the file fnmatch pattern to indicate other logical paths to directories to be treated as adjacent.
 ####################################################################################################################################
 
 NEIGHBORS = translator.TranslatorByRegex([

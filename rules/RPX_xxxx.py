@@ -41,6 +41,15 @@ class RPX_xxxx(pdsfile.PdsFile):
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
 
+    def FILENAME_KEYLEN(self):
+        """9 for files in the HST series RPX_0001-5; 0 otherwise."""
+
+        # Use the length of the HST group ID for RPX_0001-5
+        if '/RPX_000' in self.abspath:
+            return 9
+
+        return 0
+
 ####################################################################################################################################
 # Update the global dictionary of subclasses
 ####################################################################################################################################

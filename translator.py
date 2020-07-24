@@ -4,16 +4,33 @@
 # An abstract class and subclasses for mapping strings such as file paths to
 # other information. It is implemented in several ways including Python
 # dictionaries and regular expression/substitution pairs.
-#
-# Mark Showalter, PDS RMS Node, May 2017
 ################################################################################
 
 import os
 import re
 
 class Translator(object):
-    """Abstract class to define translators from a set of strings such as file
-    names to associated information.
+    """Abstract class to define translators from a set of strings (such as file
+    paths) to associated information.
+
+    All subclasses implement the following methods:
+
+    Translator.all(strings, strings_first=False)
+    Translator.first(strings, strings_first=False)
+
+    Input is a list of strings. The Translator object tests each string and
+    determines if it passes a test. If it does pass the test, then one or more
+    "translated" strings are returned.
+
+    Translator.all() returns every translated string. Translator.first() returns
+    the first translated string.
+
+    If input argument strings_first is True, then every test is applied to the
+    first string, after which every test is applied to the second string, etc.
+    If strings_first is False, then the first test is applied to every string,
+    after which the second test is applied to every string, etc. This can affect
+    the order of the translated strings returned by all(), or the single
+    translated string that is returned by first().
     """
 
     def __add__(self, other):
@@ -278,25 +295,30 @@ class TranslatorByDict(Translator):
 ################################################################################
 
 class TranslatorByRegex(Translator):
-    """Translator defined by a list of (regex, value) tuples."""
+    """Translator defined by a list of tuples defining regular expressions.
+
+    Each element in the list must be a tuple:
+        (regular expression string, flags, value)
+
+    Upon evaluation, if the regular expression matches a given string, using the
+    given set of regular expression flags, then the replacement patterns are
+    applied to a value and the modified value is returned.
+
+    The value can be a string, a list of strings, or a tuple of strings.
+    """
 
     TAG = 'REGEX'
 
     def __init__(self, tuples):
 
-        # Compile regular expressions if necessary
+        # Compile regular expressions (if not already compiled)
         compiled_tuples = []
         for items in tuples:
-            if isinstance(items[0], str):
-                if len(items) > 2:
-                    regex = re.compile('^' + items[0] + '$', flags=items[1])
-                else:
-                    regex = re.compile('^' + items[0] + '$')
-
-                compiled_tuples.append((regex, items[-1]))
-
-            else:
+            if len(items) == 2:
                 compiled_tuples.append(items)
+            else:
+                regex = re.compile('^' + items[0] + '$', flags=items[1])
+                compiled_tuples.append((regex, items[2]))
 
         self.tuples = compiled_tuples
 

@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import random
 
@@ -367,19 +368,27 @@ class MemcachedCache(PdsCache):
 
     @staticmethod
     def undo_long(value):
-        if type(value) == long:
-            if (value > MemcachedCache.MAX_NEG_LONG and
-                value < MemcachedCache.MIN_POS_LONG):
-                    value = int(value)
-        else:
-            try:
-                d = value.__dict__
-            except AttributeError:
-                pass
+        """Convert all longs to ints. Only needed in Python 2
+
+        This is a recursive call so that data structures containing longs are
+        all converted.
+        """
+
+        if sys.version_info < (3,0):
+
+            if type(value) == long:
+                if (value > MemcachedCache.MAX_NEG_LONG and
+                    value < MemcachedCache.MIN_POS_LONG):
+                        value = int(value)
             else:
-                for (k,v) in d.iteritems():
-                    if type(v) == long:
-                        d[k] = MemcachedCache.undo_long(v)
+                try:
+                    d = value.__dict__
+                except AttributeError:
+                    pass
+                else:
+                    for (k,v) in d.iteritems():
+                        if type(v) == long:
+                            d[k] = MemcachedCache.undo_long(v)
 
         return value
 
@@ -931,9 +940,9 @@ class MemcachedCache(PdsCache):
         self.clear_count = clear_count
 
         if self.logger:
-          self.logger.info('Process %d ' % self.pid +
-                           'has set clear count to %d ' % self.clear_count +
-                           'on MemcacheCache [%s]' % self.port)
+            self.logger.info('Process %d ' % self.pid +
+                             'has set clear count to %d ' % self.clear_count +
+                             'on MemcacheCache [%s]' % self.port)
 
         if block:
             if self.logger:

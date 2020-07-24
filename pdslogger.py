@@ -242,8 +242,9 @@ class PdsLogger(object):
             logname = default_prefix + '.' + logname
 
         parts = logname.split('.')
-        if len(parts) != 3:
-            raise ValueError('Log names must be of the form [pds.]xxx.yyy')
+        if len(parts) not in (2,3):
+            raise ValueError('Log names must be of the form [pds.]xxx or ' +
+                             '[pds.]xxx.yyy')
 
         if logname in LOOKUP:
             raise ValueError('PdsLogger %s already exists' % logname)

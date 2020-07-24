@@ -210,8 +210,8 @@ neighbors = translator.TranslatorByRegex([
     (r'(volumes|previews)/COISS_3xxx(|_\w+)/COISS_..../extras/(\w+)',       0, r'\1/COISS_3xxx\2/*/extras/\3'),
     (r'(volumes|previews)/COISS_3xxx(|_\w+)/COISS_..../extras/(\w+)/\w+',   0, r'\1/COISS_3xxx\2/*/extras/\3/*'),
 
-    (r'(volumes|previews|calibrated)/(COISS_[12]...)(|_.*?)/COISS_..../data',       0, r'\1/\2\3/*/data'),
-    (r'(volumes|previews|calibrated)/(COISS_[12]...)(|_.*?)/COISS_..../data/(\w+)', 0, r'\1/\2\3/*/data/*'),
+    (r'(volumes|previews|calibrated)/(COISS_[12]...)(|_.*?)/COISS_..../data',     0, r'\1/\2\3/*/data'),
+    (r'(volumes|previews|calibrated)/(COISS_[12]...)(|_.*?)/COISS_..../data/\w+', 0, r'\1/\2\3/*/data/*'),
 
     (r'volumes/(COISS_[12]xxx)/COISS_..../extras/(\w+)/\w+',     0, r'volumes/\1/*/extras/\2/*'),
     (r'volumes/(COISS_[12]xxx)/COISS_..../extras/(\w+)',         0, r'volumes/\1/*/extras/\2'),
