@@ -76,11 +76,12 @@ class TestPdsFileBlackBox:
     ############################################################################
      # Constructor
     ############################################################################
-    def test_new_index_row_pdsfile(self):
-        target_pdsfile = pdsfile.PdsFile()
-        res = target_pdsfile.new_index_row_pdsfile(
-            filename_key='', row_dicts=[])
-        assert isinstance(res, pdsfile.PdsFile)
+    # def test_new_index_row_pdsfile(self):
+    #     target_pdsfile = pdsfile.PdsFile()
+    #     res = target_pdsfile.new_index_row_pdsfile(
+    #         filename_key='', row_dicts=[])
+    #     print(res.abspath)
+    #     assert isinstance(res, pdsfile.PdsFile)
 
     ############################################################################
     # Test for properties
@@ -332,8 +333,8 @@ class TestPdsFileBlackBox:
         [
             ('previews/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q_small.jpg',
              'O43B05C1Q_small.jpg'),
-            ('volumes/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q.lbl',
-             'O43B05C1Q.lbl')
+            ('volumes/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q.LBL',
+             'O43B05C1Q.LBL')
         ]
     )
     def test_alt(self, input_path, expected):
@@ -344,14 +345,30 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('previews/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q_small.jpg',
-             pdsviewable.PdsViewSet),
-            ('volumes/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q.lbl', None)
+             [
+                 'holdings/previews/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q_small.jpg',
+                 'holdings/previews/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q_thumb.jpg',
+                 'holdings/previews/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q_full.jpg',
+                 'holdings/previews/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q_med.jpg',
+             ]
+            ),
+            ('volumes/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q.LBL',
+             [
+                'holdings/previews/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q_small.jpg',
+                'holdings/previews/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q_thumb.jpg',
+                'holdings/previews/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q_full.jpg',
+                'holdings/previews/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q_med.jpg',
+             ]
+            ),
         ]
     )
     def test_viewset(self, input_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        if expected is not None:
-            assert isinstance(target_pdsfile.viewset, expected)
+        res = target_pdsfile.viewset
+        assert isinstance(res, pdsviewable.PdsViewSet)
+        viewables = res.to_dict()['viewables']
+        for viewable in viewables:
+            assert viewable['url'] in expected
 
     @pytest.mark.parametrize(
         'input_path,expected',
@@ -565,17 +582,38 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_small.jpg',
-             pdsviewable.PdsViewSet),
+             [
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_small.jpg',
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_med.jpg',
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_full.jpg',
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_thumb.jpg',
+             ]
+            ),
             ('previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX',
-             pdsviewable.PdsViewSet),
+             [
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_small.jpg',
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_med.jpg',
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_full.jpg',
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_thumb.jpg',
+             ]
+            ),
             ('volumes/VGISS_5xxx/VGISS_5101/DATA/C13854XX',
-             pdsviewable.PdsViewSet),
+             [
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_small.jpg',
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_med.jpg',
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_full.jpg',
+                'holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_thumb.jpg',
+             ]
+            ),
         ]
     )
     def test_viewset_lookup(self, input_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        if expected is not None:
-            assert isinstance(target_pdsfile.viewset_lookup(), expected)
+        res = target_pdsfile.viewset_lookup()
+        assert isinstance(res, pdsviewable.PdsViewSet)
+        viewables = res.to_dict()['viewables']
+        for viewable in viewables:
+            assert viewable['url'] in expected
 
     @pytest.mark.parametrize(
         'input_suffix,expected',
@@ -644,30 +682,30 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('volumes/COISS_0xxx/COISS_0001/data/wacfm/bit_wght/13302/133020.lbl',
-             True)
+             'volumes/COISS_0xxx/COISS_0001/data/wacfm/bit_wght/13302/133020.lbl')
         ]
     )
     def test_from_logical_path(self, input_path, expected):
         res = pdsfile.PdsFile.from_logical_path(path=input_path)
         assert isinstance(res, pdsfile.PdsFile)
-        assert res.exists == expected
+        assert res.logical_path == expected
 
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('volumes/COISS_0xxx/COISS_0001/data/wacfm/bit_wght/13302/133020.LBL',
+            ('volumes/COISS_0xxx/COISS_0001/data/wacfm/bit_wght/13302/133020.lbl',
              True),
             (PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
-             True),
+             PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL'),
         ]
     )
     def test_from_abspath(self, input_path, expected):
         try:
             res = pdsfile.PdsFile.from_abspath(abspath=input_path)
             assert isinstance(res, pdsfile.PdsFile)
-            assert res.exists == expected
+            assert res.abspath == expected
         except ValueError as err:
-            assert True # Not an absolute path
+            assert True # input path is not an absolute path
 
     @pytest.mark.parametrize(
         'input_path,relative_path,expected',
@@ -769,7 +807,7 @@ class TestPdsFileBlackBox:
         [
             ('volumes/COVIMS_0xxx/COVIMS_0001/data/1999010T054026_1999010T060958/v1294638283_1.lbl',
              ''),
-            ('volumes/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q.lbl',
+            ('volumes/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q.LBL',
              ''),
         ]
     )
@@ -856,7 +894,7 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('volumes/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q.asc',
+            ('volumes/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q.ASC',
              PDS_DATA_DIR + '/volumes/HSTOx_xxxx'),
             ('previews/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q_thumb.jpg',
              PDS_DATA_DIR + '/previews/HSTNx_xxxx')
