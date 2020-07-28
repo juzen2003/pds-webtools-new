@@ -712,34 +712,34 @@ class TestPdsFileBlackBox:
         [
             ('previews/COUVIS_0xxx_v1/COUVIS_0009/DATA',
              '/D2004_274/EUV2004_274_01_39_thumb.png',
-             True),
+             'previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39_thumb.png'),
             ('volumes/COUVIS_0xxx/COUVIS_0001',
              '/DATA/D1999_007/FUV1999_007_16_57.LBL',
-             True),
+             'volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.LBL'),
             ('volumes/COUVIS_0xxx/COUVIS_0001',
              '/DATAx/D1999_007/FUV1999_007_16_57.LBL',
-             False),
+             'volumes/COUVIS_0xxx/COUVIS_0001/DATAx/D1999_007/FUV1999_007_16_57.LBL'),
         ]
     )
     def test_from_relative_path(self, input_path, relative_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res = target_pdsfile.from_relative_path(path=relative_path)
         assert isinstance(res, pdsfile.PdsFile)
-        assert res.exists == expected
+        assert res.logical_path == expected
 
     @pytest.mark.parametrize(
         'input_path,expected',
         [
             ('volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_CAL.LBL',
-             True),
+             PDS_DATA_DIR + '/volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_CAL.LBL'),
             (PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
-             True),
+             PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL'),
         ]
     )
     def test__from_absolute_or_logical_path(self, input_path, expected):
         res = pdsfile.PdsFile._from_absolute_or_logical_path(path=input_path)
         assert isinstance(res, pdsfile.PdsFile)
-        assert res.exists == expected
+        assert res.abspath == expected
 
     @pytest.mark.parametrize(
         'input_path,expected',
