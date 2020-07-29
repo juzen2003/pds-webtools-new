@@ -1482,14 +1482,18 @@ class TestPdsFileBlackBox:
                 'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
-             pdsfile.PdsFile)
+             [
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
+             ])
         ]
     )
     def test_pdsfiles_for_logicals(self, input_path, expected):
         res = pdsfile.PdsFile.pdsfiles_for_logicals(logical_paths=input_path)
 
         for pdsf in res:
-            assert isinstance(pdsf, expected)
+            assert isinstance(pdsf, pdsfile.PdsFile)
+            assert pdsf.logical_path in expected
 
     @pytest.mark.parametrize(
         'input_path,expected',
@@ -1657,8 +1661,23 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('volumes/COISS_0xxx/COISS_0001/data', None),
-            ('previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274', None),
+            ('volumes/COISS_0xxx/COISS_0001/data',
+             [
+                'volumes/COISS_0xxx/COISS_0001/data/datainfo.txt',
+                'volumes/COISS_0xxx/COISS_0001/data/nacfm',
+                'volumes/COISS_0xxx/COISS_0001/data/wacfm',
+             ]
+            ),
+            ('previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274',
+             [
+                # These are the files in the testing folder, not the files that 
+                # are supposed to be under input_path directory in viewmaster.
+                'previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39_thumb.png',
+                'previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_02_25_med.png',
+                'previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_07_10_full.png',
+                'previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_09_50_small.png',
+             ]
+            ),
         ]
     )
     def test_group_children(self, input_path, expected):
@@ -1666,6 +1685,9 @@ class TestPdsFileBlackBox:
         res = target_pdsfile.group_children()
         for group in res:
             assert isinstance(group, pdsfile.PdsGroup)
+            for pdsf in group.iterator_for_all():
+                assert pdsf.logical_path in expected
+
 
 ################################################################################
 # Blackbox test for functions & properties in PdsGroup class
