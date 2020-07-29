@@ -1670,7 +1670,7 @@ class TestPdsFileBlackBox:
             ),
             ('previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274',
              [
-                # These are the files in the testing folder, not the files that 
+                # These are the files in the testing folder, not the files that
                 # are supposed to be under input_path directory in viewmaster.
                 'previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39_thumb.png',
                 'previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_02_25_med.png',
@@ -1694,23 +1694,30 @@ class TestPdsFileBlackBox:
 ################################################################################
 class TestPdsGroupBlackBox:
     @pytest.mark.parametrize(
-        'input_paths,expected',
+        'input_paths,expected_achor,expected_path',
         [
             ([
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT',
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL'
              ],
-             'GEO00120100'),
+             'GEO00120100',
+             [
+                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT',
+                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL'
+             ],
+            ),
 
         ]
     )
-    def test_copy(self, input_paths, expected):
+    def test_copy(self, input_paths, expected_achor, expected_path):
         pdsfiles = get_pdsfiles(input_paths)
         res = pdsfile.PdsGroup(pdsfiles=pdsfiles)
         res_copy = res.copy()
         assert isinstance(res_copy, pdsfile.PdsGroup)
-        assert res.anchor == expected
+        assert res.anchor == expected_achor
         assert res.anchor == res_copy.anchor
+        for pdsf in res.iterator_for_all():
+            assert pdsf.logical_path in expected_path
 
     @pytest.mark.parametrize(
         'input_paths,expected',
@@ -1757,15 +1764,31 @@ class TestPdsGroupBlackBox:
                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_small.png',
                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_full.png',
              ],
-             pdsviewable.PdsViewSet),
-            (['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/'], pdsviewable.PdsViewSet)
+             [
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_thumb.png',
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_med.png',
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_small.png',
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_full.png',
+             ]
+            ),
+            (['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/'],
+             [
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_thumb.png',
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_med.png',
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_small.png',
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_full.png',
+             ]
+            )
         ]
     )
     def test_viewset(self, input_paths, expected):
         pdsfiles = get_pdsfiles(input_paths)
         pdsgroup = pdsfile.PdsGroup(pdsfiles=pdsfiles)
         res = pdsgroup.viewset
-        assert isinstance(res, expected)
+        assert isinstance(res, pdsviewable.PdsViewSet)
+        viewables = res.to_dict()['viewables']
+        for viewable in viewables:
+            assert viewable['url'] in expected
 
     @pytest.mark.parametrize(
         'input_paths,expected',
@@ -2838,7 +2861,10 @@ class TestPdsGroupTableBlackBox:
                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_010',
                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007'
              ],
-             pdsfile.PdsGroupTable),
+             [
+                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_010',
+                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007'
+             ]),
             ([
                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_33_small.png',
                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_33_thumb.png',
@@ -2849,14 +2875,27 @@ class TestPdsGroupTableBlackBox:
                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_small.png',
                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_med.png',
              ],
-             pdsfile.PdsGroupTable),
+             [
+                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_33_small.png',
+                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_33_thumb.png',
+                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_33_med.png',
+                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_33_full.png',
+                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_thumb.png',
+                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_full.png',
+                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_small.png',
+                 'previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_med.png',
+              ]
+             ),
         ]
     )
     def test_tables_from_pdsfiles(self, input_paths, expected):
         pdsfiles = get_pdsfiles(input_paths)
         tables = pdsfile.PdsGroupTable.tables_from_pdsfiles(pdsfiles=pdsfiles)
         for table in tables:
-            assert isinstance(table, expected)
+            assert isinstance(table, pdsfile.PdsGroupTable)
+            for group in table.iterator_for_all():
+                for pdsf in group.iterator_for_all():
+                    assert pdsf.logical_path in expected
 
     @pytest.mark.parametrize(
         'input_groups,hide_path,expected',
