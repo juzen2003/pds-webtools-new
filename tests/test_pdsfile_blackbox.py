@@ -74,16 +74,6 @@ class TestPdsFileBlackBox:
         assert target_pdsfile.SORT_ORDER['info_first'] == expected
 
     ############################################################################
-     # Constructor
-    ############################################################################
-    # def test_new_index_row_pdsfile(self):
-    #     target_pdsfile = pdsfile.PdsFile()
-    #     res = target_pdsfile.new_index_row_pdsfile(
-    #         filename_key='', row_dicts=[])
-    #     print(res.abspath)
-    #     assert isinstance(res, pdsfile.PdsFile)
-
-    ############################################################################
     # Test for properties
     ############################################################################
     @pytest.mark.parametrize(
@@ -1666,16 +1656,6 @@ class TestPdsFileBlackBox:
                 'volumes/COISS_0xxx/COISS_0001/data/datainfo.txt',
                 'volumes/COISS_0xxx/COISS_0001/data/nacfm',
                 'volumes/COISS_0xxx/COISS_0001/data/wacfm',
-             ]
-            ),
-            ('previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274',
-             [
-                # These are the files in the testing folder, not the files that
-                # are supposed to be under input_path directory in viewmaster.
-                'previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39_thumb.png',
-                'previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_02_25_med.png',
-                'previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_07_10_full.png',
-                'previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_09_50_small.png',
              ]
             ),
         ]
