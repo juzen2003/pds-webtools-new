@@ -745,24 +745,24 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('holdings/volumes/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39.DAT',
-             True),
+             PDS_DATA_DIR + '/volumes/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39.DAT'),
             ('volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT',
-             True),
-            ('COVIMS_0xxx/COVIMS_0001/data/1999010T054026_1999010T060958', True),
-            ('metadata/HSTOx_xxxx/HSTO0_7308', True),
-            ('HSTOx_xxxx', True),
+             PDS_DATA_DIR + '/volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT'),
+            ('COVIMS_0xxx/COVIMS_0001/data/1999010T054026_1999010T060958',
+             PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0001/data/1999010T054026_1999010T060958'),
+            ('metadata/HSTOx_xxxx/HSTO0_7308',
+             PDS_DATA_DIR + '/metadata/HSTOx_xxxx/HSTO0_7308'),
+            ('HSTOx_xxxx', PDS_DATA_DIR + '/volumes/HSTOx_xxxx'),
             ('volumes/VGIRIS_xxxx_peer_review/VGIRIS_0001/DATA/JUPITER_VG1/C1547XXX.LBL',
-             True),
+             PDS_DATA_DIR + '/volumes/VGIRIS_xxxx_peer_review/VGIRIS_0001/DATA/JUPITER_VG1/C1547XXX.LBL'),
             ('COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E.tar.gz',
-             True),
+             PDS_DATA_DIR + '/volumes/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E.tar.gz'),
         ]
     )
     def test_from_path(self, input_path, expected):
         res = pdsfile.PdsFile.from_path(path=input_path)
-        print(res.volname)
-        print(res.volset)
         assert isinstance(res, pdsfile.PdsFile)
-        assert res.exists == expected
+        assert res.abspath == expected
 
     ############################################################################
     # Test for OPUS support methods
@@ -770,16 +770,15 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'filespec,expected',
         [
-            ('COISS_0001', True),
+            ('COISS_0001', PDS_DATA_DIR + '/volumes/COISS_0xxx/COISS_0001'),
             ('COISS_1001/data/1294561143_1295221348/W1294561261_1_thumb.jpg',
-             True),
+             PDS_DATA_DIR + '/previews/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561261_1_thumb.jpg'),
         ]
     )
     def test_from_filespec(self, filespec, expected):
         res = pdsfile.PdsFile.from_filespec(filespec=filespec)
-        print(res.abspath)
         assert isinstance(res, pdsfile.PdsFile)
-        assert res.exists == expected
+        assert res.abspath == expected
 
     @pytest.mark.parametrize(
         'input_path,interiors,expected',
@@ -797,9 +796,7 @@ class TestPdsFileBlackBox:
         opus_id = target_pdsfile.opus_id
 
         res = pdsfile.PdsFile.from_opus_id(opus_id=opus_id)
-        print(res.abspath)
         assert isinstance(res, pdsfile.PdsFile)
-        assert res.exists == True
         assert res.abspath == expected
 
     @pytest.mark.parametrize(
@@ -948,23 +945,31 @@ class TestPdsFileBlackBox:
         'input_path,selection,flag,expected',
         [
             ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
-             'U2NO0404T', '=', pdsfile.PdsFile),
+             'U2NO0404T', '=',
+             'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab/U2NO0404T'),
             ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
-             'U2NO0403Tx', '>', pdsfile.PdsFile),
+             'U2NO0403Tx', '>',
+             'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab/U2NO0403T'),
             ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
-             'U2NO0403T', '>', pdsfile.PdsFile),
+             'U2NO0403T', '>',
+             'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab/U2NO0403T'),
             ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
-             'U2NO0401Tx', '<', pdsfile.PdsFile),
+             'U2NO0401Tx', '<',
+             'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab/U2NO0401T'),
             ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
-             'U2NO0401T', '<', pdsfile.PdsFile),
+             'U2NO0401T', '<',
+             'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab/U2NO0401T'),
             ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
-             'U2NO0402T', '', pdsfile.PdsFile),
+             'U2NO0402T', '',
+             'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab/U2NO0402T'),
         ]
     )
     def test_child_of_index(self, input_path, selection, flag, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res = target_pdsfile.child_of_index(selection, flag)
-        assert isinstance(res, expected)
+        assert isinstance(res, pdsfile.PdsFile)
+        # The path doesn't point to an actual file.
+        assert res.logical_path == expected
 
     @pytest.mark.parametrize(
         'input_path,selection,flag,expected',
