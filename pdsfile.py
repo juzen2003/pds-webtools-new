@@ -1235,6 +1235,8 @@ class PdsFile(object):
                 for result in results:
                     if result.endswith('_info.shelf'):
                         filtered.append(result[:-11])  # strip '_info.shelf'
+                    elif result.endswith('_info.pickle'):
+                        filtered.append(result[:-12])
 
                 if filtered:
                     return filtered
