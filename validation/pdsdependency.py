@@ -145,7 +145,12 @@ class PdsDependency(object):
             logger = pdslogger.PdsLogger.get_logger(LOGNAME)
 
         logger.replace_root([pdsdir.root_, pdsdir.disk_])
-        logger.open(self.title, dirpath)
+
+        # Remove "Newer" at beginning of titile if check_newer is False
+        if not check_newer and self.title.startswith('Newer '):
+            logger.open(self.title[6:].capitalize(), dirpath)
+        else:
+            logger.open(self.title, dirpath)
 
         try:
 
@@ -245,7 +250,7 @@ for thing in pdsfile.VOLTYPES:
     else:
         thing_ = '_' + thing
 
-    Thing = thing[0].upper() + thing[1:]
+    Thing = thing.capitalize()
 
     _ = PdsDependency(
         'Newer archive files for %s'            % thing,
@@ -626,13 +631,14 @@ _ = PdsDependency(
 ################################################################################
 ################################################################################
 
-def test(pdsdir, logger=None):
+def test(pdsdir, logger=None, check_newer=True):
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
 
     path = pdsdir.abspath
     for suite in TESTS.all(path):
-        _ = PdsDependency.test_suite(suite, path, logger=logger)
+        _ = PdsDependency.test_suite(suite, path, check_newer=check_newer,
+                                                  logger=logger)
 
 ################################################################################
 ################################################################################

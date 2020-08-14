@@ -154,6 +154,7 @@ def read_checksums(checkfile, selection=None, limits={}, logger=None):
     logger.open('Reading MD5 checksums', checkfile, limits=limits)
 
     if not os.path.exists(checkfile):
+        logger.close()
         raise IOError('Unable to open MD5 checksum file', checkfile)
 
     try:

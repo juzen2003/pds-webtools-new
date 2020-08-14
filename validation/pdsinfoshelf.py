@@ -185,7 +185,7 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
 
         # Write the shelf and the pickle file
         # shelf = shelve.open(shelf_path, flag='n')
-        shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'n'))
+        shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'n'), protocol=2)
 
         pickle_dict = {}
         for (key, values) in infodict.items():
@@ -268,7 +268,6 @@ def load_infodict(pdsdir, logger=None):
         try:
             # shelf = shelve.open(shelf_path, flag='r')
             shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'r'))
-
             shelf_is_open = True
         except Exception:
             pickle_path = shelf_path.rpartition('.')[0] + '.pickle'

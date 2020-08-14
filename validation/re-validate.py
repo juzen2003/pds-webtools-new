@@ -160,9 +160,13 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
 
         # Dependencies
         if args.dependencies:
-            logger.open('Dependency re-validation for', abspath)
+            if args.timeless:
+                logger.open('Timeless dependency re-validation for', abspath)
+            else:
+                logger.open('Dependency re-validation for', abspath)
             try:
-                pdsdependency.test(pdsdir, logger)
+                pdsdependency.test(pdsdir, logger=logger,
+                                   check_newer=(not args.timeless))
             finally:
                 tests_performed += 1
                 logger.close()
@@ -415,6 +419,13 @@ parser.add_argument('--full', '-F', action='store_true',
                          '(checksums, archives, infoshelves, linkshelves, '    +
                          'dependencies). This is the default.')
 
+parser.add_argument('--timeless', '-T', action='store_true',
+                    help='Suppress "newer modification date" tests for '       +
+                         'dependencies. These tests are unnecessary during a ' +
+                         'full validation because the contents of archive, '   +
+                         'checksum and shelf files are also checked, so their '+
+                         'dates are immaterial.')
+
 parser.add_argument('--volumes', '-v', action='store_true',
                     help='Check volume directories.')
 
@@ -488,6 +499,8 @@ if archives    : tests.append('archives')
 if infoshelves : tests.append('infoshelves')
 if linkshelves : tests.append('linkshelves')
 if dependencies: tests.append('dependencies')
+
+args.timeless = args.timeless and args.dependencies
 
 # Define the logging directory
 if args.log == '':

@@ -14,6 +14,7 @@ import shelve
 import pickle
 import shutil
 import glob
+
 import re
 import argparse
 
@@ -38,119 +39,323 @@ LOGROOT_ENV = 'PDS_LOG_ROOT'
 LOGDIRS = []
 
 REPAIRS = translator.TranslatorByRegex([
-    ('.*/COCIRS_[01].*/DATAINFO.TXT', 0,
-        {'DIAG.FMT'         : 'DATA/UNCALIBR/DIAG.FMT',
-         'FRV.FMT'          : 'DATA/UNCALIBR/FRV.FMT',
-         'GEO.FMT'          : 'DATA/NAV_DATA/GEO.FMT',
-         'HSK.FMT'          : 'DATA/HSK_DATA/HSK.FMT',
-         'IFGM.FMT'         : 'DATA/UNCALIBR/IFGM.FMT',
-         'IHSK.FMT'         : 'DATA/UNCALIBR/IHSK.FMT',
-         'ISPM.FMT'         : 'DATA/APODSPEC/ISPM.FMT',
-         'OBS.FMT'          : 'DATA/UNCALIBR/OBS.FMT',
-         'POI.FMT'          : 'DATA/NAV_DATA/POI.FMT',
-         'RIN.FMT'          : 'DATA/NAV_DATA/RIN.FMT',
-         'TAR.FMT'          : 'DATA/NAV_DATA/TAR.FMT'}),
-    ('.*/COCIRS_[56].*/TUTORIAL.TXT', 0,
-        {'GEODATA.FMT'      : 'DATA/GEODATA/GEODATA.FMT',
-         'ISPMDATA.FMT'     : 'DATA/ISPMDATA/ISPMDATA.FMT',
-         'POIDATA.FMT'      : 'DATA/POIDATA/POIDATA.FMT',
-         'RINDATA.FMT'      : 'DATA/RINDATA/RINDATA.FMT',
-         'TARDATA.FMT'      : 'DATA/TARDATA/TARDATA.FMT',
-         'filename.FMT'     : ''}),
-    ('.*/COCIRS_[56].*/AAREADME.TXT', 0,
-        {'REF.CAT'          : 'CATALOG/CIRSREF.CAT'}),
+    ('.*/COCIRS_[01].*/DATAINFO\.TXT', 0,
+        {'DIAG.FMT'             : 'UNCALIBR/DIAG.FMT',
+         'FRV.FMT'              : 'UNCALIBR/FRV.FMT',
+         'GEO.FMT'              : 'NAV_DATA/GEO.FMT',
+         'HSK.FMT'              : 'HSK_DATA/HSK.FMT',
+         'IFGM.FMT'             : 'UNCALIBR/IFGM.FMT',
+         'IHSK.FMT'             : 'UNCALIBR/IHSK.FMT',
+         'ISPM.FMT'             : 'APODSPEC/ISPM.FMT',
+         'OBS.FMT'              : 'UNCALIBR/OBS.FMT',
+         'POI.FMT'              : 'NAV_DATA/POI.FMT',
+         'RIN.FMT'              : 'NAV_DATA/RIN.FMT',
+         'TAR.FMT'              : 'NAV_DATA/TAR.FMT'}),
+    ('.*/COCIRS_[01].*/AAREADME\.TXT', 0,
+        {'DATASIS.TXT'          : 'DOCUMENT/DATASIS.PDF',
+         'VOLSYS.TXT'           : 'DOCUMENT/VOLSYS.PDF'}),
+    ('.*/COCIRS_[01].*/DATASET\.CAT', 0,
+        {'DATASIS.TXT'          : 'DATASIS.PDF'}),
+    ('.*/COCIRS_[01].*/SOFTWARE/DOC/SDOCINFO\.TXT', 0,
+        {'vanilla_guide.htm'    : 'vanilla-guide.html',
+         'vanilla_guide.pdf'    : 'vanilla-guide.pdf'}),
+    ('.*/COCIRS_[01].*/DOCUMENT/DOCINFO\.TXT', 0,
+        {'cirs_fov_overview.fig1.tiff' : 'cirs_fov_overview_fig1.tiff',
+         'cirs_fov_overview.fig2.tiff' : 'cirs_fov_overview_fig2.tiff',
+         'cirs_fov_overview.fig3.tiff' : 'cirs_fov_overview_fig3.tiff'}),
+    ('.*/COCIRS_[56].*/TUTORIAL\.TXT', 0,
+        {'GEODATA.FMT'          : '../DATA/GEODATA/GEODATA.FMT',
+         'ISPMDATA.FMT'         : '../DATA/ISPMDATA/ISPMDATA.FMT',
+         'POIDATA.FMT'          : '../DATA/POIDATA/POIDATA.FMT',
+         'RINDATA.FMT'          : '../DATA/RINDATA/RINDATA.FMT',
+         'TARDATA.FMT'          : '../DATA/TARDATA/TARDATA.FMT',
+         'filename.FMT'         : ''}),
+    ('.*/COCIRS_[56].*/AAREADME\.TXT', 0,
+        {'REF.CAT'              : 'CATALOG/CIRSREF.CAT'}),
     ('.*/COISS_0.*\.lbl', 0,
-        {'PREFIX8.FMT'  : 'label/prefix.fmt'}),
-    ('.*/COISS_[012].*/(archsis|aareadme)\.txt', 0,
-        {'Calds.CAT'    : '../../COISS_0xxx/COISS_0001/catalog/calds.cat',
-         'calds.cat'    : '../../COISS_0xxx/COISS_0001/catalog/calds.cat',
-         'Jupiterds.CAT': '../../COISS_1xxx/COISS_1001/catalog/jupiterds.cat',
-         'jupiterds.cat': '../../COISS_1xxx/COISS_1001/catalog/jupiterds.cat',
-         'Saturnds.CAT' : '../../COISS_2xxx/COISS_2001/catalog/saturnds.cat',
-         'saturnds.cat' : '../../COISS_2xxx/COISS_2001/catalog/saturnds.cat'}),
-    ('.*/metadata/.*/COUVIS_0.*_index.lbl', 0,
-        {'CUBEDS.CAT'       : ''}),
-    ('.*/COUVIS_0.*(CATALOG/\w+\.CAT|README\.TXT|INDEX.LBL)', 0,
-        {'CUBEDS.CAT'       : 'CATALOG/SCUBEDS.CAT',
-         'SPECDS.CAT'       : 'CATALOG/SSPECDS.CAT',
-         'XCALDS.CAT'       : 'CATALOG/SCALDS.CAT',
-         'XCUBEDS.CAT'      : 'CATALOG/SCUBEDS.CAT',
-         'XSPECDS.CAT'      : 'CATALOG/SSPECDS.CAT',
-         'XSSBDS.CAT'       : 'CATALOG/SSSBDS.CAT',
-         'XWAVDS.CAT'       : 'CATALOG/SWAVDS.CAT'}),
-    ('.*/COUVIS_8.*(AAREADME|CATINFO)\.TXT', 0,
-        {'INST.CAT'         : 'CATALOG/UVISINST.CAT'}),
-    ('.*/COVIMS_0001/.*\.(lbl|txt)', 0,
+        {'PREFIX8.FMT'          : 'prefix.fmt'}),
+    ('.*/COISS_00.*/aareadme\.txt', 0,
+        {'calinfo.txt'          : '../COISS_0011/calib/calinfo.txt',
+         'extrinfo.txt'         : '../COISS_0011/extras/extrinfo.txt'}),
+    ('.*/COISS_0.*/index\.lbl', 0,
+        {'CUMINDEX.TAB'         : 'index.tab'}),
+    ('.*/COISS_0011/calib/darkcurrent/wac_derived_dark_parameters04222\.lbl', 0,
+        {'wac_derived_dark_parameters04228.xdr': 'wac_derived_dark_parameters04222.xdr'}),
+    ('.*/COISS_0011/calib/darkcurrent/wac_median_dark_parameters04222\.lbl', 0,
+        {'wac_median_dark_parameters04228.xdr': 'wac_median_dark_parameters04222.xdr'}),
+    ('.*/COISS_[012].*/aareadme\.txt', 0,
+        {'Calds.CAT'            : '../../COISS_0xxx/COISS_0001/catalog/calds.cat',
+         'calds.cat'            : '../../COISS_0xxx/COISS_0001/catalog/calds.cat',
+         'Jupiterds.CAT'        : '../../COISS_1xxx/COISS_1001/catalog/jupiterds.cat',
+         'jupiterds.cat'        : '../../COISS_1xxx/COISS_1001/catalog/jupiterds.cat',
+         'Saturnds.CAT'         : '../../COISS_2xxx/COISS_2001/catalog/saturnds.cat',
+         'saturnds.cat'         : '../../COISS_2xxx/COISS_2001/catalog/saturnds.cat',
+         'calinfo.txt'          : '../../COISS_0xxx/COISS_0011/calib/calinfo.txt',
+         'calib.tar.gz'         : '../../COISS_0xxx/COISS_0011/calib/calib.tar.gz',
+         'in_flight_cal.tex'    : '../../COISS_0xxx/COISS_0011/document/in_flight_cal.tex',
+         'in_flight_cal.pdf'    : '../../COISS_0xxx/COISS_0011/document/in_flight_cal.pdf',
+         'in_flight_cal.lbl'    : '../../COISS_0xxx/COISS_0011/document/in_flight_cal.lbl',
+         'theoretical_basis.tex': '../../COISS_0xxx/COISS_0011/document/theoretical_basis.tex',
+         'theoretical_basis.pdf': '../../COISS_0xxx/COISS_0011/document/theoretical_basis.pdf',
+         'theoretical_basis.lbl': '../../COISS_0xxx/COISS_0011/document/theoretical_basis.lbl',
+         'theoretical_basis.ps' : '../../COISS_0xxx/COISS_0011/document/theoretical_basis.pdf',
+         'cisscal.tar.gz'       : '../../COISS_0xxx/COISS_0011/extras/cisscal.tar.gz.'}),
+    ('.*/COISS_[012].*/archsis\.txt', 0,
+        {'Calds.CAT'            : '../../../COISS_0xxx/COISS_0001/catalog/calds.cat',
+         'calds.cat'            : '../../../COISS_0xxx/COISS_0001/catalog/calds.cat',
+         'Jupiterds.CAT'        : '../../../COISS_1xxx/COISS_1001/catalog/jupiterds.cat',
+         'jupiterds.cat'        : '../../../COISS_1xxx/COISS_1001/catalog/jupiterds.cat',
+         'Saturnds.CAT'         : '../../../COISS_2xxx/COISS_2001/catalog/saturnds.cat',
+         'saturnds.cat'         : '../../../COISS_2xxx/COISS_2001/catalog/saturnds.cat'}),
+    ('.*/metadata/.*/COUVIS_0.*_index\.lbl', 0,
+        {'CUBEDS.CAT'           : ''}),
+    ('.*/COUVIS_0.*/INDEX\.LBL', 0,
+        {'CUBEDS.CAT'           : '../CATALOG/SCUBEDS.CAT'}),
+    ('.*/COUVIS_0.*/AAREADME\.TXT', 0,
+        {'INST.CAT'             : 'CATALOG/UVISINST.CAT',
+         'XCALDS.CAT'           : 'CATALOG/SCALDS.CAT',
+         'XCUBEDS.CAT'          : 'CATALOG/SCUBEDS.CAT',
+         'XSPECDS.CAT'          : 'CATALOG/SSPECDS.CAT',
+         'XSSBDS.CAT'           : 'CATALOG/SSSBDS.CAT',
+         'XWAVDS.CAT'           : 'CATALOG/SWAVDS.CAT'}),
+    ('.*/COUVIS_0.*/CATALOG/.*\.CAT', 0,
+        {'SPECDS.CAT'           : 'SSPECDS.CAT',
+         'CUBEDS.CAT'           : 'SCUBEDS.CAT'}),
+    ('.*/COUVIS_8.*/voldesc\.cat', 0,
+        {'UVISINST.CAT'         : 'catalog/inst.cat',
+         'PROJREF.CAT'          : ''}),
+    ('.*/COUVIS_8xxx_v1/.*/CATINFO\.TXT', re.I,
+        {'INST.CAT'             : 'UVISINST.CAT'}),
+    ('.*/COUVIS_8xxx(|_v2\.0)/.*/voldesc\.cat', re.I,
+        {'UVISINST.CAT'         : 'catalog/inst.cat',
+         'PROJREF.CAT'          : ''}),
+    ('.*/COVIMS_0001/data/.*\.lbl', 0,
+        {'band_bin_center.fmt'   : '../../../COVIMS_0002/label/band_bin_center.fmt',
+         'core_description.fmt'  : '../../../COVIMS_0002/label/core_description.fmt',
+         'suffix_description.fmt': '../../../COVIMS_0002/label/suffix_description.fmt',
+         'BAND_BIN_CENTER.FMT'   : '../../../COVIMS_0002/label/band_bin_center.fmt',
+         'CORE_DESCRIPTION.FMT'  : '../../../COVIMS_0002/label/core_description.fmt',
+         'SUFFIX_DESCRIPTION.FMT': '../../../COVIMS_0002/label/suffix_description.fmt'}),
+    ('.*/COVIMS_0001/document/archsis\.txt', 0,
         {'band_bin_center.fmt'   : '../../COVIMS_0002/label/band_bin_center.fmt',
          'core_description.fmt'  : '../../COVIMS_0002/label/core_description.fmt',
          'suffix_description.fmt': '../../COVIMS_0002/label/suffix_description.fmt',
          'BAND_BIN_CENTER.FMT'   : '../../COVIMS_0002/label/band_bin_center.fmt',
          'CORE_DESCRIPTION.FMT'  : '../../COVIMS_0002/label/core_description.fmt',
          'SUFFIX_DESCRIPTION.FMT': '../../COVIMS_0002/label/suffix_description.fmt'}),
-    ('.*/COVIMS_0.*\.txt', 0,
-        {'suffix.cat'       : '',
-         'center.fmt'       : 'label/band_bin_center.fmt'}),
-    ('.*/GO_00.*/AAREADME.TXT', 0,
-        {'ttds.cat'         : '../GO_0020/CATALOG/TTDS.CAT'}),
-    ('.*/HSTJ.*/(AAREADME|CATINFO).TXT', 0,
-        {'NST.CAT'          : 'CATALOG/INST.CAT'}),
-    ('.*/NHSP.*/AAREADME.TXT', 0,
-        {'personel.cat'     : 'CATALOG/PERSONNEL.CAT',
-         'spiceds.cat'      : 'CATALOG/SPICE_INST.CAT'}),
-    ('.*/RPX_0401/AAREADME.TXT', 0,
-        {'INSTHOST.CAT'     : 'CATALOG/HOST.CAT'}),
-    ('.*/VGIRIS_0001/.*(AAREADME|DATAINFO).TXT', 0,
-        {'JUPITER_ASCII.FMT': 'DATA/JUPITER_VG1/JUPITER_ASCII.FMT',
-         'JUPITER_LSB.FMT'  : 'DATA/JUPITER_VG1/JUPITER_LSB.FMT',
-         'JUPITER_MSB.FMT'  : 'DATA/JUPITER_VG1/JUPITER_MSB.FMT',
-         'SATURN_ASCII.FMT' : '',
-         'SATURN_LSB.FMT'   : '',
-         'SATURN_MSB.FMT'   : '',
-         'VGnINST.CAT'      : 'CATALOG/VG1INST',
-         'VGnHOST.CAT'      : 'CATALOG/VG1HOST'}),
-    ('.*/VGIRIS_0002/.*(AAREADME|DATAINFO).TXT', 0,
-        {'JUPITER_ASCII.FMT': '',
-         'JUPITER_LSB.FMT'  : '',
-         'JUPITER_MSB.FMT'  : '',
-         'SATURN_ASCII.FMT' : 'DATA/SATURN_VG1/SATURN_ASCII.FMT',
-         'SATURN_LSB.FMT'   : 'DATA/SATURN_VG1/SATURN_LSB.FMT',
-         'SATURN_MSB.FMT'   : 'DATA/SATURN_VG1/SATURN_MSB.FMT',
-         'VGnINST.CAT'      : 'CATALOG/VG1INST',
-         'VGnHOST.CAT'      : 'CATALOG/VG1HOST'}),
+    ('.*/COVIMS_0.*/document/archsis\.txt', 0,
+        {'suffix.cat'            : ''}),
+    ('.*/COVIMS_0.*/errata\.txt', 0,
+        {'center.fmt'            : 'label/band_bin_center.fmt'}),
+    ('.*/COVIMS_0024/data/2008017T190718_2008017T201544/v1579292302_1\.lbl', 0,
+        {"v1579292302.qub"      : "v1579292302_1.qub"}),
+    ('.*/COVIMS_8xxx_v2.*/voldesc.cat', 0,
+        {'PROJREF.CAT'          : ''}),
+    ('.*/EBROCC_0001/INDEX/MCD_INDEX\.LBL', 0,
+        { 'LIC_INDEX.TAB'       : 'MCD_INDEX.TAB'}),
+    ('.*/EBROCC_0001/INDEX/MCD_INDEX\.LBL', 0,
+        { 'LIC_INDEX.TAB'       : 'MCD_INDEX.TAB'}),
+    ('.*/EBROCC_0001/INDEX/PAL_INDEX\.LBL', 0,
+        { 'LIC_INDEX.TAB'       : 'PAL_INDEX.TAB'}),
+    ('.*/EBROCC_0001/SORCDATA/ESO1M/ES1_INGRESS_GEOMETRY\.LBL', 0,
+        { 'ES1_INGRESS_GEOMETRY.LBL': 'ES1_INGRESS_GEOMETRY.DAT'}),
+    ('.*/GO_0xxx.*/AAREADME\.TXT', 0,
+        {'ttds.cat'             : '../GO_0020/CATALOG/TTDS.CAT'}),
+    ('.*/GO_0xxx.*/INDEX/IMGINDEX\.LBL', 0,
+        {'IMGINDEX.LBL'         : 'IMGINDEX.TAB'}),
+    ('.*/GO_0xxx.*/INDEX/CUMINDEX\.LBL', 0,
+        {'IMGINDEX.TAB'         : 'CUMINDEX.TAB'}),
+    ('.*/HSTJ.*/AAREADME\.TXT', 0,
+        {'NST.CAT'              : 'CATALOG/INST.CAT'}),
+    ('.*/HSTJ.*/CATINFO\.TXT', 0,
+        {'NST.CAT'              : 'INST.CAT'}),
+    ('.*/HSTJ.*/HSTJ1_0427/DATA/VISIT_02/.*\.LBL', 0,
+        {'J96O02JLQ_FLT_WFC1.JPG': '',
+         'J96O02JMQ_FLT_WFC1.JPG': '',
+         'J96O02JLQ_FLT_WFC2.JPG': 'J96O02JLQ_FLT.JPG',
+         'J96O02JMQ_FLT_WFC2.JPG': 'J96O02JMQ_FLT.JPG',
+         'J96O02JOQ_FLT_WFC2.JPG': 'J96O02JOQ_FLT.JPG',
+         'J96O02JQQ_FLT_WFC2.JPG': 'J96O02JQQ_FLT.JPG',
+         'J96O02JSQ_FLT_WFC2.JPG': 'J96O02JSQ_FLT.JPG'}),
+    ('.*/HSTJx_xxxx_v1.1/HSTJ1_2395/DATA/.*\.LBL', 0,
+        {'JBNY02SOQ_FLT_WFC1.JPG': '',
+         'JBNY02SOQ_FLT_WFC2.JPG': 'JBNY02SOQ_FLT.JPG',
+         'JBNY02SQQ_FLT_WFC2.JPG': 'JBNY02SQQ_FLT.JPG',
+         'JBNY02SSQ_FLT_WFC2.JPG': 'JBNY02SSQ_FLT.JPG',
+         'JBNYA1T2Q_FLT_WFC2.JPG': 'JBNYA1T2Q_FLT.JPG',
+         'JBNYA2SUQ_FLT_WFC2.JPG': 'JBNYA2SUQ_FLT.JPG'}),
+    ('.*/NHSP.*/AAREADME\.TXT', 0,
+        {'personel.cat'         : 'CATALOG/PERSONNEL.CAT',
+         'spiceds.cat'          : 'CATALOG/SPICE_INST.CAT'}),
+    ('.*/RPX_0101.*/R_HARRIS\.LBL', 0,
+        {'R_HARRIS.DF'          : 'R_HARRIS.PDF'}),
+    ('.*/RPX_0101.*/F161225AB\.LBL', 0,
+        {'F161225RB.GIF'        : 'F161225AB.GIF'}),
+    ('.*/RPX_0201.*/T0808_F1498_CAL\.LBL', 0,
+        {'T0808_F1497_CAL.IMG'  : 'T0808_F1498_CAL.IMG'}),
+    ('.*/RPX_0401/AAREADME\.TXT', 0,
+        {'INSTHOST.CAT'         : 'CATALOG/HOST.CAT'}),
+    ('.*/VGIRIS_0001/AAREADME\.TXT', 0,
+        {'JUPITER_ASCII.FMT'    : 'DATA/JUPITER_VG1/JUPITER_ASCII.FMT',
+         'JUPITER_LSB.FMT'      : 'DATA/JUPITER_VG1/JUPITER_LSB.FMT',
+         'JUPITER_MSB.FMT'      : 'DATA/JUPITER_VG1/JUPITER_MSB.FMT',
+         'SATURN_ASCII.FMT'     : '',
+         'SATURN_LSB.FMT'       : '',
+         'SATURN_MSB.FMT'       : '',
+         'VGnINST.CAT'          : 'CATALOG/VG1INST.CAT',
+         'VGnHOST.CAT'          : 'CATALOG/VG1HOST.CAT'}),
+    ('.*/VGIRIS_0001/DATA/DATAINFO\.TXT', 0,
+        {'JUPITER_ASCII.FMT'    : 'JUPITER_VG1/JUPITER_ASCII.FMT',
+         'JUPITER_LSB.FMT'      : 'JUPITER_VG1/JUPITER_LSB.FMT',
+         'JUPITER_MSB.FMT'      : 'JUPITER_VG1/JUPITER_MSB.FMT',
+         'SATURN_ASCII.FMT'     : '',
+         'SATURN_LSB.FMT'       : '',
+         'SATURN_MSB.FMT'       : '',
+         'VGnINST.CAT'          : '../CATALOG/VG1INST.CAT',
+         'VGnHOST.CAT'          : '../CATALOG/VG1HOST.CAT'}),
+    ('.*/VGIRIS_0002/AAREADME\.TXT', 0,
+        {'JUPITER_ASCII.FMT'    : '',
+         'JUPITER_LSB.FMT'      : '',
+         'JUPITER_MSB.FMT'      : '',
+         'SATURN_ASCII.FMT'     : 'DATA/SATURN_VG1/SATURN_ASCII.FMT',
+         'SATURN_LSB.FMT'       : 'DATA/SATURN_VG1/SATURN_LSB.FMT',
+         'SATURN_MSB.FMT'       : 'DATA/SATURN_VG1/SATURN_MSB.FMT',
+         'VGnINST.CAT'          : 'CATALOG/VG1INST.CAT',
+         'VGnHOST.CAT'          : 'CATALOG/VG1HOST.CAT'}),
+    ('.*/VGIRIS_0002/DATA/DATAINFO\.TXT', 0,
+        {'JUPITER_ASCII.FMT'    : '',
+         'JUPITER_LSB.FMT'      : '',
+         'JUPITER_MSB.FMT'      : '',
+         'SATURN_ASCII.FMT'     : 'SATURN_VG1/SATURN_ASCII.FMT',
+         'SATURN_LSB.FMT'       : 'SATURN_VG1/SATURN_LSB.FMT',
+         'SATURN_MSB.FMT'       : 'SATURN_VG1/SATURN_MSB.FMT',
+         'VGnINST.CAT'          : '../CATALOG/VG1INST.CAT',
+         'VGnHOST.CAT'          : '../CATALOG/VG1HOST.CAT'}),
     ('.*/VG_2001/.*/VG2_SAT\.LBL', 0,
-        {'IRIS_ROWFMT.FMT'  : 'JUPITER/IRISHEDR.FMT'}),
-    ('.*/VG_2001/AAREADME.TXT', 0,
-        {'IRISHEDR.FMT'     : 'JUPITER/IRISHEDR.FMT',
-         'IRISTRGP.FMT'     : 'JUPITER/CALIB/IRISTRGP.FMT'}),
-    ('.*/VG_28[0-9]{2}/.*INFO.TXT', 0,
-        {'INST.CAT'         : 'CATALOG/VG1INST.CAT',
-         'VGnNINST.CAT'     : 'CATALOG/VG1INST.CAT',
-         'VGnHOST.CAT'      : 'CATALOG/VG1HOST.CAT',
-         'RS1SINST.CAT'     : 'CATALOG/VG1SINST.CAT',
-         'RS2UINST.CAT'     : 'CATALOG/VG2UINST.CAT'}),
-    ('.*/VG_280./.*/L3GUIDE.TXT', 0,
-        {'RTLMTAB.FMT'      : ''}),
+        {'IRIS_ROWFMT.FMT'      : '../JUPITER/IRISHEDR.FMT'}),
+    ('.*/VG_2001/AAREADME\.TXT', 0,
+        {'IRISHEDR.FMT'         : 'JUPITER/IRISHEDR.FMT',
+         'IRISTRGP.FMT'         : 'JUPITER/CALIB/IRISTRGP.FMT'}),
+    ('.*/VG_28[0-9]{2}/.*INFO\.TXT', 0,
+        {'VGnNINST.CAT'         : 'VG1INST.CAT',
+         'VGnHOST.CAT'          : 'VG1HOST.CAT',
+         'RS1SINST.CAT'         : 'VG1SINST.CAT',
+         'RS2UINST.CAT'         : 'VG2UINST.CAT'}),
+    ('.*/VG_28xx/VG_2801/CALIB/PS2C01\.LBL', 0,
+        {'PS1C01.TAB'           : 'PS2C01.TAB'}),
+    ('.*/VG_28xx/VG_2801/JITTER/PS1J01\.LBL', 0,
+        {'PS1J02.TAB'           : 'PS1J01.TAB'}),
+    ('.*/VG_28xx/VG_2801/JITTER/PU2J02\.LBL', 0,
+        {'PU2J01.TAB'           : 'PU2J02.TAB'}),
+    ('.*/VG_280./.*/L3GUIDE\.TXT', 0,
+        {'RTLMTAB.FMT'          : ''}),
+    ('.*/VG_2802/EDITDATA/DATAINFO\.TXT', 0,
+        {'INST.CAT'             : '../CATALOG/VG1INST.CAT'}),
+    ('.*/VG_2802/EDITDATA/US3D01P\.LBL', 0,
+        {'US3D01I.DAT'          : 'US3D01P.DAT'}),
     ('.*/VG_2803/.*/RS.R1BFV\.LBL', 0,
-        {'RS_R1BFT.FMT'     : 'RS_R1BFV.FMT'}),
-    ('.*/VGISS_[56].*/CATALOG/CATINFO.TXT', 0,
-        {'VGnNINST.CAT'     : 'CATALOG/VG1NINST.CAT',
-         'VGnHOST.CAT'      : 'CATALOG/VG1HOST.CAT'}),
+        {'RS_R1BFT.FMT'         : 'RS_R1BFV.FMT'}),
+    ('.*/VG.*/CATALOG/CATINFO\.TXT', 0,
+        {'VGnNINST.CAT'         : 'VG1NINST.CAT',
+         'VGnHOST.CAT'          : 'VG1HOST.CAT'}),
+    ('.*/VGISS.*/BROWSE/C34801XX/C3480139_.*\.LBL', 0,
+        {'C3480140_CALIB.JPG'   : 'C3480139_CALIB.JPG',
+         'C3480140_CLEANED.JPG' : 'C3480139_CLEANED.JPG',
+         'C3480140_GEOMED.JPG'  : 'C3480139_GEOMED.JPG',
+         'C3480140_RAW.JPG'     : 'C3480139_RAW.JPG'}),
+    ('.*/VGISS.*/BROWSE/C43892XX/C4389208_.*\.LBL', 0,
+        {'C4389209_CALIB.JPG'   : 'C4389208_CALIB.JPG',
+         'C4389209_CLEANED.JPG' : 'C4389208_CLEANED.JPG',
+         'C4389209_GEOMED.JPG'  : 'C4389208_GEOMED.JPG',
+         'C4389209_RAW.JPG'     : 'C4389208_RAW.JPG'}),
 ])
 
-################################################################################
+KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
+    ('.*/document/.*',                                      re.I, 'missing'),
+    ('.*/COCIRS_.*\.VAR',                                   0,    'missing'),
+    ('.*/COCIRS_.*VANILLA.*',                               re.I, 'missing'),
+    ('.*/COCIRS_0209/DATA/NAV_DATA/RIN02101300.DAT',        0,    'missing'),
+    ('.*/COCIRS_0602/DATA/UNCALIBR/FIFM06021412.DAT',       0,    'missing'),
+    ('.*/COCIRS_[01].*/CUBE/.*\.tar\.gz',                   0,    'missing'),
+    ('.*/COISS_00.*/document/report/.*',                    0,    'missing'),
+    ('.*/COISS_0011/calib.*\.tab',                          0,    'missing'),
+    ('.*/COISS_0011/calib/calib.tar.gz',                    0,    'missing'),
+    ('.*/COISS_0011/extras/.*\.pro',                        0,    'missing'),
+    ('.*/COISS_0011/extras/cisscal.*',                      0,    'missing'),
+    ('.*/CO(ISS|VIMS)_.*/extras/.*\.(tiff|png|jpg|jpeg|jpeg_small)',
+                                                            0,    'missing'),
+    ('.*/COSP_xxxx.*\.(pdf|zip|tm|orb)',                    0,    'missing'),
+    ('.*/COUVIS_.*/SOFTWARE/.*\.(PRO|pro|DAT|IDL|JAR|SAV)', 0,    'missing'),
+    ('.*/COUVIS_.*/CALIB/.*\.DOC',                          0,    'missing'),
+    ('.*/COUVIS_0xxx.*/SOFTWARE/CALIB/VERSION_4/t.t',       0,    'missing'),
+    ('.*/COVIMS_0xxx.*/index/index.csv',                    0,    'missing'),
+    ('.*/COVIMS_0xxx.*/software/.*',                        0,    'missing'),
+    ('.*/COVIMS_0xxx.*/calib/example.*',                    0,    'missing'),
+    ('.*/COVIMS_0xxx.*/calib/.*\.(tab|qub|cub|bin|lbl)',    0,    'missing'),
+    ('.*/COVIMS_0xxx.*/browse/.*\.pdf',                     0,    'missing'),
+    ('.*/COVIMS_0xxx.*\.(lbl|qub)-old_V[0-9]+',             0,    'missing'),
+    ('.*/NH.*/browse/.*\.jpg',                              0,    'missing'),
+    ('.*/NH.*/index/newline',                               0,    'missing'),
+    ('.*/NHxxMV.*/calib/.*\.png',                           0,    'missing'),
+    ('.*/NHSP_xxxx/.*/DATASET.HTML',                        0,    'missing'),
+    ('.*/RPX.*/UNZIP532.*',                                 0,    'missing'),
+    ('.*/RPX_xxxx/RPX_0201/CALIB/.*/(-180|128)',            0,    'missing'),
+    ('.*/VG.*/VG..NESR\.DAT',                               0,    'missing'),
+    ('.*/VG_0xxx.*/CUMINDEX.TAB',                           0,    'missing'),
+    ('.*/VG_0xxx.*/SOFTWARE/.*',                            0,    'missing'),
+    ('.*/VG_28xx/VG_2802/EDITDATA/EASYDATA',                0,    'missing'),
+
+# These files have internal PDS3 labels, so these are not errors
+    ('.*/COISS_3xxx.*\.IMG',                                0,    'unneeded'),
+    ('.*/COUVIS_.*/SOFTWARE/.*\.txt_.*',                    0,    'unneeded'),
+    ('.*/VG_.*\.(IMQ|IRQ|IBG)',                             0,    'unneeded'),
+    ('.*/VG_0xxx.*/(AAREADME.VMS|VTOC.SYS|IMGINDEX.DBF)',   0,    'unneeded'),
+])
+
+# Regular expressions for filenames embedded in text files
+LINK_REGEX = re.compile(r'(?:|.*[^-@\w\.])' +
+                        r'(\w[-A-Z0-9_]+\.[A-Z]\w{0,3})(?!\w|\.|-)',
+                        re.I)
+
+PATTERN = r'\'?\"?(\w[-A-Z0-9_]*\.[-A-Z0-9_.]+)\'?\"?'
+TARGET_REGEX1 = re.compile(r'^ *\^?\w+ *= *\(?\{? *' + PATTERN, re.I)
+TARGET_REGEX2 = re.compile(r'^ *,? *' + PATTERN, re.I)
 
 EXTS_WO_LABELS = set(['.LBL', '.CAT', '.TXT', '.FMT', '.SFD'])
 
-def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
+################################################################################
+
+class LinkInfo(object):
+    """Used internally to describe a link within a specified record of a file.
+    """
+
+    def __init__(self, recno, linkname, is_target):
+    
+        self.recno = recno          # record number
+        self.linktext = linkname    # substring within this record that looks
+                                    # like a link.
+        self.linkname = linkname    # link text after possible repair for known
+                                    # errors.
+        self.is_target = is_target  # True if, based on the local context, this
+                                    # might be a target of a label file
+        self.target = ''            # abspath to target of link, if any.
+                                    # If not blank, this file must exist.
+
+    def __str__(self):
+        return ('%d %s %s %s' % (self.recno, self.linktext, str(self.is_target),
+                                 self.target or '[' + self.linkname + ']'))
+
+def generate_links(dirpath, limits={'info':-1, 'debug':1000, 'ds_store':10},
+                   logger=None):
     """Generate a dictionary keyed by the absolute file path for files in the
     given directory tree, which must correspond to a volume.
 
-    Files ending in .LBL, .CAT and .TXT return a list of tuples
-        (recno, basename, target)
-    where:
-        basename is the name of a file linked from or labeled by this file;
-        recno is the record number where the basename appears;
-        target is the absolute path to the target of this link.
+    Keys ending in .LBL, .CAT and .TXT return a list of tuples
+        (recno, link, target)
+    for each link found found. Here,
+        recno = record number in file
+        link = the text of the link
+        target = absolute path to the target of the link
 
     Other keys return a single string, which indicates the absolute path to the
     label file describing this file.
@@ -167,87 +372,225 @@ def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
     logger.replace_root(pdsdir.root_)
     logger.open('Finding link files', dirpath, limits)
 
+    link_dict = {}
+
     try:
-        # Walk the directory tree...
-        link_dict = {}
-        for (root, dirs, files) in os.walk(dirpath):
 
-            # Create an empty entry in the dictionary for each file found
-            # (For files that do not contain links and are not labeled or linked
-            # by another file, this entry will remain empty.)
-            abspaths = []
-            for basename in files:
-                abspath = os.path.join(root, basename)
+      # Walk the directory tree, one subdirectory "root" at a time...
+      for (root, dirs, files) in os.walk(dirpath):
 
-                if basename == '.DS_Store':    # skip .DS_Store files
-                    logger.ds_store('.DS_Store file skipped', abspath)
-                    continue
+        local_basenames = []            # Tracks the basenames in this directory
+        local_basenames_uc = []         # Same as above, but upper case
+        for basename in files:
+            abspath = os.path.join(root, basename)
 
-                if basename.startswith('._'):   # skip dot_underscore files
-                    logger.dot_underscore('dot_underscore file skipped',
-                                          abspath)
-                    continue
+            if basename == '.DS_Store':    # skip .DS_Store files
+                logger.ds_store('.DS_Store file skipped', abspath)
+                continue
 
-                if basename.startswith('.'):    # skip invisible files
-                    logger.invisible('Invisible file skipped', abspath)
-                    continue
+            if basename.startswith('._'):   # skip dot_underscore files
+                logger.dot_underscore('dot_underscore file skipped',
+                                      abspath)
+                continue
 
-                abspaths.append(abspath)
-                link_dict[abspath] = ''
+            if basename.startswith('.'):    # skip invisible files
+                logger.invisible('Invisible file skipped', abspath)
+                continue
 
-            # If necessary, search the file for links
-            for abspath in abspaths:
-                ext = abspath[-4:].upper()
-                if ext not in EXTS_WO_LABELS: continue
-                islabel = (ext == '.LBL')
+            link_dict[abspath] = ''
+            local_basenames.append(basename)
+            local_basenames_uc.append(basename.upper())
 
-                tuples = read_links(abspath, files, logger=logger)
+        # Search each file for possible links
+        candidate_labels = {}           # {target: list of possible labels}
+        for basename in local_basenames:
 
-                # Identify all files that might be labeled by this file
-                if islabel:
-                    for tuple in tuples:
-                        if (len(tuple) == 3 and
-                            tuple[1][-4:].upper() not in EXTS_WO_LABELS):
-                                link_dict[tuple[-1]] = abspath
+            basename_uc = basename.upper()
+            ext = basename_uc[-4:] if len(basename) >= 4 else ''
+            if ext not in EXTS_WO_LABELS: continue  # only check LBL, CAT, TXT
 
-                # Save the list of linked and labeled files
-                link_dict[abspath] = tuples
+            # Get list of info for all possible linked filenames
+            abspath = os.path.join(root, basename)
+            logger.debug('Reviewing contents of file', abspath)
 
-        # Walk of tree is now complete
+            info_list = read_links(abspath, logger=logger)
 
-        # Update absolute paths to non-local files (.FMT for example)
-        for (key, tuples) in link_dict.items():
-            if type(tuples) == str: continue
-
-            key_basename = os.path.basename(key)
-            key_islabel = key_basename.upper().endswith('.LBL')
-
-            updates = []       # list of tuples to replace those already present
-            for tuple in tuples:
-                if len(tuple) == 3: # Target is in this dir and already filled
-                    if tuple[2]:
-                        updates.append(tuple)
-                    # if third element is blank, no target was identified, so
-                    # this is not a link
-
-                else:           # find the non-local target of a link
-                    (recno, basename) = tuple
-
-                    # Locate elsewhere in the tree
-                    absfile = locate_link(key, basename)
-                    if absfile:
-                        logger.info('Located "%s"' % basename, absfile)
-                        updates.append((recno, basename, absfile))
-                    elif basename.upper().endswith('.FMT'):
-                        logger.warn('Unable to locate .fmt file "%s"' %
-                                                                basename, key)
+            # Apply repairs
+            for info in info_list:
+              for repair_dict in REPAIRS.all(abspath):
+                if info.linktext in repair_dict:
+                    info.linkname = repair_dict[info.linktext]
+                    if info.linkname:
+                        logger.info('Repairing link "%s"->"%s"' %
+                                    (info.linktext, info.linkname),
+                                    abspath, force=True)
                     else:
-                        logger.info('Reference to file "%s" ignored' %
-                                                                basename, key)
+                        logger.info('Ignoring link "%s"' %
+                                    info.linktext, abspath, force=True)
 
-            link_dict[key] = updates
+                    # Validate non-local targets of repairs
+                    if '/' in info.linkname:
+                      target = os.path.join(root, info.linkname)
+                      if os.path.exists(target):
+                        info.target = os.path.abspath(target)
+                      else:
+                        logger.error('Target of repaired link is missing',
+                                     target)
 
-        return link_dict
+            # Validate or remove other targets
+            new_info_list = []
+            baseroot_uc = basename_uc.partition('.')[0]
+            ltest = len(baseroot_uc)
+            for info in info_list:
+                if info.target:         # Non-local, repaired links have targets
+                    new_info_list.append(info)
+                    continue
+
+                # A blank linkname is from a repair; indicates to ignore
+                if info.linkname == '':
+                    continue
+
+                # Ignore self-references
+                linkname_uc = info.linkname.upper()
+                if linkname_uc == basename_uc:
+                    continue
+
+                # Check for target inside this directory
+                try:
+                    match_index = local_basenames_uc.index(linkname_uc)
+                except ValueError:
+                    match_index = None
+
+                # If not found, maybe it is a non-local reference (.FMT perhaps)
+                if match_index is None:
+
+                    # It's easy to pick up floats as link candidates; ignore
+                    try:
+                        _ = float(info.linkname)
+                        continue            # Yup, it's just a float
+                    except ValueError:
+                        pass
+
+                    if info.linkname[-1] in ('e', 'E'):
+                      try:
+                        _ = float(info.linkname[:-1])
+                        continue            # Float with exponent
+                      except ValueError:
+                        pass
+
+                    # Also ignore formats
+                    if info.linkname[0] in ('F', 'E', 'G'):
+                      try:
+                        _ = float(info.linkname[1:])
+                        continue            # Format
+                      except ValueError:
+                        pass
+
+                    # Search non-locally
+                    nonlocal_target = locate_link(abspath, info.linkname)
+                    if nonlocal_target:
+                        logger.debug('Located "%s"' % info.linkname,
+                                     nonlocal_target)
+                        info.target = nonlocal_target
+                        new_info_list.append(info)
+                        continue
+
+                    if linkname_uc.endswith('.FMT'):
+                        logger.error('Unable to locate .FMT file "%s"' %
+                                     info.linkname, abspath)
+                    elif linkname_uc.endswith('.CAT'):
+                        logger.error('Unable to locate .CAT file "%s"' %
+                                     info.linkname, abspath)
+                    else:
+                        logger.debug('Substring "%s" is not a link, ignored' %
+                                     info.linkname, abspath)
+
+                    continue
+
+                # Save the match
+                info.linkname = local_basenames[match_index]    # update case
+                info.target = os.path.join(root, info.linkname)
+                new_info_list.append(info)
+
+                # Could this be the label?
+                if ext != '.LBL': continue      # nope
+
+                # If names match up to '.LBL', then yes
+                if (len(linkname_uc) > ltest and
+                    linkname_uc[:ltest] == baseroot_uc and
+                    linkname_uc[ltest] == '.'):
+                        link_dict[info.target] = abspath
+                        logger.debug('Label identified for %s' % info.linkname,
+                                     abspath)
+                        continue
+
+                # Otherwise, then maybe
+                if info.is_target:
+                    if info.linkname in candidate_labels:
+                      if basename not in candidate_labels[info.linkname]:
+                        candidate_labels[info.linkname].append(basename)
+                    else:
+                        candidate_labels[info.linkname] = [basename]
+
+                    logger.debug('Candidate label found for ' +
+                                 info.linkname, abspath)
+
+            link_dict[abspath] = new_info_list
+
+        # Review unlabeled files
+        for basename in local_basenames:
+
+            basename_uc = basename.upper()
+            ext = basename_uc[-4:] if len(basename) >= 4 else ''
+            if ext in EXTS_WO_LABELS: continue      # don't check LBL, CAT, TXT
+
+            abspath = os.path.join(root, basename)
+            if link_dict[abspath] != '': continue   # label already found
+
+            # Maybe we already know the label is missing
+            test = KNOWN_MISSING_LABELS.first(abspath)
+            if test == 'unneeded':
+                logger.debug('Label is not neeeded', abspath)
+                continue
+
+            if test == 'missing':
+                logger.debug('Label is known to be missing', abspath)
+                continue
+
+            # If a file looks like it should be the label, report
+            label_guess_uc = basename_uc.partition('.')[0] + '.LBL'
+            if label_guess_uc in local_basenames_uc:
+                k = local_basenames_uc.index(label_guess_uc)
+                logger.error('Label %s does not point to file' %
+                             local_basenames[k], abspath)
+                continue
+
+            # Check among any label candidates
+            try:
+                candidates = candidate_labels[basename]
+            except KeyError:
+                logger.error('Label is missing', abspath)
+                continue
+
+            if len(candidates) == 1:
+                logger.info('Label found as %s' % candidates[0], abspath,
+                            force=True)
+                link_dict[abspath] = os.path.join(root, candidates[0])
+            else:
+                logger.error('Ambiguous label found as %s' % candidates[0],
+                             abspath, force=True)
+                link_dict[abspath] = os.path.join(root, candidates[0])
+
+                for candidate in candidates[1:]:
+                    logger.info('Alternative label found as %s' % candidate,
+                                abspath, force=True)
+
+      # Convert link_dict to tuples
+      for (key,value) in link_dict.items():
+        if isinstance(value, list):
+            link_dict[key] = [(v.recno, v.linktext, v.target) for v in value]
+
+      return link_dict
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
@@ -256,73 +599,33 @@ def generate_links(dirpath, limits={'info':100, 'ds_store':10}, logger=None):
     finally:
         _ = logger.close()
 
-LINK_REGEX = re.compile('\w[-A-Z0-9_]+\.[A-Z](?!\w{4})\w{0,3}', re.I)
-
-def read_links(abspath, basenames, logger=None):
-    """Return a list of tuples (recno, basename[, abspath]) linked or labeled
-    by this file.
-
-    basenames is a list of all the base filenames in the same directory. This is
-    used to associate files with their labels.
-
-    abspath points to the target of the link. It is present if it was found
-    among the basenames or else if it was filled in via a repair rule.
-    Otherwise, the tuple just contains (recno, basename) and another attempt
-    will be made to fill in the path to the target.
+def read_links(abspath, logger=None):
+    """Return a list of LinkInfo objects for anything linked or labeled by this
+    file.
     """
 
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
 
-    repair_dict = REPAIRS.first(abspath)
-
     with open(abspath, 'r', **ENCODING) as f:
         recs = f.readlines()
 
-    basenames_upper = [b.upper() for b in basenames]
-
-    self_basename_upper = os.path.basename(abspath).upper()
-    parent_ = os.path.split(abspath)[0] + '/'
-    volume_ = pdsfile.PdsFile.from_abspath(abspath).volume_abspath() + '/'
+    basename_uc = os.path.basename(abspath).upper()
 
     links = []
     for recno in range(len(recs)):
         rec = recs[recno]
         while True:
-            matchobj = LINK_REGEX.search(rec)
-            if matchobj is None: break
+            is_target = True
+            matchobj = TARGET_REGEX1.match(rec) or TARGET_REGEX2.match(rec)
 
-            match = matchobj.group(0)
-            match_upper = match.upper()
+            if matchobj is None:
+                is_target = False
+                matchobj = LINK_REGEX.match(rec)
+                if matchobj is None: break
 
-            # Ignore self-references
-            if match_upper == self_basename_upper:
-                rec = rec[matchobj.end():]
-
-            # Repair known misidentifications
-            elif repair_dict and (match in repair_dict):
-                repair = repair_dict[match]
-                if repair:
-                    links.append((recno, match, volume_ + repair))
-                    logger.info('Repairing link "%s"->"%s"' % (match, repair),
-                                abspath, force=True)
-                else:
-                    logger.info('Ignoring link "%s"' % match,
-                                abspath, force=True)
-
-            # .CAT and .FMT files require a search
-            elif len(match) > 4 and match[-4:].upper() in ('.CAT', '.FMT'):
-                links.append((recno, match))
-                logger.info('Found "%s"' % match, abspath)
-
-            # Other references must be in the current directory
-            else:
-                try:
-                    k = basenames_upper.index(match_upper)
-                    links.append((recno, match, parent_ + basenames[k]))
-                    logger.info('Found "%s"' % match, abspath)
-                except ValueError:
-                    pass
+            linktext = matchobj.group(1)
+            links.append(LinkInfo(recno, linktext, is_target))
 
             rec = rec[matchobj.end():]
 
@@ -333,26 +636,31 @@ def locate_link(abspath, filename):
     done by searching up the tree and also by looking inside the LABEL,
     CATALOG and INCLUDE directories if they exist."""
 
-    filename_upper = filename.upper()
+    filename_uc = filename.upper()
 
     parts = abspath.split('/')[:-1]
-    while len(parts) > 5:
+
+    # parts are [..., 'holdings', 'volumes', volset, volname, ...]
+    # Therefore, if 'holdings' is in parts[:-3], then there's a volname in this
+    # path.
+    while 'holdings' in parts[:-3]:
         testpath = '/'.join(parts)
         basenames = os.listdir(testpath)
-        uppercase = [b.upper() for b in basenames]
+        basenames_uc = [b.upper() for b in basenames]
         try:
-            k = uppercase.index(filename_upper)
+            k = basenames_uc.index(filename_uc)
             return testpath + '/' + basenames[k]
         except ValueError:
             pass
 
-        for dirname in ['LABEL', 'CATALOG', 'INCLUDE']:
+        for dirname in ['LABEL', 'CATALOG', 'INCLUDE', 'INDEX', 'DOCUMENT',
+                        'DATA', 'CALIB', 'EXTRAS', 'SOFTWARE']:
             try:
-                k = uppercase.index(dirname)
+                k = basenames_uc.index(dirname)
                 subnames = os.listdir(testpath + '/' + basenames[k])
                 subupper = [s.upper() for s in subnames]
                 try:
-                    kk = subupper.index(filename_upper)
+                    kk = subupper.index(filename_uc)
                     return testpath + '/' + basenames[k] + '/' + subnames[kk]
                 except ValueError:
                     pass
@@ -396,7 +704,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
 
         # Write the shelf
         # shelf = shelve.open(shelf_path, flag='n')
-        shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'n'))
+        shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'n'), protocol=2)
 
         for (key, values) in interior_dict.items():
             shelf[key] = values
@@ -630,9 +938,13 @@ def move_old_links(shelf_file, logger=None):
 
         logger.info('Link shelf file moved to ' + dest)
 
-        python_file = shelf_file.rpartition('.')[0] + '.py'
-        dest = dest.rpartition('.')[0] + '.py'
-        shutil.copy(python_file, dest)
+        python_src = shelf_file.rpartition('.')[0] + '.py'
+        python_dest = dest.rpartition('.')[0] + '.py'
+        shutil.copy(python_src, python_dest)
+
+        pickle_src = shelf_file.rpartition('.')[0] + '.pickle'
+        pickle_dest = dest.rpartition('.')[0] + '.pickle'
+        shutil.copy(pickle_src, pickle_dest)
 
 ################################################################################
 # Simplified functions to perform tasks
@@ -786,7 +1098,6 @@ if __name__ == '__main__':
 
         error_handler = pdslogger.error_handler(path)
         logger.add_handler(error_handler)
-
 
     # Generate a list of file paths before logging
     paths = []
