@@ -40,6 +40,7 @@ LOGDIRS = []
 
 REPAIRS = translator.TranslatorByRegex([
     ('.*/COCIRS_[01].*/DATAINFO\.TXT', 0,
+      translator.TranslatorByDict(
         {'DIAG.FMT'             : 'UNCALIBR/DIAG.FMT',
          'FRV.FMT'              : 'UNCALIBR/FRV.FMT',
          'GEO.FMT'              : 'NAV_DATA/GEO.FMT',
@@ -50,40 +51,52 @@ REPAIRS = translator.TranslatorByRegex([
          'OBS.FMT'              : 'UNCALIBR/OBS.FMT',
          'POI.FMT'              : 'NAV_DATA/POI.FMT',
          'RIN.FMT'              : 'NAV_DATA/RIN.FMT',
-         'TAR.FMT'              : 'NAV_DATA/TAR.FMT'}),
+         'TAR.FMT'              : 'NAV_DATA/TAR.FMT'})),
     ('.*/COCIRS_[01].*/AAREADME\.TXT', 0,
+      translator.TranslatorByDict(
         {'DATASIS.TXT'          : 'DOCUMENT/DATASIS.PDF',
-         'VOLSYS.TXT'           : 'DOCUMENT/VOLSYS.PDF'}),
+         'VOLSYS.TXT'           : 'DOCUMENT/VOLSYS.PDF'})),
     ('.*/COCIRS_[01].*/DATASET\.CAT', 0,
-        {'DATASIS.TXT'          : 'DATASIS.PDF'}),
+      translator.TranslatorByDict(
+        {'DATASIS.TXT'          : 'DATASIS.PDF'})),
     ('.*/COCIRS_[01].*/SOFTWARE/DOC/SDOCINFO\.TXT', 0,
+      translator.TranslatorByDict(
         {'vanilla_guide.htm'    : 'vanilla-guide.html',
-         'vanilla_guide.pdf'    : 'vanilla-guide.pdf'}),
+         'vanilla_guide.pdf'    : 'vanilla-guide.pdf'})),
     ('.*/COCIRS_[01].*/DOCUMENT/DOCINFO\.TXT', 0,
+      translator.TranslatorByDict(
         {'cirs_fov_overview.fig1.tiff' : 'cirs_fov_overview_fig1.tiff',
          'cirs_fov_overview.fig2.tiff' : 'cirs_fov_overview_fig2.tiff',
-         'cirs_fov_overview.fig3.tiff' : 'cirs_fov_overview_fig3.tiff'}),
+         'cirs_fov_overview.fig3.tiff' : 'cirs_fov_overview_fig3.tiff'})),
+    ('.*/COCIRS_[01].*/CUBE/.*\.(LBL|lbl)', 0,
+      translator.TranslatorByRegex([
+        (r'([0-9A-Z_]+)\.DAT', 0, r'\1.tar.gz')])),
     ('.*/COCIRS_[56].*/TUTORIAL\.TXT', 0,
+      translator.TranslatorByDict(
         {'GEODATA.FMT'          : '../DATA/GEODATA/GEODATA.FMT',
          'ISPMDATA.FMT'         : '../DATA/ISPMDATA/ISPMDATA.FMT',
          'POIDATA.FMT'          : '../DATA/POIDATA/POIDATA.FMT',
          'RINDATA.FMT'          : '../DATA/RINDATA/RINDATA.FMT',
          'TARDATA.FMT'          : '../DATA/TARDATA/TARDATA.FMT',
-         'filename.FMT'         : ''}),
+         'filename.FMT'         : ''})),
     ('.*/COCIRS_[56].*/AAREADME\.TXT', 0,
-        {'REF.CAT'              : 'CATALOG/CIRSREF.CAT'}),
+      translator.TranslatorByDict(
+        {'REF.CAT'              : 'CATALOG/CIRSREF.CAT'})),
     ('.*/COISS_0.*\.lbl', 0,
-        {'PREFIX8.FMT'          : 'prefix.fmt'}),
+      translator.TranslatorByDict(
+        {'PREFIX8.FMT'          : 'prefix.fmt'})),
     ('.*/COISS_00.*/aareadme\.txt', 0,
+      translator.TranslatorByDict(
         {'calinfo.txt'          : '../COISS_0011/calib/calinfo.txt',
-         'extrinfo.txt'         : '../COISS_0011/extras/extrinfo.txt'}),
+         'extrinfo.txt'         : '../COISS_0011/extras/extrinfo.txt'})),
     ('.*/COISS_0.*/index\.lbl', 0,
-        {'CUMINDEX.TAB'         : 'index.tab'}),
-    ('.*/COISS_0011/calib/darkcurrent/wac_derived_dark_parameters04222\.lbl', 0,
-        {'wac_derived_dark_parameters04228.xdr': 'wac_derived_dark_parameters04222.xdr'}),
-    ('.*/COISS_0011/calib/darkcurrent/wac_median_dark_parameters04222\.lbl', 0,
-        {'wac_median_dark_parameters04228.xdr': 'wac_median_dark_parameters04222.xdr'}),
+      translator.TranslatorByDict(
+        {'CUMINDEX.TAB'         : 'index.tab'})),
+    ('.*/COISS_0011/calib/darkcurrent/wac_\w+_dark_parameters04222\.lbl', 0,
+      translator.TranslatorByRegex([
+        (r'wac_(\w+)_dark_parameters04228\.xdr', 0, r'wac_\1_dark_parameters04222.xdr')])),
     ('.*/COISS_[012].*/aareadme\.txt', 0,
+      translator.TranslatorByDict(
         {'Calds.CAT'            : '../../COISS_0xxx/COISS_0001/catalog/calds.cat',
          'calds.cat'            : '../../COISS_0xxx/COISS_0001/catalog/calds.cat',
          'Jupiterds.CAT'        : '../../COISS_1xxx/COISS_1001/catalog/jupiterds.cat',
@@ -99,103 +112,134 @@ REPAIRS = translator.TranslatorByRegex([
          'theoretical_basis.pdf': '../../COISS_0xxx/COISS_0011/document/theoretical_basis.pdf',
          'theoretical_basis.lbl': '../../COISS_0xxx/COISS_0011/document/theoretical_basis.lbl',
          'theoretical_basis.ps' : '../../COISS_0xxx/COISS_0011/document/theoretical_basis.pdf',
-         'cisscal.tar.gz'       : '../../COISS_0xxx/COISS_0011/extras/cisscal.tar.gz.'}),
+         'cisscal.tar.gz'       : '../../COISS_0xxx/COISS_0011/extras/cisscal.tar.gz.'})),
     ('.*/COISS_[012].*/archsis\.txt', 0,
+      translator.TranslatorByDict(
         {'Calds.CAT'            : '../../../COISS_0xxx/COISS_0001/catalog/calds.cat',
          'calds.cat'            : '../../../COISS_0xxx/COISS_0001/catalog/calds.cat',
          'Jupiterds.CAT'        : '../../../COISS_1xxx/COISS_1001/catalog/jupiterds.cat',
          'jupiterds.cat'        : '../../../COISS_1xxx/COISS_1001/catalog/jupiterds.cat',
          'Saturnds.CAT'         : '../../../COISS_2xxx/COISS_2001/catalog/saturnds.cat',
-         'saturnds.cat'         : '../../../COISS_2xxx/COISS_2001/catalog/saturnds.cat'}),
+         'saturnds.cat'         : '../../../COISS_2xxx/COISS_2001/catalog/saturnds.cat'})),
     ('.*/metadata/.*/COUVIS_0.*_index\.lbl', 0,
-        {'CUBEDS.CAT'           : ''}),
+      translator.TranslatorByDict(
+        {'CUBEDS.CAT'           : ''})),
     ('.*/COUVIS_0.*/INDEX\.LBL', 0,
-        {'CUBEDS.CAT'           : '../CATALOG/SCUBEDS.CAT'}),
+      translator.TranslatorByDict(
+        {'CUBEDS.CAT'           : '../CATALOG/SCUBEDS.CAT'})),
     ('.*/COUVIS_0.*/AAREADME\.TXT', 0,
+      translator.TranslatorByDict(
         {'INST.CAT'             : 'CATALOG/UVISINST.CAT',
          'XCALDS.CAT'           : 'CATALOG/SCALDS.CAT',
          'XCUBEDS.CAT'          : 'CATALOG/SCUBEDS.CAT',
          'XSPECDS.CAT'          : 'CATALOG/SSPECDS.CAT',
          'XSSBDS.CAT'           : 'CATALOG/SSSBDS.CAT',
-         'XWAVDS.CAT'           : 'CATALOG/SWAVDS.CAT'}),
+         'XWAVDS.CAT'           : 'CATALOG/SWAVDS.CAT'})),
     ('.*/COUVIS_0.*/CATALOG/.*\.CAT', 0,
+      translator.TranslatorByDict(
         {'SPECDS.CAT'           : 'SSPECDS.CAT',
-         'CUBEDS.CAT'           : 'SCUBEDS.CAT'}),
+         'CUBEDS.CAT'           : 'SCUBEDS.CAT'})),
     ('.*/COUVIS_8.*/voldesc\.cat', 0,
+      translator.TranslatorByDict(
         {'UVISINST.CAT'         : 'catalog/inst.cat',
-         'PROJREF.CAT'          : ''}),
+         'PROJREF.CAT'          : ''})),
     ('.*/COUVIS_8xxx_v1/.*/CATINFO\.TXT', re.I,
-        {'INST.CAT'             : 'UVISINST.CAT'}),
+      translator.TranslatorByDict(
+        {'INST.CAT'             : 'UVISINST.CAT'})),
     ('.*/COUVIS_8xxx(|_v2\.0)/.*/voldesc\.cat', re.I,
+      translator.TranslatorByDict(
         {'UVISINST.CAT'         : 'catalog/inst.cat',
-         'PROJREF.CAT'          : ''}),
+         'PROJREF.CAT'          : ''})),
     ('.*/COVIMS_0001/data/.*\.lbl', 0,
+      translator.TranslatorByDict(
         {'band_bin_center.fmt'   : '../../../COVIMS_0002/label/band_bin_center.fmt',
          'core_description.fmt'  : '../../../COVIMS_0002/label/core_description.fmt',
          'suffix_description.fmt': '../../../COVIMS_0002/label/suffix_description.fmt',
          'BAND_BIN_CENTER.FMT'   : '../../../COVIMS_0002/label/band_bin_center.fmt',
          'CORE_DESCRIPTION.FMT'  : '../../../COVIMS_0002/label/core_description.fmt',
-         'SUFFIX_DESCRIPTION.FMT': '../../../COVIMS_0002/label/suffix_description.fmt'}),
+         'SUFFIX_DESCRIPTION.FMT': '../../../COVIMS_0002/label/suffix_description.fmt'})),
     ('.*/COVIMS_0001/document/archsis\.txt', 0,
+      translator.TranslatorByDict(
         {'band_bin_center.fmt'   : '../../COVIMS_0002/label/band_bin_center.fmt',
          'core_description.fmt'  : '../../COVIMS_0002/label/core_description.fmt',
          'suffix_description.fmt': '../../COVIMS_0002/label/suffix_description.fmt',
          'BAND_BIN_CENTER.FMT'   : '../../COVIMS_0002/label/band_bin_center.fmt',
          'CORE_DESCRIPTION.FMT'  : '../../COVIMS_0002/label/core_description.fmt',
-         'SUFFIX_DESCRIPTION.FMT': '../../COVIMS_0002/label/suffix_description.fmt'}),
+         'SUFFIX_DESCRIPTION.FMT': '../../COVIMS_0002/label/suffix_description.fmt'})),
     ('.*/COVIMS_0.*/document/archsis\.txt', 0,
-        {'suffix.cat'            : ''}),
+      translator.TranslatorByDict(
+        {'suffix.cat'            : ''})),
     ('.*/COVIMS_0.*/errata\.txt', 0,
-        {'center.fmt'            : 'label/band_bin_center.fmt'}),
+      translator.TranslatorByDict(
+        {'center.fmt'            : 'label/band_bin_center.fmt'})),
     ('.*/COVIMS_0024/data/2008017T190718_2008017T201544/v1579292302_1\.lbl', 0,
-        {"v1579292302.qub"      : "v1579292302_1.qub"}),
+      translator.TranslatorByDict(
+        {"v1579292302.qub"      : "v1579292302_1.qub"})),
     ('.*/COVIMS_8xxx_v2.*/voldesc.cat', 0,
-        {'PROJREF.CAT'          : ''}),
+      translator.TranslatorByDict(
+        {'PROJREF.CAT'          : ''})),
     ('.*/EBROCC_0001/INDEX/MCD_INDEX\.LBL', 0,
-        { 'LIC_INDEX.TAB'       : 'MCD_INDEX.TAB'}),
+      translator.TranslatorByDict(
+        { 'LIC_INDEX.TAB'       : 'MCD_INDEX.TAB'})),
     ('.*/EBROCC_0001/INDEX/MCD_INDEX\.LBL', 0,
-        { 'LIC_INDEX.TAB'       : 'MCD_INDEX.TAB'}),
+      translator.TranslatorByDict(
+        { 'LIC_INDEX.TAB'       : 'MCD_INDEX.TAB'})),
     ('.*/EBROCC_0001/INDEX/PAL_INDEX\.LBL', 0,
-        { 'LIC_INDEX.TAB'       : 'PAL_INDEX.TAB'}),
+      translator.TranslatorByDict(
+        { 'LIC_INDEX.TAB'       : 'PAL_INDEX.TAB'})),
     ('.*/EBROCC_0001/SORCDATA/ESO1M/ES1_INGRESS_GEOMETRY\.LBL', 0,
-        { 'ES1_INGRESS_GEOMETRY.LBL': 'ES1_INGRESS_GEOMETRY.DAT'}),
+      translator.TranslatorByDict(
+        { 'ES1_INGRESS_GEOMETRY.LBL': 'ES1_INGRESS_GEOMETRY.DAT'})),
     ('.*/GO_0xxx.*/AAREADME\.TXT', 0,
-        {'ttds.cat'             : '../GO_0020/CATALOG/TTDS.CAT'}),
+      translator.TranslatorByDict(
+        {'ttds.cat'             : '../GO_0020/CATALOG/TTDS.CAT'})),
     ('.*/GO_0xxx.*/INDEX/IMGINDEX\.LBL', 0,
-        {'IMGINDEX.LBL'         : 'IMGINDEX.TAB'}),
+      translator.TranslatorByDict(
+        {'IMGINDEX.LBL'         : 'IMGINDEX.TAB'})),
     ('.*/GO_0xxx.*/INDEX/CUMINDEX\.LBL', 0,
-        {'IMGINDEX.TAB'         : 'CUMINDEX.TAB'}),
+      translator.TranslatorByDict(
+        {'IMGINDEX.TAB'         : 'CUMINDEX.TAB'})),
     ('.*/HSTJ.*/AAREADME\.TXT', 0,
-        {'NST.CAT'              : 'CATALOG/INST.CAT'}),
+      translator.TranslatorByDict(
+        {'NST.CAT'              : 'CATALOG/INST.CAT'})),
     ('.*/HSTJ.*/CATINFO\.TXT', 0,
-        {'NST.CAT'              : 'INST.CAT'}),
+      translator.TranslatorByDict(
+        {'NST.CAT'              : 'INST.CAT'})),
     ('.*/HSTJ.*/HSTJ1_0427/DATA/VISIT_02/.*\.LBL', 0,
+      translator.TranslatorByDict(
         {'J96O02JLQ_FLT_WFC1.JPG': '',
          'J96O02JMQ_FLT_WFC1.JPG': '',
          'J96O02JLQ_FLT_WFC2.JPG': 'J96O02JLQ_FLT.JPG',
          'J96O02JMQ_FLT_WFC2.JPG': 'J96O02JMQ_FLT.JPG',
          'J96O02JOQ_FLT_WFC2.JPG': 'J96O02JOQ_FLT.JPG',
          'J96O02JQQ_FLT_WFC2.JPG': 'J96O02JQQ_FLT.JPG',
-         'J96O02JSQ_FLT_WFC2.JPG': 'J96O02JSQ_FLT.JPG'}),
-    ('.*/HSTJx_xxxx_v1.1/HSTJ1_2395/DATA/.*\.LBL', 0,
+         'J96O02JSQ_FLT_WFC2.JPG': 'J96O02JSQ_FLT.JPG'})),
+    ('.*/HSTJx_xxxx.*/HSTJ1_2395/DATA/.*\.LBL', 0,
+      translator.TranslatorByDict(
         {'JBNY02SOQ_FLT_WFC1.JPG': '',
          'JBNY02SOQ_FLT_WFC2.JPG': 'JBNY02SOQ_FLT.JPG',
          'JBNY02SQQ_FLT_WFC2.JPG': 'JBNY02SQQ_FLT.JPG',
          'JBNY02SSQ_FLT_WFC2.JPG': 'JBNY02SSQ_FLT.JPG',
          'JBNYA1T2Q_FLT_WFC2.JPG': 'JBNYA1T2Q_FLT.JPG',
-         'JBNYA2SUQ_FLT_WFC2.JPG': 'JBNYA2SUQ_FLT.JPG'}),
+         'JBNYA2SUQ_FLT_WFC2.JPG': 'JBNYA2SUQ_FLT.JPG'})),
     ('.*/NHSP.*/AAREADME\.TXT', 0,
+      translator.TranslatorByDict(
         {'personel.cat'         : 'CATALOG/PERSONNEL.CAT',
-         'spiceds.cat'          : 'CATALOG/SPICE_INST.CAT'}),
+         'spiceds.cat'          : 'CATALOG/SPICE_INST.CAT'})),
     ('.*/RPX_0101.*/R_HARRIS\.LBL', 0,
-        {'R_HARRIS.DF'          : 'R_HARRIS.PDF'}),
+      translator.TranslatorByDict(
+        {'R_HARRIS.DF'          : 'R_HARRIS.PDF'})),
     ('.*/RPX_0101.*/F161225AB\.LBL', 0,
-        {'F161225RB.GIF'        : 'F161225AB.GIF'}),
+      translator.TranslatorByDict(
+        {'F161225RB.GIF'        : 'F161225AB.GIF'})),
     ('.*/RPX_0201.*/T0808_F1498_CAL\.LBL', 0,
-        {'T0808_F1497_CAL.IMG'  : 'T0808_F1498_CAL.IMG'}),
+      translator.TranslatorByDict(
+        {'T0808_F1497_CAL.IMG'  : 'T0808_F1498_CAL.IMG'})),
     ('.*/RPX_0401/AAREADME\.TXT', 0,
-        {'INSTHOST.CAT'         : 'CATALOG/HOST.CAT'}),
+      translator.TranslatorByDict(
+        {'INSTHOST.CAT'         : 'CATALOG/HOST.CAT'})),
     ('.*/VGIRIS_0001/AAREADME\.TXT', 0,
+      translator.TranslatorByDict(
         {'JUPITER_ASCII.FMT'    : 'DATA/JUPITER_VG1/JUPITER_ASCII.FMT',
          'JUPITER_LSB.FMT'      : 'DATA/JUPITER_VG1/JUPITER_LSB.FMT',
          'JUPITER_MSB.FMT'      : 'DATA/JUPITER_VG1/JUPITER_MSB.FMT',
@@ -203,8 +247,9 @@ REPAIRS = translator.TranslatorByRegex([
          'SATURN_LSB.FMT'       : '',
          'SATURN_MSB.FMT'       : '',
          'VGnINST.CAT'          : 'CATALOG/VG1INST.CAT',
-         'VGnHOST.CAT'          : 'CATALOG/VG1HOST.CAT'}),
+         'VGnHOST.CAT'          : 'CATALOG/VG1HOST.CAT'})),
     ('.*/VGIRIS_0001/DATA/DATAINFO\.TXT', 0,
+      translator.TranslatorByDict(
         {'JUPITER_ASCII.FMT'    : 'JUPITER_VG1/JUPITER_ASCII.FMT',
          'JUPITER_LSB.FMT'      : 'JUPITER_VG1/JUPITER_LSB.FMT',
          'JUPITER_MSB.FMT'      : 'JUPITER_VG1/JUPITER_MSB.FMT',
@@ -212,8 +257,9 @@ REPAIRS = translator.TranslatorByRegex([
          'SATURN_LSB.FMT'       : '',
          'SATURN_MSB.FMT'       : '',
          'VGnINST.CAT'          : '../CATALOG/VG1INST.CAT',
-         'VGnHOST.CAT'          : '../CATALOG/VG1HOST.CAT'}),
+         'VGnHOST.CAT'          : '../CATALOG/VG1HOST.CAT'})),
     ('.*/VGIRIS_0002/AAREADME\.TXT', 0,
+      translator.TranslatorByDict(
         {'JUPITER_ASCII.FMT'    : '',
          'JUPITER_LSB.FMT'      : '',
          'JUPITER_MSB.FMT'      : '',
@@ -221,8 +267,9 @@ REPAIRS = translator.TranslatorByRegex([
          'SATURN_LSB.FMT'       : 'DATA/SATURN_VG1/SATURN_LSB.FMT',
          'SATURN_MSB.FMT'       : 'DATA/SATURN_VG1/SATURN_MSB.FMT',
          'VGnINST.CAT'          : 'CATALOG/VG1INST.CAT',
-         'VGnHOST.CAT'          : 'CATALOG/VG1HOST.CAT'}),
+         'VGnHOST.CAT'          : 'CATALOG/VG1HOST.CAT'})),
     ('.*/VGIRIS_0002/DATA/DATAINFO\.TXT', 0,
+      translator.TranslatorByDict(
         {'JUPITER_ASCII.FMT'    : '',
          'JUPITER_LSB.FMT'      : '',
          'JUPITER_MSB.FMT'      : '',
@@ -230,44 +277,55 @@ REPAIRS = translator.TranslatorByRegex([
          'SATURN_LSB.FMT'       : 'SATURN_VG1/SATURN_LSB.FMT',
          'SATURN_MSB.FMT'       : 'SATURN_VG1/SATURN_MSB.FMT',
          'VGnINST.CAT'          : '../CATALOG/VG1INST.CAT',
-         'VGnHOST.CAT'          : '../CATALOG/VG1HOST.CAT'}),
+         'VGnHOST.CAT'          : '../CATALOG/VG1HOST.CAT'})),
     ('.*/VG_2001/.*/VG2_SAT\.LBL', 0,
-        {'IRIS_ROWFMT.FMT'      : '../JUPITER/IRISHEDR.FMT'}),
+      translator.TranslatorByDict(
+        {'IRIS_ROWFMT.FMT'      : '../JUPITER/IRISHEDR.FMT'})),
     ('.*/VG_2001/AAREADME\.TXT', 0,
+      translator.TranslatorByDict(
         {'IRISHEDR.FMT'         : 'JUPITER/IRISHEDR.FMT',
-         'IRISTRGP.FMT'         : 'JUPITER/CALIB/IRISTRGP.FMT'}),
-    ('.*/VG_28[0-9]{2}/.*INFO\.TXT', 0,
-        {'VGnNINST.CAT'         : 'VG1INST.CAT',
-         'VGnHOST.CAT'          : 'VG1HOST.CAT',
-         'RS1SINST.CAT'         : 'VG1SINST.CAT',
-         'RS2UINST.CAT'         : 'VG2UINST.CAT'}),
-    ('.*/VG_28xx/VG_2801/CALIB/PS2C01\.LBL', 0,
-        {'PS1C01.TAB'           : 'PS2C01.TAB'}),
-    ('.*/VG_28xx/VG_2801/JITTER/PS1J01\.LBL', 0,
-        {'PS1J02.TAB'           : 'PS1J01.TAB'}),
-    ('.*/VG_28xx/VG_2801/JITTER/PU2J02\.LBL', 0,
-        {'PU2J01.TAB'           : 'PU2J02.TAB'}),
-    ('.*/VG_280./.*/L3GUIDE\.TXT', 0,
-        {'RTLMTAB.FMT'          : ''}),
-    ('.*/VG_2802/EDITDATA/DATAINFO\.TXT', 0,
-        {'INST.CAT'             : '../CATALOG/VG1INST.CAT'}),
-    ('.*/VG_2802/EDITDATA/US3D01P\.LBL', 0,
-        {'US3D01I.DAT'          : 'US3D01P.DAT'}),
-    ('.*/VG_2803/.*/RS.R1BFV\.LBL', 0,
-        {'RS_R1BFT.FMT'         : 'RS_R1BFV.FMT'}),
+         'IRISTRGP.FMT'         : 'JUPITER/CALIB/IRISTRGP.FMT'})),
     ('.*/VG.*/CATALOG/CATINFO\.TXT', 0,
+      translator.TranslatorByDict(
         {'VGnNINST.CAT'         : 'VG1NINST.CAT',
-         'VGnHOST.CAT'          : 'VG1HOST.CAT'}),
+         'VGnHOST.CAT'          : 'VG1HOST.CAT'})),
+    ('.*/VG_28[0-9]{2}/.*INFO\.TXT', 0,
+      translator.TranslatorByDict(
+        {'RS1SINST.CAT'         : 'VG1SINST.CAT',
+         'RS2UINST.CAT'         : 'VG2UINST.CAT'})),
+    ('.*/VG_28xx/VG_2801/CALIB/PS2C01\.LBL', 0,
+      translator.TranslatorByDict(
+        {'PS1C01.TAB'           : 'PS2C01.TAB'})),
+    ('.*/VG_28xx/VG_2801/JITTER/PS1J01\.LBL', 0,
+      translator.TranslatorByDict(
+        {'PS1J02.TAB'           : 'PS1J01.TAB'})),
+    ('.*/VG_28xx/VG_2801/JITTER/PU2J02\.LBL', 0,
+      translator.TranslatorByDict(
+        {'PU2J01.TAB'           : 'PU2J02.TAB'})),
+    ('.*/VG_280./.*/L3GUIDE\.TXT', 0,
+      translator.TranslatorByDict(
+        {'RTLMTAB.FMT'          : ''})),
+    ('.*/VG_2802/EDITDATA/DATAINFO\.TXT', 0,
+      translator.TranslatorByDict(
+        {'INST.CAT'             : '../CATALOG/VG1INST.CAT'})),
+    ('.*/VG_2802/EDITDATA/US3D01P\.LBL', 0,
+      translator.TranslatorByDict(
+        {'US3D01I.DAT'          : 'US3D01P.DAT'})),
+    ('.*/VG_2803/.*/RS.R1BFV\.LBL', 0,
+      translator.TranslatorByDict(
+        {'RS_R1BFT.FMT'         : 'RS_R1BFV.FMT'})),
     ('.*/VGISS.*/BROWSE/C34801XX/C3480139_.*\.LBL', 0,
+      translator.TranslatorByDict(
         {'C3480140_CALIB.JPG'   : 'C3480139_CALIB.JPG',
          'C3480140_CLEANED.JPG' : 'C3480139_CLEANED.JPG',
          'C3480140_GEOMED.JPG'  : 'C3480139_GEOMED.JPG',
-         'C3480140_RAW.JPG'     : 'C3480139_RAW.JPG'}),
+         'C3480140_RAW.JPG'     : 'C3480139_RAW.JPG'})),
     ('.*/VGISS.*/BROWSE/C43892XX/C4389208_.*\.LBL', 0,
+      translator.TranslatorByDict(
         {'C4389209_CALIB.JPG'   : 'C4389208_CALIB.JPG',
          'C4389209_CLEANED.JPG' : 'C4389208_CLEANED.JPG',
          'C4389209_GEOMED.JPG'  : 'C4389208_GEOMED.JPG',
-         'C4389209_RAW.JPG'     : 'C4389208_RAW.JPG'}),
+         'C4389209_RAW.JPG'     : 'C4389208_RAW.JPG'})),
 ])
 
 KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
@@ -276,7 +334,6 @@ KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
     ('.*/COCIRS_.*VANILLA.*',                               re.I, 'missing'),
     ('.*/COCIRS_0209/DATA/NAV_DATA/RIN02101300.DAT',        0,    'missing'),
     ('.*/COCIRS_0602/DATA/UNCALIBR/FIFM06021412.DAT',       0,    'missing'),
-    ('.*/COCIRS_[01].*/CUBE/.*\.tar\.gz',                   0,    'missing'),
     ('.*/COISS_00.*/document/report/.*',                    0,    'missing'),
     ('.*/COISS_0011/calib.*\.tab',                          0,    'missing'),
     ('.*/COISS_0011/calib/calib.tar.gz',                    0,    'missing'),
@@ -345,7 +402,7 @@ class LinkInfo(object):
         return ('%d %s %s %s' % (self.recno, self.linktext, str(self.is_target),
                                  self.target or '[' + self.linkname + ']'))
 
-def generate_links(dirpath, limits={'info':-1, 'debug':1000, 'ds_store':10},
+def generate_links(dirpath, limits={'info':-1, 'debug':500, 'ds_store':10},
                    logger=None):
     """Generate a dictionary keyed by the absolute file path for files in the
     given directory tree, which must correspond to a volume.
@@ -372,7 +429,9 @@ def generate_links(dirpath, limits={'info':-1, 'debug':1000, 'ds_store':10},
     logger.replace_root(pdsdir.root_)
     logger.open('Finding link files', dirpath, limits)
 
-    link_dict = {}
+    linkinfo_dict = {}      # abspath: list of LinkInfo objects
+    label_dict = {}         # abspath: label for this file
+    abspaths = []           # list of all abspaths
 
     try:
 
@@ -397,53 +456,63 @@ def generate_links(dirpath, limits={'info':-1, 'debug':1000, 'ds_store':10},
                 logger.invisible('Invisible file skipped', abspath)
                 continue
 
-            link_dict[abspath] = ''
+            abspaths.append(abspath)
             local_basenames.append(basename)
             local_basenames_uc.append(basename.upper())
 
-        # Search each file for possible links
-        candidate_labels = {}           # {target: list of possible labels}
+        # Update linkinfo_dict, searching each relevant file for possible links.
+        # If the linking file is a label and the target file has a matching
+        # name, update the label_dict entry for the target.
+        candidate_labels = {}       # {target: list of possible label basenames}
         for basename in local_basenames:
 
             basename_uc = basename.upper()
+
+            # Only check LBL, CAT, TXT, etc.
             ext = basename_uc[-4:] if len(basename) >= 4 else ''
-            if ext not in EXTS_WO_LABELS: continue  # only check LBL, CAT, TXT
+            if ext not in EXTS_WO_LABELS:
+                continue
 
             # Get list of info for all possible linked filenames
             abspath = os.path.join(root, basename)
             logger.debug('Reviewing contents of file', abspath)
 
-            info_list = read_links(abspath, logger=logger)
+            linkinfo_list = read_links(abspath, logger=logger)
 
             # Apply repairs
-            for info in info_list:
-              for repair_dict in REPAIRS.all(abspath):
-                if info.linktext in repair_dict:
-                    info.linkname = repair_dict[info.linktext]
-                    if info.linkname:
-                        logger.info('Repairing link "%s"->"%s"' %
-                                    (info.linktext, info.linkname),
-                                    abspath, force=True)
-                    else:
+            repairs = REPAIRS.all(abspath)
+            for info in linkinfo_list:
+                for repair in repairs:
+                    linkname = repair.first(info.linktext)
+                    if linkname is None: continue   # no repair found
+
+                    info.linkname = linkname
+                    if linkname == '':
                         logger.info('Ignoring link "%s"' %
                                     info.linktext, abspath, force=True)
+                    else:
+                        logger.info('Repairing link "%s"->"%s"' %
+                                    (info.linktext, linkname),
+                                    abspath, force=True)
 
                     # Validate non-local targets of repairs
-                    if '/' in info.linkname:
-                      target = os.path.join(root, info.linkname)
+                    if '/' in linkname:
+                      target = os.path.join(root, linkname)
                       if os.path.exists(target):
                         info.target = os.path.abspath(target)
                       else:
                         logger.error('Target of repaired link is missing',
                                      target)
 
+                    break       # apply only one repair per found link
+
             # Validate or remove other targets
-            new_info_list = []
+            new_linkinfo_list = []
             baseroot_uc = basename_uc.partition('.')[0]
             ltest = len(baseroot_uc)
-            for info in info_list:
+            for info in linkinfo_list:
                 if info.target:         # Non-local, repaired links have targets
-                    new_info_list.append(info)
+                    new_linkinfo_list.append(info)
                     continue
 
                 # A blank linkname is from a repair; indicates to ignore
@@ -478,7 +547,7 @@ def generate_links(dirpath, limits={'info':-1, 'debug':1000, 'ds_store':10},
                       except ValueError:
                         pass
 
-                    # Also ignore formats
+                    # Also ignore format specifications (e.g., "F10.3")
                     if info.linkname[0] in ('F', 'E', 'G'):
                       try:
                         _ = float(info.linkname[1:])
@@ -492,7 +561,7 @@ def generate_links(dirpath, limits={'info':-1, 'debug':1000, 'ds_store':10},
                         logger.debug('Located "%s"' % info.linkname,
                                      nonlocal_target)
                         info.target = nonlocal_target
-                        new_info_list.append(info)
+                        new_linkinfo_list.append(info)
                         continue
 
                     if linkname_uc.endswith('.FMT'):
@@ -510,7 +579,7 @@ def generate_links(dirpath, limits={'info':-1, 'debug':1000, 'ds_store':10},
                 # Save the match
                 info.linkname = local_basenames[match_index]    # update case
                 info.target = os.path.join(root, info.linkname)
-                new_info_list.append(info)
+                new_linkinfo_list.append(info)
 
                 # Could this be the label?
                 if ext != '.LBL': continue      # nope
@@ -519,7 +588,7 @@ def generate_links(dirpath, limits={'info':-1, 'debug':1000, 'ds_store':10},
                 if (len(linkname_uc) > ltest and
                     linkname_uc[:ltest] == baseroot_uc and
                     linkname_uc[ltest] == '.'):
-                        link_dict[info.target] = abspath
+                        label_dict[info.target] = abspath
                         logger.debug('Label identified for %s' % info.linkname,
                                      abspath)
                         continue
@@ -535,17 +604,18 @@ def generate_links(dirpath, limits={'info':-1, 'debug':1000, 'ds_store':10},
                     logger.debug('Candidate label found for ' +
                                  info.linkname, abspath)
 
-            link_dict[abspath] = new_info_list
+            linkinfo_dict[abspath] = new_linkinfo_list
 
-        # Review unlabeled files
+        # Identify labels for files
         for basename in local_basenames:
 
             basename_uc = basename.upper()
             ext = basename_uc[-4:] if len(basename) >= 4 else ''
-            if ext in EXTS_WO_LABELS: continue      # don't check LBL, CAT, TXT
+            if ext in (".LBL", ".FMT"): continue    # these can't have labels
 
             abspath = os.path.join(root, basename)
-            if link_dict[abspath] != '': continue   # label already found
+            if abspath in label_dict:
+                continue                            # label already found
 
             # Maybe we already know the label is missing
             test = KNOWN_MISSING_LABELS.first(abspath)
@@ -557,38 +627,67 @@ def generate_links(dirpath, limits={'info':-1, 'debug':1000, 'ds_store':10},
                 logger.debug('Label is known to be missing', abspath)
                 continue
 
-            # If a file looks like it should be the label, report
+            # Determine if a label is required
+            label_is_required = (ext not in EXTS_WO_LABELS)
+
+            # Get the list of candidate labels in this directory
+            candidates = candidate_labels.get(basename, [])
+
+            # Determine if the obvious label file exists
             label_guess_uc = basename_uc.partition('.')[0] + '.LBL'
             if label_guess_uc in local_basenames_uc:
                 k = local_basenames_uc.index(label_guess_uc)
+                obvious_label_basename = local_basenames[k]
+            else:
+                obvious_label_basename = ''
+
+            # Simplest case...
+            if obvious_label_basename in candidates:
+                if not label_is_required:
+                    logger.debug('Unnecessary label found', abspath, force=True)
+
+                label_dict[abspath] = os.path.join(root, obvious_label_basename)
+                continue
+
+            # More cases...
+            if not label_is_required:
+                continue                # leave abspath out of label_dict
+
+            # Report a phantom label
+            if obvious_label_basename:
                 logger.error('Label %s does not point to file' %
                              local_basenames[k], abspath)
-                continue
-
-            # Check among any label candidates
-            try:
-                candidates = candidate_labels[basename]
-            except KeyError:
-                logger.error('Label is missing', abspath)
-                continue
 
             if len(candidates) == 1:
-                logger.info('Label found as %s' % candidates[0], abspath,
-                            force=True)
-                link_dict[abspath] = os.path.join(root, candidates[0])
+                logger.debug('Label found as ' + candidates[0], abspath,
+                             force=True)
+                label_dict[abspath] = os.path.join(root, candidates[0])
+                continue
+
+            # or errors...
+            label_dict[abspath] = ""
+            if len(candidates) == 0:
+                logger.error('Label is missing', abspath)
             else:
                 logger.error('Ambiguous label found as %s' % candidates[0],
                              abspath, force=True)
-                link_dict[abspath] = os.path.join(root, candidates[0])
-
                 for candidate in candidates[1:]:
-                    logger.info('Alternative label found as %s' % candidate,
-                                abspath, force=True)
+                    logger.debug('Alternative label found as %s' % candidate,
+                                 abspath, force=True)
 
-      # Convert link_dict to tuples
-      for (key,value) in link_dict.items():
-        if isinstance(value, list):
-            link_dict[key] = [(v.recno, v.linktext, v.target) for v in value]
+      # Merge the dictionaries
+      # There are cases where a file can have both a list of links and a label.
+      # This occurs when a .TXT or .CAT file has a label, even though it didn't
+      # need one. In the returned dictionary, link lists take priority.
+      link_dict = {}
+      for key in abspaths:
+        if key in linkinfo_dict:
+            link_dict[key] = [(v.recno, v.linktext, v.target)
+                              for v in linkinfo_dict[key]]
+        elif key in label_dict:
+            link_dict[key] = label_dict[key]
+        else:
+            link_dict[key] = ''
 
       return link_dict
 
@@ -749,7 +848,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
             f.write(name + ' = {\n')
             for valtype in (list, str):
               for key in keys:
-                if type(interior_dict[key]) != valtype: continue
+                if not isinstance(interior_dict[key], valtype): continue
 
                 f.write('  "%s"' % key)
                 if len(key) < len_key:

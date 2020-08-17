@@ -35,18 +35,39 @@ TESTS = translator.TranslatorByRegex([
                                     0, ['cocirs01']),
     ('.*/COCIRS_1xxx(|_v[3-9]).*',  0, ['cocirs01']),
     ('.*/COCIRS_[56]xxx.*',         0, ['cocirs56']),
-    ('.*/COISS_[12]xxx.*',          0, ['coiss12', 'cumindex', 'metadata']),
+    ('.*/COISS_[12]xxx.*',          0, ['coiss12', 'cumindex', 'metadata',
+                                        'inventory', 'rings', 'moons']),
+    ('.*/COISS_100[1-7].*',         0, ['jupiter']),
+    ('.*/COISS_100[89].*',          0, ['saturn']),
+    ('.*/COISS_2xxx.*',             0, ['saturn']),
     ('.*/COISS_3xxx.*',             0, ['coiss3']),
-    ('.*/COISS_3xxx_v[0-9]+.*',     0, ['coiss3']),
-    ('.*/COUVIS_0xxx.*',            0, ['couvis', 'cumindex', 'metadata']),
-    ('.*/COVIMS_0xxx/COVIMS_0.*',   0, ['covims', 'cumindex', 'metadata']),
-    ('.*/COVIMS_0xxx/COVIMS_UNKS',  0, ['covims', 'cumindex', 'metadata']),
-    ('.*/GO_0xxx.*',                0, ['go', 'cumindex', 'metadata']),
-    ('.*/HST.x_xxxx/.*',            0, ['hst', 'cumindex99']),
-    ('.*/NH(JU|LA)MV_xxxx.*',       0, ['nh', 'nhbrowse_vx']),
-    ('.*/NH(PC|PE)MV_xxxx.*',       0, ['nh', 'nhbrowse']),
-    ('.*/NH..(LO|MV)_xxxx.*',       0, ['nh']),
-    ('.*/VGISS_[5678]xxx.*',        0, ['vgiss', 'cumindex', 'metadata']),
+    ('.*/COUVIS_0xxx.*',            0, ['couvis', 'cumindex', 'metadata',
+                                        'supplemental']),
+    ('.*/COUVIS_0006.*',            0, ['saturn', 'rings']),
+    ('.*/COUVIS_000[7-9].*',        0, ['saturn', 'rings', 'moons']),
+    ('.*/COUVIS_00[1-9].*',         0, ['saturn', 'rings', 'moons']),
+    ('.*/COVIMS_0.*',               0, ['covims', 'cumindex', 'metadata']),
+    ('.*/COVIMS_000[4-9].*',        0, ['saturn', 'rings', 'moons']),
+    ('.*/COVIMS_00[1-9].*',         0, ['saturn', 'rings', 'moons']),
+    ('.*/CO.*_8xxx.*',              0, ['supplemental', 'profile']),
+    ('.*/EBROCC.*',                 0, ['ebrocc']),
+    ('.*/GO_0xxx.*',                0, ['go', 'metadata', 'cumindex']),
+    ('.*/HST.x_xxxx/.*',            0, ['hst', 'metadata', 'cumindex99']),
+    ('.*/NH..(LO|MV)_xxxx.*',       0, ['nh', 'metadata', 'supplemental']),
+    ('.*/NH..LO_xxxx.*',            0, ['inventory', 'rings', 'moons']),
+    ('.*/NH(JU|LA)MV_xxxx.*',       0, ['nhbrowse_vx', 'jupiter']),
+    ('.*/NH(PC|PE)MV_xxxx.*',       0, ['nhbrowse', 'pluto']),
+    ('.*/VGISS_[5678]xxx.*',        0, ['vgiss', 'cumindex', 'metadata',
+                                        'raw_image', 'supplemental']),
+    ('.*/VGISS_5(10[4-9]|20[5-9]|11|21).*',
+                                    0, ['jupiter', 'inventory', 'rings',
+                                        'moons']),
+    ('.*/VGISS_6(10|11[0-5]|2).*',  0, ['saturn', 'inventory', 'rings',
+                                        'moons']),
+    ('.*/VGISS_7xxx.*',             0, ['uranus', 'inventory', 'rings',
+                                        'moons']),
+    ('.*/VGISS_8xxx.*',             0, ['neptune', 'inventory', 'rings',
+                                        'moons']),
 ])
 
 ################################################################################
@@ -153,7 +174,6 @@ class PdsDependency(object):
             logger.open(self.title, dirpath)
 
         try:
-
             pattern = pdsdir.root_ + self.glob_pattern
 
             pattern = pattern.replace('$', pdsdir.volset_[:-1], 1)
@@ -170,7 +190,6 @@ class PdsDependency(object):
                 logger.open('%s >> %s' % (self.regex_pattern[1:-1], sub),
                             limits={'normal': limit})
                 try:
-
                     for abspath in abspaths:
                         path = abspath[lskip_:]
 
@@ -306,15 +325,137 @@ for thing in ['volumes', 'metadata', 'calibrated']:
     )
 
 ################################################################################
-# General metadata test
+# Metadata tests
 ################################################################################
 
+# General metadata test requiring volname + "_index.tab"
 _ = PdsDependency(
     'Metadata index table is newer than index.tab',
-    'volumes/$/$/index/index.tab',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)/index/index.tab',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
     r'metadata/\1/\3/\3_index.tab',
-    suite='metadata', newer=True,
+    suite='metadata', newer=False,
+)
+
+# More metadata
+_ = PdsDependency(
+    'Supplemental index table',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    r'metadata/\1/\3/\3_supplemental_index.tab',
+    suite='supplemental', newer=False,
+)
+
+_ = PdsDependency(
+    'Inventory file',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    r'metadata/\1/\3/\3_inventory.tab',
+    suite='inventory', newer=False,
+)
+
+_ = PdsDependency(
+    'Jupiter summary file',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    r'metadata/\1/\3/\3_jupiter_summary.tab',
+    suite='jupiter', newer=False,
+)
+
+_ = PdsDependency(
+    'Saturn summary file',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    r'metadata/\1/\3/\3_saturn_summary.tab',
+    suite='saturn', newer=False,
+)
+
+_ = PdsDependency(
+    'Uranus summary file',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    r'metadata/\1/\3/\3_uranus_summary.tab',
+    suite='uranus', newer=False,
+)
+
+_ = PdsDependency(
+    'Neptune summary file',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    r'metadata/\1/\3/\3_neptune_summary.tab',
+    suite='neptune', newer=False,
+)
+
+_ = PdsDependency(
+    'Pluto/Charon summary file',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    [r'metadata/\1/\3/\3_pluto_summary.tab',
+     r'metadata/\1/\3/\3_charon_summary.tab'],
+    suite='pluto', newer=False,
+)
+
+_ = PdsDependency(
+    'Ring summary file',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    r'metadata/\1/\3/\3_ring_summary.tab',
+    suite='rings', newer=False,
+)
+
+_ = PdsDependency(
+    'Moon summary file',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    r'metadata/\1/\3/\3_moon_summary.tab',
+    suite='moons', newer=False,
+)
+
+_ = PdsDependency(
+    'Raw image summary file',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    r'metadata/\1/\3/\3_raw_image_index.tab',
+    suite='raw_image', newer=False,
+)
+
+_ = PdsDependency(
+    'Profile index file',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    r'metadata/\1/\3/\3_profile_index.tab',
+    suite='profile', newer=False,
+)
+
+_ = PdsDependency(
+    'EBROCC index files',
+    'volumes/$/$',
+    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+    [r'metadata/\1/\3/PAL_supplemental_index.tab',
+     r'metadata/\1/\3/PAL_supplemental_index.lbl',
+     r'metadata/\1/\3/PAL_profile_index.tab',
+     r'metadata/\1/\3/PAL_profile_index.lbl',
+     r'metadata/\1/\3/MCD_supplemental_index.tab',
+     r'metadata/\1/\3/MCD_supplemental_index.lbl',
+     r'metadata/\1/\3/MCD_profile_index.tab',
+     r'metadata/\1/\3/MCD_profile_index.lbl',
+     r'metadata/\1/\3/LIC_supplemental_index.tab',
+     r'metadata/\1/\3/LIC_supplemental_index.lbl',
+     r'metadata/\1/\3/LIC_profile_index.tab',
+     r'metadata/\1/\3/IRT_supplemental_index.tab',
+     r'metadata/\1/\3/LIC_profile_index.lbl',
+     r'metadata/\1/\3/IRT_supplemental_index.lbl',
+     r'metadata/\1/\3/IRT_profile_index.tab',
+     r'metadata/\1/\3/ES2_supplemental_index.tab',
+     r'metadata/\1/\3/IRT_profile_index.lbl',
+     r'metadata/\1/\3/ES2_supplemental_index.lbl',
+     r'metadata/\1/\3/ES2_profile_index.lbl',
+     r'metadata/\1/\3/ES2_profile_index.tab',
+     r'metadata/\1/\3/ES1_supplemental_index.tab',
+     r'metadata/\1/\3/ES1_supplemental_index.lbl',
+     r'metadata/\1/\3/ES1_profile_index.tab',
+     r'metadata/\1/\3/ES1_profile_index.lbl'],
+    suite='ebrocc', newer=False,
 )
 
 ################################################################################
@@ -432,26 +573,6 @@ _ = PdsDependency(
      r'archives-metadata/\g<1>_info.py'],
     suite='cumindex99', newer=True, dir='shelves/info'
 )
-
-################################################################################
-# Cumulative index tests for COVIMS_UNKS
-################################################################################
-
-# _ = PdsDependency(
-#     'PDS3 label for every metadata table',
-#     'metadata/$/$/*.tab',
-#     r'metadata/(.*?)/(.*?)/(.*)\.tab',
-#     r'metadata/\1/\2/\3.lbl',
-#     suite='cumindex_unks', newer=False,
-# )
-# 
-# _ = PdsDependency(
-#     'Newer cumulative version for every metadata table',
-#     'metadata/$/$/COVIMS_UNKS*.tab',
-#     r'metadata/(.*?)/COVIMS_UNKS/COVIMS_UNKS(.*).tab',
-#     r'metadata/\1/COVIMS_0999/COVIMS_0999\2.tab',
-#     suite='cumindex_unks', newer=True,
-# )
 
 ################################################################################
 # Preview tests
