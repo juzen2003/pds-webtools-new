@@ -196,6 +196,10 @@ class TranslatorByDict(Translator):
 
         For this subclass, strings_first is ignored."""
 
+        # Convert an individual string to a list
+        if _isstr(strings):
+            strings = [strings]
+
         # Convert the strings to dictionary keys
         if self.path_translator is None:
             keys = strings
@@ -219,6 +223,10 @@ class TranslatorByDict(Translator):
     def first(self, strings, strings_first=False):
         """Apply a translator to one or more strings, returning the first
         result. Return None if no translation is found."""
+
+        # Convert an individual string to a list
+        if _isstr(strings):
+            strings = [strings]
 
         # Convert the strings to dictionary keys, preserving order
         if self.path_translator is None:
