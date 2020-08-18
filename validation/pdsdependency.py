@@ -49,8 +49,9 @@ TESTS = translator.TranslatorByRegex([
     ('.*/COVIMS_0.*',               0, ['covims', 'cumindex', 'metadata']),
     ('.*/COVIMS_000[4-9].*',        0, ['saturn', 'rings', 'moons']),
     ('.*/COVIMS_00[1-9].*',         0, ['saturn', 'rings', 'moons']),
-    ('.*/CO.*_8xxx.*',              0, ['supplemental', 'profile']),
-    ('.*/EBROCC.*',                 0, ['ebrocc']),
+    ('.*/CO.*_8xxx.*',              0, ['metadata', 'supplemental', 'profile']),
+    ('.*/COUVIS_8xxx.*',            0, ['couvis_8xxx']),
+    ('.*/EBROCC.*',                 0, ['metadata', 'supplemental', 'profile']),
     ('.*/GO_0xxx.*',                0, ['go', 'metadata', 'cumindex']),
     ('.*/HST.x_xxxx/.*',            0, ['hst', 'metadata', 'cumindex99']),
     ('.*/NH..(LO|MV)_xxxx.*',       0, ['nh', 'metadata', 'supplemental']),
@@ -427,37 +428,6 @@ _ = PdsDependency(
     suite='profile', newer=False,
 )
 
-_ = PdsDependency(
-    'EBROCC index files',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    [r'metadata/\1/\3/PAL_supplemental_index.tab',
-     r'metadata/\1/\3/PAL_supplemental_index.lbl',
-     r'metadata/\1/\3/PAL_profile_index.tab',
-     r'metadata/\1/\3/PAL_profile_index.lbl',
-     r'metadata/\1/\3/MCD_supplemental_index.tab',
-     r'metadata/\1/\3/MCD_supplemental_index.lbl',
-     r'metadata/\1/\3/MCD_profile_index.tab',
-     r'metadata/\1/\3/MCD_profile_index.lbl',
-     r'metadata/\1/\3/LIC_supplemental_index.tab',
-     r'metadata/\1/\3/LIC_supplemental_index.lbl',
-     r'metadata/\1/\3/LIC_profile_index.tab',
-     r'metadata/\1/\3/IRT_supplemental_index.tab',
-     r'metadata/\1/\3/LIC_profile_index.lbl',
-     r'metadata/\1/\3/IRT_supplemental_index.lbl',
-     r'metadata/\1/\3/IRT_profile_index.tab',
-     r'metadata/\1/\3/ES2_supplemental_index.tab',
-     r'metadata/\1/\3/IRT_profile_index.lbl',
-     r'metadata/\1/\3/ES2_supplemental_index.lbl',
-     r'metadata/\1/\3/ES2_profile_index.lbl',
-     r'metadata/\1/\3/ES2_profile_index.tab',
-     r'metadata/\1/\3/ES1_supplemental_index.tab',
-     r'metadata/\1/\3/ES1_supplemental_index.lbl',
-     r'metadata/\1/\3/ES1_profile_index.tab',
-     r'metadata/\1/\3/ES1_profile_index.lbl'],
-    suite='ebrocc', newer=False,
-)
-
 ################################################################################
 # Cumulative index tests where "_x999" is the suffix
 ################################################################################
@@ -656,6 +626,22 @@ _ = PdsDependency(
      r'previews/\1_med.png',
      r'previews/\1_full.png'],
     suite='couvis', newer=False,
+)
+
+# For COUVIS_8xxx
+_ = PdsDependency(
+    'Previews and diagrams of every profile',
+    'volumes/$/$/data/*_TAU01KM.TAB',
+    r'volumes/(.*)_TAU01KM\.TAB',
+    [r'previews/\1_thumb.png',
+     r'previews/\1_small.png',
+     r'previews/\1_med.png',
+     r'previews/\1_full.png',
+     r'diagrams/\1_thumb.png',
+     r'diagrams/\1_small.png',
+     r'diagrams/\1_med.png',
+     r'diagrams/\1_full.png'],
+    suite='couvis_8xxx', newer=False,
 )
 
 # For COVIMS_0xxx and COVIMS_UNKS
