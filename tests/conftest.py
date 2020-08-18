@@ -33,5 +33,5 @@ def setup(request):
     else: # default
         pdsfile.use_pickles(True)
         pdsfile.use_shelves_only(True)
-    turn_on_logger("test_log.txt")
+    # turn_on_logger("test_log.txt")
     pdsfile.preload(PDS_DATA_DIR)

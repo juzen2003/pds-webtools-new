@@ -15,6 +15,23 @@ PDS_PDSDATA_PATH = PDS_DATA_DIR[:PDS_DATA_DIR.index('holdings')]
 ################################################################################
 class TestPdsFileBlackBox:
     ############################################################################
+    # Local implementations of basic filesystem operations
+    ############################################################################
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            # (PDS_DATA_DIR + '/volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959',
+            #  ['N1460960868_1.IMG', 'N1460960868_1.LBL']),
+            (PDS_DATA_DIR + '/volumes/COISS_2xxx',
+             ['N1460960868_1.IMG', 'N1460960868_1.LBL']),
+        ]
+    )
+    def test_os_listdir(self, input_path, expected):
+        res = pdsfile.PdsFile.os_listdir(abspath=input_path)
+        print(res)
+        assert res.sort() == expected.sort()
+
+    ############################################################################
     # Test for DEFAULT FILE SORT ORDER
     ############################################################################
     @pytest.mark.parametrize(
