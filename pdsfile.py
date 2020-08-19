@@ -2560,7 +2560,8 @@ class PdsFile(object):
         if caching == 'default':
             caching = DEFAULT_CACHING
 
-        if caching == 'all' or (caching == 'dir' and self.isdir):
+        if caching == 'all' or (caching == 'dir' and
+                                (self.isdir or self.is_index)):
 
             # Don't overwrite a virtual directory
             if self.logical_path not in CATEGORIES:
