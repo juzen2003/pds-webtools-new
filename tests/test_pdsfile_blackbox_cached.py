@@ -348,7 +348,13 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_thumb.jpg',
-             pdsviewable.PdsViewSet)
+             [
+                'holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_full.jpg',
+                'holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_thumb.jpg',
+                'holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_med.jpg',
+                'holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_small.jpg',
+             ]
+            )
         ]
     )
     def test_viewset(self, input_path, expected):
@@ -356,24 +362,33 @@ class TestPdsFileBlackBox:
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res1 = target_pdsfile.viewset
         res2 = target_pdsfile.viewset
-        assert isinstance(res1, expected)
+        assert isinstance(res1, pdsviewable.PdsViewSet)
         assert res1 == res2
+        viewables = res1.to_dict()['viewables']
+        for viewable in viewables:
+            assert viewable['url'] in expected
 
     @pytest.mark.parametrize(
-        'input_path,expected',
+        'input_path,expected_pdsviewset,expected_path',
         [
             ('previews/HSTIx_xxxx/HSTI1_1556/DATA/VISIT_01/IB4W01I5Q_thumb.jpg',
-             True),
-            ('volumes/HSTIx_xxxx/HSTI1_1556/DATA/VISIT_01/IB4W01I5Q.asc', False)
+             True,
+             ['holdings/previews/HSTIx_xxxx/HSTI1_1556/DATA/VISIT_01/IB4W01I5Q_thumb.jpg']),
+            ('volumes/HSTIx_xxxx/HSTI1_1556/DATA/VISIT_01/IB4W01I5Q.asc', False, [])
         ]
     )
-    def test_local_viewset(self, input_path, expected):
+    def test_local_viewset(self, input_path, expected_pdsviewset, expected_path):
         """local_viewset: return self._local_viewset_filled"""
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res1 = target_pdsfile.local_viewset
         res2 = target_pdsfile.local_viewset
-        assert isinstance(res1, pdsviewable.PdsViewSet) == expected
+        is_pdsviewset = isinstance(res1, pdsviewable.PdsViewSet)
+        assert is_pdsviewset == expected_pdsviewset
         assert res1 == res2
+        if is_pdsviewset:
+            viewables = res1.to_dict()['viewables']
+            for viewable in viewables:
+                assert viewable['url'] in expected_path
 
     @pytest.mark.parametrize(
         'input_path,expected',
@@ -455,7 +470,13 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007',
-             pdsviewable.PdsViewSet)
+             [
+                'icons-local/blue/png-200/folder_previews.png',
+                'icons-local/blue/png-30/folder_previews.png',
+                'icons-local/blue/png-100/folder_previews.png',
+                'icons-local/blue/png-50/folder_previews.png',
+             ]
+            )
         ]
     )
     def test__iconset(self, input_path, expected):
@@ -464,14 +485,24 @@ class TestPdsFileBlackBox:
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res1 = target_pdsfile._iconset
         res2 = target_pdsfile._iconset
-        assert isinstance(res1, expected)
+        assert isinstance(res1, pdsviewable.PdsViewSet)
         assert res1 == res2
+        viewables = res1.to_dict()['viewables']
+        for viewable in viewables:
+            assert viewable['url'] in expected
+
 
     @pytest.mark.parametrize(
         'input_path,expected',
         [
             ('previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007',
-             pdsviewable.PdsViewSet)
+             [
+                'icons-local/blue/png-200/folder_previews_open.png',
+                'icons-local/blue/png-30/folder_previews_open.png',
+                'icons-local/blue/png-100/folder_previews_open.png',
+                'icons-local/blue/png-50/folder_previews_open.png',
+             ]
+            )
         ]
     )
 
@@ -481,14 +512,24 @@ class TestPdsFileBlackBox:
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res1 = target_pdsfile.iconset_open
         res2 = target_pdsfile.iconset_open
-        assert isinstance(res1, expected)
+        assert isinstance(res1, pdsviewable.PdsViewSet)
         assert res1 == res2
+        print(res1.to_dict())
+        viewables = res1.to_dict()['viewables']
+        for viewable in viewables:
+            assert viewable['url'] in expected
 
     @pytest.mark.parametrize(
         'input_path,expected',
         [
             ('previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007',
-             pdsviewable.PdsViewSet)
+             [
+                'icons-local/blue/png-200/folder_previews.png',
+                'icons-local/blue/png-30/folder_previews.png',
+                'icons-local/blue/png-100/folder_previews.png',
+                'icons-local/blue/png-50/folder_previews.png',
+             ]
+            )
         ]
     )
 
@@ -498,8 +539,12 @@ class TestPdsFileBlackBox:
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res1 = target_pdsfile.iconset_closed
         res2 = target_pdsfile.iconset_closed
-        assert isinstance(res1, expected)
+        assert isinstance(res1,  pdsviewable.PdsViewSet)
         assert res1 == res2
+        assert res1 == res2
+        viewables = res1.to_dict()['viewables']
+        for viewable in viewables:
+            assert viewable['url'] in expected
 
 ################################################################################
 # Blackbox test for internal cached in PdsGroup class
@@ -512,7 +557,21 @@ class TestPdsGroupBlackBox:
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT',
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL'
              ],
-             pdsviewable.PdsViewSet)
+             [
+                'icons-local/blue/png-30/document_binary.png',
+                'icons-local/blue/png-50/document_binary.png',
+                'icons-local/blue/png-200/document_binary.png',
+                'icons-local/blue/png-100/document_binary.png',
+             ]
+            ),
+            (['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007'],
+             [
+                'icons-local/blue/png-200/folder_previews.png',
+                'icons-local/blue/png-30/folder_previews.png',
+                'icons-local/blue/png-100/folder_previews.png',
+                'icons-local/blue/png-50/folder_previews.png',
+             ]
+            )
         ]
     )
     def test__iconset(self, input_paths, expected):
@@ -522,8 +581,11 @@ class TestPdsGroupBlackBox:
         target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
         res1 = target_pdsgroup._iconset
         res2 = target_pdsgroup._iconset
-        assert isinstance(res1, expected)
+        assert isinstance(res1, pdsviewable.PdsViewSet)
         assert res1 == res2
+        viewables = res1.to_dict()['viewables']
+        for viewable in viewables:
+            assert viewable['url'] in expected
 
     @pytest.mark.parametrize(
         'input_paths,expected',
@@ -532,7 +594,21 @@ class TestPdsGroupBlackBox:
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT',
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL'
              ],
-             pdsviewable.PdsViewSet)
+             [
+                'icons-local/blue/png-30/document_binary.png',
+                'icons-local/blue/png-50/document_binary.png',
+                'icons-local/blue/png-200/document_binary.png',
+                'icons-local/blue/png-100/document_binary.png',
+             ]
+            ),
+            (['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007'],
+             [
+                'icons-local/blue/png-200/folder_previews_open.png',
+                'icons-local/blue/png-30/folder_previews_open.png',
+                'icons-local/blue/png-100/folder_previews_open.png',
+                'icons-local/blue/png-50/folder_previews_open.png',
+             ]
+            )
         ]
     )
     def test_iconset_open(self, input_paths, expected):
@@ -542,8 +618,12 @@ class TestPdsGroupBlackBox:
         target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
         res1 = target_pdsgroup.iconset_open
         res2 = target_pdsgroup.iconset_open
-        assert isinstance(res1, expected)
+        assert isinstance(res1, pdsviewable.PdsViewSet)
         assert res1 == res2
+        print(res1.to_dict())
+        viewables = res1.to_dict()['viewables']
+        for viewable in viewables:
+            assert viewable['url'] in expected
 
     @pytest.mark.parametrize(
         'input_paths,expected',
@@ -552,7 +632,21 @@ class TestPdsGroupBlackBox:
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT',
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL'
              ],
-             pdsviewable.PdsViewSet)
+             [
+                'icons-local/blue/png-30/document_binary.png',
+                'icons-local/blue/png-50/document_binary.png',
+                'icons-local/blue/png-200/document_binary.png',
+                'icons-local/blue/png-100/document_binary.png',
+             ]
+            ),
+            (['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007'],
+             [
+                'icons-local/blue/png-200/folder_previews.png',
+                'icons-local/blue/png-30/folder_previews.png',
+                'icons-local/blue/png-100/folder_previews.png',
+                'icons-local/blue/png-50/folder_previews.png',
+             ]
+            )
         ]
     )
     def test_iconset_closed(self, input_paths, expected):
@@ -562,5 +656,9 @@ class TestPdsGroupBlackBox:
         target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
         res1 = target_pdsgroup.iconset_closed
         res2 = target_pdsgroup.iconset_closed
-        assert isinstance(res1, expected)
+        assert isinstance(res1, pdsviewable.PdsViewSet)
         assert res1 == res2
+        print(res1.to_dict())
+        viewables = res1.to_dict()['viewables']
+        for viewable in viewables:
+            assert viewable['url'] in expected
