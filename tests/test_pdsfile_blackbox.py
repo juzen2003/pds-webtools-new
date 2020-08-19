@@ -18,7 +18,7 @@ class TestPdsFileBlackBox:
     # Local implementations of basic filesystem operations
     ############################################################################
     @pytest.mark.parametrize(
-        'input_path,expected',
+        'input_path,expected1,expected2',
         [
             (PDS_DATA_DIR + '/volumes/COISS_2xxx',
              [
@@ -50,15 +50,22 @@ class TestPdsFileBlackBox:
                 'COISS_2028', 'COISS_2091', 'COISS_2031', 'COISS_2104',
                 'COISS_2010', 'COISS_2027', 'COISS_2003', 'COISS_2054',
                 'COISS_2048', 'COISS_2087', 'COISS_2112', 'COISS_2070',
-                'COISS_2075', 'COISS_2042', 'COISS_2069', 'COISS_2047']
-            ),
+                'COISS_2075', 'COISS_2042', 'COISS_2069', 'COISS_2047'
+            ],
+            [
+                'COISS_2111', 'COISS_2008', 'COISS_2003', 'COISS_2002'
+            ]
+           ),
         ]
     )
-    def test_os_listdir(self, input_path, expected):
+    def test_os_listdir(self, input_path, expected1, expected2):
+        res = pdsfile.PdsFile.os_listdir(abspath=input_path)
         if pdsfile.SHELVES_ONLY:
-            res = pdsfile.PdsFile.os_listdir(abspath=input_path)
-            assert len(res) == len(expected)
-            assert res.sort() == expected.sort()
+            assert len(res) == len(expected1)
+            assert res.sort() == expected1.sort()
+        else:
+            assert len(res) == len(expected2)
+            assert res.sort() == expected2.sort()
 
     ############################################################################
     # Test for DEFAULT FILE SORT ORDER
