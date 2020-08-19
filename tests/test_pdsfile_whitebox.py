@@ -338,51 +338,54 @@ class TestPdsFileWhiteBox:
         'input_path,expected',
         [
             ('previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007',
-             pdsviewable.PdsViewSet),
+             [
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_thumb.png',
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_full.png',
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_small.png',
+                'holdings/previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31_med.png'
+             ]),
             ('archives-volumes/COCIRS_0xxx/', None),
-            ('metadata/COUVIS_0xxx/COUVIS_0001/COUVIS_0001_index.tab',
-             pdsviewable.PdsViewSet),
-            ('volumes/COCIRS_6xxx/COCIRS_6002/DATA/RINDATA/RIN1002071502_FP3.LBL',
-             pdsviewable.PdsViewSet),
-            ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31.LBL',
-             pdsviewable.PdsViewSet),
+            ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab', []),
         ]
     )
     def test_viewset_lookup(self, input_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        if not target_pdsfile.exists:
-            assert target_pdsfile.viewset_lookup() == None
+        res = target_pdsfile.viewset_lookup()
+
+        if expected is not None:
+            assert isinstance(res, pdsviewable.PdsViewSet)
+            viewables = res.to_dict()['viewables']
+            print(viewables)
+            for viewable in viewables:
+                assert viewable['url'] in expected
         else:
-            if expected is not None:
-                assert isinstance(target_pdsfile.viewset_lookup(), expected)
-            else:
-                assert target_pdsfile.viewset_lookup() == expected
+            assert res == expected
 
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('/volumes/pdsdata/holdings/volumes/COUVIS_0xxx_v1', True),
+            ('/volumes/pdsdata/holdings/volumes/COUVIS_0xxx_v1',
+             'volumes/COUVIS_0xxx_v1'),
             ('volumes/VGIRIS_xxxx_peer_review/VGIRIS_0001/DATA/JUPITER_VG1/C1547XXX.LBL',
-             True),
+             'volumes/VGIRIS_xxxx_peer_review/VGIRIS_0001/DATA/JUPITER_VG1/C1547XXX.LBL'),
             ('volumes/VGIRIS_xxxx_in_prep/VGIRIS_0001/DATA/JUPITER_VG1/C1547XXX.LBL',
-             True),
-            ('checksums/archives', True),
-            ('diagrams/checksums', True),
-            ('COUVIS_0xxx/v1', True),
-            ('checksums-archives-volumes', True),
-            ('checksums-archives-previews', True),
-            ('archives/', True),
-            ('md5/', True),
-            ('diagrams/', True),
-            ('peer_review/', True),
-            ('COISS_0xxx_tar.gz', True),
-            ('COISS_0xxx_v1_md5.txt', True),
+             'volumes/VGIRIS_xxxx_peer_review/VGIRIS_0001/DATA/JUPITER_VG1/C1547XXX.LBL'),
+            ('checksums/archives', 'checksums-archives-volumes'),
+            ('diagrams/checksums', 'checksums-diagrams'),
+            ('COUVIS_0xxx/v1', 'volumes/COUVIS_0xxx_v1'),
+            ('checksums-archives-volumes', 'checksums-archives-volumes'),
+            ('checksums-archives-previews', 'checksums-archives-previews'),
+            ('archives/', 'archives-volumes'),
+            ('md5/', 'checksums-volumes'),
+            ('diagrams/', 'diagrams'),
+            ('peer_review/', 'volumes'),
+            ('COISS_0xxx_v1_md5.txt', 'checksums-volumes/COISS_0xxx_v1'),
         ]
     )
     def test_from_path1(self, input_path, expected):
         res = pdsfile.PdsFile.from_path(path=input_path)
         assert isinstance(res, pdsfile.PdsFile)
-        assert res.exists == expected
+        assert res.logical_path == expected
 
     @pytest.mark.parametrize(
         'input_path,expected',
@@ -401,14 +404,24 @@ class TestPdsFileWhiteBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('COISS_2001.targz', True),
-            ('COISS_2001_previews.targz', True),
+            # Temporarily comment out the following 3 cases.
+            # # Current expected results are based on comments in from_path
+            # ('COISS_2001.targz', 'archives-volumes/COISS_2xxx/COISS_2001.tar.gz'),
+            # # previews/COISS_2xxx/COISS_2001
+            # ('COISS_2001_previews.targz', 'archives-previews/COISS_2xxx/COISS_2001_previews.tar.gz'),
+            # # volumes/COISS_2xxx/COISS_2001
+            # ('COISS_0xxx_tar.gz', 'archives-volumes/COISS_2xxx'),
+            # # 'volumes/COISS_0xxx'
+            ('COISS_2002', 'volumes/COISS_2xxx/COISS_2002'),
+            # volumes/COISS_2xxx/COISS_2002
         ]
     )
     def test_from_path3(self, input_path, expected):
         if pdsfile.SHELVES_ONLY:
             res = pdsfile.PdsFile.from_path(path=input_path)
             assert isinstance(res, pdsfile.PdsFile)
+            print(res.logical_path)
+            assert res.logical_path == expected
         else:
             assert True
 
@@ -492,13 +505,16 @@ class TestPdsFileWhiteBox:
         'input_path,selection,flag,expected',
         [
             ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
-             'U2nO040', '', pdsfile.PdsFile),
+             'U2nO040', '',
+             'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab/U2nO040'),
         ]
     )
     def test_child_of_index(self, input_path, selection, flag, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res = target_pdsfile.child_of_index(selection, flag)
-        assert isinstance(res, expected)
+        assert isinstance(res, pdsfile.PdsFile)
+        # The path doesn't point to an actual file.
+        assert res.logical_path == expected
 
     @pytest.mark.parametrize(
         'input_path,selection,flag,expected',
@@ -652,15 +668,18 @@ class TestPdsFileWhiteBox:
                 'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
-             pdsfile.PdsFile)
+             [
+                 'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
+             ])
         ]
     )
     def test_pdsfiles_for_logicals(self, input_path, expected):
         res = pdsfile.PdsFile.pdsfiles_for_logicals(logical_paths=input_path,
                                                     must_exist=True)
-
         for pdsf in res:
-            assert isinstance(pdsf, expected)
+            assert isinstance(pdsf, pdsfile.PdsFile)
+            assert pdsf.logical_path in expected
 
     @pytest.mark.parametrize(
         'input_path,expected',
@@ -956,7 +975,7 @@ class TestPdsFileWhiteBox:
         'input_path,expected',
         [
             (PDS_DATA_DIR + '/volumes/COISS_0xxx/COISS_0001',
-             True),
+             PDS_DATA_DIR + '/volumes/COISS_0xxx/COISS_0001'),
         ]
     )
     def test_from_abspath(self, input_path, expected):
@@ -964,7 +983,7 @@ class TestPdsFileWhiteBox:
         res = pdsfile.PdsFile.from_abspath(abspath=input_path,
                                            fix_case=True)
         assert isinstance(res, pdsfile.PdsFile)
-        assert res.exists == expected
+        assert res.abspath == expected
 
 
 ################################################################################
