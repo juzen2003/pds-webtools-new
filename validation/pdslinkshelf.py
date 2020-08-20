@@ -933,17 +933,18 @@ def load_links(dirpath, limits={}, logger=None):
         for (key, values) in interior_dict.items():
             long_key = dirpath_ + key
 
-            if type(values) == str:
-                if values == '':
-                    link_dict[long_key] = ''
-                else:
-                    link_dict[long_key] = dirpath_ + values
-            else:
+            if isinstance(values, list):
                 new_list = []
                 for (recno, basename, interior_path) in values:
                     new_list.append((recno, basename, dirpath_ + interior_path))
 
                 link_dict[long_key] = new_list
+            else:
+                values = str(values)
+                if values == '':
+                    link_dict[long_key] = ''
+                else:
+                    link_dict[long_key] = dirpath_ + values
 
         return link_dict
 
