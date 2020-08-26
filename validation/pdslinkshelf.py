@@ -79,6 +79,44 @@ REPAIRS = translator.TranslatorByRegex([
          'RINDATA.FMT'          : '../DATA/RINDATA/RINDATA.FMT',
          'TARDATA.FMT'          : '../DATA/TARDATA/TARDATA.FMT',
          'filename.FMT'         : ''})),
+    ('.*/COCIRS_[56].*/BROWSE/.*\.LBL', 0,
+      translator.TranslatorByRegex([
+        (r'(SPEC[0-9]{10}_FP[134]\.DAT)', 0, r'../../DATA/APODSPEC/\1'),
+        (r'(ISPM[0-9]{10}_FP[134]\.TAB)', 0, r'../../DATA/ISPMDATA/\1'),
+        (r'(RIN[0-9]{10}_FP[134]\.TAB)',  0, r'../../DATA/RINDATA/\1'),
+        (r'(POI[0-9]{10}_FP[134]\.TAB)',  0, r'../../DATA/POIDATA/\1'),
+        (r'(TAR[0-9]{10}_FP[134]\.TAB)',  0, r'../../DATA/TARDATA/\1'),
+        (r'(GEO[0-9]{10}_[0-9]{3}\.TAB)', 0, r'../../DATA/GEODATA/\1')])),
+    ('.*/COCIRS_[56].*/DATA/APODSPEC/.*\.LBL', 0,
+      translator.TranslatorByRegex([
+        (r'(ISPM[0-9]{10}_FP[134]\.TAB)', 0, r'../ISPMDATA/\1'),
+        (r'(RIN[0-9]{10}_FP[134]\.TAB)',  0, r'../RINDATA/\1'),
+        (r'(POI[0-9]{10}_FP[134]\.TAB)',  0, r'../POIDATA/\1'),
+        (r'(TAR[0-9]{10}_FP[134]\.TAB)',  0, r'../TARDATA/\1')])),
+    ('.*/COCIRS_[56].*/DATA/ISPMDATA/.*\.LBL', 0,
+      translator.TranslatorByRegex([
+        (r'(SPEC[0-9]{10}_FP[134]\.DAT)', 0, r'../APODSPEC/\1'),
+        (r'(RIN[0-9]{10}_FP[134]\.TAB)',  0, r'../RINDATA/\1'),
+        (r'(POI[0-9]{10}_FP[134]\.TAB)',  0, r'../POIDATA/\1'),
+        (r'(TAR[0-9]{10}_FP[134]\.TAB)',  0, r'../TARDATA/\1')])),
+    ('.*/COCIRS_[56].*/DATA/RINDATA/.*\.LBL', 0,
+      translator.TranslatorByRegex([
+        (r'(SPEC[0-9]{10}_FP[134]\.DAT)', 0, r'../APODSPEC/\1'),
+        (r'(ISPM[0-9]{10}_FP[134]\.TAB)', 0, r'../ISPMDATA/\1'),
+        (r'(POI[0-9]{10}_FP[134]\.TAB)',  0, r'../POIDATA/\1'),
+        (r'(TAR[0-9]{10}_FP[134]\.TAB)',  0, r'../TARDATA/\1')])),
+    ('.*/COCIRS_[56].*/DATA/POIDATA/.*\.LBL', 0,
+      translator.TranslatorByRegex([
+        (r'(SPEC[0-9]{10}_FP[134]\.DAT)', 0, r'../APODSPEC/\1'),
+        (r'(ISPM[0-9]{10}_FP[134]\.TAB)', 0, r'../ISPMDATA/\1'),
+        (r'(RIN[0-9]{10}_FP[134]\.TAB)',  0, r'../RINDATA/\1'),
+        (r'(TAR[0-9]{10}_FP[134]\.TAB)',  0, r'../TARDATA/\1')])),
+    ('.*/COCIRS_[56].*/DATA/TARDATA/.*\.LBL', 0,
+      translator.TranslatorByRegex([
+        (r'(SPEC[0-9]{10}_FP[134]\.DAT)', 0, r'../APODSPEC/\1'),
+        (r'(ISPM[0-9]{10}_FP[134]\.TAB)', 0, r'../ISPMDATA/\1'),
+        (r'(RIN[0-9]{10}_FP[134]\.TAB)',  0, r'../RINDATA/\1'),
+        (r'(POI[0-9]{10}_FP[134]\.TAB)',  0, r'../POIDATA/\1')])),
     ('.*/COCIRS_[56].*/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'REF.CAT'              : 'CATALOG/CIRSREF.CAT'})),
@@ -556,7 +594,7 @@ def generate_links(dirpath, limits={'info':-1, 'debug':500, 'ds_store':10},
                         pass
 
                     # Search non-locally
-                    nonlocal_target = locate_link(abspath, info.linkname)
+                    nonlocal_target = locate_nonlocal_link(abspath, info.linkname)
                     if nonlocal_target:
                         logger.debug('Located "%s"' % info.linkname,
                                      nonlocal_target)
@@ -730,7 +768,7 @@ def read_links(abspath, logger=None):
 
     return links
 
-def locate_link(abspath, filename):
+def locate_nonlocal_link(abspath, filename):
     """Return the absolute path associated with a link in a PDS file. This is
     done by searching up the tree and also by looking inside the LABEL,
     CATALOG and INCLUDE directories if they exist."""
@@ -791,15 +829,25 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
 
         # Create a dictionary using interior paths instead of absolute paths
         interior_dict = {}
+        prefix = (dirpath + '/')[:lskip]
         for (key, values) in link_dict.items():
-            if type(values) == str:
-                interior_dict[key[lskip:]] = values[lskip:]
-            else:
+            if isinstance(values, list):
                 new_list = []
                 for (basename, recno, link_abspath) in values:
-                    new_list.append((basename, recno, link_abspath[lskip:]))
+                    if link_abspath[:lskip] == prefix:
+                        new_list.append((basename, recno, link_abspath[lskip:]))
+                    else:      # link outside this volume
+                        link = pdsfile.PdsFile.from_abspath(link_abspath)
+                        if link.volset == pdsdir.volset:
+                            link_relpath = '../' + link.volname_ + link.interior
+                        else:
+                            link_relpath = ('../../' + link.volset_ +
+                                            link.volname_ + link.interior)
+                        new_list.append((basename, recno, link_relpath))
 
                 interior_dict[key[lskip:]] = new_list
+            else:
+                interior_dict[key[lskip:]] = values[lskip:]
 
         # Write the shelf
         # shelf = shelve.open(shelf_path, flag='n')
@@ -829,7 +877,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
         len_base = 0
         for (key, value) in interior_dict.items():
             len_key = max(len_key, len(key))
-            if type(value) != str:
+            if isinstance(value, list):
                 tuples = value
                 for (recno, basename, interior_path) in tuples:
                     len_base = max(len_base, len(basename))
@@ -857,7 +905,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
                 tuple_indent = max(len(key),len_key) + 7
 
                 values = interior_dict[key]
-                if type(values) == str:
+                if isinstance(values, str):
                     f.write('"%s",\n' % values)
                 elif len(values) == 0:
                     f.write('[],\n')
@@ -936,7 +984,8 @@ def load_links(dirpath, limits={}, logger=None):
             if isinstance(values, list):
                 new_list = []
                 for (recno, basename, interior_path) in values:
-                    new_list.append((recno, basename, dirpath_ + interior_path))
+                    new_list.append((recno, str(basename),
+                                            str(dirpath_ + interior_path)))
 
                 link_dict[long_key] = new_list
             else:
