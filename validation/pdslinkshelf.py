@@ -984,8 +984,11 @@ def load_links(dirpath, limits={}, logger=None):
             if isinstance(values, list):
                 new_list = []
                 for (recno, basename, interior_path) in values:
-                    new_list.append((recno, str(basename),
-                                            str(dirpath_ + interior_path)))
+                    abspath = dirpath_ + str(interior_path)
+                    if '../' in abspath:
+                        abspath = os.path.abspath(abspath)
+
+                    new_list.append((recno, str(basename), abspath))
 
                 link_dict[long_key] = new_list
             else:
@@ -1031,6 +1034,8 @@ def validate_links(dirpath, dirdict, shelfdict, limits={}, logger=None):
                     shelfinfo.sort()
 
                 if dirinfo != shelfinfo:
+                    print (11111, dirinfo)
+                    print (22222, shelfinfo)
                     logger.error('Link target mismatch', key)
 
                 del shelfdict[key]
