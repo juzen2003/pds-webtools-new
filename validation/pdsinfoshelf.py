@@ -343,13 +343,13 @@ def validate_infodict(pdsdir, dirdict, shelfdict, selection,
                                     (count1, count1), key)
                     agreement = False
 
-                if modtime1 != modtime2:
+                if abs(modtime1 != modtime2) > 1:
                     logger.error('Modification time mismatch "%s" "%s"' %
                         (modtime1, modtime2), key)
                     agreement = False
 
                 if checksum1 != checksum1:
-                    logger.error('Modification time mismatch', key)
+                    logger.error('Checksum mismatch', key)
                     agreement = False
 
                 if size1 != size2:
