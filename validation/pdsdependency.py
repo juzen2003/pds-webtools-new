@@ -630,17 +630,17 @@ _ = PdsDependency(
 
 # For COUVIS_8xxx
 _ = PdsDependency(
-    'Previews and diagrams of every profile',
+    'Previews and diagrams of every COUVIS_8xxx profile',
     'volumes/$/$/data/*_TAU01KM.TAB',
-    r'volumes/(.*)_TAU01KM\.TAB',
-    [r'previews/\1_thumb.png',
-     r'previews/\1_small.png',
-     r'previews/\1_med.png',
-     r'previews/\1_full.png',
-     r'diagrams/\1_thumb.png',
-     r'diagrams/\1_small.png',
-     r'diagrams/\1_med.png',
-     r'diagrams/\1_full.png'],
+    r'volumes/COUVIS_8xxx[^/]*/(.*)_TAU01KM\.TAB',
+    [r'previews/COUVIS_8xxx/\1_thumb.png',
+     r'previews/COUVIS_8xxx/\1_small.png',
+     r'previews/COUVIS_8xxx/\1_med.png',
+     r'previews/COUVIS_8xxx/\1_full.png',
+     r'diagrams/COUVIS_8xxx/\1_thumb.png',
+     r'diagrams/COUVIS_8xxx/\1_small.png',
+     r'diagrams/COUVIS_8xxx/\1_med.png',
+     r'diagrams/COUVIS_8xxx/\1_full.png'],
     suite='couvis_8xxx', newer=False,
 )
 

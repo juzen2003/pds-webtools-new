@@ -1034,8 +1034,6 @@ def validate_links(dirpath, dirdict, shelfdict, limits={}, logger=None):
                     shelfinfo.sort()
 
                 if dirinfo != shelfinfo:
-                    print (11111, dirinfo)
-                    print (22222, shelfinfo)
                     logger.error('Link target mismatch', key)
 
                 del shelfdict[key]
