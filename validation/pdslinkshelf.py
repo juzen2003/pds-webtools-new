@@ -838,7 +838,8 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
                         new_list.append((basename, recno, link_abspath[lskip:]))
                     else:      # link outside this volume
                         link = pdsfile.PdsFile.from_abspath(link_abspath)
-                        if link.volset == pdsdir.volset:
+                        if (link.volset == pdsdir.volset and
+                            link.suffix == pdsdir.suffix):
                             link_relpath = '../' + link.volname_ + link.interior
                         else:
                             link_relpath = ('../../' + link.volset_ +
