@@ -3661,6 +3661,8 @@ class PdsFile(object):
                             data_abspaths_handled.add(datapath)
                             continue
 
+                    break   # ignore this file, randomly mentioned inside label
+
                 # Update the dictionary with the datafile, label, and FMT files
                 opus_type = opus_type_for_abspath.get(data_pdsfile.abspath,
                                                       data_pdsfile.opus_type)
