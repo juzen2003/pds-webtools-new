@@ -1916,8 +1916,8 @@ class PdsFile(object):
             else:
                 volume_path_ = self.volume_abspath() + '/'
 
-                # A string value means that this is actually the path from this
-                # file to its external PDS label
+                # A string value means that this is actually the abspath of this
+                # file's external PDS label
                 if _isstr(values):
                     if values:
                         self._internal_links_filled = volume_path_ + values
@@ -1933,7 +1933,14 @@ class PdsFile(object):
                 else:
                     new_list = []
                     for (recno, basename, internal_path) in values:
-                        abspath = volume_path_ + internal_path
+                        if internal_path.startswith('../../'):
+                            abspath = (self.root_ + self.category_ +
+                                       internal_path[6:])
+                        elif internal_path.startswith('../'):
+                            abspath = (self.volset_abspath() +
+                                       internal_path[2:])
+                        else:
+                            abspath = volume_path_ + internal_path
                         new_list.append((recno, basename, abspath))
                     self._internal_links_filled = new_list
 
@@ -1944,66 +1951,75 @@ class PdsFile(object):
     def linked_abspaths(self):
         """Returns a list of absolute paths linked to this PdsFile. Linked files
         are those whose name appears somewhere in the file, e.g., by being
-        referenced in a label."""
+        referenced in a label or cited in a documentation file."""
 
-        # Links from this file if any
-        abspaths = [self.abspath]
-        for (_, _, abspath) in self.internal_link_info:
-            if abspath not in abspaths:
-                abspaths.append(abspath)
-
-        # Links from the label of this if this isn't a label
-        parent = self.parent()
-        if self.label_basename and parent:
-            label = parent.child(self.label_basename)
-            for (_, _, abspath) in label.internal_link_info:
+        # Links from this file
+        if not _isstr(self.internal_link_info):
+            abspaths = []
+            for (_, _, abspath) in self.internal_link_info:
                 if abspath not in abspaths:
                     abspaths.append(abspath)
 
-        return abspaths
+            if self.abspath in abspaths:            # don't include self
+                abspaths.remove(self.abspath)
+
+            return abspaths
+
+        # Links from the label of this if this isn't a label
+        if self.label_abspath:
+            label_pdsf = PdsFile.from_abspath(self.label_abspath)
+            return label_pdsf.linked_abspaths
+
+        return []
 
     @property
     def label_basename(self):
         """Basename of the label file associated with this data file. If this is
-        already a label file, it returns its own basename."""
+        already a label file, it returns an empty string."""
 
+        # Return cached value if any
         if self._label_basename_filled is not None:
             return self._label_basename_filled
 
-        # Quick test; PDS3 only!
-        if self.extension.upper() == self.extension:
+        # Label files have no labels
+        if self.islabel:
+            self._label_basename_filled = ''
+            self._recache()
+            return ''
+
+        # Take a first guess at the label filename; PDS3 only!
+        if self.extension == '.tar.gz' and self.basename[:-7].isupper():
+            ext = '.LBL'            # for COCIRS_0xxx/COCIRS_1xxx CUBE weirdness
+        elif self.extension.isupper():
             ext = '.LBL'
         else:
             ext = '.lbl'
 
         test_basename = self.basename[:-len(self.extension)] + ext
+
+        # If the test label file exists, it's the label
         test_abspath = self.abspath.rpartition('/')[0] + '/' + test_basename
         if PdsFile.os_path_exists(test_abspath):
-            return test_basename
+            self._label_basename_filled = test_basename
+            self._recache()
+            return self._label_basename_filled
+
+        # If this file doesn't exist, then it's OK to return a nonexistent
+        # label basename. Do we really care?
+        if not self.exists:
+            if self.extension.lower() in ('.fmt', '.cat', '.txt'):
+                self._label_basename_filled = ''
+            else:
+                self._label_basename_filled = test_basename
+            self._recache()
+            return self._label_basename_filled
 
         # Otherwise, check the link shelf
-        _ = self.internal_link_info
-
-        if _isstr(self._internal_links_filled):
-            label_path = self._internal_links_filled
-            if label_path:
-                self._label_basename_filled = os.path.basename(label_path)
-
-        elif isinstance(self._internal_links_filled, list):
-            self._label_basename_filled = ''
-
-        # otherwise, tuple means not found
-        elif self.islabel:
-            self._label_basename_filled = ''
-
+        link_info = self.internal_link_info
+        if _isstr(link_info):
+            self._label_basename_filled = os.path.basename(link_info)
         else:
-            ext = self.extension.lower()
-            if ext in ('.lbl', '.txt', '.cat', 'tar.gz'):
-                self._label_basename_filled = ''
-            elif self.extension.islower():
-                self._label_basename_filled = self.basename[:-len(ext)] + '.lbl'
-            else:
-                self._label_basename_filled = self.basename[:-len(ext)] + '.LBL'
+            self._label_basename_filled = ''
 
         self._recache()
         return self._label_basename_filled
@@ -2020,17 +2036,18 @@ class PdsFile(object):
 
     @property
     def data_abspaths(self):
-        """Returns a list of the targets of a label file; otherwise
-        [self.abspath]."""
+        """A list of the targets of a label file; otherwise []."""
 
-        if not self.islabel: return self
+        if not self.islabel: return []
 
-        pattern = self.abspath.rpartition('.')[0] + '.*'
-        regex = re.compile(pattern)
-
+        # We know this is the target of a link if it is linked by this label and
+        # also target's label is this file. It's complicated.
+        label_basename_lc = self.basename.lower()
+        linked = self.linked_abspaths
         abspaths = []
-        for abspath in self.linked_abspaths:
-            if regex.match(abspath) and abspath != self.abspath:
+        for abspath in linked:
+            target_pdsf = PdsFile.from_abspath(abspath)
+            if target_pdsf.label_basename.lower() == label_basename_lc:
                 abspaths.append(abspath)
 
         return abspaths
@@ -3594,8 +3611,6 @@ class PdsFile(object):
         recent versions first.
         """
 
-        opus_pdsfiles = {}
-
         # Get the associated absolute paths
         patterns = self.OPUS_PRODUCTS.all(self.logical_path)
 
@@ -3620,73 +3635,36 @@ class PdsFile(object):
 
             abspaths += these_abspaths
 
-        # Sort into disjoint sets of labels and data files
-        abspaths = set(abspaths)
-        label_pdsfiles = set()
-        data_abspaths  = set()
+        # Get PdsFiles for abspaths, organized by labels vs. datafiles
+        # label_files[label_abspath] = [label_pdsfile, fmt1_pdsfile, ...]
+        # data_files is a list
+        label_pdsfiles = {}
+        data_pdsfiles = []
         for abspath in abspaths:
             pdsf = PdsFile.from_abspath(abspath)
             if pdsf.islabel:
-                label_pdsfiles.add(pdsf)
+                links = set(pdsf.linked_abspaths)
+                fmts = [f for f in links if f.lower().endswith('.fmt')]
+                fmts.sort()
+                fmt_pdsfiles = PdsFile.pdsfiles_for_abspaths(fmts,
+                                                             must_exist=True)
+                label_pdsfiles[abspath] = [pdsf] + fmt_pdsfiles
             else:
-                data_abspaths.add(abspath)
+                data_pdsfiles.append(pdsf)
 
-        data_abspaths_handled = set()
+        # Construct the dictionary to return
+        opus_pdsfiles = {}
+        for pdsf in data_pdsfiles:
+            key = pdsf.opus_type
+            if key not in opus_pdsfiles:
+                opus_pdsfiles[key] = []
 
-        # Get the info about each labeled product
-        for label_pdsfile in label_pdsfiles:
-            linked_abspaths = set(label_pdsfile.linked_abspaths)
-            fmts = [f for f in linked_abspaths if f[-4:] in ('.fmt', '.FMT')]
-            fmts.sort()
-            fmt_pdsfiles = PdsFile.pdsfiles_for_abspaths(fmts, must_exist=True)
-            datapaths = linked_abspaths - set(fmts)
-
-            label_prefix = os.path.splitext(label_pdsfile.abspath)[0]
-            for datapath in datapaths:
-                data_pdsfile = PdsFile.from_abspath(datapath)
-
-                # Ignore links to this or other label files
-                if data_pdsfile.islabel:
-                    data_abspaths_handled.add(datapath)
-                    continue
-
-                # Be skeptical if datafile and label prefixes don't match
-                # because it could be a random cross-reference in the label
-                data_prefix = os.path.splitext(datapath)[0]
-                if data_prefix != label_prefix:
-
-                    # Check for a better label filename
-                    if (data_prefix + '.lbl') in abspaths or \
-                       (data_prefix + '.LBL') in abspaths:
-                            data_abspaths_handled.add(datapath)
-                            continue
-
-                    break   # ignore this file, randomly mentioned inside label
-
-                # Update the dictionary with the datafile, label, and FMT files
-                opus_type = opus_type_for_abspath.get(data_pdsfile.abspath,
-                                                      data_pdsfile.opus_type)
-                sublist = [data_pdsfile, label_pdsfile] + fmt_pdsfiles
-
-                if opus_type not in opus_pdsfiles:
-                    opus_pdsfiles[opus_type] = [sublist]
-                else:
-                    opus_pdsfiles[opus_type].append(sublist)
-
-                data_abspaths_handled.add(datapath)
-
-        # Any remaining files are unlabeled
-        data_abspaths_remaining = data_abspaths - data_abspaths_handled
-        for datapath in data_abspaths_remaining:
-            data_pdsfile = PdsFile.from_abspath(datapath)
-            opus_type = opus_type_for_abspath.get(data_pdsfile.abspath,
-                                                  data_pdsfile.opus_type)
-            sublist = [data_pdsfile]
-
-            if opus_type not in opus_pdsfiles:
-                opus_pdsfiles[opus_type] = [sublist]
+            if pdsf.label_abspath:
+                sublist = [pdsf] + label_pdsfiles[pdsf.label_abspath]
             else:
-                opus_pdsfiles[opus_type].append(sublist)
+                sublist = [pdsf]
+
+            opus_pdsfiles[key].append(sublist)
 
         # Sort by version and filepath
         for (header, sublists) in opus_pdsfiles.items():
