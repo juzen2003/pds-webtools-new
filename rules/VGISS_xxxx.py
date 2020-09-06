@@ -334,12 +334,12 @@ default_viewables = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/C[0-9]{7}_RAW\..*$',     0, ('Voyager ISS',   0, 'vgiss_raw',     'Raw Image')),
-    (r'volumes/.*/C[0-9]{7}_CLEANED\..*$', 0, ('Voyager ISS',  10, 'vgiss_cleaned', 'Cleaned Image')),
-    (r'volumes/.*/C[0-9]{7}_CALIB\..*$',   0, ('Voyager ISS',  20, 'vgiss_calib',   'Calibrated Image')),
-    (r'volumes/.*/C[0-9]{7}_GEOMED\..*$',  0, ('Voyager ISS',  30, 'vgiss_geomed',  'Geometrically Corrected Image')),
-    (r'volumes/.*/C[0-9]{7}_RESLOC\..*$',  0, ('Voyager ISS',  40, 'vgiss_resloc',  'Reseau Table')),
-    (r'volumes/.*/C[0-9]{7}_GEOMA\..*$',   0, ('Voyager ISS',  50, 'vgiss_geoma',   'Geometric Tiepoint Table')),
+    (r'volumes/.*/C[0-9]{7}_RAW\..*$',     0, ('Voyager ISS',  0, 'vgiss_raw',     'Raw Image',                     True)),
+    (r'volumes/.*/C[0-9]{7}_CLEANED\..*$', 0, ('Voyager ISS', 10, 'vgiss_cleaned', 'Cleaned Image',                 True)),
+    (r'volumes/.*/C[0-9]{7}_CALIB\..*$',   0, ('Voyager ISS', 20, 'vgiss_calib',   'Calibrated Image',              True)),
+    (r'volumes/.*/C[0-9]{7}_GEOMED\..*$',  0, ('Voyager ISS', 30, 'vgiss_geomed',  'Geometrically Corrected Image', True)),
+    (r'volumes/.*/C[0-9]{7}_RESLOC\..*$',  0, ('Voyager ISS', 40, 'vgiss_resloc',  'Reseau Table',                  True)),
+    (r'volumes/.*/C[0-9]{7}_GEOMA\..*$',   0, ('Voyager ISS', 50, 'vgiss_geoma',   'Geometric Tiepoint Table',      True)),
 ])
 
 ####################################################################################################################################
@@ -390,7 +390,13 @@ opus_products = translator.TranslatorByRegex([
                                             r'metadata/\1/\2/\2_ring_summary.tab',
                                             r'metadata/\1/\2/\2_ring_summary.lbl',
                                             r'metadata/\1/\2/\2_inventory.tab',
-                                            r'metadata/\1/\2/\2_inventory.lbl'])
+                                            r'metadata/\1/\2/\2_inventory.lbl',
+                                            r'metadata/\1/\2/\2_index.lbl',
+                                            r'metadata/\1/\2/\2_index.tab',
+                                            r'metadata/\1/\2/\2_raw_image_index.lbl',
+                                            r'metadata/\1/\2/\2_raw_image_index.tab',
+                                            r'metadata/\1/\2/\2_supplemental_index.lbl',
+                                            r'metadata/\1/\2/\2_supplemental_index.tab'])
 ])
 
 ####################################################################################################################################

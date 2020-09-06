@@ -18,7 +18,7 @@ class TestPdsFileBlackBox:
     # Local implementations of basic filesystem operations
     ############################################################################
     @pytest.mark.parametrize(
-        'input_path,expected1,expected2',
+        'input_path,expected',
         [
             (PDS_DATA_DIR + '/volumes/COISS_2xxx',
              [
@@ -51,21 +51,14 @@ class TestPdsFileBlackBox:
                 'COISS_2010', 'COISS_2027', 'COISS_2003', 'COISS_2054',
                 'COISS_2048', 'COISS_2087', 'COISS_2112', 'COISS_2070',
                 'COISS_2075', 'COISS_2042', 'COISS_2069', 'COISS_2047'
-            ],
-            [
-                'COISS_2111', 'COISS_2008', 'COISS_2003', 'COISS_2002'
             ]
            ),
         ]
     )
-    def test_os_listdir(self, input_path, expected1, expected2):
+    def test_os_listdir(self, input_path, expected):
         res = pdsfile.PdsFile.os_listdir(abspath=input_path)
-        if pdsfile.SHELVES_ONLY:
-            assert len(res) == len(expected1)
-            assert res.sort() == expected1.sort()
-        else:
-            assert len(res) == len(expected2)
-            assert res.sort() == expected2.sort()
+        assert len(res) == len(expected)
+        assert res.sort() == expected.sort()
 
     ############################################################################
     # Test for DEFAULT FILE SORT ORDER
@@ -435,7 +428,10 @@ class TestPdsFileBlackBox:
     )
     def test_indexshelf_abspath(self, input_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        assert target_pdsfile.indexshelf_abspath == expected
+        if pdsfile.USE_PICKLES:
+            assert target_pdsfile.indexshelf_abspath == expected.replace('.shelf', '.pickle')
+        else:
+            assert target_pdsfile.indexshelf_abspath == expected
 
     @pytest.mark.parametrize(
         'input_path,expected',
@@ -845,20 +841,213 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('volumes/COVIMS_0xxx/COVIMS_0001/data/1999010T054026_1999010T060958/v1294638283_1.lbl',
-             ''),
-            ('volumes/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q.LBL',
-             ''),
+            ('volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1.LBL',
+             [
+                'volumes/COISS_2xxx/COISS_2002/label/vicar2.txt',
+                'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt',
+                'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt',
+                'metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.lbl',
+                'metadata/COISS_2xxx/COISS_2002/COISS_2002_saturn_summary.tab',
+                'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1.IMG',
+                'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1.LBL',
+                'metadata/COISS_2xxx/COISS_2002/COISS_2002_index.tab',
+                'metadata/COISS_2xxx/COISS_2002/COISS_2002_index.lbl',
+                'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1_CALIB.IMG',
+                'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1_CALIB.LBL',
+                'calibrated/COISS_2xxx_v1.0/COISS_2002/data/1460960653_1461048959/N1460960868_1_CALIB.IMG',
+                'calibrated/COISS_2xxx_v1.0/COISS_2002/data/1460960653_1461048959/N1460960868_1_CALIB.LBL',
+                'metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.tab',
+                'metadata/COISS_2xxx/COISS_2002/COISS_2002_moon_summary.lbl',
+                'metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.tab',
+                'metadata/COISS_2xxx/COISS_2002/COISS_2002_inventory.lbl',
+                'metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.tab',
+                'metadata/COISS_2xxx/COISS_2002/COISS_2002_ring_summary.lbl',
+                'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1_thumb.jpg',
+                'volumes/COISS_2xxx/COISS_2002/extras/thumbnail/1460960653_1461048959/N1460960868_1.IMG.jpeg_small',
+                'volumes/COISS_2xxx/COISS_2002/extras/browse/1460960653_1461048959/N1460960868_1.IMG.jpeg',
+                'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1_full.png',
+                'volumes/COISS_2xxx/COISS_2002/extras/full/1460960653_1461048959/N1460960868_1.IMG.png',
+                'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1_small.jpg',
+                'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1_med.jpg',
+             ]
+            ),
         ]
     )
     # Need to find a better way to test this one.
-    def test_opus_products(self, input_path, expected):
+    def test_opus_products1(self, input_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res = target_pdsfile.opus_products()
         for key in res:
             for files in res[key]:
                 for pdsf in files:
                     assert pdsf.exists == True
+                    assert pdsf.logical_path in expected
+
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            ('volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ.ASC',
+             {('metadata',
+               6,
+               'hstfiles_index',
+               'HST Files Associations Index',
+               False): [PDS_DATA_DIR + '/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.tab',
+                        PDS_DATA_DIR + '/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.lbl'],
+             ('metadata',
+              5,
+              'rms_index',
+              'RMS Node Augmented Index',
+              False): [PDS_DATA_DIR + '/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_index.tab',
+                       PDS_DATA_DIR + '/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_index.lbl'],
+             ('HST',
+              10,
+              'hst_text',
+              'FITS Header Text',
+              True): [PDS_DATA_DIR + '/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ.ASC',
+                      PDS_DATA_DIR + '/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ.LBL'],
+             ('HST',
+              20,
+              'hst_tiff',
+              'Raw Data Preview (lossless)',
+              True): [PDS_DATA_DIR + '/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ_RAW.TIF',
+                      PDS_DATA_DIR + '/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ.LBL'],
+             ('HST',
+              30,
+              'hst_raw',
+              'Raw Data Preview',
+              True): [PDS_DATA_DIR + '/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ_RAW.JPG',
+                      PDS_DATA_DIR + '/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ.LBL'],
+             ('HST',
+              40,
+              'hst_calib',
+              'Calibrated Data Preview',
+              True): [PDS_DATA_DIR + '/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ_FLT.JPG',
+                      PDS_DATA_DIR + '/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ.LBL'],
+             ('HST',
+              70,
+              'hst_drizzled',
+              'Calibrated Geometrically Corrected Preview',
+              True): [PDS_DATA_DIR + '/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ_DRZ.JPG',
+                      PDS_DATA_DIR + '/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ.LBL'],
+             ('browse',
+              40,
+              'browse_full',
+              'Browse Image (full)',
+              True): [PDS_DATA_DIR + '/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ_full.jpg'],
+             ('browse',
+              30,
+              'browse_medium',
+              'Browse Image (medium)',
+              False): [PDS_DATA_DIR + '/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ_med.jpg'],
+             ('browse',
+              20,
+              'browse_small',
+              'Browse Image (small)',
+              False): [PDS_DATA_DIR + '/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ_small.jpg'],
+             ('browse',
+              10,
+              'browse_thumb',
+              'Browse Image (thumbnail)',
+              False): [PDS_DATA_DIR + '/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_22/IB4V22GTQ_thumb.jpg']}
+            ),
+            ('volumes/COVIMS_0xxx/COVIMS_0006/data/2005088T102825_2005089T113931/v1490784910_3_001.qub',
+             {('Cassini VIMS',
+              0,
+              'covims_raw',
+              'Raw cube',
+              True): [PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/data/2005088T102825_2005089T113931/v1490784910_3_001.qub',
+                      PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/data/2005088T102825_2005089T113931/v1490784910_3_001.lbl',
+                      PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/label/band_bin_center.fmt',
+                      PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/label/core_description.fmt',
+                      PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/label/suffix_description.fmt'],
+             ('Cassini VIMS',
+              110,
+              'covims_thumb',
+              'Extra preview (thumbnail)',
+              False): [PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/extras/thumbnail/2005088T102825_2005089T113931/v1490784910_3_001.qub.jpeg_small'],
+             ('Cassini VIMS',
+              120,
+              'covims_medium',
+              'Extra preview (medium)',
+              False): [PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/extras/browse/2005088T102825_2005089T113931/v1490784910_3_001.qub.jpeg'],
+             ('Cassini VIMS',
+              130,
+              'covims_full',
+              'Extra preview (full)',
+              True): [PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/extras/tiff/2005088T102825_2005089T113931/v1490784910_3_001.qub.tiff'],
+             ('browse',
+              10,
+              'browse_thumb',
+              'Browse Image (thumbnail)',
+              False): [PDS_DATA_DIR + '/previews/COVIMS_0xxx/COVIMS_0006/data/2005088T102825_2005089T113931/v1490784910_3_001_thumb.png'],
+             ('browse',
+              20,
+              'browse_small',
+              'Browse Image (small)',
+              False): [PDS_DATA_DIR + '/previews/COVIMS_0xxx/COVIMS_0006/data/2005088T102825_2005089T113931/v1490784910_3_001_small.png'],
+             ('browse',
+              30,
+              'browse_medium',
+              'Browse Image (medium)',
+              False): [PDS_DATA_DIR + '/previews/COVIMS_0xxx/COVIMS_0006/data/2005088T102825_2005089T113931/v1490784910_3_001_med.png'],
+             ('browse',
+              40,
+              'browse_full',
+              'Browse Image (full)',
+              True): [PDS_DATA_DIR + '/previews/COVIMS_0xxx/COVIMS_0006/data/2005088T102825_2005089T113931/v1490784910_3_001_full.png'],
+             ('metadata',
+              20,
+              'planet_geometry',
+              'Planet Geometry Index',
+              False): [PDS_DATA_DIR + '/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_saturn_summary.tab',
+               PDS_DATA_DIR + '/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_saturn_summary.lbl'],
+             ('metadata',
+              30,
+              'moon_geometry',
+              'Moon Geometry Index',
+              False): [PDS_DATA_DIR + '/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_moon_summary.tab',
+                       PDS_DATA_DIR + '/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_moon_summary.lbl'],
+             ('metadata',
+              40,
+              'ring_geometry',
+              'Ring Geometry Index',
+              False): [PDS_DATA_DIR + '/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_ring_summary.tab',
+                       PDS_DATA_DIR + '/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_ring_summary.lbl'],
+             ('metadata',
+              10,
+              'inventory',
+              'Target Body Inventory',
+              False): [PDS_DATA_DIR + '/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_inventory.tab',
+                       PDS_DATA_DIR + '/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_inventory.lbl'],
+             ('metadata',
+              5,
+              'rms_index',
+              'RMS Node Augmented Index',
+              False): [PDS_DATA_DIR + '/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.tab',
+                       PDS_DATA_DIR + '/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.lbl'],
+             ('Cassini VIMS',
+              10,
+              'covims_packed',
+              'Packed version of unpacked raw data',
+              True): [PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/data/2005088T102825_2005089T113931/v1490784910_3.qub',
+                      PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/data/2005088T102825_2005089T113931/v1490784910_3.lbl',
+                      PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/label/band_bin_center.fmt',
+                      PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/label/core_description.fmt',
+                      PDS_DATA_DIR + '/volumes/COVIMS_0xxx/COVIMS_0006/label/suffix_description.fmt']}
+            ),
+        ]
+    )
+    # Need to find a better way to test this one.
+    def test_opus_products2(self, input_path, expected):
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        res = target_pdsfile.opus_products()
+        for key in res:
+            assert key in expected
+            for files in res[key]:
+                assert len(files) == len(expected[key])
+                for pdsf in files:
+                    assert pdsf.exists == True
+                    assert pdsf.abspath in expected[key]
 
     ############################################################################
     # Test for associated volumes and volsets
@@ -1266,7 +1455,7 @@ class TestPdsFileBlackBox:
         'input_path,interiors,expected',
         [
             (PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001',
-             ['data/1294561143_1295221348/W1294561202_1.lbl'],
+             ['data/1294561143_1295221348/W1294561202_1.LBL'],
              PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001'),
             (PDS_DATA_DIR + '/volumes/COUVIS_0xxx/COUVIS_0001',
              ['DATA/D1999_007/HDAC1999_007_16_31.DAT'],
@@ -1419,11 +1608,11 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ([
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
              [
-                 PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                 PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                  PDS_DATA_DIR + '/volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ])
         ]
@@ -1443,11 +1632,11 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ([
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
              [
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ])
         ]
@@ -1466,10 +1655,10 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ([
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
-             ['W1294561202_1.lbl', 'N4BI01L4Q.LBL'])
+             ['W1294561202_1.LBL', 'N4BI01L4Q.LBL'])
         ]
     )
     def test_basenames_for_pdsfiles(self, input_path, expected):
@@ -1486,11 +1675,11 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ([
-                PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 PDS_DATA_DIR + '/volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
              [
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL',
              ])
         ]
@@ -1506,10 +1695,10 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ([
-                PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 PDS_DATA_DIR + '/volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
-             ['W1294561202_1.lbl', 'N4BI01L4Q.LBL'])
+             ['W1294561202_1.LBL', 'N4BI01L4Q.LBL'])
         ]
     )
     def test_basenames_for_abspaths(self, input_path, expected):
@@ -1522,11 +1711,11 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ([
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
              [
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ])
         ]
@@ -1542,11 +1731,11 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ([
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
              [
-                PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 PDS_DATA_DIR + '/volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL',
              ])
         ]
@@ -1562,10 +1751,10 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ([
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
-             ['W1294561202_1.lbl', 'N4BI01L4Q.LBL'])
+             ['W1294561202_1.LBL', 'N4BI01L4Q.LBL'])
         ]
     )
     def test_basenames_for_logicals(self, input_path, expected):
@@ -1678,16 +1867,20 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,category,expected',
         [
-            ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
+            ('volumes/HSTUx_xxxx/HSTU0_5167/DATA/VISIT_04/U2NO0404T.LBL',
              'metadata',
              # should we have the "/" at the end?
-             PDS_DATA_DIR + '/metadata/COUVIS_0xxx/COUVIS_0001/'),
+             [PDS_DATA_DIR + '/metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab/U2NO0404T',
+              PDS_DATA_DIR + '/metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_hstfiles.tab/U2NO0404T',
+              PDS_DATA_DIR + '/metadata/HSTUx_xxxx/HSTU0_5167/',
+              PDS_DATA_DIR + '/metadata/HSTUx_xxxx/HSTU0_5167',
+             ]),
             ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
              'archives-volumes',
-             PDS_DATA_DIR + '/archives-volumes/COUVIS_0xxx/COUVIS_0001.tar.gz'),
+             [PDS_DATA_DIR + '/archives-volumes/COUVIS_0xxx/COUVIS_0001.tar.gz']),
             ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
              'checksums-volumes',
-             PDS_DATA_DIR + '/checksums-volumes/COUVIS_0xxx/COUVIS_0001_md5.txt'),
+             [PDS_DATA_DIR + '/checksums-volumes/COUVIS_0xxx/COUVIS_0001_md5.txt']),
         ]
     )
     def test__associated_paths(self, input_path, category, expected):
@@ -3051,7 +3244,7 @@ class TestPdsFileHelperBlackBox:
     )
     def test_repair_case(self, input_path, expected):
         res = pdsfile.repair_case(abspath=input_path)
-        assert res == expected
+        assert res.lower() == expected.lower()
 
     @pytest.mark.parametrize(
         'input_path,expected',

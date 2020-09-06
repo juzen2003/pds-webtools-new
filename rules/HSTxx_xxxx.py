@@ -92,18 +92,18 @@ neighbors = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*\.ASC$',                 0, ('HST',  10, 'hst_text',        'FITS Header Text')),
-    (r'volumes/.*\.LBL$',                 0, ('HST',  10, 'hst_label',       'HST Preview Products')),
-    (r'volumes/.*\.TIF$',                 0, ('HST',  20, 'hst_tiff',        'Raw Data Preview (lossless)')),
-    (r'volumes/.*_(RAW.*|D0M_...)\.JPG$', 0, ('HST',  30, 'hst_raw',         'Raw Data Preview')),
-    (r'volumes/.*_(FLT.*|CAL)\.JPG$',     0, ('HST',  40, 'hst_calib',       'Calibrated Data Preview')),
-    (r'volumes/.*_SFL\.JPG$',             0, ('HST',  50, 'hst_summed',      'Calibrated Summed Preview')),
-    (r'volumes/.*_CRJ\.JPG$',             0, ('HST',  60, 'hst_cosmic_ray',  'Calibrated Cosmic Ray Cleaned Preview')),
-    (r'volumes/.*_DRZ\.JPG$',             0, ('HST',  70, 'hst_drizzled',    'Calibrated Geometrically Corrected Preview')),
-    (r'volumes/.*_IMA\.JPG$',             0, ('HST',  80, 'hst_ima',         'Pre-mosaic Preview')),
-    (r'volumes/.*_MOS\.JPG$',             0, ('HST',  90, 'hst_mosaic',      'Mosaic Preview')),
-    (r'volumes/.*_(X1D|SX1)\.JPG$',       0, ('HST', 100, 'hst_1d_spectrum', '1-D Spectrum Preview')),
-    (r'volumes/.*_(X2D|SX2)\.JPG$',       0, ('HST', 110, 'hst_2d_spectrum', '2-D Spectrum Preview')),
+    (r'volumes/.*\.ASC$',                 0, ('HST',  10, 'hst_text',        'FITS Header Text',                           True)),
+    (r'volumes/.*\.LBL$',                 0, ('HST',  10, 'hst_label',       'HST Preview Products',                       True)),
+    (r'volumes/.*\.TIF$',                 0, ('HST',  20, 'hst_tiff',        'Raw Data Preview (lossless)',                True)),
+    (r'volumes/.*_(RAW.*|D0M_...)\.JPG$', 0, ('HST',  30, 'hst_raw',         'Raw Data Preview',                           True)),
+    (r'volumes/.*_(FLT.*|CAL)\.JPG$',     0, ('HST',  40, 'hst_calib',       'Calibrated Data Preview',                    True)),
+    (r'volumes/.*_SFL\.JPG$',             0, ('HST',  50, 'hst_summed',      'Calibrated Summed Preview',                  True)),
+    (r'volumes/.*_CRJ\.JPG$',             0, ('HST',  60, 'hst_cosmic_ray',  'Calibrated Cosmic Ray Cleaned Preview',      True)),
+    (r'volumes/.*_DRZ\.JPG$',             0, ('HST',  70, 'hst_drizzled',    'Calibrated Geometrically Corrected Preview', True)),
+    (r'volumes/.*_IMA\.JPG$',             0, ('HST',  80, 'hst_ima',         'Pre-mosaic Preview',                         True)),
+    (r'volumes/.*_MOS\.JPG$',             0, ('HST',  90, 'hst_mosaic',      'Mosaic Preview',                             True)),
+    (r'volumes/.*_(X1D|SX1)\.JPG$',       0, ('HST', 100, 'hst_1d_spectrum', '1-D Spectrum Preview',                       True)),
+    (r'volumes/.*_(X2D|SX2)\.JPG$',       0, ('HST', 110, 'hst_2d_spectrum', '2-D Spectrum Preview',                       True)),
 ])
 
 ####################################################################################################################################
@@ -116,7 +116,11 @@ opus_products = translator.TranslatorByRegex([
                                                                                r'previews/\1/\3/\4_thumb.jpg',
                                                                                r'previews/\1/\3/\4_small.jpg',
                                                                                r'previews/\1/\3/\4_med.jpg',
-                                                                               r'previews/\1/\3/\4_full.jpg'])
+                                                                               r'previews/\1/\3/\4_full.jpg',
+                                                                               r'metadata/\1/\3/\3_index.lbl',
+                                                                               r'metadata/\1/\3/\3_index.tab',
+                                                                               r'metadata/\1/\3/\3_hstfiles.lbl',
+                                                                               r'metadata/\1/\3/\3_hstfiles.tab'])
 ])
 
 ####################################################################################################################################

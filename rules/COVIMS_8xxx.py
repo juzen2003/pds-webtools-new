@@ -11,8 +11,8 @@ import re
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*_TAU_01KM\.(TAB|LBL)$', 0, ('Cassini VIMS', 10, 'covims_occ_01',  'Occultation Profile (1km)')),
-    (r'volumes/.*_TAU_10KM\.(TAB|LBL)$', 0, ('Cassini VIMS', 20, 'covims_occ_10',  'Occultation Profile (10km)')),
+    (r'volumes/.*_TAU_01KM\.(TAB|LBL)$', 0, ('Cassini VIMS', 10, 'covims_occ_01', 'Occultation Profile (1km)',  True)),
+    (r'volumes/.*_TAU_10KM\.(TAB|LBL)$', 0, ('Cassini VIMS', 20, 'covims_occ_10', 'Occultation Profile (10km)', True)),
 ])
 
 ####################################################################################################################################
@@ -21,18 +21,28 @@ opus_type = translator.TranslatorByRegex([
 
 # Use of explicit file names means we don't need to invoke glob.glob(); this goes much faster
 opus_products = translator.TranslatorByRegex([
-    (r'.*volumes/COVIMS_8xxx/(COVIMS_....)/DATA/(.*)_TAU_01KM\.(TAB|LBL)', 0,
+    (r'.*volumes/COVIMS_8xxx/(COVIMS_....)/data/(.*)_TAU_01KM\.(TAB|LBL)', 0,
                             [r'volumes/COVIMS_8xxx/\1/data/\2_TAU_01KM.TAB',
                              r'volumes/COVIMS_8xxx/\1/data/\2_TAU_01KM.LBL',
                              r'volumes/COVIMS_8xxx/\1/data/\2_TAU_10KM.LBL',
-                             r'volumes/COVIMS_8xxx/\1/data/\2_TAU_10KM.TAB'])])
+                             r'volumes/COVIMS_8xxx/\1/data/\2_TAU_10KM.TAB']),
+
+    (r'.*volumes/(COVIMS_8xxx)/(COVIMS_8...)/data/.*_TAU_01KM\.(TAB|LBL)', 0,
+                            [r'metadata/\1/\2/\2_index.lbl',
+                             r'metadata/\1/\2/\2_index.tab',
+                             r'metadata/\1/\2/\2_profile_index.lbl',
+                             r'metadata/\1/\2/\2_profile_index.tab',
+                             r'metadata/\1/\2/\2_supplemental_index.lbl',
+                             r'metadata/\1/\2/\2_supplemental_index.tab']),
+
+])
 
 ####################################################################################################################################
 # FILESPEC_TO_OPUS_ID
 ####################################################################################################################################
 
 filespec_to_opus_id = translator.TranslatorByRegex([
-    (r'COVIMS_8001/DATA/VIMS_(\d{4})_(\d{3})_(\w+)_(I|E)_TAU_01KM\..+$', 0, r'co-vims-occ-\1-\2-\3-\4'),
+    (r'COVIMS_8001/data/VIMS_(\d{4})_(\d{3})_(\w+)_(I|E)_TAU_01KM\..+$', 0, r'co-vims-occ-\1-\2-\3-\4'),
 ])
 
 ####################################################################################################################################

@@ -366,23 +366,30 @@ SPLIT_RULES = translator.TranslatorByRegex([
 OPUS_TYPE = translator.TranslatorByRegex([
 
     # Previews
-    (r'previews/.*\_thumb\..*$', 0, ('browse', 10, 'browse_thumb',  'Browse Image (thumbnail)')),
-    (r'previews/.*\_small\..*$', 0, ('browse', 20, 'browse_small',  'Browse Image (small)')),
-    (r'previews/.*\_med\..*$',   0, ('browse', 30, 'browse_medium', 'Browse Image (medium)')),
-    (r'previews/.*\_full\..*$',  0, ('browse', 40, 'browse_full',   'Browse Image (full)')),
+    (r'previews/.*\_thumb\..*$', 0, ('browse', 10, 'browse_thumb',  'Browse Image (thumbnail)', False)),
+    (r'previews/.*\_small\..*$', 0, ('browse', 20, 'browse_small',  'Browse Image (small)',     False)),
+    (r'previews/.*\_med\..*$',   0, ('browse', 30, 'browse_medium', 'Browse Image (medium)',    False)),
+    (r'previews/.*\_full\..*$',  0, ('browse', 40, 'browse_full',   'Browse Image (full)',      True)),
 
     # Diagrams
-    (r'diagrams/.*\_thumb\..*$', 0, ('diagram', 10, 'diagram_thumb',  'Browse Diagram (thumbnail)')),
-    (r'diagrams/.*\_small\..*$', 0, ('diagram', 20, 'diagram_small',  'Browse Diagram (small)')),
-    (r'diagrams/.*\_med\..*$',   0, ('diagram', 30, 'diagram_medium', 'Browse Diagram (medium)')),
-    (r'diagrams/.*\_full\..*$',  0, ('diagram', 40, 'diagram_full',   'Browse Diagram (full)')),
+    (r'diagrams/.*\_thumb\..*$', 0, ('diagram', 10, 'diagram_thumb',  'Browse Diagram (thumbnail)', False)),
+    (r'diagrams/.*\_small\..*$', 0, ('diagram', 20, 'diagram_small',  'Browse Diagram (small)',     False)),
+    (r'diagrams/.*\_med\..*$',   0, ('diagram', 30, 'diagram_medium', 'Browse Diagram (medium)',    False)),
+    (r'diagrams/.*\_full\..*$',  0, ('diagram', 40, 'diagram_full',   'Browse Diagram (full)',      True)),
 
     # Metadata
-    (r'metadata/.*_inventory\..*',             0, ('metadata', 10, 'inventory',       'Target Body Inventory')),
+    (r'metadata/.*_inventory\..*',             0, ('metadata', 10, 'inventory',       'Target Body Inventory', False)),
     (r'metadata/.*_(jupiter|saturn|uranus|neptune|pluto)_summary\..*',
-                                               0, ('metadata', 20, 'planet_geometry', 'Planet Geometry Index')),
-    (r'metadata/.*_(moon|charon)_summary\..*', 0, ('metadata', 30, 'moon_geometry',   'Moon Geometry Index')),
-    (r'metadata/.*_ring_summary\..*',          0, ('metadata', 40, 'ring_geometry',   'Ring Geometry Index')),
+                                               0, ('metadata', 20, 'planet_geometry', 'Planet Geometry Index', False)),
+    (r'metadata/.*_(moon|charon)_summary\..*', 0, ('metadata', 30, 'moon_geometry',   'Moon Geometry Index',   False)),
+    (r'metadata/.*_ring_summary\..*',          0, ('metadata', 40, 'ring_geometry',   'Ring Geometry Index',   False)),
+
+    # Metadata index
+    (r'metadata/.*_\d+_index\..*',         0, ('metadata', 5, 'rms_index',          'RMS Node Augmented Index',     False)),
+    (r'metadata/.*_hstfiles\..*',          0, ('metadata', 6, 'hstfiles_index',     'HST Files Associations Index', False)),
+    (r'metadata/.*raw_image_index\..*',    0, ('metadata', 7, 'raw_image_index',    'Raw Image Index',              False)),
+    (r'metadata/.*profile_index\..*',      0, ('metadata', 8, 'profile_index',      'Profile Index',                False)),
+    (r'metadata/.*supplemental_index\..*', 0, ('metadata', 9, 'supplemental_index', 'Supplemental Index',           False)),
 ])
 
 ####################################################################################################################################

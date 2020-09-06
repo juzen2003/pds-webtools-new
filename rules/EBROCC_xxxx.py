@@ -29,7 +29,7 @@ opus_format = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*\.(TAB|LBL)$', 0, ('Ground Based', 0, 'gb_occ_profile', 'Occultation Profile')),
+    (r'volumes/.*\.(TAB|LBL)$', 0, ('Ground Based', 0, 'gb_occ_profile', 'Occultation Profile', True)),
 ])
 
 ####################################################################################################################################
@@ -40,6 +40,13 @@ opus_type = translator.TranslatorByRegex([
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(EBROCC_..../.*)\.(TAB|LBL)', 0, [r'volumes/\1.TAB',
                                                    r'volumes/\1.LBL']),
+    (r'.*volumes/(EBROCC_....)/(EBROCC_....)/DATA/.*/(\w+)_(EPD|IPD)\.(TAB|LBL)', 0,
+                                        [r'metadata/\1/\2/\2_index.lbl',
+                                         r'metadata/\1/\2/\2_index.tab',
+                                         r'metadata/\1/\2/\2_profile_index.lbl',
+                                         r'metadata/\1/\2/\2_profile_index.tab',
+                                         r'metadata/\1/\2/\2_supplemental_index.lbl',
+                                         r'metadata/\1/\2/\2_supplemental_index.tab']),
 ])
 
 ####################################################################################################################################

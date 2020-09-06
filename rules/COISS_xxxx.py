@@ -239,11 +239,11 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*\.(IMG|LBL)$',                      0, ('Cassini ISS',   0, 'coiss_raw',    'Raw image')),
-    (r'calibrated/.*_CALIB\.(IMG|LBL)$',             0, ('Cassini ISS',  10, 'coiss_calib',  'Calibrated image')),
-    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini ISS', 110, 'coiss_thumb',  'Extra preview (thumbnail)')),
-    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini ISS', 120, 'coiss_medium', 'Extra preview (medium)')),
-    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini ISS', 130, 'coiss_full',   'Extra preview (full)')),
+    (r'volumes/.*\.(IMG|LBL)$',                      0, ('Cassini ISS',  0,  'coiss_raw',    'Raw image',                 True)),
+    (r'calibrated/.*_CALIB\.(IMG|LBL)$',             0, ('Cassini ISS', 10,  'coiss_calib',  'Calibrated image',          True)),
+    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini ISS', 110, 'coiss_thumb',  'Extra preview (thumbnail)', False)),
+    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini ISS', 120, 'coiss_medium', 'Extra preview (medium)',    False)),
+    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini ISS', 130, 'coiss_full',   'Extra preview (full)',      True)),
 ])
 
 ####################################################################################################################################
@@ -284,7 +284,9 @@ opus_products = translator.TranslatorByRegex([
                                                                      r'metadata/\1/\2/\2_ring_summary.lbl',
                                                                      r'metadata/\1/\2/\2_ring_summary.tab',
                                                                      r'metadata/\1/\2/\2_inventory.lbl',
-                                                                     r'metadata/\1/\2/\2_inventory.tab']),
+                                                                     r'metadata/\1/\2/\2_inventory.tab',
+                                                                     r'metadata/\1/\2/\2_index.lbl',
+                                                                     r'metadata/\1/\2/\2_index.tab']),
 ])
 
 ####################################################################################################################################

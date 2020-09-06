@@ -116,7 +116,7 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/GO_0xxx(|_v[1-9])/GO_0.../(?!CATALOG|DOCUMENT|INDEX|LABEL).*\.(IMG|LBL)', 0, ('Galileo SSI', 10, 'gossi_raw', 'Raw Image')),
+    (r'volumes/GO_0xxx(|_v[1-9])/GO_0.../(?!CATALOG|DOCUMENT|INDEX|LABEL).*\.(IMG|LBL)', 0, ('Galileo SSI', 10, 'gossi_raw', 'Raw Image', True)),
 ])
 
 ####################################################################################################################################
@@ -143,7 +143,11 @@ opus_products = translator.TranslatorByRegex([
                                                                            r'previews/\1_v1/\2/\3/\4_thumb.jpg',
                                                                            r'previews/\1_v1/\2/\3/\4_small.jpg',
                                                                            r'previews/\1_v1/\2/\3/\4_med.jpg',
-                                                                           r'previews/\1_v1/\2/\3/\4_full.jpg']),
+                                                                           r'previews/\1_v1/\2/\3/\4_full.jpg',
+                                                                           r'metadata/\1/\2/\2_index.lbl',
+                                                                           r'metadata/\1/\2/\2_index.tab',
+                                                                           r'metadata/\1_v1/\2/\2_index.lbl',
+                                                                           r'metadata/\1_v1/\2/\2_index.tab']),
 ])
 
 ####################################################################################################################################

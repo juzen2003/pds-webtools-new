@@ -1454,8 +1454,12 @@ class PdsFile(object):
             else:
                 abspath = self.abspath
                 abspath = abspath.replace('/holdings/', '/shelves/index/')
-                abspath = abspath.replace('.tab', '.shelf')
-                abspath = abspath.replace('.TAB', '.shelf')
+                if USE_PICKLES:
+                    abspath = abspath.replace('.tab', '.pickle')
+                    abspath = abspath.replace('.TAB', '.pickle')
+                else:
+                    abspath = abspath.replace('.tab', '.shelf')
+                    abspath = abspath.replace('.TAB', '.shelf')
                 self._indexshelf_abspath = abspath
 
             self._recache()
@@ -3376,7 +3380,7 @@ class PdsFile(object):
                           self.logical_path + '/' + selection)
 
         if flag == '=':
-            raise IOError('Index selection not found: ' +
+            raise KeyError('Index selection not found: ' +
                           self.logical_path + '/' + selection)
 
         childnames = self.childnames + [selection]
@@ -3533,7 +3537,7 @@ class PdsFile(object):
     ############################################################################
 
     @staticmethod
-    def from_filespec(filespec):
+    def from_filespec(filespec, fix_case=False):
         """The PdsFile object based on a volume name plus file specification
         path, without the category or prefix specified.
         """
@@ -3541,8 +3545,7 @@ class PdsFile(object):
         logical_path = PdsFile.FILESPEC_TO_LOGICAL_PATH.first(filespec)
         if not logical_path:
             raise ValueError('Unrecognized file specification: ' + filespec)
-
-        return PdsFile.from_logical_path(logical_path)
+        return PdsFile.from_logical_path(logical_path, fix_case)
 
     @staticmethod
     def from_opus_id(opus_id):
@@ -3586,13 +3589,13 @@ class PdsFile(object):
     def opus_products(self):
         """For this primary data product or label, return a dictionary keyed
         by a tuple containing this information:
-          (group, priority, opus_type, description)
+          (group, priority, opus_type, description, default_checked)
         Examples:
-          ('Cassini ISS',    0, 'coiss_raw',       'Raw image')
-          ('Cassini VIMS', 130, 'covims_full',     'Extra preview (full-size)')
-          ('Cassini CIRS', 618, 'cirs_browse_pan', 'Extra Browse Diagram (Pan)')
-          ('metadata',      40, 'ring_geometry',   'Ring Geometry Index')
-          ('browse',        30, 'browse_medium',   'Browse Image (medium)')
+          ('Cassini ISS',    0, 'coiss_raw',       'Raw image',                  True)
+          ('Cassini VIMS', 130, 'covims_full',     'Extra preview (full-size)',  True)
+          ('Cassini CIRS', 618, 'cirs_browse_pan', 'Extra Browse Diagram (Pan)', True)
+          ('metadata',      40, 'ring_geometry',   'Ring Geometry Index',        True)
+          ('browse',        30, 'browse_medium',   'Browse Image (medium)',      True)
         These keys are designed such that OPUS results will be returned in the
         sorted order of these keys.
 
@@ -3643,6 +3646,17 @@ class PdsFile(object):
         for abspath in abspaths:
             pdsf = PdsFile.from_abspath(abspath)
             if pdsf.islabel:
+                # Check if the corresponding shelves/links files or link info
+                # exist, if not, we skip this label file. That way, the error
+                # handled when calling the linked_abspaths below will not abort
+                # the import process.
+                try:
+                    pdsf.shelf_lookup('links')
+                except (OSError, KeyError, ValueError):
+                    if LOGGER:
+                        LOGGER.warn('Missing links info',
+                                    label_pdsfile.logical_path)
+                    continue
                 links = set(pdsf.linked_abspaths)
                 fmts = [f for f in links if f.lower().endswith('.fmt')]
                 fmts.sort()
@@ -3655,7 +3669,7 @@ class PdsFile(object):
         # Construct the dictionary to return
         opus_pdsfiles = {}
         for pdsf in data_pdsfiles:
-            key = pdsf.opus_type
+            key = opus_type_for_abspath.get(pdsf.abspath, pdsf.opus_type)
             if key not in opus_pdsfiles:
                 opus_pdsfiles[key] = []
 

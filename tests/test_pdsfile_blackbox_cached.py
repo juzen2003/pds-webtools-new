@@ -8,7 +8,7 @@ from tests.helper import instantiate_target_pdsfile, get_pdsfiles
 
 PDS_DATA_DIR = os.environ['PDS_DATA_DIR']
 PDS_TESTING_ROOT = PDS_DATA_DIR[:PDS_DATA_DIR.index('pdsdata')]
-ICON_ROOT_ = PDS_TESTING_ROOT + '/icons-local/'
+ICON_ROOT_ = PDS_TESTING_ROOT + 'icons-local/'
 ICON_URL_  = 'icons-local/'
 ICON_COLOR = 'blue'
 ################################################################################
@@ -174,7 +174,7 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1.lbl',
+            ('volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1.LBL',
              (
                 'Cassini ISS Saturn images 2004-04-18 to 2004-05-18 (SC clock 1460960653-1463538454)',
                 'VOLUME', '1.0', '2005-07-01', ['CO-S-ISSNA/ISSWA-2-EDR-V1.0']
@@ -279,9 +279,11 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('volumes/COCIRS_6xxx/COCIRS_6004/DATA/GEODATA/GEO1004021018_699.TAB',
-             ('Cassini CIRS', 110, 'cocirs_geo',  'System Geometry')),
+             ('Cassini CIRS', 110, 'cocirs_geo',  'System Geometry', True)),
             ('previews/VGISS_8xxx/VGISS_8201/DATA/C08966XX/C0896631_thumb.jpg',
-             ('browse', 10, 'browse_thumb', 'Browse Image (thumbnail)')),
+             ('browse', 10, 'browse_thumb', 'Browse Image (thumbnail)', False)),
+            ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
+             ('metadata', 5, 'rms_index', 'RMS Node Augmented Index', False)),
         ]
     )
     def test_opus_type(self, input_path, expected):
@@ -481,15 +483,21 @@ class TestPdsFileBlackBox:
     )
     def test__iconset(self, input_path, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_, color=ICON_COLOR)
-        target_pdsfile = instantiate_target_pdsfile(input_path)
-        res1 = target_pdsfile._iconset
-        res2 = target_pdsfile._iconset
-        assert isinstance(res1, pdsviewable.PdsViewSet)
-        assert res1 == res2
-        viewables = res1.to_dict()['viewables']
-        for viewable in viewables:
-            assert viewable['url'] in expected
+        try:
+            pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
+                                   color=ICON_COLOR)
+        except FileNotFoundError:
+            # Not icon set files, we skip the test
+            assert True
+        else:
+            target_pdsfile = instantiate_target_pdsfile(input_path)
+            res1 = target_pdsfile._iconset
+            res2 = target_pdsfile._iconset
+            assert isinstance(res1, pdsviewable.PdsViewSet)
+            assert res1 == res2
+            viewables = res1.to_dict()['viewables']
+            for viewable in viewables:
+                assert viewable['url'] in expected
 
 
     @pytest.mark.parametrize(
@@ -508,16 +516,21 @@ class TestPdsFileBlackBox:
 
     def test_iconset_open(self, input_path, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_, color=ICON_COLOR)
-        target_pdsfile = instantiate_target_pdsfile(input_path)
-        res1 = target_pdsfile.iconset_open
-        res2 = target_pdsfile.iconset_open
-        assert isinstance(res1, pdsviewable.PdsViewSet)
-        assert res1 == res2
-        print(res1.to_dict())
-        viewables = res1.to_dict()['viewables']
-        for viewable in viewables:
-            assert viewable['url'] in expected
+        try:
+            pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
+                                   color=ICON_COLOR)
+        except FileNotFoundError:
+            # Not icon set files, we skip the test
+            assert True
+        else:
+            target_pdsfile = instantiate_target_pdsfile(input_path)
+            res1 = target_pdsfile.iconset_open
+            res2 = target_pdsfile.iconset_open
+            assert isinstance(res1, pdsviewable.PdsViewSet)
+            assert res1 == res2
+            viewables = res1.to_dict()['viewables']
+            for viewable in viewables:
+                assert viewable['url'] in expected
 
     @pytest.mark.parametrize(
         'input_path,expected',
@@ -535,16 +548,22 @@ class TestPdsFileBlackBox:
 
     def test_iconset_closed(self, input_path, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_, color=ICON_COLOR)
-        target_pdsfile = instantiate_target_pdsfile(input_path)
-        res1 = target_pdsfile.iconset_closed
-        res2 = target_pdsfile.iconset_closed
-        assert isinstance(res1,  pdsviewable.PdsViewSet)
-        assert res1 == res2
-        assert res1 == res2
-        viewables = res1.to_dict()['viewables']
-        for viewable in viewables:
-            assert viewable['url'] in expected
+        try:
+            pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
+                                   color=ICON_COLOR)
+        except FileNotFoundError:
+            # Not icon set files, we skip the test
+            assert True
+        else:
+            target_pdsfile = instantiate_target_pdsfile(input_path)
+            res1 = target_pdsfile.iconset_closed
+            res2 = target_pdsfile.iconset_closed
+            assert isinstance(res1,  pdsviewable.PdsViewSet)
+            assert res1 == res2
+            assert res1 == res2
+            viewables = res1.to_dict()['viewables']
+            for viewable in viewables:
+                assert viewable['url'] in expected
 
 ################################################################################
 # Blackbox test for internal cached in PdsGroup class
@@ -576,16 +595,22 @@ class TestPdsGroupBlackBox:
     )
     def test__iconset(self, input_paths, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_, color=ICON_COLOR)
-        target_pdsfile = get_pdsfiles(input_paths)
-        target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
-        res1 = target_pdsgroup._iconset
-        res2 = target_pdsgroup._iconset
-        assert isinstance(res1, pdsviewable.PdsViewSet)
-        assert res1 == res2
-        viewables = res1.to_dict()['viewables']
-        for viewable in viewables:
-            assert viewable['url'] in expected
+        try:
+            pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
+                                   color=ICON_COLOR)
+        except FileNotFoundError:
+            # Not icon set files, we skip the test
+            assert True
+        else:
+            target_pdsfile = get_pdsfiles(input_paths)
+            target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
+            res1 = target_pdsgroup._iconset
+            res2 = target_pdsgroup._iconset
+            assert isinstance(res1, pdsviewable.PdsViewSet)
+            assert res1 == res2
+            viewables = res1.to_dict()['viewables']
+            for viewable in viewables:
+                assert viewable['url'] in expected
 
     @pytest.mark.parametrize(
         'input_paths,expected',
@@ -613,17 +638,22 @@ class TestPdsGroupBlackBox:
     )
     def test_iconset_open(self, input_paths, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_, color=ICON_COLOR)
-        target_pdsfile = get_pdsfiles(input_paths)
-        target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
-        res1 = target_pdsgroup.iconset_open
-        res2 = target_pdsgroup.iconset_open
-        assert isinstance(res1, pdsviewable.PdsViewSet)
-        assert res1 == res2
-        print(res1.to_dict())
-        viewables = res1.to_dict()['viewables']
-        for viewable in viewables:
-            assert viewable['url'] in expected
+        try:
+            pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
+                                   color=ICON_COLOR)
+        except FileNotFoundError:
+            # Not icon set files, we skip the test
+            assert True
+        else:
+            target_pdsfile = get_pdsfiles(input_paths)
+            target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
+            res1 = target_pdsgroup.iconset_open
+            res2 = target_pdsgroup.iconset_open
+            assert isinstance(res1, pdsviewable.PdsViewSet)
+            assert res1 == res2
+            viewables = res1.to_dict()['viewables']
+            for viewable in viewables:
+                assert viewable['url'] in expected
 
     @pytest.mark.parametrize(
         'input_paths,expected',
@@ -651,14 +681,19 @@ class TestPdsGroupBlackBox:
     )
     def test_iconset_closed(self, input_paths, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_, color=ICON_COLOR)
-        target_pdsfile = get_pdsfiles(input_paths)
-        target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
-        res1 = target_pdsgroup.iconset_closed
-        res2 = target_pdsgroup.iconset_closed
-        assert isinstance(res1, pdsviewable.PdsViewSet)
-        assert res1 == res2
-        print(res1.to_dict())
-        viewables = res1.to_dict()['viewables']
-        for viewable in viewables:
-            assert viewable['url'] in expected
+        try:
+            pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
+                                   color=ICON_COLOR)
+        except FileNotFoundError:
+            # Not icon set files, we skip the test
+            assert True
+        else:
+            target_pdsfile = get_pdsfiles(input_paths)
+            target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
+            res1 = target_pdsgroup.iconset_closed
+            res2 = target_pdsgroup.iconset_closed
+            assert isinstance(res1, pdsviewable.PdsViewSet)
+            assert res1 == res2
+            viewables = res1.to_dict()['viewables']
+            for viewable in viewables:
+                assert viewable['url'] in expected

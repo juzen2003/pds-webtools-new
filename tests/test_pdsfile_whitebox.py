@@ -120,7 +120,7 @@ class TestPdsFileWhiteBox:
             ('volumes/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39x.lbl',
             ''),
             ('volumes/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39x',
-            '.LBL'),
+            '.lbl'),
             ('volumes/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39x.cat',
             ''),
         ]
@@ -496,10 +496,24 @@ class TestPdsFileWhiteBox:
              'U2nO040', '', 'U2nO040'),
         ]
     )
-    def test_find_selected_row_key(self, input_path, selection, flag, expected):
+    def test_find_selected_row_key1(self, input_path, selection, flag, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res = target_pdsfile.find_selected_row_key(selection, flag)
         assert res == expected
+
+    @pytest.mark.parametrize(
+        'input_path,selection,flag,expected',
+        [
+            ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
+             'U2nO040', '=', 'Index selection is ambiguous'),
+        ]
+    )
+    def test_find_selected_row_key2(self, input_path, selection, flag, expected):
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        try:
+            res = target_pdsfile.find_selected_row_key(selection, flag)
+        except OSError as e:
+            assert expected in str(e)
 
     @pytest.mark.parametrize(
         'input_path,selection,flag,expected',
@@ -578,11 +592,11 @@ class TestPdsFileWhiteBox:
         'input_path,expected',
         [
             ([
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
              [
-                 PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                 PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                  PDS_DATA_DIR + '/volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ])
         ]
@@ -603,11 +617,11 @@ class TestPdsFileWhiteBox:
         'input_path,expected',
         [
             ([
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
              [
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ])
         ]
@@ -627,10 +641,10 @@ class TestPdsFileWhiteBox:
         'input_path,expected',
         [
             ([
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
-             ['W1294561202_1.lbl', 'N4BI01L4Q.LBL'])
+             ['W1294561202_1.LBL', 'N4BI01L4Q.LBL'])
         ]
     )
     def test_basenames_for_pdsfiles(self, input_path, expected):
@@ -648,10 +662,10 @@ class TestPdsFileWhiteBox:
         'input_path,expected',
         [
             ([
-                PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                PDS_DATA_DIR + '/volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 PDS_DATA_DIR + '/volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
-             ['W1294561202_1.lbl', 'N4BI01L4Q.LBL'])
+             ['W1294561202_1.LBL', 'N4BI01L4Q.LBL'])
         ]
     )
     def test_basenames_for_abspaths(self, input_path, expected):
@@ -665,11 +679,11 @@ class TestPdsFileWhiteBox:
         'input_path,expected',
         [
             ([
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
              [
-                 'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                 'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                  'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ])
         ]
@@ -685,10 +699,10 @@ class TestPdsFileWhiteBox:
         'input_path,expected',
         [
             ([
-                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.lbl',
+                'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
                 'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL'
              ],
-             ['W1294561202_1.lbl', 'N4BI01L4Q.LBL'])
+             ['W1294561202_1.LBL', 'N4BI01L4Q.LBL'])
         ]
     )
     def test_basenames_for_logicals(self, input_path, expected):
@@ -835,7 +849,14 @@ class TestPdsFileWhiteBox:
 
             ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
              'metadata', 'u2no0403t', '',
-             PDS_DATA_DIR + '/metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab'),
+             [
+              PDS_DATA_DIR + '/metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab/U2NO0403T',
+              PDS_DATA_DIR + '/metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_hstfiles.tab/U2NO0403T',
+              PDS_DATA_DIR + '/metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
+              PDS_DATA_DIR + '/metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_hstfiles.tab',
+              PDS_DATA_DIR + '/metadata/HSTUx_xxxx/HSTU0_5167/',
+              PDS_DATA_DIR + '/metadata/HSTUx_xxxx/HSTU0_5167',
+             ]),
         ]
     )
     def test__associated_paths1(self, input_path, category, selection,

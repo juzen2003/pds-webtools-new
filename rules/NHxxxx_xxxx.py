@@ -202,9 +202,9 @@ opus_type = translator.TranslatorByRegex([
     (r'previews/NHxx.._xxxx(|_v.+)/NH...._2xxx/.*$', 0, ''),
 
     (r'volumes/NHxx.._xxxx(|_v.+)/NH...._1.../data/.*_eng(|_[1-9])\.(fit|lbl)$', re.I,
-                                            ('New Horizons',   0, 'nh_raw',   'Raw Image')),
+                                            ('New Horizons',   0, 'nh_raw',   'Raw Image',        True)),
     (r'volumes/NHxx.._xxxx(|_v.+)/NH...._2.../data/.*_sci(|_[1-9])\.(fit|lbl)$', re.I,
-                                            ('New Horizons', 100, 'nh_calib', 'Calibrated Image'))
+                                            ('New Horizons', 100, 'nh_calib', 'Calibrated Image', True))
 ])
 
 ####################################################################################################################################
@@ -234,7 +234,11 @@ opus_products = translator.TranslatorByRegex([
                                                                  r'metadata/\1/\2_1\3/\2_1\3_ring_summary.lbl',
                                                                  r'metadata/\1/\2_1\3/\2_1\3_ring_summary.tab',
                                                                  r'metadata/\1/\2_1\3/\2_1\3_inventory.lbl',
-                                                                 r'metadata/\1/\2_1\3/\2_1\3_inventory.tab']),
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_inventory.tab',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_index.lbl',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_index.tab',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_supplemental_index.lbl',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_supplemental_index.tab']),
 
     # These two entries are necessary because NHxxMV_xxxx_v1/NHJUMV_1001 uses uppercase file names
     (r'.*volumes/(NH..MV_xxxx)(?:|_v.+)/(NH..MV)_[12](...)/data/(.*)/mc(.*)_0x..._(eng|sci)(|_[1-9][0-9]*)\.(fit|lbl)', 0,
@@ -267,7 +271,11 @@ opus_products = translator.TranslatorByRegex([
                                                                  r'previews/\1/\2_1\3/\4_0x???_eng*_thumb.jpg',
                                                                  r'previews/\1/\2_1\3/\4_0x???_eng*_small.jpg',
                                                                  r'previews/\1/\2_1\3/\4_0x???_eng*_med.jpg',
-                                                                 r'previews/\1/\2_1\3/\4_0x???_eng*_full.jpg']),
+                                                                 r'previews/\1/\2_1\3/\4_0x???_eng*_full.jpg',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_index.lbl',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_index.tab',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_supplemental_index.lbl',
+                                                                 r'metadata/\1/\2_1\3/\2_1\3_supplemental_index.tab']),
 ])
 
 ####################################################################################################################################
@@ -356,7 +364,7 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
         for header in list(pdsfiles.keys()): # We change pdsfiles in the loop!
             sublists = pdsfiles[header]
             if len(sublists) == 1: continue
-            if header[0] != 'New Horizons': continue
+            if header == '' or header[0] != 'New Horizons': continue
 
             priority = []
             for sublist in sublists:
@@ -378,7 +386,8 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
                 new_header = ('New Horizons',
                               header[1]+50,
                               header[2]+'_alternate',
-                              header[3]+' Alternate Downlink')
+                              header[3]+' Alternate Downlink',
+                              True)
                 if new_header not in pdsfiles:
                     pdsfiles[new_header] = []
                 pdsfiles[new_header].append(sublist)

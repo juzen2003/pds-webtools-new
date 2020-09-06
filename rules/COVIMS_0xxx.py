@@ -137,17 +137,17 @@ opus_format = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*\.(qub|lbl)$',                      0, ('Cassini VIMS',   0, 'covims_raw',    'Raw cube')),
-    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini VIMS', 110, 'covims_thumb',  'Extra preview (thumbnail)')),
-    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini VIMS', 120, 'covims_medium', 'Extra preview (medium)')),
-    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini VIMS', 130, 'covims_full',   'Extra preview (full)')),
+    (r'volumes/.*\.(qub|lbl)$',                      0, ('Cassini VIMS',   0, 'covims_raw',    'Raw cube',                  True)),
+    (r'volumes/.*/extras/thumbnail/.*\.jpeg_small$', 0, ('Cassini VIMS', 110, 'covims_thumb',  'Extra preview (thumbnail)', False)),
+    (r'volumes/.*/extras/browse/.*\.jpeg$',          0, ('Cassini VIMS', 120, 'covims_medium', 'Extra preview (medium)',    False)),
+    (r'volumes/.*/extras/(tiff|full)/.*\.\w+$',      0, ('Cassini VIMS', 130, 'covims_full',   'Extra preview (full)',      True)),
 ])
 
 ####################################################################################################################################
 # OPUS_PRODUCTS
 ####################################################################################################################################
 
-PACKED_OPUS_TYPE = ('Cassini VIMS', 10, 'covims_packed', 'Packed version of unpacked raw data')
+PACKED_OPUS_TYPE = ('Cassini VIMS', 10, 'covims_packed', 'Packed version of unpacked raw data', True)
 
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(COVIMS_0xxx)/(COVIMS_0...)/data/(\w+/v[0-9]{10})_[0-9]+(|_[0-9]{3})\.(qub|lbl)', 0,
@@ -168,7 +168,9 @@ opus_products = translator.TranslatorByRegex([
                                                                      r'metadata/\1/\2/\2_ring_summary.lbl',
                                                                      r'metadata/\1/\2/\2_ring_summary.tab',
                                                                      r'metadata/\1/\2/\2_inventory.lbl',
-                                                                     r'metadata/\1/\2/\2_inventory.tab']),
+                                                                     r'metadata/\1/\2/\2_inventory.tab',
+                                                                     r'metadata/\1/\2/\2_index.lbl',
+                                                                     r'metadata/\1/\2/\2_index.tab']),
     # packed versions of unpacked files
     (r'.*volumes/(COVIMS_0xxx)/(COVIMS_0...)/data/(\w+/v[0-9]{10})_[0-9]+_[0-9]{3}\.(qub|lbl)', 0,
                                                                     [(r'volumes/\1/\2/data/\3_?.qub', PACKED_OPUS_TYPE),

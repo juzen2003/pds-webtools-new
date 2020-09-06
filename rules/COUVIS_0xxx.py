@@ -106,8 +106,8 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/DATA/.*\.DAT',  0, ('Cassini UVIS', 10, 'couvis_raw', 'Raw Data')),
-    (r'volumes/.*/CALIB/.*\.DAT', 0, ('Cassini UVIS', 20, 'couvis_calib_corr', 'Calibration Data')),
+    (r'volumes/.*/DATA/.*\.DAT',  0, ('Cassini UVIS', 10, 'couvis_raw',        'Raw Data',         True)),
+    (r'volumes/.*/CALIB/.*\.DAT', 0, ('Cassini UVIS', 20, 'couvis_calib_corr', 'Calibration Data', True)),
 ])
 
 ####################################################################################################################################
@@ -142,7 +142,11 @@ opus_products = translator.TranslatorByRegex([
                                                                     r'metadata/\1/\2/\2_ring_summary.lbl',
                                                                     r'metadata/\1/\2/\2_ring_summary.tab',
                                                                     r'metadata/\1/\2/\2_inventory.lbl',
-                                                                    r'metadata/\1/\2/\2_inventory.tab']),
+                                                                    r'metadata/\1/\2/\2_inventory.tab',
+                                                                    r'metadata/\1/\2/\2_index.lbl',
+                                                                    r'metadata/\1/\2/\2_index.tab',
+                                                                    r'metadata/\1/\2/\2_supplemental_index.lbl',
+                                                                    r'metadata/\1/\2/\2_supplemental_index.tab']),
 ])
 
 ####################################################################################################################################
