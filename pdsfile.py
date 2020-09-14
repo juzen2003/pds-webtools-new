@@ -1075,7 +1075,9 @@ class PdsFile(object):
                     return True
 
                 # Maybe there's an associated shelf file in the infoshelf tree
-                if os.path.exists(shelf_abspath + '_info.shelf'):
+                if (os.path.exists(shelf_abspath + '_info.shelf') or
+                    (USE_PICKLES and
+                     os.path.exists(shelf_abspath + '_info.pickle'))):
                     return True
 
                 # Checksum files need special handling
@@ -1117,7 +1119,9 @@ class PdsFile(object):
                     return True
 
                 # Maybe there's an associated shelf file in the infoshelf tree
-                if os.path.exists(shelf_abspath + '_info.shelf'):
+                if (os.path.exists(shelf_abspath + '_info.shelf') or
+                    (USE_PICKLES and
+                     os.path.exists(shelf_abspath + '_info.pickle'))):
                     return True
 
                 # Checksum files need special handling
@@ -1266,6 +1270,8 @@ class PdsFile(object):
 
         # Handle wildcards in the shelf path, if any
         if '*' in shelf_path or '?' in shelf_path or '[' in shelf_path:
+            if USE_PICKLES:
+                shelf_path = shelf_path.replace('.shelf', '.pickle')
             shelf_paths = _clean_glob(shelf_path)
         else:
             shelf_paths = [shelf_path]
