@@ -243,7 +243,7 @@ REPAIRS = translator.TranslatorByRegex([
     ('.*/HSTJ.*/CATINFO\.TXT', 0,
       translator.TranslatorByDict(
         {'NST.CAT'              : 'INST.CAT'})),
-    ('.*/HSTJ.*/HSTJ1_0427/DATA/VISIT_02/.*\.LBL', 0,
+    ('.*/HSTJ.*_v.*/HSTJ1_0427/DATA/VISIT_02/.*\.LBL', 0,
       translator.TranslatorByDict(
         {'J96O02JLQ_FLT_WFC1.JPG': '',
          'J96O02JMQ_FLT_WFC1.JPG': '',
@@ -252,7 +252,7 @@ REPAIRS = translator.TranslatorByRegex([
          'J96O02JOQ_FLT_WFC2.JPG': 'J96O02JOQ_FLT.JPG',
          'J96O02JQQ_FLT_WFC2.JPG': 'J96O02JQQ_FLT.JPG',
          'J96O02JSQ_FLT_WFC2.JPG': 'J96O02JSQ_FLT.JPG'})),
-    ('.*/HSTJx_xxxx.*/HSTJ1_2395/DATA/.*\.LBL', 0,
+    ('.*/HSTJx_xxxx.*_v.*/HSTJ1_2395/DATA/.*\.LBL', 0,
       translator.TranslatorByDict(
         {'JBNY02SOQ_FLT_WFC1.JPG': '',
          'JBNY02SOQ_FLT_WFC2.JPG': 'JBNY02SOQ_FLT.JPG',
