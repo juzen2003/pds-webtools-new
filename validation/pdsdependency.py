@@ -87,7 +87,7 @@ class PdsDependency(object):
         Inputs:
             title           a short description of the dependency.
             glob_pattern    a glob pattern for finding files.
-            regex           a regular expression to match the files.
+            regex           regular expression to match path returned by glob.
             sublist         a list of substitution strings returning paths to
                             files that must exist.
             suite           optional name of a test suite to which this
@@ -306,22 +306,22 @@ for thing in pdsfile.VOLTYPES:
     )
 
     _ = PdsDependency(
-        'Newer info shelf files for archives-%s' % thing,
-        'archives-%s/$/$*'                       % thing,
-        r'archives-%s/(.*?)/(.*)%s.tar.gz'       % (thing, thing_),
-        [r'archives-%s/\1_info.shelf'            % thing,
-         r'archives-%s/\1_info.py'               % thing],
+        'Newer info shelf files for archives-%s'% thing,
+        'archives-%s/$/$*'                      % thing,
+        r'archives-%s/(.*?)/(.*)%s.tar.gz'      % (thing, thing_),
+        [r'archives-%s/\1_info.shelf'           % thing,
+         r'archives-%s/\1_info.py'              % thing],
         suite='general', newer=True, dir='shelves/info',
     )
 
 for thing in ['volumes', 'metadata', 'calibrated']:
 
     _ = PdsDependency(
-        'Newer link shelf files for %s'             % thing,
-        '%s/$/$'                                    % thing,
-        r'%s/(.*?)/(.*)'                            % thing,
-        [r'%s/\1/\2_links.shelf'                    % thing,
-         r'%s/\1/\2_links.py'                       % thing],
+        'Newer link shelf files for %s'         % thing,
+        '%s/$/$'                                % thing,
+        r'%s/(.*?)/(.*)'                        % thing,
+        [r'%s/\1/\2_links.shelf'                % thing,
+         r'%s/\1/\2_links.py'                   % thing],
         suite='general', newer=True, dir='shelves/links',
     )
 
@@ -620,11 +620,11 @@ _ = PdsDependency(
 _ = PdsDependency(
     'Previews of every COUVIS data file',
     'volumes/$/$/DATA/*/*.DAT',
-    r'volumes/(.*)\.DAT',
-    [r'previews/\1_thumb.png',
-     r'previews/\1_small.png',
-     r'previews/\1_med.png',
-     r'previews/\1_full.png'],
+    r'volumes/COUVIS_0xxx(|_v[\.0-9]+)/(.*)\.DAT',
+    [r'previews/COUVIS_0xxx/\2_thumb.png',
+     r'previews/COUVIS_0xxx/\2_small.png',
+     r'previews/COUVIS_0xxx/\2_med.png',
+     r'previews/COUVIS_0xxx/\2_full.png'],
     suite='couvis', newer=False,
 )
 
