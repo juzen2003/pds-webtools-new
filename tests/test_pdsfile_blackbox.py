@@ -743,8 +743,70 @@ class TestPdsFileBlackBox:
             res = pdsfile.PdsFile.from_abspath(abspath=input_path)
             assert isinstance(res, pdsfile.PdsFile)
             assert res.abspath == expected
-        except ValueError as err:
+        except ValueError as e:
             assert True # input path is not an absolute path
+
+    @pytest.mark.parametrize(
+        'input_lid,expected',
+        [
+            ('CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2002:data/1460960653_1461048959:N1460960868_1.IMG',
+             ['CO-S-ISSNA/ISSWA-2-EDR-V1.0', 'N1460960868_1.IMG']),
+            ('CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0:COISS_1001:data/1294561143_1295221348:W1294561202_1.LBL',
+             ['CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0', 'W1294561202_1.LBL']),
+            ('CO-E/V/J/S-VIMS-2-QUBE-V1.0:COVIMS_0001:data/1999010T054026_1999010T060958:v1294638283_1.qub',
+             ['CO-E/V/J/S-VIMS-2-QUBE-V1.0', 'v1294638283_1.qub']),
+            ('ESO1M-SR-APPH-4-OCC-V1.0:EBROCC_0001:DATA/ESO1M:ES1_EPD.LBL',
+             ['ESO1M-SR-APPH-4-OCC-V1.0', 'ES1_EPD.LBL']),
+            ('ESO22M-SR-APPH-4-OCC-V1.0:EBROCC_0001:CATALOG:ESO22M_DATASET.CAT',
+             ['ESO22M-SR-APPH-4-OCC-V1.0', 'ESO22M_DATASET.CAT']),
+            ('IRTF-SR-URAC-4-OCC-V1.0:EBROCC_0001:GEOMETRY/IRTF:IRT_IGD.TAB',
+             ['IRTF-SR-URAC-4-OCC-V1.0', 'IRT_IGD.TAB']),
+            ('LICK1M-SR-CCDC-4-OCC-V1.0:EBROCC_0001:INDEX:LIC_INDEX.LBL',
+             ['LICK1M-SR-CCDC-4-OCC-V1.0', 'LIC_INDEX.LBL']),
+            ('MCD27M-SR-IIRAR-4-OCC-V1.0:EBROCC_0001:DATA/MCD27M:MCD_IPD.TAB',
+             ['MCD27M-SR-IIRAR-4-OCC-V1.0', 'MCD_IPD.TAB']),
+            ('PAL200-SR-CIRC-4-OCC-V1.0:EBROCC_0001:DATA/PAL200:PAL_EPD.LBL',
+             ['PAL200-SR-CIRC-4-OCC-V1.0', 'PAL_EPD.LBL']),
+
+        ]
+    )
+    def test_from_lid_valid_lid(self, input_lid, expected):
+        res = pdsfile.PdsFile.from_lid(input_lid)
+        assert isinstance(res, pdsfile.PdsFile)
+        assert res.data_set_id == expected[0]
+        assert res.basename == expected[1]
+
+    @pytest.mark.parametrize(
+        'input_lid,expected',
+        [
+            ('CO-E/V/J/S-VIMS-2-QUBE-V2.0:COVIMS_0001:data/1999010T054026_1999010T060958:v1294638283_1.qub',
+             'CO-E/V/J/S-VIMS-2-QUBE-V1.0'),
+        ]
+    )
+    def test_from_lid_mismatched_lid(self, input_lid, expected):
+        try:
+            res = pdsfile.PdsFile.from_lid(input_lid)
+            # Must raise an exception
+            assert False
+        except ValueError as e:
+            # input LID data set id doesn't match the one from res
+            assert 'does not match the one from pdsfile:' in str(e)
+
+    @pytest.mark.parametrize(
+        'input_lid,expected',
+        [
+            ('CO-E/V/J/S-VIMS-2-QUBE-V2.0:data/1999010T054026_1999010T060958:v1294638283_1.qub',
+             'CO-E/V/J/S-VIMS-2-QUBE-V1.0'),
+        ]
+    )
+    def test_from_lid_invalid_lid(self, input_lid, expected):
+        try:
+            res = pdsfile.PdsFile.from_lid(input_lid)
+            # Must raise an exception
+            assert False
+        except ValueError as e:
+            # input LID is not a valid LID
+            assert 'is not a valid LID' in str(e)
 
     @pytest.mark.parametrize(
         'input_path,relative_path,expected',

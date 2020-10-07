@@ -565,6 +565,162 @@ class TestPdsFileBlackBox:
             for viewable in viewables:
                 assert viewable['url'] in expected
 
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            ('volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1.IMG',
+             'CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2002:data/1460960653_1461048959:N1460960868_1.IMG'),
+            ('volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
+             'CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0:COISS_1001:data/1294561143_1295221348:W1294561202_1.LBL'),
+            ('volumes/COISS_2xxx/COISS_2002/extras/thumbnail/1460960653_1461048959/N1460960868_1.IMG.jpeg_small',
+             'CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2002:extras/thumbnail/1460960653_1461048959:N1460960868_1.IMG.jpeg_small'),
+            ('volumes/COVIMS_0xxx/COVIMS_0001/data/1999010T054026_1999010T060958/v1294638283_1.qub',
+             'CO-E/V/J/S-VIMS-2-QUBE-V1.0:COVIMS_0001:data/1999010T054026_1999010T060958:v1294638283_1.qub'),
+            ('volumes/COVIMS_0xxx/COVIMS_0006/INDEX/index.tab',
+             'CO-E/V/J/S-VIMS-2-QUBE-V1.0:COVIMS_0006:INDEX:index.tab'),
+            ('volumes/COISS_2xxx/COISS_2002/label/prefix.fmt',
+             'CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2002:label:prefix.fmt'),
+            ('volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT',
+             'CO-J-CIRS-2/3/4-TSDR-V2.0:COCIRS_0012:DATA/NAV_DATA:GEO00120100.DAT'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL',
+             'ESO1M-SR-APPH-4-OCC-V1.0:EBROCC_0001:DATA/ESO1M:ES1_EPD.LBL'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/CATALOG/ESO22M_DATASET.CAT',
+             'ESO22M-SR-APPH-4-OCC-V1.0:EBROCC_0001:CATALOG:ESO22M_DATASET.CAT'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/IRTF/IRT_IGD.TAB',
+             'IRTF-SR-URAC-4-OCC-V1.0:EBROCC_0001:GEOMETRY/IRTF:IRT_IGD.TAB'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/INDEX/LIC_INDEX.LBL',
+             'LICK1M-SR-CCDC-4-OCC-V1.0:EBROCC_0001:INDEX:LIC_INDEX.LBL'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/MCD27M/MCD_IPD.TAB',
+             'MCD27M-SR-IIRAR-4-OCC-V1.0:EBROCC_0001:DATA/MCD27M:MCD_IPD.TAB'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/PAL200/PAL_EPD.LBL',
+             'PAL200-SR-CIRC-4-OCC-V1.0:EBROCC_0001:DATA/PAL200:PAL_EPD.LBL'),
+            # The file has no LID.
+            ('previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_010/HDAC1999_010_05_01_thumb.png',
+             ''),
+        ]
+    )
+    def test_lid(self, input_path, expected):
+        """lid: return self._lid_filled"""
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        res1 = target_pdsfile.lid
+        res2 = target_pdsfile.lid
+        assert res1 == expected
+        assert res1 == res2
+
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            ('volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1.IMG',
+             'CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2002:data/1460960653_1461048959:N1460960868_1.IMG::1.0'),
+            ('volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
+             'CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0:COISS_1001:data/1294561143_1295221348:W1294561202_1.LBL::1.0'),
+            ('volumes/COISS_2xxx/COISS_2002/extras/thumbnail/1460960653_1461048959/N1460960868_1.IMG.jpeg_small',
+             'CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2002:extras/thumbnail/1460960653_1461048959:N1460960868_1.IMG.jpeg_small::1.0'),
+            ('volumes/COVIMS_0xxx/COVIMS_0001/data/1999010T054026_1999010T060958/v1294638283_1.qub',
+             'CO-E/V/J/S-VIMS-2-QUBE-V1.0:COVIMS_0001:data/1999010T054026_1999010T060958:v1294638283_1.qub::1.0'),
+            ('volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT',
+             'CO-J-CIRS-2/3/4-TSDR-V2.0:COCIRS_0012:DATA/NAV_DATA:GEO00120100.DAT::1.0'),
+            # The file has no LID.
+            ('metadata/COISS_2xxx/COISS_2002/COISS_2002_index.ta',
+             ''),
+        ]
+    )
+    def test_lidvid(self, input_path, expected):
+        """lid: return self._lid_filled"""
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        res1 = target_pdsfile.lidvid
+        res2 = target_pdsfile.lidvid
+        assert res1 == expected
+        assert res1 == res2
+
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            ('volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1.IMG',
+             'CO-S-ISSNA/ISSWA-2-EDR-V1.0'),
+            ('volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
+             'CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0'),
+            ('volumes/COISS_2xxx/COISS_2002/extras/thumbnail/1460960653_1461048959/N1460960868_1.IMG.jpeg_small',
+             'CO-S-ISSNA/ISSWA-2-EDR-V1.0'),
+            ('volumes/COVIMS_0xxx/COVIMS_0001/data/1999010T054026_1999010T060958/v1294638283_1.qub',
+             'CO-E/V/J/S-VIMS-2-QUBE-V1.0'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL',
+             'ESO1M-SR-APPH-4-OCC-V1.0'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/CATALOG/ESO22M_DATASET.CAT',
+             'ESO22M-SR-APPH-4-OCC-V1.0'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/IRTF/IRT_IGD.TAB',
+             'IRTF-SR-URAC-4-OCC-V1.0'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/INDEX/LIC_INDEX.LBL',
+             'LICK1M-SR-CCDC-4-OCC-V1.0'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/MCD27M/MCD_IPD.TAB',
+             'MCD27M-SR-IIRAR-4-OCC-V1.0'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/PAL200/PAL_EPD.LBL',
+             'PAL200-SR-CIRC-4-OCC-V1.0'),
+        ]
+    )
+    def test_data_set_id(self, input_path, expected):
+        """lid: return self._lid_filled"""
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        res1 = target_pdsfile.data_set_id
+        res2 = target_pdsfile.data_set_id
+        assert res1 == expected
+        assert res1 == res2
+
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            # Return '' for COUVIS_0xxx (multiple data set ids) since
+            # we don't have a properly defined DATA_SET_ID rule for it.
+            ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31.DAT',
+             ''),
+            # Return '' for files under volume that have multiple data
+            # set ids.
+            ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/DATAINFO.TXT',
+             ''),
+        ]
+    )
+    def test_data_set_id_multi_data_set_id(self, input_path, expected):
+        """lid: return self._data_set_id_filled"""
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        res1 = target_pdsfile.data_set_id
+        res2 = target_pdsfile.data_set_id
+        assert res1 == expected
+        assert res1 == res2
+
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31.DAT',
+             ''),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/DATAINFO.TXT',
+             ''),
+        ]
+    )
+    def test_lid_no_data_set_id(self, input_path, expected):
+        """lid: return self._data_set_id_filled"""
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        res1 = target_pdsfile.lid
+        res2 = target_pdsfile.lid
+        assert res1 == expected
+        assert res1 == res2
+
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31.DAT',
+             ''),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/DATAINFO.TXT',
+             ''),
+        ]
+    )
+    def test_lidvid_no_data_set_id(self, input_path, expected):
+        """lid: return self._data_set_id_filled"""
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        res1 = target_pdsfile.lidvid
+        res2 = target_pdsfile.lidvid
+        assert res1 == expected
+        assert res1 == res2
+
 ################################################################################
 # Blackbox test for internal cached in PdsGroup class
 ################################################################################

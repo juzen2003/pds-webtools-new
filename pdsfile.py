@@ -602,6 +602,8 @@ class PdsFile(object):
     SPLIT_RULES = pdsfile_rules.SPLIT_RULES
     VIEW_OPTIONS = pdsfile_rules.VIEW_OPTIONS
     VIEWABLES = pdsfile_rules.VIEWABLES
+    LID_AFTER_DSID = pdsfile_rules.LID_AFTER_DSID
+    DATA_SET_ID = pdsfile_rules.DATA_SET_ID
 
     OPUS_TYPE = pdsfile_rules.OPUS_TYPE
     OPUS_FORMAT = pdsfile_rules.OPUS_FORMAT
@@ -800,6 +802,9 @@ class PdsFile(object):
         self._volume_publication_date_filled = None
         self._volume_version_id_filled       = None
         self._volume_data_set_ids_filled     = None
+        self._lid_filled                     = None
+        self._lidvid_filled                  = None
+        self._data_set_id_filled             = None
         self._version_ranks_filled           = None
         self._exact_archive_url_filled       = None
         self._exact_checksum_url_filled      = None
@@ -920,6 +925,9 @@ class PdsFile(object):
         this._volume_publication_date_filled = ''
         this._volume_version_id_filled       = ''
         this._volume_data_set_ids_filled     = ''
+        this._lid_filled                     = ''
+        this._lidvid_filled                  = ''
+        this._data_set_id_filled             = ''
         this._version_ranks_filled           = []
         this._exact_archive_url_filled       = ''
         this._exact_checksum_url_filled      = ''
@@ -973,6 +981,9 @@ class PdsFile(object):
         this._volume_publication_date_filled = self.volume_publication_date
         this._volume_version_id_filled       = self.volume_version_id
         this._volume_data_set_ids_filled     = self.volume_data_set_ids
+        this._lid_filled                     = ''
+        this._lidvid_filled                  = ''
+        this._data_set_id_filled             = None
         this._version_ranks_filled           = self.version_ranks
         this._exact_archive_url_filled       = ''
         this._exact_checksum_url_filled      = ''
@@ -1864,6 +1875,106 @@ class PdsFile(object):
             self._recache()
 
         return self._opus_type_filled
+
+    @property
+    def data_set_id(self):
+        """Return the data set id if the volume only has one data set id. Return
+        '' when the volume has multiple or zero data set id.
+        """
+        if self._data_set_id_filled is not None:
+            return self._data_set_id_filled
+
+        # If the volume has no data set id, we will return ''
+        if len(self.volume_data_set_ids) == 0:
+            self._data_set_id_filled = ''
+        elif len(self.volume_data_set_ids) != 1:
+            # If the volume has multiple data set ids, the rules will handle
+            # this case. If there is no match, we will return ''
+            self._data_set_id_filled = self.DATA_SET_ID.first(self.logical_path)
+            if self._data_set_id_filled is None:
+                self._data_set_id_filled = ''
+        else:
+            self._data_set_id_filled = self.volume_data_set_ids[0]
+
+        self._recache()
+        return self._data_set_id_filled
+
+    @property
+    def lid(self):
+        """Return the LID for data files under volumes directory. If the volume
+        has no LID, it returns ''.
+
+        Format:
+        dataset_id:volume_id:directory_path:file_name
+
+        Examples:
+        'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/
+        N1460960653_1.IMG'
+        -> 'CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2002:data/1460960653_1461048959:
+            N1460960653_1.IMG'
+
+        'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/
+        N1460960653_1.LBL'
+        -> 'CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2002:data/1460960653_1461048959:
+            N1460960653_1.LBL'
+
+        'volumes/COISS_2xxx/COISS_2008/extras/full/1477675247_1477737486/
+        N1477691357_1.IMG.png'
+        -> 'CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2008:
+            extras/full/1477675247_1477737486:N1477691357_1.IMG.png'
+        """
+
+        if self._lid_filled is not None:
+            return self._lid_filled
+
+        lid_after_data_set_id = self.LID_AFTER_DSID.first(self.logical_path)
+        # only the latest versions of PDS3 volumes have LIDs
+        if (lid_after_data_set_id and self.data_set_id and
+            not self.suffix and self.category_ == 'volumes/'):
+            self._lid_filled = self.data_set_id + ':' + lid_after_data_set_id
+        else:
+            self._lid_filled = ''
+
+        self._recache()
+        return self._lid_filled
+
+    @property
+    def lidvid(self):
+        """Return the LIDVID for data files under volumes directory. If the
+        volume has no LID, it returns ''.
+
+        Format:
+        dataset_id:volume_id:directory_path:file_name::vid
+
+        Examples:
+        'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/
+        N1460960653_1.IMG'
+        -> 'CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2002:data/1460960653_1461048959:
+            N1460960653_1.IMG::1.0'
+
+        'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/
+        N1460960653_1.LBL'
+        -> 'CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2002:data/1460960653_1461048959:
+            N1460960653_1.LBL::1.0'
+
+        'volumes/COISS_2xxx/COISS_2008/extras/full/1477675247_1477737486/
+        N1477691357_1.IMG.png'
+        -> 'CO-S-ISSNA/ISSWA-2-EDR-V1.0:COISS_2008:
+            extras/full/1477675247_1477737486:N1477691357_1.IMG.png::1.0'
+        """
+
+        if self._lidvid_filled is not None:
+            return self._lidvid_filled
+
+        if self.lid:
+            # only the last PDS3 version of a product will have a LID.
+            self._lidvid_filled = self.lid + "::1.0"
+        else:
+            self._lidvid_filled = ''
+
+        self._recache()
+        return self._lidvid_filled
+
 
     @property
     def info_basename(self):
@@ -2844,6 +2955,28 @@ class PdsFile(object):
             abspath = os.path.split(self.abspath)[0]
             return PdsFile.from_abspath(abspath,
                                         must_exist=must_exist)
+
+    @staticmethod
+    def from_lid(lid_str):
+        """Constructor for a PdsFile from a LID.
+        lid_str format: dataset_id:volume_id:directory_path:file_name
+        """
+
+        lid_component = lid_str.split(':')
+        if len(lid_component) != 4:
+            raise ValueError('%s is not a valid LID.' % lid_str)
+
+        data_set_id = lid_component[0]
+        volume_id = lid_component[1]
+        logical_path_wo_volset = 'volumes/' + '/'.join(lid_component[1:])
+
+        pdsf = PdsFile.from_path(logical_path_wo_volset)
+
+        if pdsf.data_set_id != data_set_id:
+            raise ValueError('Data set id from lid_str: ' + data_set_id +
+                             'does not match the one from pdsfile: ' +
+                             pdsf.data_set_id)
+        return pdsf
 
     @staticmethod
     def from_logical_path(path, fix_case=False, must_exist=False,

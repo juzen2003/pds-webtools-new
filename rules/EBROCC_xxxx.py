@@ -72,6 +72,18 @@ filespec_to_logical_path = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# DATA_SET_ID
+####################################################################################################################################
+data_set_id = translator.TranslatorByRegex([
+    (r'.*volumes/EBROCC_xxxx/EBROCC_0001.*/(ES1|ESO1M).*',  0, r'ESO1M-SR-APPH-4-OCC-V1.0'),
+    (r'.*volumes/EBROCC_xxxx/EBROCC_0001.*/(ES2|ESO22M).*', 0, r'ESO22M-SR-APPH-4-OCC-V1.0'),
+    (r'.*volumes/EBROCC_xxxx/EBROCC_0001.*/IRT.*',          0, r'IRTF-SR-URAC-4-OCC-V1.0'),
+    (r'.*volumes/EBROCC_xxxx/EBROCC_0001.*/LIC.*',          0, r'LICK1M-SR-CCDC-4-OCC-V1.0'),
+    (r'.*volumes/EBROCC_xxxx/EBROCC_0001.*/MCD.*',          0, r'MCD27M-SR-IIRAR-4-OCC-V1.0'),
+    (r'.*volumes/EBROCC_xxxx/EBROCC_0001.*/PAL.*',          0, r'PAL200-SR-CIRC-4-OCC-V1.0')
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -85,6 +97,8 @@ class EBROCC_xxxx(pdsfile.PdsFile):
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
     OPUS_PRODUCTS = opus_products
     FILESPEC_TO_OPUS_ID = filespec_to_opus_id
+
+    DATA_SET_ID = data_set_id
 
 pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH = filespec_to_logical_path + pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH
 
