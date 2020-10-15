@@ -187,12 +187,9 @@ def initialize(pdsf, logger=None):
 
 def reinitialize(pdsf, logger=None):
 
-    print(11111, pdsf.abspath)
-
     # Create parent directory if necessary
     parent = os.path.split(pdsf.indexshelf_abspath)[0]
     if not os.path.exists(parent):
-        print(11111, parent)
         os.makedirs(parent)
 
     # Generate info

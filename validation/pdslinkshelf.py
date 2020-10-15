@@ -213,12 +213,12 @@ REPAIRS = translator.TranslatorByRegex([
     ('.*/COVIMS_0024/data/2008017T190718_2008017T201544/v1579292302_1\.lbl', 0,
       translator.TranslatorByDict(
         {"v1579292302.qub"      : "v1579292302_1.qub"})),
+    ('.*/metadata/COVIMS.*/.*supplemental_index.lbl', 0,
+      translator.TranslatorByDict(
+        {'dpsis.txt': '../../../volumes/COVIMS_0xxx/COVIMS_0001/document/dpsis.txt'})),
     ('.*/COVIMS_8xxx_v2.*/voldesc.cat', 0,
       translator.TranslatorByDict(
         {'PROJREF.CAT'          : ''})),
-    ('.*/EBROCC_0001/INDEX/MCD_INDEX\.LBL', 0,
-      translator.TranslatorByDict(
-        { 'LIC_INDEX.TAB'       : 'MCD_INDEX.TAB'})),
     ('.*/EBROCC_0001/INDEX/MCD_INDEX\.LBL', 0,
       translator.TranslatorByDict(
         { 'LIC_INDEX.TAB'       : 'MCD_INDEX.TAB'})),
@@ -364,6 +364,9 @@ REPAIRS = translator.TranslatorByRegex([
          'C4389209_CLEANED.JPG' : 'C4389208_CLEANED.JPG',
          'C4389209_GEOMED.JPG'  : 'C4389208_GEOMED.JPG',
          'C4389209_RAW.JPG'     : 'C4389208_RAW.JPG'})),
+    ('.*/metadata/COVIMS.*/.*supplemental_index.lbl', 0,
+      translator.TranslatorByDict(
+        {'dpsis.txt': '../../../volumes/COVIMS_0xxx/COVIMS_0001/document/dpsis.txt'})),
 ])
 
 KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
@@ -838,11 +841,16 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
                         new_list.append((basename, recno, link_abspath[lskip:]))
                     else:      # link outside this volume
                         link = pdsfile.PdsFile.from_abspath(link_abspath)
-                        if (link.volset == pdsdir.volset and
+                        if (link.category_ == pdsdir.category_ and
+                            link.volset == pdsdir.volset and
                             link.suffix == pdsdir.suffix):
                             link_relpath = '../' + link.volname_ + link.interior
-                        else:
+                        elif link.category_ == pdsdir.category_:
                             link_relpath = ('../../' + link.volset_ +
+                                            link.volname_ + link.interior)
+                        else:
+                            link_relpath = ('../../../' + link.category_ +
+                                            link.volset_ +
                                             link.volname_ + link.interior)
                         new_list.append((basename, recno, link_relpath))
 
