@@ -323,6 +323,8 @@ class TranslatorByRegex(Translator):
         compiled_tuples = []
         for items in tuples:
             if len(items) == 2:
+                if isinstance(items[0], str):
+                    items = (re.compile('^' + items[0] + '$'), items[1])
                 compiled_tuples.append(items)
             else:
                 regex = re.compile('^' + items[0] + '$', flags=items[1])
