@@ -10,7 +10,6 @@
 
 import sys
 import os
-import shelve
 import pickle
 import shutil
 import glob
@@ -21,16 +20,6 @@ import argparse
 import pdslogger
 import pdsfile
 import translator
-
-try:
-    GDBM_MODULE = __import__("gdbm")
-except ImportError:
-    GDBM_MODULE = __import__("dbm.gnu")
-
-if sys.version_info >= (3,0):
-    ENCODING = {'encoding': 'latin-1'}  # For open() of ASCII files in Python 3
-else:
-    ENCODING = {}
 
 LOGNAME = 'pds.validation.links'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
@@ -260,6 +249,13 @@ REPAIRS = translator.TranslatorByRegex([
          'JBNY02SSQ_FLT_WFC2.JPG': 'JBNY02SSQ_FLT.JPG',
          'JBNYA1T2Q_FLT_WFC2.JPG': 'JBNYA1T2Q_FLT.JPG',
          'JBNYA2SUQ_FLT_WFC2.JPG': 'JBNYA2SUQ_FLT.JPG'})),
+    ('.*/JNOJIR.*/AAREADME.TXT', 0,
+      translator.TranslatorByDict(
+        {'PERSON.CAT'           : 'JNO_JIRAM_PERSON.CAT',
+         'DATAINFO.TXT'         : ''})),
+    ('.*/JNOJNC.*/(AAREADME|CATINFO).TXT', 0,
+      translator.TranslatorByDict(
+        {'JUNO_REF.CAT'         : 'JUNO_PROJREF.CAT'})),
     ('.*/NHSP.*/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'personel.cat'         : 'CATALOG/PERSONNEL.CAT',
@@ -370,44 +366,45 @@ REPAIRS = translator.TranslatorByRegex([
 ])
 
 KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
-    ('.*/document/.*',                                      re.I, 'missing'),
-    ('.*/COCIRS_.*\.VAR',                                   0,    'missing'),
-    ('.*/COCIRS_.*VANILLA.*',                               re.I, 'missing'),
-    ('.*/COCIRS_0209/DATA/NAV_DATA/RIN02101300.DAT',        0,    'missing'),
-    ('.*/COCIRS_0602/DATA/UNCALIBR/FIFM06021412.DAT',       0,    'missing'),
-    ('.*/COISS_00.*/document/report/.*',                    0,    'missing'),
-    ('.*/COISS_0011/calib.*\.tab',                          0,    'missing'),
-    ('.*/COISS_0011/calib/calib.tar.gz',                    0,    'missing'),
-    ('.*/COISS_0011/extras/.*\.pro',                        0,    'missing'),
-    ('.*/COISS_0011/extras/cisscal.*',                      0,    'missing'),
-    ('.*/CO(ISS|VIMS)_.*/extras/.*\.(tiff|png|jpg|jpeg|jpeg_small)',
+    (r'.*/document/.*',                                     re.I, 'missing'),
+    (r'.*/COCIRS_.*\.VAR',                                  0,    'missing'),
+    (r'.*/COCIRS_.*VANILLA.*',                              re.I, 'missing'),
+    (r'.*/COCIRS_0209/DATA/NAV_DATA/RIN02101300.DAT',       0,    'missing'),
+    (r'.*/COCIRS_0602/DATA/UNCALIBR/FIFM06021412.DAT',      0,    'missing'),
+    (r'.*/COISS_00.*/document/report/.*',                   0,    'missing'),
+    (r'.*/COISS_0011/calib.*\.tab',                         0,    'missing'),
+    (r'.*/COISS_0011/calib/calib.tar.gz',                   0,    'missing'),
+    (r'.*/COISS_0011/extras/.*\.pro',                       0,    'missing'),
+    (r'.*/COISS_0011/extras/cisscal.*',                     0,    'missing'),
+    (r'.*/CO(ISS|VIMS)_.*/extras/.*\.(tiff|png|jpg|jpeg|jpeg_small)',
                                                             0,    'missing'),
-    ('.*/COSP_xxxx.*\.(pdf|zip|tm|orb)',                    0,    'missing'),
-    ('.*/COUVIS_.*/SOFTWARE/.*\.(PRO|pro|DAT|IDL|JAR|SAV)', 0,    'missing'),
-    ('.*/COUVIS_.*/CALIB/.*\.DOC',                          0,    'missing'),
-    ('.*/COUVIS_0xxx.*/SOFTWARE/CALIB/VERSION_4/t.t',       0,    'missing'),
-    ('.*/COVIMS_0xxx.*/index/index.csv',                    0,    'missing'),
-    ('.*/COVIMS_0xxx.*/software/.*',                        0,    'missing'),
-    ('.*/COVIMS_0xxx.*/calib/example.*',                    0,    'missing'),
-    ('.*/COVIMS_0xxx.*/calib/.*\.(tab|qub|cub|bin|lbl)',    0,    'missing'),
-    ('.*/COVIMS_0xxx.*/browse/.*\.pdf',                     0,    'missing'),
-    ('.*/COVIMS_0xxx.*\.(lbl|qub)-old_V[0-9]+',             0,    'missing'),
-    ('.*/NH.*/browse/.*\.jpg',                              0,    'missing'),
-    ('.*/NH.*/index/newline',                               0,    'missing'),
-    ('.*/NHxxMV.*/calib/.*\.png',                           0,    'missing'),
-    ('.*/NHSP_xxxx/.*/DATASET.HTML',                        0,    'missing'),
-    ('.*/RPX.*/UNZIP532.*',                                 0,    'missing'),
-    ('.*/RPX_xxxx/RPX_0201/CALIB/.*/(-180|128)',            0,    'missing'),
-    ('.*/VG.*/VG..NESR\.DAT',                               0,    'missing'),
-    ('.*/VG_0xxx.*/CUMINDEX.TAB',                           0,    'missing'),
-    ('.*/VG_0xxx.*/SOFTWARE/.*',                            0,    'missing'),
-    ('.*/VG_28xx/VG_2802/EDITDATA/EASYDATA',                0,    'missing'),
+    (r'.*/COSP_xxxx.*\.(pdf|zip|tm|orb)',                   0,    'missing'),
+    (r'.*/COUVIS_.*/SOFTWARE/.*\.(PRO|pro|DAT|IDL|JAR|SAV)',0,    'missing'),
+    (r'.*/COUVIS_.*/CALIB/.*\.DOC',                         0,    'missing'),
+    (r'.*/COUVIS_0xxx.*/SOFTWARE/CALIB/VERSION_4/t.t',      0,    'missing'),
+    (r'.*/COVIMS_0xxx.*/index/index.csv',                   0,    'missing'),
+    (r'.*/COVIMS_0xxx.*/software/.*',                       0,    'missing'),
+    (r'.*/COVIMS_0xxx.*/calib/example.*',                   0,    'missing'),
+    (r'.*/COVIMS_0xxx.*/calib/.*\.(tab|qub|cub|bin|lbl)',   0,    'missing'),
+    (r'.*/COVIMS_0xxx.*/browse/.*\.pdf',                    0,    'missing'),
+    (r'.*/COVIMS_0xxx.*\.(lbl|qub)-old_V[0-9]+',            0,    'missing'),
+    (r'.*/JNOJNC_0xxx.*/EXTRAS/.*\.PNG',                    0,    'missing'),
+    (r'.*/NH.*/browse/.*\.jpg',                             0,    'missing'),
+    (r'.*/NH.*/index/newline',                              0,    'missing'),
+    (r'.*/NHxxMV.*/calib/.*\.png',                          0,    'missing'),
+    (r'.*/NHSP_xxxx/.*/DATASET.HTML',                       0,    'missing'),
+    (r'.*/RPX.*/UNZIP532.*',                                0,    'missing'),
+    (r'.*/RPX_xxxx/RPX_0201/CALIB/.*/(-180|128)',           0,    'missing'),
+    (r'.*/VG.*/VG..NESR\.DAT',                              0,    'missing'),
+    (r'.*/VG_0xxx.*/CUMINDEX.TAB',                          0,    'missing'),
+    (r'.*/VG_0xxx.*/SOFTWARE/.*',                           0,    'missing'),
+    (r'.*/VG_28xx/VG_2802/EDITDATA/EASYDATA',               0,    'missing'),
 
 # These files have internal PDS3 labels, so these are not errors
-    ('.*/COISS_3xxx.*\.IMG',                                0,    'unneeded'),
-    ('.*/COUVIS_.*/SOFTWARE/.*\.txt_.*',                    0,    'unneeded'),
-    ('.*/VG_.*\.(IMQ|IRQ|IBG)',                             0,    'unneeded'),
-    ('.*/VG_0xxx.*/(AAREADME.VMS|VTOC.SYS|IMGINDEX.DBF)',   0,    'unneeded'),
+    (r'.*/COISS_3xxx.*\.IMG',                               0,    'unneeded'),
+    (r'.*/COUVIS_.*/SOFTWARE/.*\.txt_.*',                   0,    'unneeded'),
+    (r'.*/VG_.*\.(IMQ|IRQ|IBG)',                            0,    'unneeded'),
+    (r'.*/VG_0xxx.*/(AAREADME.VMS|VTOC.SYS|IMGINDEX.DBF)',  0,    'unneeded'),
 ])
 
 # Regular expressions for filenames embedded in text files
@@ -516,7 +513,7 @@ def generate_links(dirpath, limits={'info':-1, 'debug':500, 'ds_store':10},
 
             # Get list of info for all possible linked filenames
             abspath = os.path.join(root, basename)
-            logger.debug('Reviewing contents of file', abspath)
+            logger.debug('REVIEWING', abspath)
 
             linkinfo_list = read_links(abspath, logger=logger)
 
@@ -747,7 +744,7 @@ def read_links(abspath, logger=None):
     if logger is None:
         logger = pdslogger.PdsLogger.get_logger(LOGNAME)
 
-    with open(abspath, 'r', **ENCODING) as f:
+    with open(abspath, 'r', encoding='latin-1') as f:
         recs = f.readlines()
 
     basename_uc = os.path.basename(abspath).upper()
@@ -859,18 +856,8 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
                 interior_dict[key[lskip:]] = values[lskip:]
 
         # Write the shelf
-        # shelf = shelve.open(shelf_path, flag='n')
-        shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'n'), protocol=2)
-
-        for (key, values) in interior_dict.items():
-            shelf[key] = values
-
-        shelf.close()
-
-        # Write the pickle file
-        pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
-        with open(pickle_path, 'wb') as f:
-            pickle.dump(interior_dict, f, protocol=2)
+        with open(shelf_path, 'wb') as f:
+            pickle.dump(interior_dict, f)
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
@@ -901,7 +888,7 @@ def shelve_links(dirpath, link_dict, limits={}, logger=None):
         keys = list(interior_dict.keys())
         keys.sort()
 
-        with open(python_path, 'w', **ENCODING) as f:
+        with open(python_path, 'w', encoding='latin-1') as f:
             f.write(name + ' = {\n')
             for valtype in (list, str):
               for key in keys:
@@ -968,22 +955,8 @@ def load_links(dirpath, limits={}, logger=None):
             raise IOError('File not found: ' + shelf_path)
 
         # Read the shelf file and convert to a dictionary
-        # On failure, read pickle file
-        try:
-            # shelf = shelve.open(shelf_path, flag='r')
-            shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'r'))
-
-        except Exception:
-            pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
-            with open(pickle_path, 'rb') as f:
-                interior_dict = pickle.load(f)
-
-        else:
-            interior_dict = {}
-            for key in shelf.keys():
-                interior_dict[key] = shelf[key]
-
-            shelf.close()
+        with open(shelf_path, 'rb') as f:
+            interior_dict = pickle.load(f)
 
         # Convert interior paths to absolute paths
         link_dict = {}
@@ -1291,6 +1264,9 @@ if __name__ == '__main__':
         for path in paths:
 
             pdsdir = pdsfile.PdsFile.from_abspath(path)
+            if not pdsdir.isdir:    # skip volset-level readme files
+                continue
+
             linkfile = pdsdir.shelf_path_and_lskip(id='links')[0]
 
             # Save logs in up to two places

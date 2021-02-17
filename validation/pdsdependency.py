@@ -34,41 +34,48 @@ TESTS = translator.TranslatorByRegex([
     ('.*/COCIRS_0xxx(|_v[3-9])/COCIRS_0[4-9].*',
                                     0, ['cocirs01']),
     ('.*/COCIRS_1xxx(|_v[3-9]).*',  0, ['cocirs01']),
-    ('.*/COCIRS_[56]xxx.*',         0, ['cocirs56']),
-    ('.*/COISS_[12]xxx.*',          0, ['coiss12', 'cumindex', 'metadata',
-                                        'inventory', 'rings', 'moons']),
-    ('.*/COISS_100[1-7].*',         0, ['jupiter']),
-    ('.*/COISS_100[89].*',          0, ['saturn']),
-    ('.*/COISS_2xxx.*',             0, ['saturn']),
+    ('.*/COCIRS_[56]xxx/.*',        0, ['cocirs56']),
+    ('.*/COISS_[12]xxx/.*',         0, ['coiss12', 'metadata', 'inventory',
+                                        'rings', 'moons' ,'cumindex999']),
+    ('.*/COISS_100[1-7]/.*',        0, ['jupiter']),
+    ('.*/COISS_100[89]/.*',         0, ['saturn']),
+    ('.*/COISS_2xxx/.*',            0, ['saturn']),
     ('.*/COISS_3xxx.*',             0, ['coiss3']),
-    ('.*/COUVIS_0xxx.*',            0, ['couvis', 'cumindex', 'metadata',
-                                        'supplemental']),
-    ('.*/COUVIS_0006.*',            0, ['saturn', 'rings']),
-    ('.*/COUVIS_000[7-9].*',        0, ['saturn', 'rings', 'moons']),
-    ('.*/COUVIS_00[1-9].*',         0, ['saturn', 'rings', 'moons']),
-    ('.*/COVIMS_0.*',               0, ['covims', 'cumindex', 'metadata']),
+    ('.*/COUVIS_0xxx/.*',           0, ['couvis', 'metadata', 'supplemental',
+                                        'cumindex999']),
+    ('.*/COUVIS_0xxx/COUVIS_0006.*',     0, ['saturn', 'rings']),
+    ('.*/COUVIS_0xxx/COUVIS_000[7-9].*', 0, ['saturn', 'rings', 'moons']),
+    ('.*/COUVIS_0xxx/COUVIS_00[1-9].*',  0, ['saturn', 'rings', 'moons']),
+    ('.*/COVIMS_0.*',               0, ['covims', 'metadata', 'cumindex999']),
     ('.*/COVIMS_000[4-9].*',        0, ['saturn', 'rings', 'moons']),
     ('.*/COVIMS_00[1-9].*',         0, ['saturn', 'rings', 'moons']),
-    ('.*/CO.*_8xxx.*',              0, ['metadata', 'supplemental', 'profile']),
-    ('.*/COUVIS_8xxx.*',            0, ['couvis_8xxx']),
-    ('.*/EBROCC.*',                 0, ['metadata', 'supplemental', 'profile']),
-    ('.*/GO_0xxx.*',                0, ['go', 'metadata', 'cumindex']),
-    ('.*/HST.x_xxxx/.*',            0, ['hst', 'metadata', 'cumindex99']),
-    ('.*/NH..(LO|MV)_xxxx.*',       0, ['nh', 'metadata', 'supplemental']),
-    ('.*/NH..LO_xxxx.*',            0, ['inventory', 'rings', 'moons']),
-    ('.*/NH(JU|LA)MV_xxxx.*',       0, ['nhbrowse_vx', 'jupiter']),
-    ('.*/NH(PC|PE)MV_xxxx.*',       0, ['nhbrowse', 'pluto']),
-    ('.*/VGISS_[5678]xxx.*',        0, ['vgiss', 'cumindex', 'metadata',
-                                        'raw_image', 'supplemental']),
-    ('.*/VGISS_5(10[4-9]|20[5-9]|11|21).*',
+    ('.*/CO.*_8xxx/.*',             0, ['metadata', 'supplemental', 'profile']),
+    ('.*/CORSS_8xxx/.*',            0, ['corss_8xxx']),
+    ('.*/COUVIS_8xxx/.*',           0, ['couvis_8xxx']),
+    ('.*/COVIMS_8xxx/.*',           0, ['covims_8xxx']),
+    ('.*/EBROCC_xxx/.*',            0, ['ebrocc_xxxx', 'metadata',
+                                        'supplemental', 'profile']),
+    ('.*/GO_0xxx/.*',               0, ['go', 'metadata', 'cumindex999']),
+    ('.*/GO_0xxx_v1/.*',            0, ['go', 'metadata', 'cumindex999']),
+    ('.*/HST.x_xxxx/.*',            0, ['hst', 'metadata', 'cumindex9_9999']),
+    ('.*/NH..(LO|MV)_xxxx/.*',      0, ['nh', 'metadata', 'supplemental']),
+    ('.*/NH..LO_xxxx/.*',           0, ['inventory', 'rings', 'moons']),
+    ('.*/NH(JU|LA)MV_xxxx/.*',      0, ['nhbrowse_vx', 'jupiter']),
+    ('.*/NH(PC|PE)MV_xxxx/.*',      0, ['nhbrowse', 'pluto']),
+    ('.*/RPX_xxxx/.*',              0, ['metadata']),
+    ('.*/RPX_xxxx/RPX_000.*',       0, ['obsindex', 'cumindex99']),
+    ('.*/VGISS_[5678]xxx/.*',       0, ['vgiss', 'metadata', 'raw_image',
+                                        'supplemental', 'cumindex999']),
+    ('.*/VGISS_5(10[4-9]|20[5-9]|11|21)/.*',
                                     0, ['jupiter', 'inventory', 'rings',
                                         'moons']),
-    ('.*/VGISS_6(10|11[0-5]|2).*',  0, ['saturn', 'inventory', 'rings',
+    ('.*/VGISS_6(10|11[0-5]|2)/.*', 0, ['saturn', 'inventory', 'rings',
                                         'moons']),
-    ('.*/VGISS_7xxx.*',             0, ['uranus', 'inventory', 'rings',
+    ('.*/VGISS_7xxx/.*',            0, ['uranus', 'inventory', 'rings',
                                         'moons']),
-    ('.*/VGISS_8xxx.*',             0, ['neptune', 'inventory', 'rings',
+    ('.*/VGISS_8xxx/.*',            0, ['neptune', 'inventory', 'rings',
                                         'moons']),
+    ('.*/VG_28xx/.*',               0, ['metadata']),
 ])
 
 ################################################################################
@@ -81,7 +88,7 @@ class PdsDependency(object):
     MODTIME_DICT = {}
 
     def __init__(self, title, glob_pattern, regex, sublist, suite=None,
-                       newer=True, dir='holdings'):
+                       newer=True, dir='holdings', exceptions=[]):
         """Constructor for a PdsDependency.
 
         Inputs:
@@ -95,12 +102,15 @@ class PdsDependency(object):
             newer           True if the file file must be newer; False to
                             suppress a check of the modification date.
             dir             root directory of required file.
+            exceptions      a list of zero or more regular expressions. If a
+                            file path matches one of these patterns, then it
+                            will not trigger a test.
         """
 
         self.glob_pattern = glob_pattern
 
         if type(regex) == str:
-            self.regex = re.compile('^' + regex + '$')
+            self.regex = re.compile('^' + regex + '$', re.I)
         else:
             self.regex = regex
 
@@ -122,6 +132,8 @@ class PdsDependency(object):
                 PdsDependency.DEPENDENCY_SUITES[suite] = []
 
             PdsDependency.DEPENDENCY_SUITES[suite].append(self)
+
+        self.exceptions = [re.compile(pattern, re.I) for pattern in exceptions]
 
     @staticmethod
     def purge_cache():
@@ -168,7 +180,7 @@ class PdsDependency(object):
 
         logger.replace_root([pdsdir.root_, pdsdir.disk_])
 
-        # Remove "Newer" at beginning of titile if check_newer is False
+        # Remove "Newer" at beginning of title if check_newer is False
         if not check_newer and self.title.startswith('Newer '):
             logger.open(self.title[6:].capitalize(), dirpath)
         else:
@@ -192,6 +204,18 @@ class PdsDependency(object):
                             limits={'normal': limit})
                 try:
                     for abspath in abspaths:
+
+                        # Check exception list
+                        exception_identified = False
+                        for regex in self.exceptions:
+                            if regex.fullmatch(abspath):
+                                logger.info('Test skipped', abspath)
+                                exception_identified = True
+                                break
+
+                        if exception_identified:
+                            continue
+
                         path = abspath[lskip_:]
 
                         (requirement, count) = self.regex.subn(sub, path)
@@ -273,55 +297,48 @@ for thing in pdsfile.VOLTYPES:
     Thing = thing.capitalize()
 
     _ = PdsDependency(
-        'Newer archive files for %s'            % thing,
-        '%s/$/$'                                % thing,
-        r'%s/(.*?)/(.*)'                        % thing,
-        r'archives-%s/\1/\2%s.tar.gz'           % (thing, thing_),
+        'Newer archives and checksums for %s'       % thing,
+        '%s/$/$'                                    % thing,
+        r'%s/(.*?)/(.*)'                            % thing,
+        [r'archives-%s/\1/\2%s.tar.gz'              % (thing, thing_),
+         r'checksums-%s/\1/\2%s_md5.txt'            % (thing, thing_)],
         suite='general', newer=True,
     )
 
     _ = PdsDependency(
-        'Newer checksum files for %s'           % thing,
-        '%s/$/$'                                % thing,
-        r'%s/(.*?)/(.*)'                        % thing,
-        r'checksums-%s/\1/\2%s_md5.txt'         % (thing, thing_),
+        'Newer checksum files for archives-%s'      % thing,
+        'archives-%s/$/$*'                          % thing,
+        r'archives-%s/(.*?)/(.*)%s.tar.gz'          % (thing, thing_),
+        r'checksums-archives-%s/\1%s_md5.txt'       % (thing, thing_),
         suite='general', newer=True,
     )
 
     _ = PdsDependency(
-        'Newer checksum files for archives-%s'  % thing,
-        'archives-%s/$/$*'                      % thing,
-        r'archives-%s/(.*?)/(.*)%s.tar.gz'      % (thing, thing_),
-        r'checksums-archives-%s/\1%s_md5.txt'   % (thing, thing_),
-        suite='general', newer=True,
+        'Newer info shelf files for %s'             % thing,
+        'checksums-%s/$/$%s_md5.txt'                % (thing, thing_),
+        r'checksums-%s/(.*?)/(.*)%s_md5.txt'        % (thing, thing_),
+        [r'%s/\1/\2_info.pickle'                    % thing,
+         r'%s/\1/\2_info.py'                        % thing],
+        suite='general', newer=True, dir='shelves/info'
     )
 
     _ = PdsDependency(
-        'Newer info shelf files for %s'         % thing,
-        '%s/$/$'                                % thing,
-        r'%s/(.*?)/(.*)'                        % thing,
-        [r'%s/\1/\2_info.shelf'                 % thing,
-         r'%s/\1/\2_info.py'                    % thing],
-        suite='general', newer=True, dir='shelves/info',
-    )
-
-    _ = PdsDependency(
-        'Newer info shelf files for archives-%s'% thing,
-        'archives-%s/$/$*'                      % thing,
-        r'archives-%s/(.*?)/(.*)%s.tar.gz'      % (thing, thing_),
-        [r'archives-%s/\1_info.shelf'           % thing,
-         r'archives-%s/\1_info.py'              % thing],
-        suite='general', newer=True, dir='shelves/info',
+        'Newer info shelf files for archives-%s'    % thing,
+        'checksums-archives-%s/$%s_md5.txt'         % (thing, thing_),
+        r'checksums-archives-%s/(.*)%s_md5.txt'     % (thing, thing_),
+        [r'archives-%s/\1_info.pickle'              % thing,
+         r'archives-%s/\1_info.py'                  % thing],
+        suite='general', newer=True, dir='shelves/info'
     )
 
 for thing in ['volumes', 'metadata', 'calibrated']:
 
     _ = PdsDependency(
-        'Newer link shelf files for %s'         % thing,
-        '%s/$/$'                                % thing,
-        r'%s/(.*?)/(.*)'                        % thing,
-        [r'%s/\1/\2_links.shelf'                % thing,
-         r'%s/\1/\2_links.py'                   % thing],
+        'Newer link shelf files for %s'             % thing,
+        '%s/$/$'                                    % thing,
+        r'%s/(.*?)/(.*)'                            % thing,
+        [r'%s/\1/\2_links.pickle'                   % thing,
+         r'%s/\1/\2_links.py'                       % thing],
         suite='general', newer=True, dir='shelves/links',
     )
 
@@ -329,220 +346,128 @@ for thing in ['volumes', 'metadata', 'calibrated']:
 # Metadata tests
 ################################################################################
 
-# General metadata test requiring volname + "_index.tab"
+# General metadata including *_index.tab
 _ = PdsDependency(
-    'Metadata index table is newer than index.tab',
+    'Metadata index table for each volume',
     'volumes/$/$',
     r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
     r'metadata/\1/\3/\3_index.tab',
     suite='metadata', newer=False,
 )
 
-# More metadata
 _ = PdsDependency(
-    'Supplemental index table',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    r'metadata/\1/\3/\3_supplemental_index.tab',
-    suite='supplemental', newer=False,
+    'Label for every metadata table or CSV',
+    'metadata/$*/$/*.(tab|csv)',
+    r'metadata/(.*)\....',
+    r'metadata/\1.lbl',
+    suite='metadata', newer=False,
 )
 
 _ = PdsDependency(
-    'Inventory file',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    r'metadata/\1/\3/\3_inventory.tab',
-    suite='inventory', newer=False,
+    'Newer index shelf for every metadata table',
+    'metadata/$*/$/*.tab',
+    r'metadata/(.*)\.tab',
+    [r'metadata/\1.pickle',
+     r'metadata/\1.py'],
+    suite='metadata', newer=True, dir='shelves/index',
+    exceptions=[r'.*_inventory.tab',
+                r'.*GO_0xxx_v1.*']
 )
 
-_ = PdsDependency(
-    'Jupiter summary file',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    r'metadata/\1/\3/\3_jupiter_summary.tab',
-    suite='jupiter', newer=False,
-)
+# More metadata suites
+for (name, suffix) in [('supplemental'  , 'supplemental_index.tab'),
+                       ('inventory'     , 'inventory.csv'),
+                       ('jupiter'       , 'jupiter_summary.tab'),
+                       ('saturn'        , 'saturn_summary.tab'),
+                       ('uranus'        , 'uranus_summary.tab'),
+                       ('neptune'       , 'neptune_summary.tab'),
+                       ('pluto'         , 'pluto_summary.tab'),
+                       ('pluto'         , 'charon_summary.tab'),
+                       ('rings'         , 'ring_summary.tab'),
+                       ('moons'         , 'moon_summary.tab'),
+                       ('raw_image'     , 'raw_image_index.tab'),
+                       ('profile'       , 'profile_index.tab'),
+                       ('obsindex'      , 'obsindex.tab')]:
 
-_ = PdsDependency(
-    'Saturn summary file',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    r'metadata/\1/\3/\3_saturn_summary.tab',
-    suite='saturn', newer=False,
-)
-
-_ = PdsDependency(
-    'Uranus summary file',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    r'metadata/\1/\3/\3_uranus_summary.tab',
-    suite='uranus', newer=False,
-)
-
-_ = PdsDependency(
-    'Neptune summary file',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    r'metadata/\1/\3/\3_neptune_summary.tab',
-    suite='neptune', newer=False,
-)
-
-_ = PdsDependency(
-    'Pluto/Charon summary file',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    [r'metadata/\1/\3/\3_pluto_summary.tab',
-     r'metadata/\1/\3/\3_charon_summary.tab'],
-    suite='pluto', newer=False,
-)
-
-_ = PdsDependency(
-    'Ring summary file',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    r'metadata/\1/\3/\3_ring_summary.tab',
-    suite='rings', newer=False,
-)
-
-_ = PdsDependency(
-    'Moon summary file',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    r'metadata/\1/\3/\3_moon_summary.tab',
-    suite='moons', newer=False,
-)
-
-_ = PdsDependency(
-    'Raw image summary file',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    r'metadata/\1/\3/\3_raw_image_index.tab',
-    suite='raw_image', newer=False,
-)
-
-_ = PdsDependency(
-    'Profile index file',
-    'volumes/$/$',
-    r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
-    r'metadata/\1/\3/\3_profile_index.tab',
-    suite='profile', newer=False,
-)
+    _ = PdsDependency(
+        name.capitalize() + ' metadata required',
+        'volumes/$/$',
+        r'volumes/([^/]+?)(|_v[0-9.]+)/(.*?)',
+        r'metadata/\1/\3/\3_' + suffix,
+        suite=name, newer=False,
+    )
 
 ################################################################################
-# Cumulative index tests where "_x999" is the suffix
+# Cumulative index tests where the suffix is "99", "999", or "9_9999"
 ################################################################################
 
-_ = PdsDependency(
-    'PDS3 label for every metadata table',
-    'metadata/$/$/*.tab',
-    r'metadata/(.*?)/(.*?)/(.*)\.tab',
-    r'metadata/\1/\2/\3.lbl',
-    suite='cumindex', newer=False,
-)
+for nines in ('99', '999', '9_9999'):
 
-_ = PdsDependency(
-    'Newer cumulative version for every metadata table',
-    'metadata/$/$/*.tab',
-    r'metadata/(.*?)/(.*?).../(.*?_.)...(.*).tab',
-    r'metadata/\1/\g<2>999/\g<3>999\4.tab',
-    suite='cumindex', newer=True,
-)
+    dots = nines.replace('9', '.')
+    name = 'cumindex' + nines
 
-_ = PdsDependency(
-    'Newer archives and checksums of every cumulative metadata table',
-    'metadata/$/*999/*.tab',
-    r'metadata/(.*?)/(.*?)/.*\.tab',
-    [r'archives-metadata/\1/\2_metadata.tar.gz',
-     r'checksums-metadata/\1/\2_metadata_md5.txt',
-     r'checksums-archives-metadata/\1_metadata_md5.txt'],
-    suite='cumindex', newer=True,
-)
+    _ = PdsDependency(
+        'Cumulative version of every metadata table',
+        'metadata/$*/$/*.(tab|csv)',
+        r'metadata/(.*?)/(.*)' + dots + r'/(.*)' + dots + r'(.*)\.(tab|csv)',
+        [r'metadata/\1/\g<2>' + nines + r'/\g<3>' + nines + r'\4.\5',
+         r'metadata/\1/\g<2>' + nines + r'/\g<3>' + nines + r'\4.lbl'],
+        suite=name, newer=False,
+    )
 
-_ = PdsDependency(
-    'Newer checksums of cumulative index archives',
-    'archives-metadata/$/*999_metadata.tar.gz',
-    r'archives-metadata/(.*?)/(.*?)999_metadata.tar.gz',
-    r'checksums-archives-metadata/\g<2>xxx_metadata_md5.txt',
-    suite='cumindex', newer=True,
-)
+    _ = PdsDependency(
+        'Newer archives and checksums for cumulative metadata',
+        'metadata/$*/*' + nines,
+        r'metadata/(.*?)/(.*)',
+        [r'archives-metadata/\1/\2_metadata.tar.gz',
+         r'checksums-metadata/\1/\2_metadata_md5.txt'],
+        suite=name, newer=True,
+    )
 
-_ = PdsDependency(
-    'Newer info shelf files for every cumulative metadata checksum file',
-    'metadata/$/*999/*.tab',
-    r'metadata/(.*?)/(.*?)/(.*)\.tab',
-    [r'metadata/\1/\2_info.shelf',
-     r'metadata/\1/\2_info.py',
-     r'archives-metadata/\1_info.shelf',
-     r'archives-metadata/\1_info.py'],
-    suite='cumindex', newer=True, dir='shelves/info'
-)
+    _ = PdsDependency(
+        'Newer checksums for cumulative archives-metadata',
+        'archives-metadata/$*/*' + nines + '_metadata.tar.gz',
+        r'archives-metadata/(.*?)/.*_metadata.tar.gz',
+        r'checksums-archives-metadata/\1_metadata_md5.txt',
+        suite=name, newer=True,
+    )
 
-_ = PdsDependency(
-    'Newer info shelf files for every cumulative metadata archive',
-    'checksums-archives-metadata/$_metadata_md5.txt',
-    r'checksums-archives-metadata/(.*?)_metadata_md5.txt',
-    [r'archives-metadata/\g<1>_info.shelf',
-     r'archives-metadata/\g<1>_info.py'],
-    suite='cumindex', newer=True, dir='shelves/info'
-)
+    _ = PdsDependency(
+        'Newer info shelf files for cumulative metadata',
+        'checksums-metadata/$*/*' + nines + '_metadata_md5.txt',
+        r'checksums-metadata/(.*?)/(.*)_metadata_md5.txt',
+        [r'metadata/\1/\2_info.pickle',
+         r'metadata/\1/\2_info.py'],
+        suite=name, newer=True, dir='shelves/info'
+    )
 
-################################################################################
-# Cumulative index tests where "9_9999" is the suffix
-################################################################################
+    _ = PdsDependency(
+        'Newer info shelf files for cumulative archives-metadata',
+        'checksums-archives-metadata/$*_metadata_md5.txt',
+        r'checksums-archives-metadata/(.*)_metadata_md5.txt',
+        [r'archives-metadata/\1_info.pickle',
+         r'archives-metadata/\1_info.py'],
+        suite=name, newer=True, dir='shelves/info'
+    )
 
-_ = PdsDependency(
-    'PDS3 label for every metadata table',
-    'metadata/$/$/*.tab',
-    r'metadata/(.*?)/(.*?)/(.*)\.tab',
-    r'metadata/\1/\2/\3.lbl',
-    suite='cumindex99', newer=False,
-)
+    _ = PdsDependency(
+        'Newer link shelf files for cumulative metadata',
+        'metadata/$/*' + nines,
+        r'metadata/(.*?)/(.*)',
+        [r'metadata/\1/\2_links.pickle',
+         r'metadata/\1/\2_links.py'],
+        suite=name, newer=True, dir='shelves/links'
+    )
 
-_ = PdsDependency(
-    'Newer cumulative version for every metadata table',
-    'metadata/$/$/*.tab',
-    r'metadata/(.*?)/(.*?)._..../(.*?)._....(.*).tab',
-    r'metadata/\1/\g<2>9_9999/\g<3>9_9999\4.tab',
-    suite='cumindex99', newer=True,
-)
-
-_ = PdsDependency(
-    'Newer archives and checksums of every cumulative metadata table',
-    'metadata/$/*9_9999/*.tab',
-    r'metadata/(.*?)/(.*?)/.*\.tab',
-    [r'archives-metadata/\1/\2_metadata.tar.gz',
-     r'checksums-metadata/\1/\2_metadata_md5.txt',
-     r'checksums-archives-metadata/\1_metadata_md5.txt'],
-    suite='cumindex99', newer=True,
-)
-
-_ = PdsDependency(
-    'Newer checksums of cumulative index archives',
-    'archives-metadata/$/*9_9999_metadata.tar.gz',
-    r'archives-metadata/(.*?)/(.*?)9_9999_metadata.tar.gz',
-    r'checksums-archives-metadata/\g<2>x_xxxx_metadata_md5.txt',
-    suite='cumindex99', newer=True,
-)
-
-_ = PdsDependency(
-    'Newer info shelf files for every cumulative metadata checksum file',
-    'metadata/$/*9_9999/*.tab',
-    r'metadata/(.*?)/(.*?)/(.*)\.tab',
-    [r'metadata/\1/\2_info.shelf',
-     r'metadata/\1/\2_info.py',
-     r'archives-metadata/\1_info.shelf',
-     r'archives-metadata/\1_info.py'],
-    suite='cumindex99', newer=True, dir='shelves/info'
-)
-
-_ = PdsDependency(
-    'Newer info shelf files for every cumulative metadata archive',
-    'checksums-archives-metadata/$_metadata_md5.txt',
-    r'checksums-archives-metadata/(.*?)_metadata_md5.txt',
-    [r'archives-metadata/\g<1>_info.shelf',
-     r'archives-metadata/\g<1>_info.py'],
-    suite='cumindex99', newer=True, dir='shelves/info'
-)
+    _ = PdsDependency(
+        'Newer index shelf files for cumulative metadata',
+        'metadata/$/*' + nines + '/*.tab',
+        r'metadata/(.*)\.tab',
+        [r'metadata/\1.pickle',
+         r'metadata/\1.py'],
+        suite=name, newer=True, dir='shelves/index',
+        exceptions=[r'.*GO_0xxx_v1.*']
+    )
 
 ################################################################################
 # Preview tests
@@ -610,14 +535,6 @@ _ = PdsDependency(
 
 # For COUVIS_0xxx
 _ = PdsDependency(
-    'Newer supplemental index for every COUVIS volume',
-    'volumes/$/$/DATA/*/*.lbl',
-    r'volumes/(\w+)/(\w+)/.*\.lbl',
-    r'metadata/\1/\2/\2_supplemental_index.tab',
-    suite='couvis', newer=True,
-)
-
-_ = PdsDependency(
     'Previews of every COUVIS data file',
     'volumes/$/$/DATA/*/*.DAT',
     r'volumes/COUVIS_0xxx(|_v[\.0-9]+)/(.*)\.DAT',
@@ -628,23 +545,7 @@ _ = PdsDependency(
     suite='couvis', newer=False,
 )
 
-# For COUVIS_8xxx
-_ = PdsDependency(
-    'Previews and diagrams of every COUVIS_8xxx profile',
-    'volumes/$/$/data/*_TAU01KM.TAB',
-    r'volumes/COUVIS_8xxx[^/]*/(.*)_TAU01KM\.TAB',
-    [r'previews/COUVIS_8xxx/\1_thumb.png',
-     r'previews/COUVIS_8xxx/\1_small.png',
-     r'previews/COUVIS_8xxx/\1_med.png',
-     r'previews/COUVIS_8xxx/\1_full.png',
-     r'diagrams/COUVIS_8xxx/\1_thumb.png',
-     r'diagrams/COUVIS_8xxx/\1_small.png',
-     r'diagrams/COUVIS_8xxx/\1_med.png',
-     r'diagrams/COUVIS_8xxx/\1_full.png'],
-    suite='couvis_8xxx', newer=False,
-)
-
-# For COVIMS_0xxx and COVIMS_UNKS
+# For COVIMS_0xxx
 _ = PdsDependency(
     'Previews and calibrated versions of every COVIMS cube',
     'volumes/$/$/data/*/*.qub',
@@ -654,6 +555,131 @@ _ = PdsDependency(
      r'previews/\1_med.png',
      r'previews/\1_full.png'],
     suite='covims', newer=False,
+)
+
+# For CORSS_8xxx
+_ = PdsDependency(
+    'Previews and diagrams for every CORSS_8xxx data directory',
+    'volumes/$/$/data/Rev*/Rev*/*',
+    r'volumes/CORSS_8xxx[^/]*/(CORSS_8001/data/Rev.../Rev.....?)/(Rev.....?)_(RSS_...._..._..._.)',
+    [r'previews/CORSS_8xxx/\1/\2_\3/\3_GEO_thumb.jpg',
+     r'previews/CORSS_8xxx/\1/\2_\3/\3_GEO_small.jpg',
+     r'previews/CORSS_8xxx/\1/\2_\3/\3_GEO_med.jpg',
+     r'previews/CORSS_8xxx/\1/\2_\3/\3_GEO_full.jpg',
+     r'previews/CORSS_8xxx/\1/\2_\3/\3_TAU_thumb.jpg',
+     r'previews/CORSS_8xxx/\1/\2_\3/\3_TAU_small.jpg',
+     r'previews/CORSS_8xxx/\1/\2_\3/\3_TAU_med.jpg',
+     r'previews/CORSS_8xxx/\1/\2_\3/\3_TAU_full.jpg',
+     r'previews/CORSS_8xxx/\1_thumb.jpg',
+     r'previews/CORSS_8xxx/\1_small.jpg',
+     r'previews/CORSS_8xxx/\1_med.jpg',
+     r'previews/CORSS_8xxx/\1_full.jpg',
+     r'diagrams/CORSS_8xxx/\1_\3_thumb.jpg',
+     r'diagrams/CORSS_8xxx/\1_\3_small.jpg',
+     r'diagrams/CORSS_8xxx/\1_\3_med.jpg',
+     r'diagrams/CORSS_8xxx/\1_\3_full.jpg'],
+    suite='corss_8xxx', newer=False,
+)
+
+_ = PdsDependency(
+    'Previews of every CORSS_8xxx browse PDF',
+    'volumes/$/$/browse/*.pdf',
+    r'volumes/CORSS_8xxx[^/]*/(.*)\.pdf',
+    [r'previews/CORSS_8xxx/\1_thumb.jpg',
+     r'previews/CORSS_8xxx/\1_small.jpg',
+     r'previews/CORSS_8xxx/\1_med.jpg',
+     r'previews/CORSS_8xxx/\1_full.jpg'],
+    suite='corss_8xxx', newer=False,
+)
+_ = PdsDependency(
+    'Previews of every CORSS_8xxx Rev PDF',
+    'volumes/$/$/data/Rev*/*.pdf',
+    r'volumes/CORSS_8xxx[^/]*/(.*)\.pdf',
+    [r'previews/CORSS_8xxx/\1_thumb.jpg',
+     r'previews/CORSS_8xxx/\1_small.jpg',
+     r'previews/CORSS_8xxx/\1_med.jpg',
+     r'previews/CORSS_8xxx/\1_full.jpg'],
+    suite='corss_8xxx', newer=False,
+)
+
+_ = PdsDependency(
+    'Previews of every CORSS_8xxx data PDF',
+    'volumes/$/$/data/Rev*/Rev*/Rev*/*.pdf',
+    r'volumes/CORSS_8xxx[^/]*/(.*)\.pdf',
+    [r'previews/CORSS_8xxx/\1_thumb.jpg',
+     r'previews/CORSS_8xxx/\1_small.jpg',
+     r'previews/CORSS_8xxx/\1_med.jpg',
+     r'previews/CORSS_8xxx/\1_full.jpg'],
+    suite='corss_8xxx', newer=False,
+)
+
+# For COUVIS_8xxx
+_ = PdsDependency(
+    'Previews and diagrams of every COUVIS_8xxx profile',
+    'volumes/$/$/data/*_TAU01KM.TAB',
+    r'volumes/COUVIS_8xxx[^/]*/(.*)_TAU01KM\.TAB',
+    [r'previews/COUVIS_8xxx/\1_thumb.jpg',
+     r'previews/COUVIS_8xxx/\1_small.jpg',
+     r'previews/COUVIS_8xxx/\1_med.jpg',
+     r'previews/COUVIS_8xxx/\1_full.jpg',
+     r'diagrams/COUVIS_8xxx/\1_thumb.jpg',
+     r'diagrams/COUVIS_8xxx/\1_small.jpg',
+     r'diagrams/COUVIS_8xxx/\1_med.jpg',
+     r'diagrams/COUVIS_8xxx/\1_full.jpg'],
+    suite='couvis_8xxx', newer=False,
+    exceptions=['.*2005_139_PSICEN_E.*',
+                '.*2005_139_THEHYA_E.*',
+                '.*2007_038_SAO205839_I.*',
+                '.*2010_148_LAMAQL_E.*']
+)
+
+# For COVIMS_8xxx
+_ = PdsDependency(
+    'Previews and diagrams of every COVIMS_8xxx profile',
+    'volumes/$/$/data/*_TAU01KM.TAB',
+    r'volumes/COVIMS_8xxx[^/]*/(.*)_TAU01KM\.TAB',
+    [r'previews/COVIMS_8xxx/\1_thumb.jpg',
+     r'previews/COVIMS_8xxx/\1_small.jpg',
+     r'previews/COVIMS_8xxx/\1_med.jpg',
+     r'previews/COVIMS_8xxx/\1_full.jpg',
+     r'diagrams/COVIMS_8xxx/\1_thumb.jpg',
+     r'diagrams/COVIMS_8xxx/\1_small.jpg',
+     r'diagrams/COVIMS_8xxx/\1_med.jpg',
+     r'diagrams/COVIMS_8xxx/\1_full.jpg'],
+    suite='covims_8xxx', newer=False,
+)
+
+_ = PdsDependency(
+    'Previews of every COVIMS_8xxx PDF',
+    'volumes/$/$/browse/*.PDF',
+    r'volumes/COVIMS_8xxx[^/]*/(.*)\.PDF',
+    [r'previews/COVIMS_8xxx/\1_thumb.jpg',
+     r'previews/COVIMS_8xxx/\1_small.jpg',
+     r'previews/COVIMS_8xxx/\1_med.jpg',
+     r'previews/COVIMS_8xxx/\1_full.jpg'],
+    suite='covims_8xxx', newer=False,
+)
+
+# For EBROCC_xxxx
+_ = PdsDependency(
+    'Previews of every EBROCC browse PDF',
+    'volumes/$/$/BROWSE/*.PDF',
+    r'volumes/EBROCC_xxxx[^/]*/(.*)\.PDF',
+    [r'previews/EBROCC_xxxx/\1_thumb.jpg',
+     r'previews/EBROCC_xxxx/\1_small.jpg',
+     r'previews/EBROCC_xxxx/\1_med.jpg',
+     r'previews/EBROCC_xxxx/\1_full.jpg'],
+    suite='ebrocc_xxxx', newer=False,
+)
+_ = PdsDependency(
+    'Previews of every EBROCC profile',
+    'volumes/$/$/data/*/*.TAB',
+    r'volumes/EBROCC_xxxx[^/]*/(.*)\.TAB',
+    [r'previews/EBROCC_xxxx/\1_thumb.jpg',
+     r'previews/EBROCC_xxxx/\1_small.jpg',
+     r'previews/EBROCC_xxxx/\1_med.jpg',
+     r'previews/EBROCC_xxxx/\1_full.jpg'],
+    suite='ebrocc_xxxx', newer=False,
 )
 
 # For GO_xxxx

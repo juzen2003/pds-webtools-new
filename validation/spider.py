@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################################
 # Program spider.py
 #
@@ -12,8 +12,6 @@
 #
 # The log file for each path is named spider_yyyy-mm-dd_volset[-volname].log.
 # An additional log file called spider_ERRORS.og only logs errors.
-#
-# MRS, September 2017
 ################################################################################
 
 import sys, os
@@ -22,11 +20,9 @@ import pickle
 import datetime
 import re
 import argparse
-
+import ssl
+import urllib.request
 from bs4 import BeautifulSoup
-import urllib2
-import pycurl
-from StringIO import StringIO
 
 import pdsfile
 import pdslogger
@@ -38,35 +34,37 @@ LOGROOT_ENV = 'PDS_LOG_ROOT'
 # Internal functions
 ################################################################################
 
-def curl_url(url):
-    """Return the content of the URL as a text string."""
+DEFAULT_HTTPS_CONTEXT = ssl._create_default_https_context()
 
-    buffer = StringIO()
-    c = pycurl.Curl()
-    c.setopt(c.URL, url)
-    c.setopt(c.FOLLOWLOCATION, True)
-    c.setopt(c.WRITEDATA, buffer)
-    c.perform()
-    c.close()
-    return buffer.getvalue()
-
-def get_viewmaster_hrefs(url):
+def get_viewmaster_hrefs(url, context=None):
     """Return a list of all the hrefs in the results of submitting this query to
     viewmaster."""
 
-    html = curl_url(url)
+    if context is None:
+        with urllib.request.urlopen(url) as response:
+            html = response.read()
+    else:
+        with urllib.request.urlopen(url, context=context) as response:
+            html = response.read()
 
-    if '404 Not Found' in html:
+    if b'404 Not Found' in html:
         return None
-    if 'encountered an internal error' in html:
+    if b'encountered an internal error' in html:
         return None
 
     soup = BeautifulSoup(html, 'lxml')
     href_tags = soup.find_all(href=True)
 
-    # A directory should have hrefs
-    if '.' not in url[-8:] and len(href_tags) == 0:
-        return None
+    # A directory should always have hrefs
+    if len(href_tags) == 0:
+
+        # If the basename looks like a directory name, return None
+        # Returning None forces an error to be logged.
+        basename = url.rstrip('/').rpartition('/')[-1]
+        if '.' not in basename:
+            return None
+        if '_v' in basename and basename.rpartition('.')[-1].isdigit():
+            return None
 
     viewmaster_hrefs = []
     for tag in href_tags:
@@ -78,7 +76,7 @@ def get_viewmaster_hrefs(url):
     return viewmaster_hrefs
 
 def random_tree_search(viewmaster_, start, regex, logger, handler=None,
-                                    limit=1000):
+                                    limit=1000, context=None):
     """Recursively check every link in a tree of Viewmaster.
 
     Input:
@@ -91,6 +89,9 @@ def random_tree_search(viewmaster_, start, regex, logger, handler=None,
         logger      PdsLogger to use.
         handler     an optional, additional handler to use just for this search.
         limit       maximum number of links to check.
+        context     URL context to use; can be used to suppress SSL
+                    certification errors using ssl._create_unverified_context().
+                    Default is None.
     """
 
     unchecked_by_depth = {}
@@ -126,7 +127,8 @@ def random_tree_search(viewmaster_, start, regex, logger, handler=None,
                 return True
 
         # Find all the URLs on this page
-        found_urls = get_viewmaster_hrefs(viewmaster_ + full_url)
+        found_urls = get_viewmaster_hrefs(viewmaster_ + full_url,
+                                          context=context)
 
         # A return value of None indicates a 404 error or a fancy index
         if found_urls is None:
@@ -177,7 +179,7 @@ def random_tree_search(viewmaster_, start, regex, logger, handler=None,
         # Choose a random depth. This makes sure deeper depths don't totally
         # dominate
         while len(unchecked_by_depth) > 0:
-            random_depth = random.choice(unchecked_by_depth.keys())
+            random_depth = random.choice(list(unchecked_by_depth.keys()))
             if len(unchecked_by_depth[random_depth]) == 0:
                 del unchecked_by_depth[random_depth]
             else:
@@ -258,9 +260,10 @@ parser.add_argument('--log', '-l', type=str, default='',
                          'If this is undefined, logs are written to the '  +
                          '"Logs" subdirectory of the current working '     +
                          'directory.')
-
+parser.add_argument('--nocert', action='store_true',
+                    help='Ignore SSL certification failures')
 parser.add_argument('--verbose', '-v', action='store_true',
-                    help='Also log progress to to terminal.')
+                    help='Also log progress to the terminal.')
 
 # Parse command line
 namespace = parser.parse_args()
@@ -276,6 +279,8 @@ else:
         log_root = os.path.join(os.environ[LOGROOT_ENV], 'viewmaster')
     except KeyError:
         log_root = 'Logs'
+
+print(log_root)
 
 # Initialize the logger
 pdsfile.PdsFile.set_log_root(log_root)
@@ -298,6 +303,15 @@ if not server.startswith('http'):
 
 viewmaster_ = server.rstrip('/') + '/viewmaster/'
 
+logger.info('Beginning Spider')
+
+# Ignore certification if necessary
+if namespace.nocert:
+    context = ssl._create_unverified_context()
+    logger.warn('SSL certification errors suppressed')
+else:
+    context = None
+
 # For each volume set or volume name in list...
 errors = 0
 for arg in namespace.volume:
@@ -308,6 +322,7 @@ for arg in namespace.volume:
                                      level='info',
                                      suffix=arg.replace('/','-'),
                                      rotation='ymd')
+    logger.add_handler(handler)
 
     # Determine scope
     parts = arg.split('/')
@@ -326,8 +341,10 @@ for arg in namespace.volume:
 
     tuple = random_tree_search(viewmaster_, 'volumes/' + arg, regex,
                                logger=logger, handler=handler,
-                               limit=namespace.n)
+                               limit=namespace.n, context=context)
     errors += tuple[0] + tuple[1]
+
+    logger.remove_handler(handler)
 
 # Exit status is 1 if any error was found
 if errors:

@@ -25,7 +25,7 @@ LOGROOT_ENV = 'PDS_LOG_ROOT'
 ################################################################################
 
 def load_directory_info(pdsdir, limits={'normal':100}, logger=None):
-    """Generate a list of tuples (abspath, dirpath, bytes, mod time) recursively
+    """Generate a list of tuples (abspath, dirpath, nbytes, mod time) recursively
     for the given directory tree.
     """
 
@@ -58,11 +58,11 @@ def load_directory_info(pdsdir, limits={'normal':100}, logger=None):
                 if '/.' in abspath:             # flag invisible files
                     logger.invisible('Invisible file', abspath)
 
-                bytes = os.path.getsize(abspath)
+                nbytes = os.path.getsize(abspath)
                 modtime = os.path.getmtime(abspath)
                 logger.normal('File info generated', abspath)
 
-                tuples.append((abspath, abspath[lskip:], bytes, modtime))
+                tuples.append((abspath, abspath[lskip:], nbytes, modtime))
 
             # Load directories
             for dir in dirs:
@@ -91,7 +91,7 @@ def load_directory_info(pdsdir, limits={'normal':100}, logger=None):
 ################################################################################
 
 def read_archive_info(tarpath, limits={'normal':100}, logger=None):
-    """Return a list of tuples (abspath, dirpath, bytes, modtime) from a .tar.gz
+    """Return a list of tuples (abspath, dirpath, nbytes, modtime) from a .tar.gz
     file."""
 
     tarpath = os.path.abspath(tarpath)
@@ -222,19 +222,19 @@ def validate_tuples(dir_tuples, tar_tuples, limits={'normal':100}, logger=None):
 
     try:
         tardict = {}
-        for (abspath, dirpath, bytes, modtime) in tar_tuples:
-            tardict[abspath] = (dirpath, bytes, modtime)
+        for (abspath, dirpath, nbytes, modtime) in tar_tuples:
+            tardict[abspath] = (dirpath, nbytes, modtime)
 
-        for (abspath, dirpath, bytes, modtime) in dir_tuples:
+        for (abspath, dirpath, nbytes, modtime) in dir_tuples:
             if abspath not in tardict:
                 logger.error('Missing from tar file', abspath)
 
-            elif (dirpath, bytes, modtime) != tardict[abspath]:
+            elif (dirpath, nbytes, modtime) != tardict[abspath]:
 
-                if bytes != tardict[abspath][1]:
+                if nbytes != tardict[abspath][1]:
                     logger.error('Byte count mismatch: ' +
                                  '%d (filesystem) vs. %d (tarfile)' %
-                                 (bytes, tardict[abspath][1]), abspath)
+                                 (nbytes, tardict[abspath][1]), abspath)
 
                 if abs(modtime - tardict[abspath][2]) > 1:
                     logger.error('Modification time mismatch: ' +
@@ -412,7 +412,9 @@ if __name__ == '__main__':
             pdsdirs.append(pdsdir)
         except ValueError:
             pdsdir = pdsf.volset_pdsdir()
-            pdsdirs += [pdsdir.child(c) for c in pdsdir.childnames]
+            children = [pdsdir.child(c) for c in pdsdir.childnames]
+            pdsdirs += [c for c in children if c.isdir]
+                    # "if c.isdir" is False for volset level readme files
 
     # Begin logging and loop through pdsdirs...
     logger.open(' '.join(sys.argv))

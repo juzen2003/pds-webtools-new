@@ -10,7 +10,6 @@
 
 import sys
 import os
-import shelve
 import pickle
 import shutil
 import glob
@@ -21,16 +20,6 @@ from PIL import Image
 import pdslogger
 import pdsfile
 import pdschecksums
-
-try:
-    GDBM_MODULE = __import__("gdbm")
-except ImportError:
-    GDBM_MODULE = __import__("dbm.gnu")
-
-if sys.version_info >= (3,0):
-    ENCODING = {'encoding': 'latin-1'}  # For open() of ASCII files in Python 3
-else:
-    ENCODING = {}
 
 # Holds log file directories temporarily, used by move_old_info()
 LOGDIRS = []
@@ -183,21 +172,14 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
         (shelf_path, lskip) = pdsdir.shelf_path_and_lskip(id='info')
         logger.info('Shelf file', shelf_path)
 
-        # Write the shelf and the pickle file
-        # shelf = shelve.open(shelf_path, flag='n')
-        shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'n'), protocol=2)
-
+        # Write the pickle file
         pickle_dict = {}
         for (key, values) in infodict.items():
             short_key = key[lskip:]
-            shelf[short_key] = values
             pickle_dict[short_key] = values
 
-        shelf.close()
-
-        pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
-        with open(pickle_path, 'wb') as f:
-            pickle.dump(pickle_dict, f, protocol=2)
+        with open(shelf_path, 'wb') as f:
+            pickle.dump(pickle_dict, f)
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
@@ -223,7 +205,7 @@ def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
         abspaths = list(infodict.keys())
         abspaths.sort()
 
-        with open(python_path, 'w', **ENCODING) as f:
+        with open(python_path, 'w', encoding='latin-1') as f:
             f.write(name + ' = {\n')
             for abspath in abspaths:
                 path = abspath[lskip:]
@@ -264,16 +246,8 @@ def load_infodict(pdsdir, logger=None):
             raise IOError('File not found: ' + shelf_path)
 
         # Read the shelf file and convert to a dictionary
-        # On failure, read pickle file
-        try:
-            # shelf = shelve.open(shelf_path, flag='r')
-            shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'r'))
-            shelf_is_open = True
-        except Exception:
-            pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
-            shelf_is_open = False
-            with open(pickle_path, 'rb') as f:
-                shelf = pickle.load(f)
+        with open(shelf_path, 'rb') as f:
+            shelf = pickle.load(f)
 
         infodict = {}
         for key in shelf.keys():
@@ -281,9 +255,6 @@ def load_infodict(pdsdir, logger=None):
                 infodict[dirpath_[:-1]] = shelf[key]
             else:
                 infodict[dirpath_[:lskip] + key] = shelf[key]
-
-        if shelf_is_open:
-            shelf.close()
 
         return infodict
 
@@ -640,7 +611,9 @@ if __name__ == '__main__':
 
             # Others are checksumed by volume
             else:
-                info += [(pdsf.child(c), None) for c in pdsf.childnames]
+                children = [pdsf.child(c) for c in pdsf.childnames]
+                info += [(c, None) for c in children if c.isdir]
+                        # "if c.isdir" is False for volset level readme files
 
         elif pdsf.is_volume_dir():
             # Shelve one volume

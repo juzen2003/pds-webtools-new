@@ -10,27 +10,12 @@
 
 import sys
 import os
-import shelve
 import pickle
-import shutil
-import glob
-import datetime
 import argparse
-from PIL import Image
 
 import pdslogger
 import pdsfile
 import pdstable
-
-try:
-    GDBM_MODULE = __import__("gdbm")
-except ImportError:
-    GDBM_MODULE = __import__("dbm.gnu")
-
-if sys.version_info >= (3,0):
-    ENCODING = {'encoding': 'latin-1'}  # For open() of ASCII files in Python 3
-else:
-    ENCODING = {}
 
 LOGNAME = 'pds.validation.indexshelf'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
@@ -74,25 +59,15 @@ def shelve_indexdict(pdsf, indexdict, logger=None):
     logger.replace_root(pdsf.root_)
     logger.info('Writing index shelf file', pdsf.indexshelf_abspath)
 
-    # Write the shelf
-    shelf_path = pdsf.indexshelf_abspath
-    logger.info('Writing index shelf file', shelf_path)
-
-    pdsfile.PdsFile.close_all_shelves()     # prevents multiple access to the
-                                            # same shelf file
-
-    shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'n'), protocol=2)
-    for (key, values) in indexdict.items():
-        shelf[key] = values
-
-    shelf.close()
+    pdsfile.PdsFile.close_all_shelves()     # prevents using a cached shelf file
 
     # Write the pickle file
-    pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
-    logger.info('Writing pickle file', pickle_path)
+    shelf_path = pdsf.indexshelf_abspath
 
-    with open(pickle_path, 'wb') as f:
-        pickle.dump(indexdict, f, protocol=2)
+    logger.info('Writing shelf file', shelf_path)
+
+    with open(shelf_path, 'wb') as f:
+        pickle.dump(indexdict, f)
 
     # Write the Python file
     python_path = shelf_path.rpartition('.')[0] + '.py'
@@ -103,10 +78,10 @@ def shelve_indexdict(pdsf, indexdict, logger=None):
     for key in indexdict:
         len_path = max(len_path, len(key))
 
-    name = os.path.basename(shelf_path).replace('.shelf', '')
-    with open(python_path, 'w', **ENCODING) as f:
+    name = os.path.basename(shelf_path).rpartition('.')[0]
+    with open(python_path, 'w', encoding='latin-1') as f:
         f.write(name + ' = {\n')
-        for key in pdsf.childnames:
+        for key in indexdict:
             f.write('    "%s: ' % (key + '"' + (len_path-len(key)) * ' '))
 
             rows = indexdict[key]
@@ -120,7 +95,7 @@ def shelve_indexdict(pdsf, indexdict, logger=None):
 
         f.write('}\n\n')
 
-    logger.info('Three files written')
+    logger.info('Two files written')
 
 ################################################################################
 
@@ -135,25 +110,12 @@ def load_indexdict(pdsf, logger=None):
     shelf_path = pdsf.indexshelf_abspath
     logger.info('Shelf file', shelf_path)
 
-    # Read the shelf file and convert to a dictionary
-    # On failure, read pickle file
     try:
-        shelf = shelve.Shelf(GDBM_MODULE.open(shelf_path, 'r'))
-        shelf_is_open = True
-
-    except Exception:
-        pickle_path = shelf_path.rpartition('.')[0] + '.pickle'
-        logger.warn('Shelf read failed; reading pickle file', picklepath)
-        shelf_is_open = False
-        with open(pickle_path, 'rb') as f:
-            shelf = pickle.load(f)
-
-    indexdict = {}
-    for key in shelf.keys():
-        indexdict[key] = shelf[key]
-
-    if shelf_is_open:
-        shelf.close()
+        with open(shelf_path, 'rb') as f:
+            indexdict = pickle.load(f)
+    except pickle.PickleError as e:
+        logger.error(str(e))
+        return {}
 
     return indexdict
 
