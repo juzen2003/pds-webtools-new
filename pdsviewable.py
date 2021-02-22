@@ -307,6 +307,7 @@ ICON_FILENAME_VS_TYPE = {       # (priority, icon URL)
     'CUBE'     : (70, 'document_cube.png'),
     'VOLUME'   : (80, 'document_volume%s.png'),
     'TOPFILE'  : (85, 'document_viewmaster.png'),
+    'SERIES'   : (90, 'document_series.png'),
 
     'INFO'     : (21, 'document_info.png'),
     'INDEX'    : (31, 'document_index.png'),
@@ -323,6 +324,7 @@ ICON_FILENAME_VS_TYPE = {       # (priority, icon URL)
     'IMAGEDIR' : (85, 'folder_images%s.png'),
     'TARDIR'   : (95, 'folder_archives%s.png'),
     'CUBEDIR'  : (96, 'folder_cubes%s.png'),
+    'SERIESDIR': (97, 'folder_series%s.png'),
 
     'DATADIR'  : (22, 'folder_binary%s.png'),
     'BROWDIR'   :(52, 'folder_previews%s.png'),
