@@ -621,7 +621,7 @@ class PdsLogger(object):
                 self.handlers.remove(handler)
                 self.logger.removeHandler(handler)
 
-            try:
+            try:        # in case the finder_colors module was not imported
                 logfile = handler.baseFilename
                 if fatal:
                     finder_colors.set_color(logfile, 'violet')
