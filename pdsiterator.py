@@ -5,8 +5,8 @@
 
 import os
 import fnmatch
-import glob
 import pdsfile
+import pdslogger
 
 # Python 2 and 3 compatible, byte strings and unicode
 def _isstr(x): return isinstance(x, ("".__class__, u"".__class__))
@@ -34,7 +34,7 @@ DIRECTORY_CACHE = {}
 
 class PdsDirIterator(object):
 
-    def __init__(self, pdsf, sign=1):
+    def __init__(self, pdsf, sign=1, logger=None):
 
         global DIRECTORY_CACHE
 
@@ -54,7 +54,8 @@ class PdsDirIterator(object):
             else:
                 paths = []
                 for fnmatch_pattern in fnmatch_patterns:
-                    abspaths = glob.glob(pdsf.root_ + fnmatch_pattern)
+                    abspaths = pdsfile.PdsFile.glob_glob(pdsf.root_ +
+                                                         fnmatch_pattern)
                     abspaths = [pdsfile.repair_case(p) for p in abspaths]
                     abspaths = [a for a in abspaths if os.path.isdir(a)]
                     paths += pdsfile.PdsFile.logicals_for_abspaths(abspaths)
@@ -88,6 +89,7 @@ class PdsDirIterator(object):
         self.neighbors = logical_paths
         self.neighbors_lc = [p.lower() for p in logical_paths]
         self.current_logical_path = pdsf.logical_path
+        self.logger = logger
 
     def copy(self, sign=None):
         """Return a clone of this iterator, possibly reversed."""
@@ -98,7 +100,7 @@ class PdsDirIterator(object):
             sign1 = -1 if sign < 0 else +1
 
         pdsf = pdsfile.PdsFile.from_logical_path(self.current_logical_path)
-        this = PdsDirIterator(pdsf, sign=sign1)
+        this = PdsDirIterator(pdsf, sign=sign1, logger=self.logger)
 
         return this
 
@@ -110,6 +112,9 @@ class PdsDirIterator(object):
         return self
 
     def next(self):
+        return self.__next__()
+
+    def __next__(self):
         """Iterator returns (logical_path, display path, level)"""
 
         prev_logical_path = self.current_logical_path
@@ -149,7 +154,8 @@ class PdsDirIterator(object):
 
 class PdsFileIterator(object):
 
-    def __init__(self, pdsf, sign=1, pattern=None, exclude=None, filter=None):
+    def __init__(self, pdsf, sign=1, pattern=None, exclude=None, filter=None,
+                       logger=None):
 
         parent = pdsf.parent()
         self.dir_iterator = PdsDirIterator(parent, sign)
@@ -170,6 +176,7 @@ class PdsFileIterator(object):
 
         self.sibnames = parent.logicals_for_basenames(basenames)
         self.sibnames_lc = [n.lower() for n in self.sibnames]
+        self.logger = logger
 
         # Case-insensitive search
         logical_path_lc = pdsf.logical_path.lower()
@@ -186,7 +193,7 @@ class PdsFileIterator(object):
         pdsf = pdsfile.PdsFile.from_logical_path(self.current_logical_path)
         this = PdsFileIterator(pdsf, sign=sign1,
                                pattern=self.pattern, exclude=self.exclude,
-                               filter=self.filter)
+                               filter=self.filter, logger=self.logger)
 
         return this
 
@@ -210,6 +217,9 @@ class PdsFileIterator(object):
         return self
 
     def next(self):
+        return self.__next__()
+
+    def __next__(self):
         """Iterator returns (logical_path, display path, level of jump)
 
         Level of jump is 0 for a sibling, 1 for a cousin.
@@ -263,7 +273,7 @@ class PdsFileIterator(object):
 
 class PdsRowIterator(object):
 
-    def __init__(self, pdsf, sign=1):
+    def __init__(self, pdsf, sign=1, logger=None):
 
         self.parent_pdsf = pdsf.parent()
         self.parent_logical_path_ = self.parent_pdsf.logical_path + '/'
@@ -283,6 +293,7 @@ class PdsRowIterator(object):
         self.sibnames = basenames
         self.sibnames_lc = basenames_lc
         self.sibling_index = basenames_lc.index(this_basename_lc)
+        self.logger = logger
 
     def copy(self, sign=None):
         """Return a clone of this iterator."""
@@ -293,7 +304,8 @@ class PdsRowIterator(object):
             sign1 = -1 if sign < 0 else +1
 
         childname = self.sibnames[self.sibling_index]
-        return PdsRowIterator(self.parent_pdsf.child(childname), sign=sign1)
+        return PdsRowIterator(self.parent_pdsf.child(childname), sign=sign1,
+                              logger=self.logger)
 
     ############################################################################
     # Iterator
@@ -303,6 +315,9 @@ class PdsRowIterator(object):
         return self
 
     def next(self):
+        return self.__next__()
+
+    def __next__(self):
         """Iterator returns (logical_path, display path, level of jump)
 
         Level of jump is 0 for a sibling, 1 for a cousin.
