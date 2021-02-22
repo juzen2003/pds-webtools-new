@@ -215,7 +215,7 @@ class DictionaryCache(PdsCache):
     def set_multi(self, mydict, lifetime=0, pause=False):
         """Set multiple values at one time based on a dictionary."""
 
-        for (key, value) in mydict.iteritems():
+        for (key, value) in mydict.items():
             self.set(key, value, lifetime, pause=True)
 
         if not pause:
@@ -386,7 +386,7 @@ class MemcachedCache(PdsCache):
                 except AttributeError:
                     pass
                 else:
-                    for (k,v) in d.iteritems():
+                    for (k,v) in d.items():
                         if type(v) == long:
                             d[k] = MemcachedCache.undo_long(v)
 
@@ -552,7 +552,7 @@ class MemcachedCache(PdsCache):
             try:
                 self.mc.set_multi(mydict, time=lifetime)
             except pylibmc.TooBig:  # comes up with big HTML pages
-                for (k,v) in mydict.iteritems():
+                for (k,v) in mydict.items():
                     try:
                         self.mc.set(k, v, time=lifetime)
                     except pylibmc.TooBig:
@@ -575,11 +575,12 @@ class MemcachedCache(PdsCache):
         if self.logger:
             count = len(self.local_keys_by_lifetime) - len(failures)
             if count == 1:
-                noun = 'item'
+                desc = '1 item, ' + list(mydict.keys())[0]
             else:
-                noun = 'items'
+                desc = (str(count) + ' items, including '  +
+                        list(mydict.keys())[0])
             self.logger.debug(('Process %d has flushed ' % self.pid +
-                               '%d %s to ' % (count, noun) +
+                               desc + ', to '
                                'MemcachedCache [%s]; ' % self.port +
                                'current size is %d' % self.len_mc()))
             if failures:
@@ -693,7 +694,7 @@ class MemcachedCache(PdsCache):
                                  'get_multi() on ' +
                                  'MemcacheCache [%s]' % self.port)
 
-            for (key, tuple) in mydict.iteritems():
+            for (key, tuple) in mydict.items():
                 (value, lifetime) = tuple
                 value = MemcachedCache.undo_long(value)
                 mydict[key] = value
@@ -775,7 +776,7 @@ class MemcachedCache(PdsCache):
                     self.local_lifetime_by_key[key] = lifetime
 
         # Save or update values in local cache
-        for (key, value) in mydict.iteritems():
+        for (key, value) in mydict.items():
             self.set_local(key, value, lifetime)   # this resets the clock
 
         if not pause:
