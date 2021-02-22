@@ -42,9 +42,6 @@ class Translator(object):
 ################################################################################
 ################################################################################
 
-# Python 2 and 3 compatible, byte strings and unicode
-def _isstr(x): return isinstance(x, ("".__class__, u"".__class__))
-
 class TranslatorBySequence(Translator):
     """Translator defined by a sequence of other translators."""
 
@@ -62,7 +59,7 @@ class TranslatorBySequence(Translator):
         result in priority order."""
 
         # Convert an individual string to a list
-        if _isstr(strings):
+        if isinstance(strings, str):
             strings = [strings]
 
         # Initialize the set of results
@@ -94,7 +91,7 @@ class TranslatorBySequence(Translator):
         result. Return None if no translation is found."""
 
         # Convert an individual string to a list
-        if _isstr(strings):
+        if isinstance(strings, str):
             strings = [strings]
 
         # Two options for priority...
@@ -197,7 +194,7 @@ class TranslatorByDict(Translator):
         For this subclass, strings_first is ignored."""
 
         # Convert an individual string to a list
-        if _isstr(strings):
+        if isinstance(strings, str):
             strings = [strings]
 
         # Convert the strings to dictionary keys
@@ -225,7 +222,7 @@ class TranslatorByDict(Translator):
         result. Return None if no translation is found."""
 
         # Convert an individual string to a list
-        if _isstr(strings):
+        if isinstance(strings, str):
             strings = [strings]
 
         # Convert the strings to dictionary keys, preserving order
@@ -251,12 +248,12 @@ class TranslatorByDict(Translator):
 
         expanded = []
         for result in results:
-            if _isstr(result):
+            if isinstance(result, str):
                 result = result.replace(r'\1', key)
             elif type(result) == tuple:
                 items = []
                 for item in result:
-                    if _isstr(item):
+                    if isinstance(item, str):
                         item = item.replace(r'\1', key)
                     items.append(item)
                 result = tuple(items)
@@ -337,7 +334,7 @@ class TranslatorByRegex(Translator):
         value in priority order."""
 
         # Convert an individual string to a list
-        if _isstr(strings):
+        if isinstance(strings, str):
             strings = [strings]
 
         # Initialize the list of results
@@ -369,7 +366,7 @@ class TranslatorByRegex(Translator):
         result. Return None if no translation is found."""
 
         # Convert an individual string to a list
-        if _isstr(strings):
+        if isinstance(strings, str):
             strings = [strings]
 
         # Two options for priority...
@@ -397,24 +394,54 @@ class TranslatorByRegex(Translator):
         """Handle substitutions in the cases where the replacement is a list, a
         string, or a tuple containing strings."""
 
+        def _fix_case(string):
+            # Change text following "#UPPER#" to upper case
+            # Change text following "#LOWER#" to lower case
+            # Stop changing case of text following "#MIXED#"
+
+            parts = string.split('#')
+
+            newparts = []
+            change = 'MIXED'
+            literal_hash = False
+            for part in parts:
+                if part in ('LOWER', 'UPPER', 'MIXED'):
+                    change = part
+                    literal_hash = False
+                else:
+                    if change == 'UPPER':
+                        part = part.upper()
+                    elif change == 'LOWER':
+                        part = part.lower()
+
+                    if literal_hash:
+                        newparts.append('#')
+
+                    newparts.append(part)
+                    literal_hash = True
+
+            return ''.join(newparts)
+
         matchobj = regex.match(string)
         if matchobj is None: return []
 
-        if type(replacements) != list:
+        if not isinstance(replacements, list):
             replacements = [replacements]
 
         results = []
         for replacement in replacements:
 
             # If replacement is a string, apply substitution
-            if _isstr(replacement):
-                results.append(matchobj.expand(replacement))
+            if isinstance(replacement, str):
+                result = matchobj.expand(replacement)
+                result = _fix_case(result)
+                results.append(result)
 
             # Deal with a tuple
-            elif type(replacement) == tuple:
+            elif isinstance(replacement, tuple):
                 items = []
                 for item in replacement:
-                    if _isstr(item):
+                    if isinstance(item, str):
                         items.append(matchobj.expand(item))
                     else:
                         items.append(item)
