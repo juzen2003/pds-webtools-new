@@ -25,66 +25,18 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'volumes/VG_0xxx/VG_000[1-3]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0,
-                                                                (r'previews/VGISS_7xxx/VGISS_7???/DATA/\1XX/\1\2_thumb.jpg',
-                                                                 r'previews/VGISS_7xxx/VGISS_7???/DATA/\1XX/\1\2_small.jpg',
-                                                                 r'previews/VGISS_7xxx/VGISS_7???/DATA/\1XX/\1\2_med.jpg',
-                                                                 r'previews/VGISS_7xxx/VGISS_7???/DATA/\1XX/\1\2_full.jpg')),
-    (r'volumes/VG_0xxx/VG_000[45]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)',
-                                                               (r'previews/VGISS_6xxx/VGISS_6???/DATA/\1XX/\1\2_thumb.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_6???/DATA/\1XX/\1\2_small.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_6???/DATA/\1XX/\1\2_med.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_6???/DATA/\1XX/\1\2_full.jpg')),
-    (r'volumes/VG_0xxx/VG_000[6-8]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0,
-                                                               (r'previews/VGISS_5xxx/VGISS_5???/DATA/\1XX/\1\2_thumb.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_5???/DATA/\1XX/\1\2_small.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_5???/DATA/\1XX/\1\2_med.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_5???/DATA/\1XX/\1\2_full.jpg')),
-    (r'volumes/VG_0xxx/VG_0009/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)',     0,
-                                                               (r'previews/VGISS_8xxx/VGISS_8???/DATA/\1XX/\1\2_thumb.jpg',
-                                                                r'previews/VGISS_8xxx/VGISS_8???/DATA/\1XX/\1\2_small.jpg',
-                                                                r'previews/VGISS_8xxx/VGISS_8???/DATA/\1XX/\1\2_med.jpg',
-                                                                r'previews/VGISS_8xxx/VGISS_8???/DATA/\1XX/\1\2_full.jpg')),
-    (r'volumes/VG_0xxx/VG_001[0-2]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0,
-                                                               (r'previews/VGISS_8xxx/VGISS_8???/DATA/\1XX/\1\2_thumb.jpg',
-                                                                r'previews/VGISS_8xxx/VGISS_8???/DATA/\1XX/\1\2_small.jpg',
-                                                                r'previews/VGISS_8xxx/VGISS_8???/DATA/\1XX/\1\2_med.jpg',
-                                                                r'previews/VGISS_8xxx/VGISS_8???/DATA/\1XX/\1\2_full.jpg')),
-    (r'volumes/VG_0xxx/VG_001[3-9]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0,
-                                                               (r'previews/VGISS_5xxx/VGISS_51??/DATA/\1XX/\1\2_thumb.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_51??/DATA/\1XX/\1\2_small.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_51??/DATA/\1XX/\1\2_med.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_51??/DATA/\1XX/\1\2_full.jpg')),
-    (r'volumes/VG_0xxx/VG_0020/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)',     0,
-                                                               (r'previews/VGISS_5xxx/VGISS_5???/DATA/\1XX/\1\2_thumb.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_5???/DATA/\1XX/\1\2_small.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_5???/DATA/\1XX/\1\2_med.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_5???/DATA/\1XX/\1\2_full.jpg')),
-    (r'volumes/VG_0xxx/VG_002[1-5]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0,
-                                                               (r'previews/VGISS_5xxx/VGISS_52??/DATA/\1XX/\1\2_thumb.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_52??/DATA/\1XX/\1\2_small.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_52??/DATA/\1XX/\1\2_med.jpg',
-                                                                r'previews/VGISS_5xxx/VGISS_52??/DATA/\1XX/\1\2_full.jpg')),
-    (r'volumes/VG_0xxx/VG_002[6-9]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0,
-                                                               (r'previews/VGISS_6xxx/VGISS_61??/DATA/\1XX/\1\2_thumb.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_61??/DATA/\1XX/\1\2_small.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_61??/DATA/\1XX/\1\2_med.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_61??/DATA/\1XX/\1\2_full.jpg')),
-    (r'volumes/VG_0xxx/VG_003[0-2]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0,
-                                                               (r'previews/VGISS_6xxx/VGISS_61??/DATA/\1XX/\1\2_thumb.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_61??/DATA/\1XX/\1\2_small.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_61??/DATA/\1XX/\1\2_med.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_61??/DATA/\1XX/\1\2_full.jpg')),
-    (r'volumes/VG_0xxx/VG_0033/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)',     0,
-                                                               (r'previews/VGISS_6xxx/VGISS_6???/DATA/\1XX/\1\2_thumb.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_6???/DATA/\1XX/\1\2_small.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_6???/DATA/\1XX/\1\2_med.jpg',
-                                                                r'previews/VGISS_6xxx/VGISS_6???/DATA/\1XX/\1\2_full.jpg')),
-    (r'volumes/VG_0xxx/VG_003[4-8]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0,
-                                                                (r'previews/VGISS_6xxx/VGISS_62??/DATA/\1XX/\1\2_thumb.jpg',
-                                                                 r'previews/VGISS_6xxx/VGISS_62??/DATA/\1XX/\1\2_small.jpg',
-                                                                 r'previews/VGISS_6xxx/VGISS_62??/DATA/\1XX/\1\2_med.jpg',
-                                                                 r'previews/VGISS_6xxx/VGISS_62??/DATA/\1XX/\1\2_full.jpg')),
+    (r'volumes/VG_0xxx/VG_000[1-3]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0, r'previews/VGISS_7xxx/VGISS_7???/DATA/\1XX/\1\2_*.jpg'),
+    (r'volumes/VG_0xxx/VG_000[45]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)',  0, r'previews/VGISS_6xxx/VGISS_6???/DATA/\1XX/\1\2_*.jpg'),
+    (r'volumes/VG_0xxx/VG_000[6-8]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0, r'previews/VGISS_5xxx/VGISS_5???/DATA/\1XX/\1\2_*.jpg'),
+    (r'volumes/VG_0xxx/VG_0009/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)',     0, r'previews/VGISS_8xxx/VGISS_8???/DATA/\1XX/\1\2_*.jpg'),
+    (r'volumes/VG_0xxx/VG_001[0-2]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0, r'previews/VGISS_8xxx/VGISS_8???/DATA/\1XX/\1\2_*.jpg'),
+    (r'volumes/VG_0xxx/VG_001[3-9]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0, r'previews/VGISS_5xxx/VGISS_51??/DATA/\1XX/\1\2_*.jpg'),
+    (r'volumes/VG_0xxx/VG_0020/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)',     0, r'previews/VGISS_5xxx/VGISS_5???/DATA/\1XX/\1\2_*.jpg'),
+    (r'volumes/VG_0xxx/VG_002[1-5]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0, r'previews/VGISS_5xxx/VGISS_52??/DATA/\1XX/\1\2_*.jpg'),
+    (r'volumes/VG_0xxx/VG_002[6-9]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0, r'previews/VGISS_6xxx/VGISS_61??/DATA/\1XX/\1\2_*.jpg'),
+    (r'volumes/VG_0xxx/VG_003[0-2]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0, r'previews/VGISS_6xxx/VGISS_61??/DATA/\1XX/\1\2_*.jpg'),
+    (r'volumes/VG_0xxx/VG_0033/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)',     0, r'previews/VGISS_6xxx/VGISS_6???/DATA/\1XX/\1\2_*.jpg'),
+    (r'volumes/VG_0xxx/VG_003[4-8]/.*/(C[0-9]{5})([0-9]{2})\.(IMQ|IBG)', 0, r'previews/VGISS_6xxx/VGISS_62??/DATA/\1XX/\1\2_*.jpg'),
 ])
 
 ####################################################################################################################################
@@ -151,36 +103,45 @@ neighbors = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
-# FILESPEC_TO_OPUS_ID
-####################################################################################################################################
-
-filespec_to_opus_id = translator.TranslatorByRegex([
-    (r'VG_000[1-3]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg-iss-2-u-\1'),
-    (r'VG_000[45]/.*/(C3[0-9]{6})\.(IMQ|IBG)',       0, r'vg-iss-1-s-\1'),
-    (r'VG_000[45]/.*/(C4[0-9]{6})\.(IMQ|IBG)',       0, r'vg-iss-2-s-\1'),
-    (r'VG_000[6-8]/.*/(C1[0-7][0-9]{5})\.(IMQ|IBG)', 0, r'vg-iss-1-j-\1'),
-    (r'VG_000[6-8]/.*/(C1[8-9][0-9]{5})\.(IMQ|IBG)', 0, r'vg-iss-2-j-\1'),
-    (r'VG_000[6-8]/.*/(C2[0-9]{6})\.(IMQ|IBG)',      0, r'vg-iss-2-j-\1'),
-    (r'VG_0009/.*/(C[0-9]{7})\.(IMQ|IBG)',           0, r'vg-iss-2-n-\1'),
-    (r'VG_001[0-2]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg-iss-2-n-\1'),
-    (r'VG_001[3-9]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg-iss-1-j-\1'),
-    (r'VG_0020/.*/(C1[0-7][0-9]{5})\.(IMQ|IBG)',     0, r'vg-iss-1-j-\1'),
-    (r'VG_0020/.*/(C1[8-9][0-9]{5})\.(IMQ|IBG)',     0, r'vg-iss-2-j-\1'),
-    (r'VG_002[1-5]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg-iss-2-j-\1'),
-    (r'VG_002[6-9]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg-iss-1-s-\1'),
-    (r'VG_003[0-2]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg-iss-1-s-\1'),
-    (r'VG_0033/.*/(C3[0-9]{6})\.(IMQ|IBG)',          0, r'vg-iss-1-s-\1'),
-    (r'VG_0033/.*/(C4[0-9]{6})\.(IMQ|IBG)',          0, r'vg-iss-2-s-\1'),
-    (r'VG_003[4-8]/.*/(C[0-9]{7})\.(IMQ|IBG)',       0, r'vg-iss-2-s-\1'),
-])
-
-####################################################################################################################################
 # OPUS_TYPE
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/C[0-9]{7}\.IMQ$', 0, ('Voyager ISS', 110, 'vgiss-imq', 'Compressed Raw (IMQ)', True)),
-    (r'volumes/.*/C[0-9]{7}\.IBQ$', 0, ('Voyager ISS', 120, 'vgiss-ibq', 'Small Preview (IBQ)',  True)),
+    (r'volumes/.*/C[0-9]{7}\.IMQ', 0, ('Voyager ISS', 110, 'vgiss-imq', 'Compressed Raw (IMQ)', True)),
+    (r'volumes/.*/C[0-9]{7}\.IBQ', 0, ('Voyager ISS', 120, 'vgiss-ibq', 'Small Preview (IBQ)',  True)),
+])
+
+####################################################################################################################################
+# OPUS_FORMAT
+####################################################################################################################################
+
+opus_format = translator.TranslatorByRegex([
+    (r'.*\.IBG', 0, ('Binary', 'Compressed Voyager browse')),
+    (r'.*\.IMQ', 0, ('Binary', 'Compressed Voyager EDR')),
+])
+
+####################################################################################################################################
+# OPUS_ID
+####################################################################################################################################
+
+opus_id = translator.TranslatorByRegex([
+    (r'.*/VG_000[1-3]/.*/C([0-9]{7})\..*',       0, r'vg-iss-2-u-c\1'),
+    (r'.*/VG_000[45]/.*/C(3[0-9]{6})\..*',       0, r'vg-iss-1-s-c\1'),
+    (r'.*/VG_000[45]/.*/C(4[0-9]{6})\..*',       0, r'vg-iss-2-s-c\1'),
+    (r'.*/VG_000[6-8]/.*/C(1[0-7][0-9]{5})\..*', 0, r'vg-iss-1-j-c\1'),
+    (r'.*/VG_000[6-8]/.*/C(1[8-9][0-9]{5})\..*', 0, r'vg-iss-2-j-c\1'),
+    (r'.*/VG_000[6-8]/.*/C(2[0-9]{6})\..*',      0, r'vg-iss-2-j-c\1'),
+    (r'.*/VG_0009/.*/C([0-9]{7})\..*',           0, r'vg-iss-2-n-c\1'),
+    (r'.*/VG_001[0-2]/.*/C([0-9]{7})\..*',       0, r'vg-iss-2-n-c\1'),
+    (r'.*/VG_001[3-9]/.*/C([0-9]{7})\..*',       0, r'vg-iss-1-j-c\1'),
+    (r'.*/VG_0020/.*/C(1[0-7][0-9]{5})\..*',     0, r'vg-iss-1-j-c\1'),
+    (r'.*/VG_0020/.*/C(1[8-9][0-9]{5})\..*',     0, r'vg-iss-2-j-c\1'),
+    (r'.*/VG_002[1-5]/.*/C([0-9]{7})\..*',       0, r'vg-iss-2-j-c\1'),
+    (r'.*/VG_002[6-9]/.*/C([0-9]{7})\..*',       0, r'vg-iss-1-s-c\1'),
+    (r'.*/VG_003[0-2]/.*/C([0-9]{7})\..*',       0, r'vg-iss-1-s-c\1'),
+    (r'.*/VG_0033/.*/C(3[0-9]{6})\..*',          0, r'vg-iss-1-s-c\1'),
+    (r'.*/VG_0033/.*/C(4[0-9]{6})\..*',          0, r'vg-iss-2-s-c\1'),
+    (r'.*/VG_003[4-8]/.*/C([0-9]{7})\..*',       0, r'vg-iss-2-s-c\1'),
 ])
 
 ####################################################################################################################################
@@ -196,13 +157,15 @@ class VG_0xxx(pdsfile.PdsFile):
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
 
-    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
+    OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
+    OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
+    OPUS_ID = opus_id
+
+    VIEWABLES = {'default': default_viewables}
 
     ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
     ASSOCIATIONS['volumes']  = associations_to_volumes
     ASSOCIATIONS['previews'] = associations_to_previews
-
-    VIEWABLES = {'default': default_viewables}
 
     FILENAME_KEYLEN = 8     # trim off suffixes
 

@@ -19,38 +19,40 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# VIEWABLES
+####################################################################################################################################
+
+default_viewables = translator.TranslatorByRegex([
+    (r'.*\.lbl',  re.I, ''),
+
+    (r'volumes/(.*/C[0-9]{10}[A-Z])\.(IMG|LBL)', 0, r'previews/\1_*.jpg'),
+
+    (r'volumes/(GO_0xxx_v1/.*/C[0-9]{6}/.*)\.(IMG|LBL)', 0, r'previews/\1_*.jpg'),
+])
+
+####################################################################################################################################
 # ASSOCIATIONS
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
-    (r'.*/(GO_0xxx/GO_..../.*/C[0-9]{10}[A-Z]).*',              0, [r'volumes/\1.IMG',
-                                                                    r'volumes/\1.LBL']),
-    (r'.*/(GO_0xxx_v1/GO_..../.*/C[0-9]{6}/[0-9]{4}[A-Z]).*',   0, [r'volumes/\1.IMG',
-                                                                    r'volumes/\1.LBL']),
-    (r'metadata/(GO_0xxx)/(GO_00..)/.*_index\..*',              0, [r'volumes/\1/\2/INDEX/IMGINDEX.TAB',
-                                                                    r'volumes/\1/\2/INDEX/IMGINDEX.LBL']),
-    (r'metadata/(GO_0xxx)/(GO_0999)/.*_index\..*',              0, [r'volumes/\1/GO_0023/INDEX/CUMINDEX.TAB',
-                                                                    r'volumes/\1/GO_0023/INDEX/CUMINDEX.LBL']),
+    (r'.*/(GO_0xxx/GO_..../.*/C[0-9]{10}[A-Z]).*',              0, r'volumes/\1.*'),
+    (r'.*/(GO_0xxx_v1/GO_..../.*/C[0-9]{6}/[0-9]{4}[A-Z]).*',   0, r'volumes/\1.*'),
+    (r'.*previews/(GO_0..._v1/.*)_[a-z]+\.jpg',                 0, r'volumes/\1.*'),
+    (r'.*metadata/GO_0xxx/GO_0999.*',                           0, r'volumes/GO_0xxx'),
+    (r'.*metadata/GO_0xxx_v1/GO_0999.*',                        0, r'volumes/GO_0xxx_v1'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
-    (r'.*/(GO_0xxx/GO_..../.*/C[0-9]{10}[A-Z]).*',              0, [r'previews/\1_full.jpg',
-                                                                    r'previews/\1_thumb.jpg',
-                                                                    r'previews/\1_small.jpg',
-                                                                    r'previews/\1_med.jpg']),
-    (r'.*/(GO_0xxx_v1/GO_..../.*/C[0-9]{6}/[0-9]{4}[A-Z]).*',   0, [r'previews/\1_full.jpg',
-                                                                    r'previews/\1_thumb.jpg',
-                                                                    r'previews/\1_small.jpg',
-                                                                    r'previews/\1_med.jpg']),
+    (r'.*/(GO_0xxx/GO_..../.*/C[0-9]{10}[A-Z]).*',              0, r'previews/\1_*.jpg'),
+    (r'.*/(GO_0xxx_v1/GO_..../.*/C[0-9]{6}/[0-9]{4}[A-Z]).*',   0, r'previews/\1_*.jpg'),
+    (r'.*volumes/(GO_0..._v1/.*)\.(IMG|LBL)',                   0, r'previews/\1_*.jpg'),
+    (r'.*metadata/GO_0xxx/GO_0999.*',                           0, r'previews/GO_0xxx'),
+    (r'.*metadata/GO_0xxx_v1/GO_0999.*',                        0, r'previews/GO_0xxx_v1'),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
     (r'.*/(GO_0xxx)/(GO_....)/.*/(C[0-9]{10})[A-Z].*',      0,  r'metadata/\1/\2/\2_index.tab/\3'),
     (r'.*/(GO_0xxx_v1)/(GO_....).*',                        0,  r'metadata/\1/\2'),
-    ('volumes/(GO_0xxx.*/GO_....)/INDEX/IMGINDEX\..*',      0, [r'metadata/\1/\2/\2_index.tab',
-                                                                r'metadata/\1/\2/\2_index.lbl']),
-    ('volumes/(GO_0xxx.*/GO_....)/INDEX/CUMINDEX\..*',      0, [r'metadata/\1/GO_0999/GO_0999_index.tab',
-                                                                r'metadata/\1/GO_0999/GO_0999_index.lbl']),
 ])
 
 ####################################################################################################################################
@@ -72,24 +74,6 @@ neighbors = translator.TranslatorByRegex([
     (r'(volumes|previews)/GO_0xxx(|_v[1-9])/\w+(|/REDO)/[CEGIJ][0-9]{1,2}$',          0,  r'\1/GO_0xxx\2/*\3/[A-Z][0-9]*'),
     (r'(volumes|previews)/GO_0xxx(|_v[1-9])/\w+(|/REDO)/[CEGIJ][0-9]{1,2}/(\w+)$',    0,  r'\1/GO_0xxx\2/*\3/[A-Z][0-9]*/\4'),
     (r'(volumes|previews)/GO_0xxx(|_v[1-9])/\w+(|/REDO)/[CEGIJ][0-9]{1,2}/(\w+)/.*',  0,  r'\1/GO_0xxx\2/*\3/\[A-Z][0-9]*/\4/*'),
-])
-
-####################################################################################################################################
-# VIEWABLES
-####################################################################################################################################
-
-default_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl',  re.I, ''),
-
-    (r'volumes/(.*/C[0-9]{10}[A-Z])\.(IMG|LBL)', 0, (r'previews/\1_thumb.jpg',
-                                                     r'previews/\1_small.jpg',
-                                                     r'previews/\1_med.jpg',
-                                                     r'previews/\1_full.jpg')),
-
-    (r'volumes/(GO_0xxx_v1/.*/C[0-9]{6}/.*)\.(IMG|LBL)', 0, (r'previews/\1_thumb.jpg',
-                                                             r'previews/\1_small.jpg',
-                                                             r'previews/\1_med.jpg',
-                                                             r'previews/\1_full.jpg')),
 ])
 
 ####################################################################################################################################
@@ -132,36 +116,54 @@ opus_format = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_products = translator.TranslatorByRegex([
-    (r'.*volumes/(GO_0xxx)/(GO_0...)/(.*/C[0-9]{6})([0-9]{4}[A-Z])\.(IMG|LBL)', 0, [r'volumes/\1/\2/\3\4.IMG',
-                                                                           r'volumes/\1/\2/\3\4.LBL',
-                                                                           r'volumes/\1_v1/\2/\3/\4.IMG',
-                                                                           r'volumes/\1_v1/\2/\3/\4.LBL',
-                                                                           r'previews/\1/\2/\3\4_thumb.jpg',
-                                                                           r'previews/\1/\2/\3\4_small.jpg',
-                                                                           r'previews/\1/\2/\3\4_med.jpg',
-                                                                           r'previews/\1/\2/\3\4_full.jpg',
-                                                                           r'previews/\1_v1/\2/\3/\4_thumb.jpg',
-                                                                           r'previews/\1_v1/\2/\3/\4_small.jpg',
-                                                                           r'previews/\1_v1/\2/\3/\4_med.jpg',
-                                                                           r'previews/\1_v1/\2/\3/\4_full.jpg',
-                                                                           r'metadata/\1/\2/\2_index.lbl',
-                                                                           r'metadata/\1/\2/\2_index.tab']),
+    (r'.*volumes/(GO_0xxx)/(GO_0...)/(.*/C[0-9]{6})([0-9]{4}[A-Z])\.(IMG|LBL)', 0,
+                                        [r'volumes/\1/\2/\3\4.IMG',
+                                         r'volumes/\1/\2/\3\4.LBL',
+                                         r'volumes/\1_v1/\2/\3/\4.IMG',
+                                         r'volumes/\1_v1/\2/\3/\4.LBL',
+                                         r'previews/\1/\2/\3\4_*.jpg',
+                                         r'previews/\1_v1/\2/\3/\4_*.jpg',
+                                         r'metadata/\1/\2/\2_*index.*']),
 ])
 
 ####################################################################################################################################
-# FILESPEC_TO_OPUS_ID
+# OPUS_ID
 ####################################################################################################################################
 
-filespec_to_opus_id = translator.TranslatorByRegex([
-    (r'GO_00../.*/(C[0-9]{10}).*', 0, r'go-ssi-\1'),
+opus_id = translator.TranslatorByRegex([
+    (r'.*/GO_0xxx/GO_00../.*/C([0-9]{10})[A-Z]\.(IMG|LBL)', 0, r'go-ssi-c\1'),
 ])
 
 ####################################################################################################################################
-# OPUS_ID_TO_FILESPEC
+# OPUS_ID_TO_PRIMARY_LOGICAL_PATH
 ####################################################################################################################################
 
-opus_id_to_filespec = translator.TranslatorByRegex([
-    (r'go-ssi-.*', 0, re.compile(r'.*\.IMG$')),
+opus_id_to_primary_logical_path = translator.TranslatorByRegex([
+    (r'go-ssi-c(03[4-5].*)', 0, [r'volumes/GO_0xxx/GO_0017/??/*/C\1R.IMG']),
+    (r'go-ssi-c(036.*)'    , 0, [r'volumes/GO_0xxx/GO_0017/??/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0018/??/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0018/REDO/??/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0019/REDO/??/*/C\1R.IMG']),
+    (r'go-ssi-c(037.*)'    , 0, [r'volumes/GO_0xxx/GO_0018/??/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0018/REDO/??/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0019/REDO/??/*/C\1R.IMG']),
+    (r'go-ssi-c(038.*)'    , 0, [r'volumes/GO_0xxx/GO_0018/??/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0018/REDO/??/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0019/REDO/??/*/C\1R.IMG']),
+    (r'go-ssi-c(039.*)'    , 0, [r'volumes/GO_0xxx/GO_0019/??/*/C\1R.IMG']),
+    (r'go-ssi-c(040.*)'    , 0, [r'volumes/GO_0xxx/GO_0019/??/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0019/???/*/C\1R.IMG']),
+    (r'go-ssi-c(041.*)'    , 0, [r'volumes/GO_0xxx/GO_0019/???/*/C\1R.IMG']),
+    (r'go-ssi-c(04[2-6].*)', 0, [r'volumes/GO_0xxx/GO_0020/???/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0023/REDO/E11/*/C\1R.IMG']),
+    (r'go-ssi-c(04[7-9].*)', 0, [r'volumes/GO_0xxx/GO_0021/???/*/C\1R.IMG']),
+    (r'go-ssi-c(05[0-1].*)', 0, [r'volumes/GO_0xxx/GO_0021/???/*/C\1R.IMG']),
+    (r'go-ssi-c(052.*)'    , 0, [r'volumes/GO_0xxx/GO_0022/???/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0022/???/*/*/C\1R.IMG']),
+    (r'go-ssi-c(05[3-9].*)', 0, [r'volumes/GO_0xxx/GO_0023/???/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0023/G28/REPAIRED/C\1S.IMG']),
+    (r'go-ssi-c(06.*)'     , 0, [r'volumes/GO_0xxx/GO_0023/???/*/C\1R.IMG',
+                                 r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/C\1S.IMG']),
 ])
 
 ####################################################################################################################################
@@ -181,7 +183,10 @@ class GO_0xxx(pdsfile.PdsFile):
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
     OPUS_PRODUCTS = opus_products
-    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
+    OPUS_ID = opus_id
+    OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
+
+    VIEWABLES = {'default': default_viewables}
 
     ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
     ASSOCIATIONS['volumes']  = associations_to_volumes
@@ -193,7 +198,8 @@ class GO_0xxx(pdsfile.PdsFile):
     VIEWABLES = {'default': default_viewables}
 
 # Global attribute shared by all subclasses
-pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
+pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'go-ssi-.*', 0, GO_0xxx)]) + \
+                                      pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

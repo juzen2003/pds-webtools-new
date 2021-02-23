@@ -25,6 +25,14 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# FILESPEC_TO_VOLSET
+####################################################################################################################################
+
+filespec_to_volset = translator.TranslatorByRegex([
+    (r'VGIRIS_\d{4}.*', 0, 'VGIRIS_xxxx_peer_review'),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -34,6 +42,8 @@ class VGIRIS_xxxx(pdsfile.PdsFile):
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
+
+pdsfile.PdsFile.FILESPEC_TO_VOLSET = filespec_to_volset + pdsfile.PdsFile.FILESPEC_TO_VOLSET
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

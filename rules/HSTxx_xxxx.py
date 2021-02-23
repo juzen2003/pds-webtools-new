@@ -33,41 +33,37 @@ split_rules = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# VIEWABLES
+####################################################################################################################################
+
+default_viewables = translator.TranslatorByRegex([
+    (r'volumes/(.*/DATA/VISIT_..)/([IJUON]\w{8})(|_\w+)\.(.*)', 0, r'previews/\1/\2_*.jpg'),
+])
+
+####################################################################################################################################
 # ASSOCIATIONS
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
     (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_../\w{9}).*',   0, r'volumes/\1/\3*'),
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_..)$',          0, r'volumes/\1/\3'),
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA)$',                   0, r'volumes/\1/\3'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_..)',           0, r'volumes/\1/\3'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA)',                    0, r'volumes/\1/\3'),
+    (r'.*/(HST.)9_9999.*',                                          0, r'volumes/\1x_xxxx'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_../\w{9}).*',   0, [r'previews/\1/\3_full.jpg',
-                                                                        r'previews/\1/\3_thumb.jpg',
-                                                                        r'previews/\1/\3_small.jpg',
-                                                                        r'previews/\1/\3_med.jpg']),
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_..)$',          0,  r'previews/\1/\3'),
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA)$',                   0,  r'previews/\1/\3'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_../\w{9}).*',   0, r'previews/\1/\3_*.jpg'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_..)',           0, r'previews/\1/\3'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA)',                    0, r'previews/\1/\3'),
+    (r'.*/(HST.)9_9999.*',                                          0, r'previews/\1x_xxxx'),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
     (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA/VISIT_../(\w{9}).*', 0, [r'metadata/\1/\3/\3_index.tab/\4',
                                                                         r'metadata/\1/\3/\3_hstfiles.tab/\4',
                                                                         r'metadata/\1/\3']),
-    (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA/VISIT_..$',          0,  r'metadata/\1/\3'),
-    (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA$',                   0,  r'metadata/\1/\3'),
-])
-
-####################################################################################################################################
-# VIEWABLES
-####################################################################################################################################
-
-default_viewables = translator.TranslatorByRegex([
-    (r'volumes/(.*/DATA/VISIT_..)/([IJUON]\w{8})(|_\w+)\.(.*)', 0, (r'previews/\1/\2_thumb.jpg',
-                                                                    r'previews/\1/\2_small.jpg',
-                                                                    r'previews/\1/\2_med.jpg',
-                                                                    r'previews/\1/\2_full.jpg')),
+    (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA/VISIT_..',           0,  r'metadata/\1/\3'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA',                    0,  r'metadata/\1/\3'),
 ])
 
 ####################################################################################################################################
@@ -92,18 +88,18 @@ neighbors = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*\.ASC$',                 0, ('HST',  10, 'hst_text',        'FITS Header Text',                           True)),
-    (r'volumes/.*\.LBL$',                 0, ('HST',  10, 'hst_label',       'HST Preview Products',                       True)),
-    (r'volumes/.*\.TIF$',                 0, ('HST',  20, 'hst_tiff',        'Raw Data Preview (lossless)',                True)),
-    (r'volumes/.*_(RAW.*|D0M_...)\.JPG$', 0, ('HST',  30, 'hst_raw',         'Raw Data Preview',                           True)),
-    (r'volumes/.*_(FLT.*|CAL)\.JPG$',     0, ('HST',  40, 'hst_calib',       'Calibrated Data Preview',                    True)),
-    (r'volumes/.*_SFL\.JPG$',             0, ('HST',  50, 'hst_summed',      'Calibrated Summed Preview',                  True)),
-    (r'volumes/.*_CRJ\.JPG$',             0, ('HST',  60, 'hst_cosmic_ray',  'Calibrated Cosmic Ray Cleaned Preview',      True)),
-    (r'volumes/.*_DRZ\.JPG$',             0, ('HST',  70, 'hst_drizzled',    'Calibrated Geometrically Corrected Preview', True)),
-    (r'volumes/.*_IMA\.JPG$',             0, ('HST',  80, 'hst_ima',         'Pre-mosaic Preview',                         True)),
-    (r'volumes/.*_MOS\.JPG$',             0, ('HST',  90, 'hst_mosaic',      'Mosaic Preview',                             True)),
-    (r'volumes/.*_(X1D|SX1)\.JPG$',       0, ('HST', 100, 'hst_1d_spectrum', '1-D Spectrum Preview',                       True)),
-    (r'volumes/.*_(X2D|SX2)\.JPG$',       0, ('HST', 110, 'hst_2d_spectrum', '2-D Spectrum Preview',                       True)),
+    (r'volumes/.*\.ASC',                 0, ('HST',  10, 'hst_text',        'FITS Header Text',                           True)),
+    (r'volumes/.*\.LBL',                 0, ('HST',  10, 'hst_label',       'HST Preview Products',                       True)),
+    (r'volumes/.*\.TIF',                 0, ('HST',  20, 'hst_tiff',        'Raw Data Preview (lossless)',                True)),
+    (r'volumes/.*_(RAW.*|D0M_...)\.JPG', 0, ('HST',  30, 'hst_raw',         'Raw Data Preview',                           True)),
+    (r'volumes/.*_(FLT.*|CAL)\.JPG',     0, ('HST',  40, 'hst_calib',       'Calibrated Data Preview',                    True)),
+    (r'volumes/.*_SFL\.JPG',             0, ('HST',  50, 'hst_summed',      'Calibrated Summed Preview',                  True)),
+    (r'volumes/.*_CRJ\.JPG',             0, ('HST',  60, 'hst_cosmic_ray',  'Calibrated Cosmic Ray Cleaned Preview',      True)),
+    (r'volumes/.*_DRZ\.JPG',             0, ('HST',  70, 'hst_drizzled',    'Calibrated Geometrically Corrected Preview', True)),
+    (r'volumes/.*_IMA\.JPG',             0, ('HST',  80, 'hst_ima',         'Pre-mosaic Preview',                         True)),
+    (r'volumes/.*_MOS\.JPG',             0, ('HST',  90, 'hst_mosaic',      'Mosaic Preview',                             True)),
+    (r'volumes/.*_(X1D|SX1)\.JPG',       0, ('HST', 100, 'hst_1d_spectrum', '1-D Spectrum Preview',                       True)),
+    (r'volumes/.*_(X2D|SX2)\.JPG',       0, ('HST', 110, 'hst_2d_spectrum', '2-D Spectrum Preview',                       True)),
 ])
 
 ####################################################################################################################################
@@ -111,47 +107,48 @@ opus_type = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_products = translator.TranslatorByRegex([
-    (r'.*volumes/(HST.x_xxxx)(|_v.+)/(HST.._....)/(DATA/VISIT_../.{9}).*', 0, [r'volumes/\1/\3/\4*',
-                                                                               r'volumes/\1_v*/\3/\4*',
-                                                                               r'previews/\1/\3/\4_thumb.jpg',
-                                                                               r'previews/\1/\3/\4_small.jpg',
-                                                                               r'previews/\1/\3/\4_med.jpg',
-                                                                               r'previews/\1/\3/\4_full.jpg',
-                                                                               r'metadata/\1/\3/\3_index.lbl',
-                                                                               r'metadata/\1/\3/\3_index.tab',
-                                                                               r'metadata/\1/\3/\3_hstfiles.lbl',
-                                                                               r'metadata/\1/\3/\3_hstfiles.tab'])
+    (r'.*volumes/(HST.x_xxxx)(|_v.+)/(HST.._....)/(DATA/VISIT_../.{9}).*', 0,
+                    [r'volumes/\1\2/\3/\4*',
+                     r'previews/\1/\3/\4_*.jpg',
+                     r'metadata/\1/\3/\3_index.lbl',
+                     r'metadata/\1/\3/\3_index.tab',
+                     r'metadata/\1/\3/\3_hstfiles.lbl',
+                     r'metadata/\1/\3/\3_hstfiles.tab',
+                     ])
 ])
 
 ####################################################################################################################################
-# FILESPEC_TO_OPUS_ID
+# OPUS_ID
 ####################################################################################################################################
 
-filespec_to_opus_id = translator.TranslatorByRegex([
+opus_id = translator.TranslatorByRegex([
     # Associated HST products share an OPUS ID based on the first nine characters of the file's basename.
-    (r'HSTI(.)_(....)(|_v.+)/DATA/VISIT_../(\w{9}).*',    0, r'hst-\1\2-wfc3-\4'),
-    (r'HSTJ(.)_(....)(|_v.+)/DATA/VISIT_../(\w{9}).*',    0, r'hst-\1\2-acs-\4'),
-    (r'HSTN(.)_(....)(|_v.+)/DATA/VISIT_../(\w{9}).*',    0, r'hst-\1\2-nicmos-\4'),
-    (r'HSTO(.)_(....)(|_v.+)/DATA/VISIT_../(\w{9}).*',    0, r'hst-\1\2-stis-\4'),
-    (r'HSTU(.)_(....)(|_v.+)/DATA/VISIT_../(\w{9}).*',    0, r'hst-\1\2-wfpc2-\4'),
+    (r'.*/HSTI(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-wfc3-#LOWER#\4'),
+    (r'.*/HSTJ(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-acs-#LOWER#\4'),
+    (r'.*/HSTN(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-nicmos-#LOWER#\4'),
+    (r'.*/HSTO(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-stis-#LOWER#\4'),
+    (r'.*/HSTU(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-wfpc2-#LOWER#\4'),
 ])
 
 ####################################################################################################################################
-# OPUS_ID_TO_FILESPEC
+# OPUS_ID_TO_PRIMARY_LOGICAL_PATH
 ####################################################################################################################################
 
-opus_id_to_filespec = translator.TranslatorByRegex([
-    # The filespec returned points to the combined-detached label.
-    (r'hst-.*', 0,  re.compile(r'.*\.LBL$')),
+opus_id_to_primary_logical_path = translator.TranslatorByRegex([
+    # The logical path returned points to the combined-detached label.
+    (r'hst-(.)(....)-wfc3-(....)(..)(.*)',   0, r'volumes/HSTIx_xxxx/HSTI\1_\2/DATA/VISIT_#UPPER#\4/\3\4\5.LBL'),
+    (r'hst-(.)(....)-acs-(....)(..)(.*)',    0, r'volumes/HSTJx_xxxx/HSTJ\1_\2/DATA/VISIT_#UPPER#\4/\3\4\5.LBL'),
+    (r'hst-(.)(....)-nicmos-(....)(..)(.*)', 0, r'volumes/HSTNx_xxxx/HSTN\1_\2/DATA/VISIT_#UPPER#\4/\3\4\5.LBL'),
+    (r'hst-(.)(....)-stis-(....)(..)(.*)',   0, r'volumes/HSTOx_xxxx/HSTO\1_\2/DATA/VISIT_#UPPER#\4/\3\4\5.LBL'),
+    (r'hst-(.)(....)-wfpc2-(....)(..)(.*)',  0, r'volumes/HSTUx_xxxx/HSTU\1_\2/DATA/VISIT_#UPPER#\4/\3\4\5.LBL'),
 ])
 
 ####################################################################################################################################
-# FILESPEC_TO_LOGICAL_PATH
+# FILESPEC_TO_VOLSET
 ####################################################################################################################################
 
-filespec_to_logical_path = translator.TranslatorByRegex([
-    (r'HST(.)(._..../.*_(thumb|small|med|full)\.(jpg|png))', 0, r'previews/HST\1x_xxxx/HST\1\2'),
-    (r'HST(.)(._..../.*)$',                                  0, r'volumes/HST\1x_xxxx/HST\1\2'),
+filespec_to_volset = translator.TranslatorByRegex([
+    (r'(HST[A-Z])[01]_\d{4}.*', 0, r'HST\1x_xxxx'),
 ])
 
 ####################################################################################################################################
@@ -170,7 +167,8 @@ class HSTxx_xxxx(pdsfile.PdsFile):
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_PRODUCTS = opus_products
-    FILESPEC_TO_OPUS_ID = filespec_to_opus_id
+    OPUS_ID = opus_id
+    OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
     VIEWABLES = {'default': default_viewables}
 
@@ -181,9 +179,11 @@ class HSTxx_xxxx(pdsfile.PdsFile):
 
     FILENAME_KEYLEN = 9     # trim off suffixes
 
-# Global attributes shared by all subclasses
-pdsfile.PdsFile.OPUS_ID_TO_FILESPEC = opus_id_to_filespec + pdsfile.PdsFile.OPUS_ID_TO_FILESPEC
-pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH = filespec_to_logical_path + pdsfile.PdsFile.FILESPEC_TO_LOGICAL_PATH
+# Global attribute shared by all subclasses
+pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'hst-.*', 0, HSTxx_xxxx)]) + \
+                                      pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS
+
+pdsfile.PdsFile.FILESPEC_TO_VOLSET = filespec_to_volset + pdsfile.PdsFile.FILESPEC_TO_VOLSET
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

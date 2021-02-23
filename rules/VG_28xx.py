@@ -32,6 +32,15 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 # ])
 
 ####################################################################################################################################
+# FILESPEC_TO_VOLSET
+####################################################################################################################################
+
+filespec_to_volset = translator.TranslatorByRegex([
+    (r'VG_2803.*',    0, r'VG_28xx_peer_review'),
+    (r'VG_28\d{2}.*', 0, r'VG_28xx'),
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
@@ -42,6 +51,8 @@ class VG_28xx(pdsfile.PdsFile):
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
 #     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
+
+pdsfile.PdsFile.FILESPEC_TO_VOLSET = filespec_to_volset + pdsfile.PdsFile.FILESPEC_TO_VOLSET
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses

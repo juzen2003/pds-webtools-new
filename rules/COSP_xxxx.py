@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# rules/NHSP_xxxx.py
+# rules/COSP_xxxx.py
 ####################################################################################################################################
 
 import pdsfile
@@ -11,16 +11,16 @@ import re
 ####################################################################################################################################
 
 filespec_to_volset = translator.TranslatorByRegex([
-    (r'NHSP_\d{4}.*', 0, r'NHSP_xxxx'),
+    (r'COSP_\d{4}.*', 0, r'COSP_xxxx'),
 ])
 
 ####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
-class NHSP_xxxx(pdsfile.PdsFile):
+class COSP_xxxx(pdsfile.PdsFile):
 
-    pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('NHSP_xxxx', re.I, 'NHSP_xxxx')]) + \
+    pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('COSP_xxxx', re.I, 'COSP_xxxx')]) + \
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
 
 pdsfile.PdsFile.FILESPEC_TO_VOLSET = filespec_to_volset + pdsfile.PdsFile.FILESPEC_TO_VOLSET
@@ -29,6 +29,6 @@ pdsfile.PdsFile.FILESPEC_TO_VOLSET = filespec_to_volset + pdsfile.PdsFile.FILESP
 # Update the global dictionary of subclasses
 ####################################################################################################################################
 
-pdsfile.PdsFile.SUBCLASSES['NHSP_xxxx'] = NHSP_xxxx
+pdsfile.PdsFile.SUBCLASSES['COSP_xxxx'] = COSP_xxxx
 
 ####################################################################################################################################
