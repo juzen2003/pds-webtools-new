@@ -421,6 +421,7 @@ class PdsLogger(object):
         else:
             handlers = [handler]
 
+        # Get list of full paths to the log files
         logfiles = [h.baseFilename for h in self.handlers if
                                             isinstance(h, logging.FileHandler)]
         for handler in handlers:
