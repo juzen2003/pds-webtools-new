@@ -346,7 +346,9 @@ parser = argparse.ArgumentParser(
                 'volume or volumes.')
 
 parser.add_argument('volume', nargs='*', type=str,
-                    help='Paths to volumes or volume sets for validation.')
+                    help='Paths to volumes or volume sets for validation. '    +
+                    	 'In batch mode, provide the path to the holdings '    +
+                    	 'directory.')
 
 parser.add_argument('--log', '-l', type=str, default='',
                     help='Optional root directory for a duplicate of the log ' +
@@ -356,15 +358,6 @@ parser.add_argument('--log', '-l', type=str, default='',
                          '"logs" directory parallel to "holdings". Logs are '  +
                          'created inside the "re-validate" subdirectory of '   +
                          'each log root directory.')
-
-parser.add_argument('--subdirectory', '-s', type=str, default='',
-                    help='Optional subdirectory below "re-validate" in which ' +
-                         'write the log file. This can be used to organize '   +
-                         'the results of different validation options.')
-
-parser.add_argument('--pickles', '-P', action='store_true',
-                    help='Use pickle files instead of shelf files during '     +
-                         'validation.')
 
 parser.add_argument('--batch', '-b', action='store_true',
                     help='Operate in batch mode. In this mode, the program '   +
@@ -465,9 +458,6 @@ if args.calibrated:
 if voltypes == [] or args.all:
     voltypes = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews']
 
-if args.pickles:
-    pdsfile.use_pickles()
-
 # Determine which tests to perform
 checksums    = args.checksums
 archives     = args.archives
@@ -512,6 +502,8 @@ if args.log == '':
 # Initialize the logger
 new_limits = {'info':10, 'normal':10, 'override':False}
 logger = pdslogger.PdsLogger(LOGNAME, limits=new_limits)
+
+# Place to search for existing logs in batch mode
 pdsfile.PdsFile.set_log_root(args.log)
 
 if not args.quiet:
@@ -519,18 +511,8 @@ if not args.quiet:
 
 if args.log:
     path = os.path.join(args.log, 're-validate')
-    warning_handler = pdslogger.warning_handler(path)
-    logger.add_handler(warning_handler)
-
-    error_handler = pdslogger.error_handler(path)
-    logger.add_handler(error_handler)
-
-if args.subdirectory:
-    subdirectory_ = args.subdirectory.rstrip('/') + '/'
-else:
-    subdirectory_ = ''
-
-args.subdirectory = subdirectory_
+    logger.add_handler(pdslogger.warning_handler(path))
+    logger.add_handler(pdslogger.error_handler(path))
 
 ########################################
 # Interactive mode
@@ -589,17 +571,19 @@ if not args.batch and not args.batch_status:
 
 else:
 
-    # Find the holdings directory
     if not args.volume:
-        args.volume = glob.glob('/Volumes/pdsdata*/holdings')
-
-    if not args.volume:
-        print('No holdings path found')
+        print('No holdings path identified')
         sys.exit(1)
 
-    for holding in args.volume:
-        if not os.path.exists(holding):
-            print('Holdings path not found: ' + holding)
+    for holdings in args.volume:
+        if not os.path.exists(holdings):
+            print('Holdings path not found: ' + holdings)
+            sys.exit(1)
+
+        holdings = holdings.rstrip('/')
+        holdings = os.path.abspath(holdings)
+        if not holdings.endswith('/holdings'):
+            print('Not a holdings directory: ' + holdings)
             sys.exit(1)
 
     logger.add_root(args.volume)
@@ -610,8 +594,8 @@ else:
 
     # Read the current holdings
     holdings_info = []
-    for holding in args.volume:
-        holdings_info += get_volume_info(holding)
+    for holdings in args.volume:
+        holdings_info += get_volume_info(holdings)
 
     # Define an ordered list of tasks
     (modified_holdings,
