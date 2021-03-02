@@ -185,13 +185,13 @@ opus_type = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/.*/(Rev...)(C?[IE])_(RSS_...._..._..._[EI]).*', 0,
-                        [r'volumes/CORSS_8xxx\1/\2/data/\3/\3\4/\3\4_\5/*',
-                         r'volumes/CORSS_8xxx\1/\2/EASYDATA/\3\4_\5/*',
-                         r'volumes/CORSS_8xxx\1/\2/browse/\3_OccTrack_Geometry.LBL',
-                         r'volumes/CORSS_8xxx\1/\2/browse/\3_OccTrack_Geometry.pdf',
-                         r'previews/CORSS_8xxx/\2/data/\3/\3\4/\3\4_\5/*',
-                         r'metadata/CORSS_8xxx/\2/CORSS_8001_*index.*',
-                        ]),
+                [r'volumes/CORSS_8xxx*/\2/data/\3/\3\4/\3\4_\5/*',
+                 r'volumes/CORSS_8xxx*/\2/EASYDATA/\3\4_\5/*',
+                 r'volumes/CORSS_8xxx*/\2/browse/\3_OccTrack_Geometry.LBL',
+                 r'volumes/CORSS_8xxx*/\2/browse/\3_OccTrack_Geometry.pdf',
+                 r'previews/CORSS_8xxx/\2/data/\3/\3\4/\3\4_\5/*',
+                 r'metadata/CORSS_8xxx/\2/CORSS_8001_*index.*',
+                 ]),
 ])
 
 ####################################################################################################################################
@@ -199,10 +199,10 @@ opus_products = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_id = translator.TranslatorByRegex([
-    (r'.*/CORSS_8xxx.*/CORSS_8.../(data|browse).*/(Rev...C?[IE])_RSS_(....)_(...)_(...)_[IE].*', 0,
-                        r'co-rss-occ-#LOWER#\2-\3-\4-\5'),
-    (r'.*/CORSS_8xxx_v1/CORSS_8.../EASYDATA.*/Rev(\d\d)(C?[IE])_RSS_(....)_(...)_(...)_[IE].*', 0,
-                        r'co-rss-occ-#LOWER#rev0\1\2-\3-\4-\5'),
+    (r'.*/CORSS_8xxx.*/CORSS_8.../(data|browse).*/(Rev...C?)[IE]_RSS_(....)_(...)_(...)_([IE]).*', 0,
+                        r'co-rss-occ-\3-\4-#LOWER#\2-\5-\6'),
+    (r'.*/CORSS_8xxx_v1/CORSS_8.../EASYDATA.*/Rev(\d\d)(C?)[IE]_RSS_(....)_(...)_(...)_([IE]).*', 0,
+                        r'co-rss-occ-\3-\4-#LOWER#rev0\1\2-\5-\6'),
 ])
 
 ####################################################################################################################################

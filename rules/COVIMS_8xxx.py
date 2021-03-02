@@ -104,7 +104,7 @@ opus_type = translator.TranslatorByRegex([
 # Use of explicit file names means we don't need to invoke glob.glob(); this goes much faster
 opus_products = translator.TranslatorByRegex([
     (r'.*/COVIMS_8xxx(|_v[0-9\.]+)/(COVIMS_....)/(data|EASYDATA)/(VIMS_.*)_(TAU.*|[a-z]+)\..*', 0,
-                    [r'volumes/COVIMS_8xxx\1/\2/\3/\4_TAU*KM.*',
+                    [r'volumes/COVIMS_8xxx*/\2/\3/\4_TAU*KM.*',
                      r'previews/COVIMS_8xxx/\2/data/\4_*',
                      r'diagrams/COVIMS_8xxx/\2/data/\4_*',
                      r'metadata/COVIMS_8xxx/\2/\2_*index.*',
@@ -116,7 +116,7 @@ opus_products = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_id = translator.TranslatorByRegex([
-    (r'.*/COVIMS_8xxx.*/(data|EASYDATA)/VIMS_(\d{4}_\d{3}_\w+_[IE]).*', 0, r'co-vims-occ-#LOWER#\2'),
+    (r'.*/COVIMS_8xxx.*/(data|EASYDATA)/VIMS_(\d{4})_(\d{3})_(\w+)_([IE]).*', 0, r'co-vims-occ-#LOWER#\2-\3-\4-\5'),
 ])
 
 ####################################################################################################################################

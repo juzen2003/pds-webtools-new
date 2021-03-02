@@ -57,7 +57,7 @@ associations_to_previews = translator.TranslatorByRegex([
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0...)/DATA/\w+/(\w+)\..*', 
+    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0...)/DATA/\w+/(\w+)\..*',
                             0,  [r'metadata/COUVIS_0xxx/\2/\2_index.tab/\3',
                                  r'metadata/COUVIS_0xxx/\2/\2_supplemental_index.tab/\3',
                                  r'metadata/COUVIS_0xxx/\2/\2_ring_summary.tab/\3',
@@ -119,13 +119,13 @@ opus_format = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0...)/DATA/(\w+/\w+[0-9])(|_CAL.*|_[a-z]+)\..*', 0,
-                                        [r'volumes/COUVIS_0xxx\1/\2/DATA/\3.DAT',
-                                         r'volumes/COUVIS_0xxx\1/\2/DATA/\3.LBL',
-                                         r'volumes/COUVIS_0xxx\1/\2/CALIB/VERSION_*/\4_CAL_*',
-                                         r'previews/COUVIS_0xxx/\2/DATA/\3_*.png',
-                                         r'metadata/COUVIS_0xxx/\2/\2_*summary.*',
-                                         r'metadata/COUVIS_0xxx/\2/\2_*index.*',
-                                         ]),
+                [r'volumes/COUVIS_0xxx*/\2/DATA/\3.DAT',
+                 r'volumes/COUVIS_0xxx*/\2/DATA/\3.LBL',
+                 r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_*/\3_CAL_*',
+                 r'previews/COUVIS_0xxx/\2/DATA/\3_*.png',
+                 r'metadata/COUVIS_0xxx/\2/\2_*summary.*',
+                 r'metadata/COUVIS_0xxx/\2/\2_*index.*',
+                 ]),
 ])
 
 ####################################################################################################################################

@@ -108,7 +108,7 @@ opus_type = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(HST.x_xxxx)(|_v.+)/(HST.._....)/(DATA/VISIT_../.{9}).*', 0,
-                    [r'volumes/\1\2/\3/\4*',
+                    [r'volumes/\1*/\3/\4*',
                      r'previews/\1/\3/\4_*.jpg',
                      r'metadata/\1/\3/\3_index.lbl',
                      r'metadata/\1/\3/\3_index.tab',
@@ -123,11 +123,11 @@ opus_products = translator.TranslatorByRegex([
 
 opus_id = translator.TranslatorByRegex([
     # Associated HST products share an OPUS ID based on the first nine characters of the file's basename.
-    (r'.*/HSTI(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-wfc3-#LOWER#\4'),
-    (r'.*/HSTJ(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-acs-#LOWER#\4'),
-    (r'.*/HSTN(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-nicmos-#LOWER#\4'),
-    (r'.*/HSTO(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-stis-#LOWER#\4'),
-    (r'.*/HSTU(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-wfpc2-#LOWER#\4'),
+    (r'.*/HSTI(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-wfc3-#LOWER#\3'),
+    (r'.*/HSTJ(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-acs-#LOWER#\3'),
+    (r'.*/HSTN(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-nicmos-#LOWER#\3'),
+    (r'.*/HSTO(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-stis-#LOWER#\3'),
+    (r'.*/HSTU(.)_(....)/DATA/VISIT_../(\w{9})\w*\..*', 0, r'hst-\1\2-wfpc2-#LOWER#\3'),
 ])
 
 ####################################################################################################################################
@@ -148,7 +148,7 @@ opus_id_to_primary_logical_path = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 filespec_to_volset = translator.TranslatorByRegex([
-    (r'(HST[A-Z])[01]_\d{4}.*', 0, r'HST\1x_xxxx'),
+    (r'HST([A-Z])[01]_\d{4}.*', 0, r'HST\1x_xxxx'),
 ])
 
 ####################################################################################################################################

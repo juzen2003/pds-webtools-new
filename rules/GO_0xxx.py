@@ -117,13 +117,14 @@ opus_format = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(GO_0xxx)/(GO_0...)/(.*/C[0-9]{6})([0-9]{4}[A-Z])\.(IMG|LBL)', 0,
-                                        [r'volumes/\1/\2/\3\4.IMG',
-                                         r'volumes/\1/\2/\3\4.LBL',
-                                         r'volumes/\1_v1/\2/\3/\4.IMG',
-                                         r'volumes/\1_v1/\2/\3/\4.LBL',
-                                         r'previews/\1/\2/\3\4_*.jpg',
-                                         r'previews/\1_v1/\2/\3/\4_*.jpg',
-                                         r'metadata/\1/\2/\2_*index.*']),
+                [r'volumes/\1/\2/\3\4.IMG',
+                 r'volumes/\1/\2/\3\4.LBL',
+                 r'volumes/\1_v1/\2/\3/\4.IMG',
+                 r'volumes/\1_v1/\2/\3/\4.LBL',
+                 r'previews/\1/\2/\3\4_*.jpg',
+                 r'previews/\1_v1/\2/\3/\4_*.jpg',
+                 r'metadata/\1/\2/\2_*index.*'
+                 ]),
 ])
 
 ####################################################################################################################################

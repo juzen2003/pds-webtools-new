@@ -124,16 +124,17 @@ opus_format = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*/COVIMS_0xxx(|_v[0-9\.]+)/(COVIMS_0...)/(data|extras/\w+)/(\w+/v[0-9]{10}_[0-9]+)(_0[0-6][0-9]|)\..*', 0,
-                    [r'volumes/COVIMS_0xxx\1/\2/data/\4.qub',
-                     r'volumes/COVIMS_0xxx\1/\2/data/\4.lbl',
-                     r'volumes/COVIMS_0xxx\1/\2/extras/thumbnail/\4.qub.jpeg_small',
-                     r'volumes/COVIMS_0xxx\1/\2/extras/browse/\4.qub.jpeg',
-                     r'volumes/COVIMS_0xxx\1/\2/extras/full/\4.qub.png',
-                     r'volumes/COVIMS_0xxx\1/\2/extras/tiff/\4.qub.tiff',
-                     r'previews/COVIMS_0xxx/\2/data/\4_*.png',
-                     r'metadata/COVIMS_0xxx/\2/\2_*summary.*',
-                     r'metadata/COVIMS_0xxx/\2/\2_inventory.*',
-                     r'metadata/COVIMS_0xxx/\2/\2_*index.*']),
+            [r'volumes/COVIMS_0xxx*/\2/data/\4.qub',
+             r'volumes/COVIMS_0xxx*/\2/data/\4.lbl',
+             r'volumes/COVIMS_0xxx*/\2/extras/thumbnail/\4.qub.jpeg_small',
+             r'volumes/COVIMS_0xxx*/\2/extras/browse/\4.qub.jpeg',
+             r'volumes/COVIMS_0xxx*/\2/extras/full/\4.qub.png',
+             r'volumes/COVIMS_0xxx*/\2/extras/tiff/\4.qub.tiff',
+             r'previews/COVIMS_0xxx/\2/data/\4_*.png',
+             r'metadata/COVIMS_0xxx/\2/\2_*summary.*',
+             r'metadata/COVIMS_0xxx/\2/\2_inventory.*',
+             r'metadata/COVIMS_0xxx/\2/\2_*index.*'
+             ]),
 ])
 
 ####################################################################################################################################
@@ -143,7 +144,7 @@ opus_products = translator.TranslatorByRegex([
 opus_id = translator.TranslatorByRegex([
     # There are up to two OPUS IDs associated with each VIMS file, one for the VIS channel and one for the IR channel.
     # This translator returns the OPUS ID without the suffix "_IR" or "_VIS" used by OPUS. That must be handled separately
-    (r'.*/COVIMS_0xxx.*/(v[0-9]{10})_[0-9]+(|_[0-9]{3})\.qub', 0, r'co-vims-\2\3'),
+    (r'.*/COVIMS_0xxx.*/(v[0-9]{10})_[0-9]+(|_[0-9]{3})\..*', 0, r'co-vims-\1\2'),
 ])
 
 ####################################################################################################################################

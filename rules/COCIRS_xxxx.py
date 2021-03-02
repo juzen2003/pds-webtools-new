@@ -311,18 +311,19 @@ opus_format = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*/(COCIRS_[56]xxx)(|_v[0-9\.]+)/(COCIRS_[56]...)/DATA/\w+/[A-Z]+([0-9]{10})_(FP.).*', 0,
-                [r'volumes/\1\2/\3/DATA/APODSPEC/SPEC\4_\5.*',
-                 r'volumes/\1\2/\3/DATA/GEODATA/GEO\4_6*',
-                 r'volumes/\1\2/\3/DATA/POIDATA/POI\4_\5.*',
-                 r'volumes/\1\2/\3/DATA/RINDATA/RIN\4_\5.*',
-                 r'volumes/\1\2/\3/DATA/TARDATA/TAR\4_\5.*',
-                 r'volumes/\1\2/\3/BROWSE/TARGETS/IMG\4_\5.*',
-                 r'volumes/\1\2/\3/BROWSE/SATURN/POI\4_\5.*',
-                 r'volumes/\1\2/\3/BROWSE/S_RINGS/RIN\4_\5.*',
-                 r'volumes/\1\2/\3/BROWSE/*/POI\4_\5_*.*',
+                [r'volumes/\1*/\3/DATA/APODSPEC/SPEC\4_\5.*',
+                 r'volumes/\1*/\3/DATA/GEODATA/GEO\4_6*',
+                 r'volumes/\1*/\3/DATA/POIDATA/POI\4_\5.*',
+                 r'volumes/\1*/\3/DATA/RINDATA/RIN\4_\5.*',
+                 r'volumes/\1*/\3/DATA/TARDATA/TAR\4_\5.*',
+                 r'volumes/\1*/\3/BROWSE/TARGETS/IMG\4_\5.*',
+                 r'volumes/\1*/\3/BROWSE/SATURN/POI\4_\5.*',
+                 r'volumes/\1*/\3/BROWSE/S_RINGS/RIN\4_\5.*',
+                 r'volumes/\1*/\3/BROWSE/*/POI\4_\5_*.*',
                  r'diagrams/\1/\3/BROWSE/*/POI\4_\5_*',
                  r'diagrams/\1/\3/BROWSE/S_RINGS/RIN\4_\5_*',
-                 r'diagrams/\1/\3/BROWSE/TARGETS/IMG\4_\5*']),
+                 r'diagrams/\1/\3/BROWSE/TARGETS/IMG\4_\5*'
+                 ]),
 ])
 
 opus_support_products = translator.TranslatorByRegex([])

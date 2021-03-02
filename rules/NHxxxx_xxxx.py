@@ -192,8 +192,8 @@ opus_type = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_([12])(...)/data/(\w+/[a-z0-9]{3}_\d{10})_(0x...)_(eng|sci)(|\d+)(|[a-z]+)\..*', re.I,
-                    [r'volumes/\1\2/\3_1\5/data/#LOWER#\6*',
-                     r'volumes/\1\2/\3_2\5/data/#LOWER#\6*',
+                    [r'volumes/\1*/\3_1\5/data/#LOWER#\6*',
+                     r'volumes/\1*/\3_2\5/data/#LOWER#\6*',
                      r'previews/\1/\3_\4\5/data/#LOWER#\6_\7_\8_*',
                      r'metadata/\1/\3_\4\5/\3_\4\5_*index.*',
                      r'metadata/\1/\3_\4\5/\3_\4\5_*summary.*',

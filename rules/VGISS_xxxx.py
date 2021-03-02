@@ -79,7 +79,7 @@ associations_to_volumes = translator.TranslatorByRegex([
 #                                                                      r'volumes/VG_0xxx/VG_000[6-8]/*/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_000[6-8]/*/*/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_000[6-8]/*/*/*/*/\2*']),
-# 
+#
 #     # VG_0013 to VG_0025, Jupiter
 #     (r'.*/VGISS_5xxx/VGISS_..../(DATA|BROWSE)/C.....XX/(C14[0-9]{5}|C15[0-4][0-9]{4}).*',
 #                                                                 0,  [r'volumes/VG_0xxx/VG_0013/*/\2*',
@@ -116,7 +116,7 @@ associations_to_volumes = translator.TranslatorByRegex([
 #                                                                      r'volumes/VG_0xxx/VG_0019/*/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_0019/*/*/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_0019/*/*/*/*/\2*']),
-# 
+#
 #     (r'.*/VGISS_5xxx/VGISS_..../(DATA|BROWSE)/C.....XX/(C175[0-9]{4}).*',
 #                                                                 0,  [r'volumes/VG_0xxx/VG_0020/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_0020/*/*/\2*',
@@ -152,14 +152,14 @@ associations_to_volumes = translator.TranslatorByRegex([
 #                                                                      r'volumes/VG_0xxx/VG_0025//*/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_0025//*/*/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_0025//*/*/*/*/\2*']),
-# 
+#
 #     # VG_0004 to VG_0005, selected Saturn
 #     (r'.*/VGISS_6xxx/VGISS_..../(DATA|BROWSE)/C.....XX/(C[0-9]{7}).*',
 #                                                                 0,  [r'volumes/VG_0xxx/VG_000[45]/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_000[45]/*/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_000[45]/*/*/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_000[45]/*/*/*/*/\2*']),
-# 
+#
 #     # VG_0026 to VG_0038, Saturn
 #     (r'.*/VGISS_6xxx/VGISS_..../(DATA|BROWSE)/C.....XX/(C32[0-9]{5}|C33[0-5]{4}).*',
 #                                                                 0,  [r'volumes/VG_0xxx/VG_0026/*/\2*',
@@ -230,14 +230,14 @@ associations_to_volumes = translator.TranslatorByRegex([
 #                                                                 0,   r'volumes/VG_0xxx/VG_0038/FOUND/*/\2*'),
 #     (r'.*/VGISS_6xxx/VGISS_..../(DATA|BROWSE)/C.....XX/(C43[0-9]{5}).*',
 #                                                                 0,  [r'volumes/VG_0xxx/VG_0038/BROWSE/CALIB/*/\2*']),
-# 
+#
 #     # VG_0001 to VG_0003, Uranus
 #     (r'.*/VGISS_7xxx/VGISS_..../(DATA|BROWSE)/C.....XX/(C[0-9]{7}).*',
 #                                                                 0,  [r'volumes/VG_0xxx/VG_000[1-3]/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_000[1-3]/*/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_000[1-3]/*/*/*/\2*',
 #                                                                      r'volumes/VG_0xxx/VG_000[1-3]/*/*/*/*/\2*']),
-# 
+#
 #     # VG_0009 to VG_0012, Neptune
 #     (r'.*/VGISS_8xxx/VGISS_..../(DATA|BROWSE)/(C.....XX)/(C[0-9]{7}).*',
 #                                                                 0,  [r'volumes/VG_0xxx/VG_0009/*/\2*',
@@ -331,11 +331,12 @@ opus_format = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(VGISS_[5-8]xxx)/(VGISS_[5-8]...)/(DATA/.*)_[A-Z]+\.(IMG|DAT|LBL|TAB)',
-                                        0, [r'volumes/\1/\2/\3_*',
-                                            r'previews/\1/\2/\3_*',
-                                            r'metadata/\1/\2/\2_*summary.*',
-                                            r'metadata/\1/\2/\2_inventory.*',
-                                            r'metadata/\1/\2/\2_*index.*'])
+                0, [r'volumes/\1/\2/\3_*',
+                    r'previews/\1/\2/\3_*',
+                    r'metadata/\1/\2/\2_*summary.*',
+                    r'metadata/\1/\2/\2_inventory.*',
+                    r'metadata/\1/\2/\2_*index.*'
+                    ])
 ])
 
 ####################################################################################################################################
