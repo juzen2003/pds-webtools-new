@@ -347,8 +347,8 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument('volume', nargs='*', type=str,
                     help='Paths to volumes or volume sets for validation. '    +
-                    	 'In batch mode, provide the path to the holdings '    +
-                    	 'directory.')
+                         'In batch mode, provide the path to the holdings '    +
+                         'directory.')
 
 parser.add_argument('--log', '-l', type=str, default='',
                     help='Optional root directory for a duplicate of the log ' +
