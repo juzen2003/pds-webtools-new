@@ -3435,7 +3435,7 @@ class PdsFile(object):
 
         raise saved_e
 
-    def find_selected_row_key(self, selection, flag='='):
+    def find_selected_row_key(self, selection, flag='=', exact_match=False):
         """Return the key for this selection among the "children" (row
         selection keys) of an index file. The selection need not be an exact
         match but it must be "close" and unique.
@@ -3464,44 +3464,46 @@ class PdsFile(object):
             k = self.childnames_lc.index(selection_lc)
             return self.childnames[k]
 
-        # Allow for a key inside the selection
-        child_keys = []
-        for (k,key) in enumerate(self.childnames_lc):
-            if selection_lc.startswith(key):
-                child_keys.append(self.childnames[k])
+        # Try partial matches unless an exact match is required
+        if not exact_match:
+            # Allow for a key inside the selection
+            child_keys = []
+            for (k,key) in enumerate(self.childnames_lc):
+                if selection_lc.startswith(key):
+                    child_keys.append(self.childnames[k])
 
-        # If we have a single match, we're done
-        if len(child_keys) == 1:
-            return child_keys[0]
+            # If we have a single match, we're done
+            if len(child_keys) == 1:
+                return child_keys[0]
 
-        # In the case of multiple matches, choose the longest match
-        if len(child_keys) > 1:
-            longest_match = child_keys[0]
-            for key in child_keys[1:]:
-                if len(key) > len(longest_match):
-                    longest_match = key
+            # In the case of multiple matches, choose the longest match
+            if len(child_keys) > 1:
+                longest_match = child_keys[0]
+                for key in child_keys[1:]:
+                    if len(key) > len(longest_match):
+                        longest_match = key
 
-            return longest_match
+                return longest_match
 
-        # Allow for the selection inside a key
-        child_keys = []
-        for (k,key) in enumerate(self.childnames_lc):
-            if key.startswith(selection_lc):
-                child_keys.append(self.childnames[k])
+            # Allow for the selection inside a key
+            child_keys = []
+            for (k,key) in enumerate(self.childnames_lc):
+                if key.startswith(selection_lc):
+                    child_keys.append(self.childnames[k])
 
-        # If we have a single match, we're done
-        if len(child_keys) == 1:
-            return child_keys[0]
+            # If we have a single match, we're done
+            if len(child_keys) == 1:
+                return child_keys[0]
 
-        # On failure, return the selection if flag is ''
-        if flag == '':
-            return selection
+            # On failure, return the selection if flag is ''
+            if flag == '':
+                return selection
 
-        # We disallow multiple matches because this can occur when a key is
-        # incomplete
-        if len(child_keys) > 1:
-            raise IOError('Index selection is ambiguous: ' +
-                          self.logical_path + '/' + selection)
+            # We disallow multiple matches because this can occur when a key is
+            # incomplete
+            if len(child_keys) > 1:
+                raise IOError('Index selection is ambiguous: ' +
+                              self.logical_path + '/' + selection)
 
         if flag == '=':
             raise KeyError('Index selection not found: ' +
