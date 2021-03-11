@@ -346,7 +346,8 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
         for header in list(pdsfiles.keys()): # We change pdsfiles in the loop!
             sublists = pdsfiles[header]
             if len(sublists) == 1: continue
-            if header == '' or header[0] != 'New Horizons': continue
+            if header == '' or not header[0].startswith('New Horizons'):
+                continue
 
             priority = []
             for sublist in sublists:
@@ -365,7 +366,7 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
                     list0.append(sublist)
                     continue
 
-                new_header = ('New Horizons',
+                new_header = (header[0],
                               header[1]+50,
                               header[2]+'_alternate',
                               header[3]+' Alternate Downlink',
