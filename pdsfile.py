@@ -1,15 +1,17 @@
+import bisect
 import datetime
+import fnmatch
+import functools
 import glob
 import math
+import numbers
 import os
 import pickle
+import PIL
 import random
 import re
 import sys
 import time
-import fnmatch
-import numbers
-import PIL
 
 # Import module for memcached if possible, otherwise flag
 try: # pragma: no cover
@@ -132,6 +134,8 @@ def set_logger(logger):
 # Filesystem vs. shelf files
 ################################################################################
 
+_GLOB_CACHE_SIZE = 200
+_PATH_EXISTS_CACHE_SIZE = 200
 SHELVES_ONLY = False
 
 def use_shelves_only(status=True):
@@ -957,6 +961,7 @@ class PdsFile(object):
         return volsets > len(basenames)//2
 
     @staticmethod
+    @functools.lru_cache(maxsize=_PATH_EXISTS_CACHE_SIZE)
     def os_path_exists(abspath):
         """True if the given absolute path points to a file that exists; False
         otherwise. This replaces os.path.exists(path) but might use infoshelf
@@ -1192,17 +1197,42 @@ class PdsFile(object):
             root_ = parts[0] + '/holdings/' + parts[1].split('_info.')[0] + '/'
 
             if _needs_glob(key):
-                for (interior_path, value) in shelf.items():
+                # Since shelf files are always in alphabetical order, we can
+                # use a binary search to figure out where to start comparing
+                # strings. This is useful because there can be a lot of
+                # paths to search through, and fnmatchcase is slow.
+                w1 = key.find('?')
+                w2 = key.find('*')
+                w3 = key.find('[')
+                wildcard_index = len(key)
+                if w1 != -1:
+                    wildcard_index = w1
+                if w2 != -1:
+                    wildcard_index = min(wildcard_index, w2)
+                if w3 != -1:
+                    wildcard_index = min(wildcard_index, w3)
+                key_prefix = key[:wildcard_index]
+                interior_paths = list(shelf.keys())
+                values = list(shelf.values())
+                starting_pos = bisect.bisect_left(interior_paths, key_prefix)
+                num_key_slashes = len(key.split('/'))
+                for (interior_path, value) in zip(
+                                interior_paths[starting_pos:],
+                                values[starting_pos:]):
+                    # If the key prefix doesn't match the interior_path prefix,
+                    # then we're done since the filenames are in alphabetical
+                    # order.
+                    if (key_prefix.upper() !=
+                        interior_path[:wildcard_index].upper()):
+                        break
                     # Because fnmatch matches strings instead of filesystems,
                     # it has the unfortunate property that match patterns can
                     # accidentally cross directory boundaries. For example, the
                     # pattern "f*r" will match "foo/bar", when it shouldn't. We
                     # handle this by also checking that the returned result
                     # contains the same number of slashes as the pattern.
-                    interior_parts = len(interior_path.split('/'))
-
                     if (fnmatch.fnmatchcase(interior_path, key) and
-                        interior_parts == len(key.split('/'))):
+                        len(interior_path.split('/')) == num_key_slashes):
                             abspaths.append(root_ + interior_path)
             else:
                 if key in shelf:
@@ -1382,7 +1412,7 @@ class PdsFile(object):
 
         if self._is_index is None:
             abspath = self.indexshelf_abspath
-            if abspath and os.path.exists(abspath):
+            if abspath and PdsFile.os_path_exists(abspath):
                 self._is_index = True
             else:
                 self._is_index = False
@@ -4055,6 +4085,13 @@ class PdsFile(object):
         except Exception as e:
             raise IOError('Unable to open pickle file: %s' % shelf_path)
 
+        # The pickle files do not produce dictionaries that are in
+        # alphabetical order, so we sort them here in case we want to
+        # do a binary search later.
+        keys_vals = list(zip(shelf.keys(), shelf.values()))
+        keys_vals.sort(key=lambda x: x[0])
+        shelf = dict(keys_vals)
+
         # Save the null key values from the info shelves. This can save a lot of
         # shelf open/close operations when we just need info about a volume,
         # not an interior file.
@@ -4931,6 +4968,7 @@ def _clean_abspath(path):
         abspath = abspath.replace('\\', '/')
     return abspath
 
+@functools.lru_cache(maxsize=_GLOB_CACHE_SIZE)
 def _clean_glob(pattern):
     matches = glob.glob(pattern)
     if os.sep == '\\':
