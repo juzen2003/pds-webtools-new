@@ -106,6 +106,7 @@ opus_products = translator.TranslatorByRegex([
                     [r'volumes/EBROCC_xxxx*/\2/DATA/\4PD.LBL',
                      r'volumes/EBROCC_xxxx*/\2/DATA/\4PD.TAB',
                      r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.*',
+                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4PB.*',
                      r'volumes/EBROCC_xxxx*/\2/GEOMETRY/\4GD.*',
                      r'volumes/EBROCC_xxxx*/\2/SORCDATA/\4*',
                      r'previews/EBROCC_xxxx/\2/DATA/\4PD_*.jpg',
