@@ -79,12 +79,12 @@ view_options = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/DATA/\w+/\w+\.(TAB|LBL)',          0, ('Earth-based Occultations',  0, 'ebro_profile', 'Radial Profile',   True)),
-    (r'volumes/GEOMETRY/\w+/\w+\.(TAB|LBL)',      0, ('Earth-based Occultations', 10, 'ebro_geom',    'Geometry Table',   True)),
-    (r'volumes/BROWSE/\w+/\w+PB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 20, 'ebro_preview', 'Preview Plot',     True)),
-    (r'volumes/BROWSE/\w+/\w+GB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 30, 'ebro_diagram', 'Geometry Diagram', False)),
-    (r'volumes/SORCDATA/\w+/\w+_GEOMETRY\..*',    0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',      False)),
-    (r'volumes/SORCDATA/\w+/\w+GRESS\.(OUT|LBL)', 0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',      False)),
+    (r'volumes/EBROCC_xxxx.*/EBROCC_..../DATA/\w+/\w+\.(TAB|LBL)',          0, ('Earth-based Occultations',  0, 'ebro_profile', 'Radial Profile',   True)),
+    (r'volumes/EBROCC_xxxx.*/EBROCC_..../GEOMETRY/\w+/\w+\.(TAB|LBL)',      0, ('Earth-based Occultations', 10, 'ebro_geom',    'Geometry Table',   True)),
+    (r'volumes/EBROCC_xxxx.*/EBROCC_..../BROWSE/\w+/\w+PB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 20, 'ebro_preview', 'Preview Plot',     True)),
+    (r'volumes/EBROCC_xxxx.*/EBROCC_..../BROWSE/\w+/\w+GB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 30, 'ebro_diagram', 'Geometry Diagram', False)),
+    (r'volumes/EBROCC_xxxx.*/EBROCC_..../SORCDATA/\w+/\w+_GEOMETRY\..*',    0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',      False)),
+    (r'volumes/EBROCC_xxxx.*/EBROCC_..../SORCDATA/\w+/\w+GRESS\.(OUT|LBL)', 0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',      False)),
 ])
 
 ####################################################################################################################################
@@ -103,13 +103,13 @@ opus_format = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)/(\w+/\w{3}_[EI]).*', 0,
-                    [r'volumes/EBROCC_xxxx*/\2/DATA\4PD.LBL',
-                     r'volumes/EBROCC_xxxx*/\2/DATA\4PD.TAB',
-                     r'volumes/EBROCC_xxxx*/\2/BROWSE\4GB.*',
-                     r'volumes/EBROCC_xxxx*/\2/GEOMETRY\4GD.*',
-                     r'volumes/EBROCC_xxxx*/\2/SORCDATA\4*',
-                     r'previews/EBROCC_xxxx/\2/DATA\4PD_*.jpg',
-                     r'previews/EBROCC_xxxx/\2/BROWSE\4GB_*.jpg',
+                    [r'volumes/EBROCC_xxxx*/\2/DATA/\4PD.LBL',
+                     r'volumes/EBROCC_xxxx*/\2/DATA/\4PD.TAB',
+                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.*',
+                     r'volumes/EBROCC_xxxx*/\2/GEOMETRY/\4GD.*',
+                     r'volumes/EBROCC_xxxx*/\2/SORCDATA/\4*',
+                     r'previews/EBROCC_xxxx/\2/DATA/\4PD_*.jpg',
+                     r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_*.jpg',
                      r'metadata/EBROCC_xxxx/\2_*index.*',
                      ]),
 ])
