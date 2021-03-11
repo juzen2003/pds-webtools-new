@@ -176,10 +176,6 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-
-    # Hide calibrated previews because the raw previews are fine
-    (r'previews/NHxx.._xxxx.*/NH...._2.../.*', 0, ''),
-
     (r'volumes/.*/NH..LO_1.../data/.*\.(fit|lbl)', re.I, ('New Horizons LORRI',   0, 'nh_lorri_raw'  , 'Raw Image',        True)),
     (r'volumes/.*/NH..LO_2.../data/.*\.(fit|lbl)', re.I, ('New Horizons LORRI', 100, 'nh_lorri_calib', 'Calibrated Image', True)),
     (r'volumes/.*/NH..MV_1.../data/.*\.(fit|lbl)', re.I, ('New Horizons MVIC' ,   0, 'nh_mvic_raw'   , 'Raw Image',        True)),
@@ -194,9 +190,10 @@ opus_products = translator.TranslatorByRegex([
     (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_([12])(...)/data/(\w+/[a-z0-9]{3}_\d{10})_(0x...)_(eng|sci)(|_\d+)(|_[a-z]+)\..*', re.I,
                     [r'volumes/\1*/\3_1\5/data/#LOWER#\6*',
                      r'volumes/\1*/\3_2\5/data/#LOWER#\6*',
-                     r'previews/\1/\3_\4\5/data/#LOWER#\6_\7_\8_*',
-                     r'metadata/\1/\3_\4\5/\3_\4\5_*index.*',
-                     r'metadata/\1/\3_\4\5/\3_\4\5_*summary.*',
+                     r'previews/\1/\3_1\5/data/#LOWER#\6_\7_*',
+                     r'metadata/\1/\3_1\5/\3_1\5_*inventory.*',
+                     r'metadata/\1/\3_1\5/\3_1\5_*index.*',
+                     r'metadata/\1/\3_1\5/\3_1\5_*summary.*',
                      ]),
 ])
 
