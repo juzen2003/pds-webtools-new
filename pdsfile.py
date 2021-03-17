@@ -1190,7 +1190,13 @@ class PdsFile(object):
         # Gather the matching entries in each shelf
         abspaths = []
         for shelf_path in shelf_paths:
-            shelf = PdsFile._get_shelf(shelf_path, log_missing_file=False)
+            if not os.path.exists(shelf_path):
+                if LOGGER:
+                    LOGGER.warn('Missing info shelf for ' + abspath,
+                                shelf_path)
+                continue
+
+            shelf = PdsFile._get_shelf(shelf_path)
             parts = shelf_path.split('/shelves/info/')
             assert len(parts) == 2
 
@@ -3801,7 +3807,7 @@ class PdsFile(object):
 
             abspaths += these_abspaths
 
-        # Get PdsFiles for abspaths, organized by labels vs. datafiles
+        # Get PdsFiles for abspaths, organized by labels vs. datafiles.
         # label_files[label_abspath] = [label_pdsfile, fmt1_pdsfile, ...]
         # data_files is a list
         label_pdsfiles = {}

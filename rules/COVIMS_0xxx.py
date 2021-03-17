@@ -137,22 +137,41 @@ opus_products = translator.TranslatorByRegex([
                      r'previews/COVIMS_0xxx/\2/data/\4_med.png',
                      r'previews/COVIMS_0xxx/\2/data/\4_small.png',
                      r'previews/COVIMS_0xxx/\2/data/\4_thumb.png',
-                     r'metadata/\1/\2/\2_moon_summary.tab',
-                     r'metadata/\1/\2/\2_moon_summary.lbl',
-                     r'metadata/\1/\2/\2_ring_summary.tab',
-                     r'metadata/\1/\2/\2_ring_summary.lbl',
-                     r'metadata/\1/\2/\2_saturn_summary.tab',
-                     r'metadata/\1/\2/\2_saturn_summary.lbl',
-                     r'metadata/\1/\2/\2_jupiter_summary.tab',
-                     r'metadata/\1/\2/\2_jupiter_summary.lbl',
-                     r'metadata/\1/\2/\2_inventory.csv',
-                     r'metadata/\1/\2/\2_inventory.lbl',
-                     r'metadata/\1/\2/\2_index.tab',
-                     r'metadata/\1/\2/\2_index.lbl',
-                     r'metadata/\1/\2/\2_supplemental_index.tab',
-                     r'metadata/\1/\2/\2_supplemental_index.lbl',
+                     r'metadata/COVIMS_0xxx/\2/\2_moon_summary.tab',
+                     r'metadata/COVIMS_0xxx/\2/\2_moon_summary.lbl',
+                     r'metadata/COVIMS_0xxx/\2/\2_ring_summary.tab',
+                     r'metadata/COVIMS_0xxx/\2/\2_ring_summary.lbl',
+                     r'metadata/COVIMS_0xxx/\2/\2_saturn_summary.tab',
+                     r'metadata/COVIMS_0xxx/\2/\2_saturn_summary.lbl',
+                     r'metadata/COVIMS_0xxx/\2/\2_jupiter_summary.tab',
+                     r'metadata/COVIMS_0xxx/\2/\2_jupiter_summary.lbl',
+                     r'metadata/COVIMS_0xxx/\2/\2_inventory.csv',
+                     r'metadata/COVIMS_0xxx/\2/\2_inventory.lbl',
+                     r'metadata/COVIMS_0xxx/\2/\2_index.tab',
+                     r'metadata/COVIMS_0xxx/\2/\2_index.lbl',
+                     r'metadata/COVIMS_0xxx/\2/\2_supplemental_index.tab',
+                     r'metadata/COVIMS_0xxx/\2/\2_supplemental_index.lbl',
                     ]),
 ])
+
+def test_opus_products():
+
+    TESTS = [
+        (2, 'volumes/.*/data/.*'),
+        (3, 'volumes/.*/extras/.*'),
+        (4, 'previews/.*/data/.*'),
+        (4, 'metadata/.*index.*'),
+        (6, 'metadata/.*summary.*'),
+        (2, 'metadata/.*inventory.*'),
+        (2, 'metadata/.*supplemental.*'),
+    ]
+
+    PATH = 'volumes/COVIMS_0xxx/COVIMS_0006/data/2005015T175855_2005016T184233/v1484504505_4.qub'
+    abspaths = pdsfile.rules.translate_all(opus_products, PATH)
+    trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
+    for (count, pattern) in TESTS:
+        subset = [p for p in trimmed if re.fullmatch(pattern, p)]
+        assert len(subset) == count, f'Miscount: {pattern} {len(subset)} {trimmed}'
 
 ####################################################################################################################################
 # OPUS_ID
@@ -234,7 +253,7 @@ opus_id_to_primary_logical_path = translator.TranslatorByRegex([
 # Subclass definition
 ####################################################################################################################################
 
-BASENAME_REGEX = re.compile('(v?\d{10}_\d+)(_0[0-6][0-9]|).*')
+BASENAME_REGEX = re.compile(r'(v?\d{10}_\d+)(_0[0-6][0-9]|).*')
 
 class COVIMS_0xxx(pdsfile.PdsFile):
 

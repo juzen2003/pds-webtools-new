@@ -120,6 +120,9 @@ opus_products = translator.TranslatorByRegex([
                      r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.LBL',
                      r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.PDF',
                      r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.PS',
+                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4PB.LBL',
+                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4PB.PDF',
+                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4PB.PS',
                      r'volumes/EBROCC_xxxx*/\2/GEOMETRY/\4GD.LBL',
                      r'volumes/EBROCC_xxxx*/\2/GEOMETRY/\4GD.TAB',
                      r'volumes/EBROCC_xxxx*/\2/SORCDATA/\4*',
@@ -131,14 +134,39 @@ opus_products = translator.TranslatorByRegex([
                      r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_med.jpg',
                      r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_small.jpg',
                      r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_thumb.jpg',
-                     r'metadata/EBROCC_xxxx/\2_index.lbl',
-                     r'metadata/EBROCC_xxxx/\2_index.tab',
-                     r'metadata/EBROCC_xxxx/\2_profile_index.lbl',
-                     r'metadata/EBROCC_xxxx/\2_profile_index.tab',
-                     r'metadata/EBROCC_xxxx/\2_supplemental_index.lbl',
-                     r'metadata/EBROCC_xxxx/\2_supplemental_index.tab',
+                     r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_full.jpg',
+                     r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_med.jpg',
+                     r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_small.jpg',
+                     r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_thumb.jpg',
+                     r'metadata/EBROCC_xxxx/\2/\2_index.lbl',
+                     r'metadata/EBROCC_xxxx/\2/\2_index.tab',
+                     r'metadata/EBROCC_xxxx/\2/\2_profile_index.lbl',
+                     r'metadata/EBROCC_xxxx/\2/\2_profile_index.tab',
+                     r'metadata/EBROCC_xxxx/\2/\2_supplemental_index.lbl',
+                     r'metadata/EBROCC_xxxx/\2/\2_supplemental_index.tab',
                     ]),
 ])
+
+def test_opus_products():
+
+    TESTS = [
+        (2, 'volumes.*/DATA/.*'),
+        (6, 'volumes.*/BROWSE/.*'),
+        (2, 'volumes.*/GEOMETRY/.*'),
+        (4, 'volumes.*/SORCDATA/.*'),
+        (4, 'previews.*/DATA/.*'),
+        (8, 'previews/.*/BROWSE/.*'),
+        (6, 'metadata.*index.*'),
+        (2, 'metadata.*profile.*'),
+        (2, 'metadata.*supplemental.*'),
+    ]
+
+    PATH = 'volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL'
+    abspaths = pdsfile.rules.translate_all(opus_products, PATH)
+    trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
+    for (count, pattern) in TESTS:
+        subset = [p for p in trimmed if re.fullmatch(pattern, p)]
+        assert len(subset) == count, f'Miscount: {pattern} {len(subset)} {trimmed}'
 
 ####################################################################################################################################
 # OPUS_ID
