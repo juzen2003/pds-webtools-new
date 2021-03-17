@@ -39,12 +39,18 @@ associations_to_volumes = translator.TranslatorByRegex([
                             0,  [r'volumes/EBROCC_xxxx\1/\2/DATA\4',
                                  r'volumes/EBROCC_xxxx\1/\2/BROWSE\4',
                                  r'volumes/EBROCC_xxxx\1/\2/GEOMETRY\4',
-                                 r'volumes/EBROCC_xxxx\1/\2/SORCDATA\4']),
+                                 r'volumes/EBROCC_xxxx\1/\2/SORCDATA\4',
+                                ]),
     (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)/(\w+/\w{3}_[EI]).*',
-                            0,  [r'volumes/EBROCC_xxxx\1/\2/DATA\4PD.*',
-                                 r'volumes/EBROCC_xxxx\1/\2/BROWSE\4GB.*',
-                                 r'volumes/EBROCC_xxxx\1/\2/GEOMETRY\4GD.*',
-                                 r'volumes/EBROCC_xxxx\1/\2/SORCDATA\4*']),
+                            0,  [r'volumes/EBROCC_xxxx\1/\2/DATA\4PD.LBL',
+                                 r'volumes/EBROCC_xxxx\1/\2/DATA\4PD.TAB',
+                                 r'volumes/EBROCC_xxxx\1/\2/BROWSE\4GB.LBL',
+                                 r'volumes/EBROCC_xxxx\1/\2/BROWSE\4GB.PDF',
+                                 r'volumes/EBROCC_xxxx\1/\2/BROWSE\4GB.PS',
+                                 r'volumes/EBROCC_xxxx\1/\2/GEOMETRY\4GD.LBL',
+                                 r'volumes/EBROCC_xxxx\1/\2/GEOMETRY\4GD.TAB',
+                                 r'volumes/EBROCC_xxxx\1/\2/SORCDATA\4*',
+                                ]),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
@@ -54,8 +60,15 @@ associations_to_previews = translator.TranslatorByRegex([
                                  r'previews/EBROCC_xxxx/\2/GEOMETRY\4',
                                  r'previews/EBROCC_xxxx/\2/SORCDATA\4']),
     (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)/(\w+/\w{3}_[EI]).*',
-                            0,  [r'previews/EBROCC_xxxx/\2/DATA\4PD_*.jpg',
-                                 r'previews/EBROCC_xxxx/\2/BROWSE\4GB_*.jpg']),
+                            0,  [r'previews/EBROCC_xxxx/\2/DATA\4PD_full.jpg',
+                                 r'previews/EBROCC_xxxx/\2/DATA\4PD_med.jpg',
+                                 r'previews/EBROCC_xxxx/\2/DATA\4PD_small.jpg',
+                                 r'previews/EBROCC_xxxx/\2/DATA\4PD_thumb.jpg',
+                                 r'previews/EBROCC_xxxx/\2/BROWSE\4GB_full.jpg',
+                                 r'previews/EBROCC_xxxx/\2/BROWSE\4GB_med.jpg',
+                                 r'previews/EBROCC_xxxx/\2/BROWSE\4GB_small.jpg',
+                                 r'previews/EBROCC_xxxx/\2/BROWSE\4GB_thumb.jpg',
+                                ]),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
@@ -79,12 +92,12 @@ view_options = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/EBROCC_xxxx.*/EBROCC_..../DATA/\w+/\w+\.(TAB|LBL)',          0, ('Earth-based Occultations',  0, 'ebro_profile', 'Radial Profile',   True)),
-    (r'volumes/EBROCC_xxxx.*/EBROCC_..../GEOMETRY/\w+/\w+\.(TAB|LBL)',      0, ('Earth-based Occultations', 10, 'ebro_geom',    'Geometry Table',   True)),
-    (r'volumes/EBROCC_xxxx.*/EBROCC_..../BROWSE/\w+/\w+PB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 20, 'ebro_preview', 'Preview Plot',     True)),
-    (r'volumes/EBROCC_xxxx.*/EBROCC_..../BROWSE/\w+/\w+GB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 30, 'ebro_diagram', 'Geometry Diagram', False)),
-    (r'volumes/EBROCC_xxxx.*/EBROCC_..../SORCDATA/\w+/\w+_GEOMETRY\..*',    0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',      False)),
-    (r'volumes/EBROCC_xxxx.*/EBROCC_..../SORCDATA/\w+/\w+GRESS\.(OUT|LBL)', 0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',      False)),
+    (r'volumes/.*/DATA/\w+/\w+\.(TAB|LBL)',          0, ('Earth-based Occultations',  0, 'ebro_profile', 'Radial Profile',   True)),
+    (r'volumes/.*/GEOMETRY/\w+/\w+\.(TAB|LBL)',      0, ('Earth-based Occultations', 10, 'ebro_geom',    'Geometry Table',   True)),
+    (r'volumes/.*/BROWSE/\w+/\w+PB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 20, 'ebro_preview', 'Preview Plot',     True)),
+    (r'volumes/.*/BROWSE/\w+/\w+GB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 30, 'ebro_diagram', 'Geometry Diagram', False)),
+    (r'volumes/.*/SORCDATA/\w+/\w+_GEOMETRY\..*',    0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',      False)),
+    (r'volumes/.*/SORCDATA/\w+/\w+GRESS\.(OUT|LBL)', 0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',      False)),
 ])
 
 ####################################################################################################################################
@@ -94,7 +107,6 @@ opus_type = translator.TranslatorByRegex([
 opus_format = translator.TranslatorByRegex([
     (r'.*\_GEOMETRY.DAT',    0, ('ASCII', 'Text')),
     (r'.*\_(E|IN)GRESS.OUT', 0, ('ASCII', 'Text')),
-    (r'.*\.jpeg_small$',     0, ('Binary', 'JPEG')),
 ])
 
 ####################################################################################################################################
@@ -105,14 +117,27 @@ opus_products = translator.TranslatorByRegex([
     (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)/(\w+/\w{3}_[EI]).*', 0,
                     [r'volumes/EBROCC_xxxx*/\2/DATA/\4PD.LBL',
                      r'volumes/EBROCC_xxxx*/\2/DATA/\4PD.TAB',
-                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.*',
-                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4PB.*',
-                     r'volumes/EBROCC_xxxx*/\2/GEOMETRY/\4GD.*',
+                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.LBL',
+                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.PDF',
+                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.PS',
+                     r'volumes/EBROCC_xxxx*/\2/GEOMETRY/\4GD.LBL',
+                     r'volumes/EBROCC_xxxx*/\2/GEOMETRY/\4GD.TAB',
                      r'volumes/EBROCC_xxxx*/\2/SORCDATA/\4*',
-                     r'previews/EBROCC_xxxx/\2/DATA/\4PD_*.jpg',
-                     r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_*.jpg',
-                     r'metadata/EBROCC_xxxx/\2_*index.*',
-                     ]),
+                     r'previews/EBROCC_xxxx/\2/DATA/\4PD_full.jpg',
+                     r'previews/EBROCC_xxxx/\2/DATA/\4PD_med.jpg',
+                     r'previews/EBROCC_xxxx/\2/DATA/\4PD_small.jpg',
+                     r'previews/EBROCC_xxxx/\2/DATA/\4PD_thumb.jpg',
+                     r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_full.jpg',
+                     r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_med.jpg',
+                     r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_small.jpg',
+                     r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_thumb.jpg',
+                     r'metadata/EBROCC_xxxx/\2_index.lbl',
+                     r'metadata/EBROCC_xxxx/\2_index.tab',
+                     r'metadata/EBROCC_xxxx/\2_profile_index.lbl',
+                     r'metadata/EBROCC_xxxx/\2_profile_index.tab',
+                     r'metadata/EBROCC_xxxx/\2_supplemental_index.lbl',
+                     r'metadata/EBROCC_xxxx/\2_supplemental_index.tab',
+                    ]),
 ])
 
 ####################################################################################################################################

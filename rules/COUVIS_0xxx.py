@@ -35,22 +35,32 @@ default_viewables = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
-    (r'volumes/COUVIS_0xxx(.*/COUVIS_0...)/DATA/(\w+/\w+)\..*',
-                            0,  [r'volumes/COUVIS_0xxx\1/DATA/\2.*',
-                                 r'volumes/COUVIS_0xxx\1/CALIB/VERSION_*/\2_CAL_*']),
-    (r'volumes/COUVIS_0xxx(.*/COUVIS_0...)/CALIB/VERSION_./(\w+/\w+)_CAL_.\..*',
-                            0,  [r'volumes/COUVIS_0xxx\1/DATA/\2.*',
-                                 r'volumes/COUVIS_0xxx\1/CALIB/VERSION_*/\2_CAL_*']),
+    (r'volumes/COUVIS_0xxx(.*/COUVIS_0...)/(DATA|CALIB/VERSION_.)/(\w+)/(.*_\d\d)(|_CAL_.)\..*',
+                            0,  [r'volumes/COUVIS_0xxx\1/DATA/\3/\4.DAT',
+                                 r'volumes/COUVIS_0xxx\1/DATA/\3/\4.LBL',
+                                 r'volumes/COUVIS_0xxx\1/CALIB/VERSION_3/\3/\4_CAL_3.DAT',
+                                 r'volumes/COUVIS_0xxx\1/CALIB/VERSION_3/\3/\4_CAL_3.LBL',
+                                 r'volumes/COUVIS_0xxx\1/CALIB/VERSION_4/\3/\4_CAL_4.DAT',
+                                 r'volumes/COUVIS_0xxx\1/CALIB/VERSION_4/\3/\4_CAL_4.LBL',
+                                 r'volumes/COUVIS_0xxx\1/CALIB/VERSION_5/\3/\4_CAL_5.DAT',
+                                 r'volumes/COUVIS_0xxx\1/CALIB/VERSION_5/\3/\4_CAL_5.LBL',
+                                ]),
     (r'previews/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0...)/DATA(|/\w+)',
-                            0,   r'volumes/COUVIS_0xxx\1//DATA\2'),
-    (r'previews/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+/\w+)_(full|med|small|thumb)\..*',
-                            0,  r'volumes/COUVIS_0xxx/\2.*'),
+                            0,   r'volumes/COUVIS_0xxx//DATA\2'),
+    (r'previews/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+/\w+)_[a-z]+\.png',
+                            0,  [r'volumes/COUVIS_0xxx/\2.DAT',
+                                 r'volumes/COUVIS_0xxx/\2.LBL',
+                                ]),
     (r'.*/COUVIS_0999.*',   0,  r'volumes/COUVIS_0xxx'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
     (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+/\w+)\..*',
-                            0,  r'previews/COUVIS_0xxx/\2_*'),
+                            0,  [r'previews/COUVIS_0xxx/\2_full.png',
+                                 r'previews/COUVIS_0xxx/\2_med.png',
+                                 r'previews/COUVIS_0xxx/\2_small.png',
+                                 r'previews/COUVIS_0xxx/\2_thumb.png',
+                                ]),
     (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+)',
                             0,  r'previews/COUVIS_0xxx/\2'),
     (r'.*/COUVIS_0999.*',   0,  r'previews/COUVIS_0xxx'),
@@ -110,7 +120,7 @@ opus_type = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_format = translator.TranslatorByRegex([
-    (r'.*\.DAT$', 0, ('Binary', 'Unformatted')),
+    (r'.*\.DAT', 0, ('Binary', 'Unformatted')),
 ])
 
 ####################################################################################################################################
@@ -119,13 +129,29 @@ opus_format = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0...)/DATA/(\w+/\w+[0-9])(|_CAL.*|_[a-z]+)\..*', 0,
-                [r'volumes/COUVIS_0xxx*/\2/DATA/\3.DAT',
-                 r'volumes/COUVIS_0xxx*/\2/DATA/\3.LBL',
-                 r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_*/\3_CAL_*',
-                 r'previews/COUVIS_0xxx/\2/DATA/\3_*.png',
-                 r'metadata/COUVIS_0xxx/\2/\2_*summary.*',
-                 r'metadata/COUVIS_0xxx/\2/\2_*index.*',
-                 ]),
+                    [r'volumes/COUVIS_0xxx*/\2/DATA/\3.DAT',
+                     r'volumes/COUVIS_0xxx*/\2/DATA/\3.LBL',
+                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_3/\4_CAL_3.DAT',
+                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_3/\4_CAL_3.LBL',
+                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_4/\4_CAL_4.DAT',
+                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_4/\4_CAL_4.LBL',
+                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_5/\4_CAL_5.DAT',
+                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_5/\4_CAL_5.LBL',
+                     r'previews/COUVIS_0xxx/\2/DATA/\3_full.png',
+                     r'previews/COUVIS_0xxx/\2/DATA/\3_med.png',
+                     r'previews/COUVIS_0xxx/\2/DATA/\3_small.png',
+                     r'previews/COUVIS_0xxx/\2/DATA/\3_thumb.png',
+                     r'metadata/COUVIS_0xxx/\2/\2_moon_summary.tab',
+                     r'metadata/COUVIS_0xxx/\2/\2_moon_summary.lbl',
+                     r'metadata/COUVIS_0xxx/\2/\2_ring_summary.tab',
+                     r'metadata/COUVIS_0xxx/\2/\2_ring_summary.lbl',
+                     r'metadata/COUVIS_0xxx/\2/\2_saturn_summary.tab',
+                     r'metadata/COUVIS_0xxx/\2/\2_saturn_summary.lbl',
+                     r'metadata/COUVIS_0xxx/\2/\2_index.tab',
+                     r'metadata/COUVIS_0xxx/\2/\2_index.lbl',
+                     r'metadata/COUVIS_0xxx/\2/\2_supplemental_index.tab',
+                     r'metadata/COUVIS_0xxx/\2/\2_supplemental_index.lbl',
+                    ]),
 ])
 
 ####################################################################################################################################

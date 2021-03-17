@@ -37,7 +37,13 @@ split_rules = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'volumes/(.*/DATA/VISIT_..)/([IJUON]\w{8})(|_\w+)\.(.*)', 0, r'previews/\1/\2_*.jpg'),
+    (r'volumes/(.*/DATA/VISIT_..)/([IJUON]\w{8})(|_\w+)\.(.*)', 0,
+        (r'previews/\1/\2_full.jpg',
+         r'previews/\1/\2_med.jpg',
+         r'previews/\1/\2_small.jpg',
+         r'previews/\1/\2_thumb.jpg',
+        ),
+    ),
 ])
 
 ####################################################################################################################################
@@ -52,7 +58,10 @@ associations_to_volumes = translator.TranslatorByRegex([
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_../\w{9}).*',   0, r'previews/\1/\3_*.jpg'),
+    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_../\w{9}).*',   0, [r'previews/\1/\3_full.jpg',
+                                                                        r'previews/\1/\3_med.jpg',
+                                                                        r'previews/\1/\3_small.jpg',
+                                                                        r'previews/\1/\3_thumb.jpg']),
     (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_..)',           0, r'previews/\1/\3'),
     (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA)',                    0, r'previews/\1/\3'),
     (r'.*/(HST.)9_9999.*',                                          0, r'previews/\1x_xxxx'),
@@ -60,8 +69,7 @@ associations_to_previews = translator.TranslatorByRegex([
 
 associations_to_metadata = translator.TranslatorByRegex([
     (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA/VISIT_../(\w{9}).*', 0, [r'metadata/\1/\3/\3_index.tab/\4',
-                                                                        r'metadata/\1/\3/\3_hstfiles.tab/\4',
-                                                                        r'metadata/\1/\3']),
+                                                                        r'metadata/\1/\3/\3_hstfiles.tab/\4']),
     (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA/VISIT_..',           0,  r'metadata/\1/\3'),
     (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA',                    0,  r'metadata/\1/\3'),
 ])
@@ -109,12 +117,15 @@ opus_type = translator.TranslatorByRegex([
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(HST.x_xxxx)(|_v.+)/(HST.._....)/(DATA/VISIT_../.{9}).*', 0,
                     [r'volumes/\1*/\3/\4*',
-                     r'previews/\1/\3/\4_*.jpg',
+                     r'previews/\1/\3/\4_full.jpg',
+                     r'previews/\1/\3/\4_med.jpg',
+                     r'previews/\1/\3/\4_small.jpg',
+                     r'previews/\1/\3/\4_thumb.jpg',
                      r'metadata/\1/\3/\3_index.lbl',
                      r'metadata/\1/\3/\3_index.tab',
                      r'metadata/\1/\3/\3_hstfiles.lbl',
                      r'metadata/\1/\3/\3_hstfiles.tab',
-                     ])
+                    ])
 ])
 
 ####################################################################################################################################

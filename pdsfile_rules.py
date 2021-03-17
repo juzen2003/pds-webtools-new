@@ -55,9 +55,9 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
 
     # Volume types
     (r'volumes',                0, ('<em>PDS volumes</em> in Viewmaster', 'TOPFILE')),
-    (r'volumes/[^/]+$',         0, (GENERIC_VOLSET_DESC, 'VOLDIR')),
-    (r'volumes/[^/]+$',         0, (GENERIC_VOLSET_DESC, 'VOLDIR')),
-    (r'volumes/[^/]+/[^/]+$',   0, (GENERIC_VOLUME_DESC, 'VOLUME')),
+    (r'volumes/[^/]+',          0, (GENERIC_VOLSET_DESC, 'VOLDIR')),
+    (r'volumes/[^/]+',          0, (GENERIC_VOLSET_DESC, 'VOLDIR')),
+    (r'volumes/[^/]+/[^/]+',    0, (GENERIC_VOLUME_DESC, 'VOLUME')),
 
     (r'calibrated',       0, ('<em>Calibrated products</em> created by the RMS Node',     'TOPFILE')),
     (r'diagrams',         0, ('<em>Observation diagrams</em> created by the RMS Node',    'TOPFILE')),
@@ -98,13 +98,19 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
     (r'metadata/.*_pluto_summary\.tab',   0, ('Index of observed geometry on Pluto',      'INDEX')),
     (r'metadata/.*_charon_summary\.tab',  0, ('Index of observed geometry on Charon',     'INDEX')),
 
-    # Previews and diagrams
-    (r'(previews|diagrams)/.*_thumb\.(jpg|png)', 0, ('Thumbnail preview image',       'BROWSE')),
-    (r'(previews|diagrams)/.*_small\.(jpg|png)', 0, ('Small preview image',           'BROWSE')),
-    (r'(previews|diagrams)/.*_med\.(jpg|png)',   0, ('Medium preview image',          'BROWSE')),
-    (r'(previews|diagrams)/.*_full\.(jpg|png)',  0, ('Full-resolution preview image', 'BROWSE')),
-    (r'previews/.*',                             0, ('Preview images',                'BROWDIR')),
-    (r'diagrams/.*',                             0, ('Observation diagrams',          'BROWDIR')),
+    # Previews
+    (r'previews/.*_thumb\.(jpg|png)',     0, ('Thumbnail preview image',        'BROWSE')),
+    (r'previews/.*_small\.(jpg|png)',     0, ('Small preview image',            'BROWSE')),
+    (r'previews/.*_med\.(jpg|png)',       0, ('Medium preview image',           'BROWSE')),
+    (r'previews/.*_full\.(jpg|png)',      0, ('Full-resolution preview image',  'BROWSE')),
+    (r'previews/.*',                      0, ('Preview images',                 'BROWDIR')),
+
+    # Diagrams 
+    (r'diagrams/.*_thumb\.(jpg|png)',     0, ('Thumbnail observation diagram',  'DIAGRAM')),
+    (r'diagrams/.*_small\.(jpg|png)',     0, ('Small observation diagram',      'DIAGRAM')),
+    (r'diagrams/.*_med\.(jpg|png)',       0, ('Medium observation diagram',     'DIAGRAM')),
+    (r'diagrams/.*_full\.(jpg|png)',      0, ('Large observation diagram',      'DIAGRAM')),
+    (r'diagrams/.*',                      0, ('Observation diagrams',           'DIAGDIR')),
 
     # Standard information files
     (r'.*/aareadme\.(txt|vms)',         re.I, ('Read Me First!',                'INFO'    )),
@@ -335,11 +341,11 @@ SORT_KEY = translator.TranslatorByRegex([
 SPLIT_RULES = translator.TranslatorByRegex([
 
     # Preview files (before and after SORT_RULES were applied)
-    (r'(.*)_(thumb|small|med|full)\.(jpg|png)$',     0, (r'\1', r'_\2', r'.\3')),
-    (r'(.*)_(1thumb|2small|3med|9full)\.(jpg|png)$', 0, (r'\1', r'_\2', r'.\3')),
+    (r'(.*)_(thumb|small|med|full)\.(jpg|png)',     0, (r'\1', r'_\2', r'.\3')),
+    (r'(.*)_(1thumb|2small|3med|9full)\.(jpg|png)', 0, (r'\1', r'_\2', r'.\3')),
 
     # Calibrated images
-    (r'(.*)(_CALIB)\.(IMG|LBL)$', re.I, (r'\1', r'\2', r'.\3')),
+    (r'(.*)(_CALIB)\.(IMG|LBL)', re.I, (r'\1', r'\2', r'.\3')),
 
     # If all else fails, split at last period
     (r'(.*)(\..*)', 0, (r'\1', '', r'\2')),
@@ -362,16 +368,16 @@ SPLIT_RULES = translator.TranslatorByRegex([
 OPUS_TYPE = translator.TranslatorByRegex([
 
     # Previews
-    (r'previews/.*\_thumb\..*$', 0, ('browse', 10, 'browse_thumb',  'Browse Image (thumbnail)', False)),
-    (r'previews/.*\_small\..*$', 0, ('browse', 20, 'browse_small',  'Browse Image (small)',     False)),
-    (r'previews/.*\_med\..*$',   0, ('browse', 30, 'browse_medium', 'Browse Image (medium)',    False)),
-    (r'previews/.*\_full\..*$',  0, ('browse', 40, 'browse_full',   'Browse Image (full)',      True)),
+    (r'previews/.*\_thumb\..*', 0, ('browse', 10, 'browse_thumb',  'Browse Image (thumbnail)', False)),
+    (r'previews/.*\_small\..*', 0, ('browse', 20, 'browse_small',  'Browse Image (small)',     False)),
+    (r'previews/.*\_med\..*',   0, ('browse', 30, 'browse_medium', 'Browse Image (medium)',    False)),
+    (r'previews/.*\_full\..*',  0, ('browse', 40, 'browse_full',   'Browse Image (full)',      True)),
 
     # Diagrams
-    (r'diagrams/.*\_thumb\..*$', 0, ('diagram', 10, 'diagram_thumb',  'Browse Diagram (thumbnail)', False)),
-    (r'diagrams/.*\_small\..*$', 0, ('diagram', 20, 'diagram_small',  'Browse Diagram (small)',     False)),
-    (r'diagrams/.*\_med\..*$',   0, ('diagram', 30, 'diagram_medium', 'Browse Diagram (medium)',    False)),
-    (r'diagrams/.*\_full\..*$',  0, ('diagram', 40, 'diagram_full',   'Browse Diagram (full)',      True)),
+    (r'diagrams/.*\_thumb\..*', 0, ('diagram', 10, 'diagram_thumb',  'Browse Diagram (thumbnail)', False)),
+    (r'diagrams/.*\_small\..*', 0, ('diagram', 20, 'diagram_small',  'Browse Diagram (small)',     False)),
+    (r'diagrams/.*\_med\..*',   0, ('diagram', 30, 'diagram_medium', 'Browse Diagram (medium)',    False)),
+    (r'diagrams/.*\_full\..*',  0, ('diagram', 40, 'diagram_full',   'Browse Diagram (full)',      True)),
 
     # Metadata
     (r'metadata/.*_inventory\..*',             0, ('metadata', 10, 'inventory',       'Target Body Inventory', False)),

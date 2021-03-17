@@ -12,9 +12,9 @@ import re
 
 description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'volumes/.*/data',             re.I, ('Images grouped by SC clock',        'IMAGEDIR')),
-    (r'volumes/.*/data/C[0-9]+X+',   re.I, ('Images grouped by SC clock',        'IMAGEDIR')),
+    (r'volumes/.*/data/C\d+X+',      re.I, ('Images grouped by SC clock',        'IMAGEDIR')),
     (r'volumes/.*/browse',           re.I, ('Browse images grouped by SC clock', 'IMAGEDIR')),
-    (r'volumes/.*/browse/C[0-9]+X+', re.I, ('Browse images grouped by SC clock', 'IMAGEDIR')),
+    (r'volumes/.*/browse/C\d+X+',    re.I, ('Browse images grouped by SC clock', 'IMAGEDIR')),
     (r'volumes/.*_raw\.img',         re.I, ('Raw image, VICAR',                  'IMAGE'   )),
     (r'volumes/.*_cleaned\.img',     re.I, ('Cleaned raw image, VICAR',          'IMAGE'   )),
     (r'volumes/.*_calib\.img',       re.I, ('Calibrated image, VICAR',           'IMAGE'   )),
@@ -54,7 +54,7 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 split_rules = translator.TranslatorByRegex([
-    (r'(.*)_(RAW|CLEANED|CALIB|GEOMED|RESLOC|GEOMA)\.(.*)$', 0, (r'\1', r'_\2', r'.\3')),
+    (r'(.*)_(RAW|CLEANED|CALIB|GEOMED|RESLOC|GEOMA)\.(.*)', 0, (r'\1', r'_\2', r'.\3')),
 ])
 
 ####################################################################################################################################
@@ -62,15 +62,40 @@ split_rules = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
-    (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C.....XX/C[0-9]{7})_\w+\..*',
-                                                                0,  [r'volumes/\1/DATA/\3_*',
-                                                                     r'volumes/\1/BROWSE/\3_*']),
+    (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C\d{5}XX/C\d{7})_\w+\..*', 0,
+                    [r'volumes/\1/DATA/\3_CALIB.IMG',
+                     r'volumes/\1/DATA/\3_CALIB.LBL',
+                     r'volumes/\1/DATA/\3_CLEANED.IMG',
+                     r'volumes/\1/DATA/\3_CLEANED.LBL',
+                     r'volumes/\1/DATA/\3_GEOMED.IMG',
+                     r'volumes/\1/DATA/\3_GEOMED.LBL',
+                     r'volumes/\1/DATA/\3_RAW.IMG',
+                     r'volumes/\1/DATA/\3_RAW.LBL',
+                     r'volumes/\1/DATA/\3_GEOMA.DAT',
+                     r'volumes/\1/DATA/\3_GEOMA.TAB',
+                     r'volumes/\1/DATA/\3_GEOMA.LBL',
+                     r'volumes/\1/DATA/\3_RESLOC.DAT',
+                     r'volumes/\1/DATA/\3_RESLOC.TAB',
+                     r'volumes/\1/DATA/\3_RESLOC.LBL',
+                     r'volumes/\1/BROWSE/\3_CALIB.JPG',
+                     r'volumes/\1/BROWSE/\3_CALIB.LBL',
+                     r'volumes/\1/BROWSE/\3_CLEANED.JPG',
+                     r'volumes/\1/BROWSE/\3_CLEANED.LBL',
+                     r'volumes/\1/BROWSE/\3_GEOMED.JPG',
+                     r'volumes/\1/BROWSE/\3_GEOMED.LBL',
+                     r'volumes/\1/BROWSE/\3_RAW.JPG',
+                     r'volumes/\1/BROWSE/\3_RAW.LBL',
+                    ]),
 
-    (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C.....XX)',    0, [r'volumes/\1/DATA/\3',
-                                                                    r'volumes/\1/BROWSE/\3']),
-    (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)$',              0, [r'volumes/\1/DATA',
-                                                                    r'volumes/\1/BROWSE']),
-    (r'.*/(VGISS_.)999.*',                                      0,  r'volumes/\1xxx'),
+    (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C\d{5}XX)', 0,
+                    [r'volumes/\1/DATA/\3',
+                     r'volumes/\1/BROWSE/\3'
+                    ]),
+    (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)', 0,
+                    [r'volumes/\1/DATA',
+                     r'volumes/\1/BROWSE'
+                    ]),
+    (r'.*/(VGISS_.)999.*', 0, r'volumes/\1xxx'),
 
 # These associations are very slow to execute, not important.
 #     # VG_0006 to VG_0008, selected Jupiter
@@ -251,27 +276,31 @@ associations_to_volumes = translator.TranslatorByRegex([
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
-    (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C.....XX/C[0-9]{7})_\w+\..*',
-                                                                0, r'previews/\1/DATA/\3_*'),
-    (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C.....XX)$',   0, r'previews/\1/DATA/\3'),
-    (r'.*/(VGISS_.xxx/VGISS_....)/BROWSE$',                     0, r'previews/\1/DATA'),
+    (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C\d{5}XX/C\d{7})_\w+\..*', 0,
+                    [r'previews/\1/DATA/\3_full.jpg',
+                     r'previews/\1/DATA/\3_med.jpg',
+                     r'previews/\1/DATA/\3_small.jpg',
+                     r'previews/\1/DATA/\3_thumb.jpg',
+                    ]),
+    (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C\d{5}XX)',    0, r'previews/\1/DATA/\3'),
+    (r'.*/(VGISS_.xxx/VGISS_....)/BROWSE',                      0, r'previews/\1/DATA'),
     (r'.*/(VGISS_.)999.*',                                      0, r'previews/\1xxx'),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)/(C.....XX)/(C[0-9]{7})_\w+\..*',
-                                                                0, [r'metadata/\1/\2/\2_index.tab/\5',
-                                                                    r'metadata/\1/\2/\2_raw_image_index.tab/\5',
-                                                                    r'metadata/\1/\2/\2_supplemental_index.tab/\5',
-                                                                    r'metadata/\1/\2/\2_ring_summary.tab/\5',
-                                                                    r'metadata/\1/\2/\2_moon_summary.tab/\5',
-                                                                    r'metadata/\1/\2/\2_jupiter_summary.tab/\5',
-                                                                    r'metadata/\1/\2/\2_saturn_summary.tab/\5',
-                                                                    r'metadata/\1/\2/\2_uranus_summary.tab/\5',
-                                                                    r'metadata/\1/\2/\2_neptune_summary.tab/\5',
-                                                                    r'metadata/\1/\2']),
-    (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)/C.....XX$',   0,  r'metadata/\1/\2'),
-    (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)$',            0,  r'metadata/\1/\2'),
+    (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)/(C\d{5}XX)/(C\d{7})_\w+\..*', 0,
+                    [r'metadata/\1/\2/\2_index.tab/\5',
+                     r'metadata/\1/\2/\2_raw_image_index.tab/\5',
+                     r'metadata/\1/\2/\2_supplemental_index.tab/\5',
+                     r'metadata/\1/\2/\2_ring_summary.tab/\5',
+                     r'metadata/\1/\2/\2_moon_summary.tab/\5',
+                     r'metadata/\1/\2/\2_jupiter_summary.tab/\5',
+                     r'metadata/\1/\2/\2_saturn_summary.tab/\5',
+                     r'metadata/\1/\2/\2_uranus_summary.tab/\5',
+                     r'metadata/\1/\2/\2_neptune_summary.tab/\5',
+                    ]),
+    (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)/C\d{5}XX',    0,  r'metadata/\1/\2'),
+    (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)',             0,  r'metadata/\1/\2'),
 ])
 
 ####################################################################################################################################
@@ -306,12 +335,16 @@ default_viewables = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/C[0-9]{7}_RAW\..*$',     0, ('Voyager ISS',  0, 'vgiss_raw',     'Raw Image',                     True)),
-    (r'volumes/.*/C[0-9]{7}_CLEANED\..*$', 0, ('Voyager ISS', 10, 'vgiss_cleaned', 'Cleaned Image',                 True)),
-    (r'volumes/.*/C[0-9]{7}_CALIB\..*$',   0, ('Voyager ISS', 20, 'vgiss_calib',   'Calibrated Image',              True)),
-    (r'volumes/.*/C[0-9]{7}_GEOMED\..*$',  0, ('Voyager ISS', 30, 'vgiss_geomed',  'Geometrically Corrected Image', True)),
-    (r'volumes/.*/C[0-9]{7}_RESLOC\..*$',  0, ('Voyager ISS', 40, 'vgiss_resloc',  'Reseau Table',                  True)),
-    (r'volumes/.*/C[0-9]{7}_GEOMA\..*$',   0, ('Voyager ISS', 50, 'vgiss_geoma',   'Geometric Tiepoint Table',      True)),
+    (r'volumes/.*/DATA/.*/C\d{7}_RAW\..*',       0, ('Voyager ISS',  0, 'vgiss_raw',     'Raw Image',                     True)),
+    (r'volumes/.*/DATA/.*/C\d{7}_CLEANED\..*',   0, ('Voyager ISS', 10, 'vgiss_cleaned', 'Cleaned Image',                 True)),
+    (r'volumes/.*/DATA/.*/C\d{7}_CALIB\..*',     0, ('Voyager ISS', 20, 'vgiss_calib',   'Calibrated Image',              True)),
+    (r'volumes/.*/DATA/.*/C\d{7}_GEOMED\..*',    0, ('Voyager ISS', 30, 'vgiss_geomed',  'Geometrically Corrected Image', True)),
+    (r'volumes/.*/DATA/.*/C\d{7}_RESLOC\..*',    0, ('Voyager ISS', 40, 'vgiss_resloc',  'Reseau Table',                  True)),
+    (r'volumes/.*/DATA/.*/C\d{7}_GEOMA\..*',     0, ('Voyager ISS', 50, 'vgiss_geoma',   'Geometric Tiepoint Table',      True)),
+    (r'volumes/.*/BROWSE/.*/C\d{7}_RAW\..*',     0, ('Voyager ISS', 60, 'vgiss_raw_browse',     'Extra Preview (raw)',                     False)),
+    (r'volumes/.*/BROWSE/.*/C\d{7}_CLEANED\..*', 0, ('Voyager ISS', 70, 'vgiss_cleaned_browse', 'Extra Preview (cleaned)',                 False)),
+    (r'volumes/.*/BROWSE/.*/C\d{7}_CALIB\..*',   0, ('Voyager ISS', 80, 'vgiss_calib_browse',   'Extra Preview (calibrated)',              False)),
+    (r'volumes/.*/BROWSE/.*/C\d{7}_GEOMED\..*',  0, ('Voyager ISS', 90, 'vgiss_geomed_browse',  'Extra Preview (geometrically corrected)', False)),
 ])
 
 ####################################################################################################################################
@@ -319,24 +352,58 @@ opus_type = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_format = translator.TranslatorByRegex([
-    (r'.*\.IMG$', 0, ('Binary', 'VICAR')),
-    (r'.*\.DAT$', 0, ('Binary', 'VICAR')),
-    (r'.*\.IMQ$', 0, ('Binary', 'Compressed EDR')),
-    (r'.*\.IBQ$', 0, ('Binary', 'PDS1 Attached Label')),
+    (r'.*\.IMG', 0, ('Binary', 'VICAR')),
+    (r'.*\.DAT', 0, ('Binary', 'VICAR')),
+    (r'.*\.IMQ', 0, ('Binary', 'Compressed EDR')),
+    (r'.*\.IBQ', 0, ('Binary', 'PDS1 Attached Label')),
 ])
 
 ####################################################################################################################################
 # OPUS_PRODUCTS
 ####################################################################################################################################
 
+# Note: These patterns do not currently support version numbers in the volset directory name.
 opus_products = translator.TranslatorByRegex([
-    (r'.*volumes/(VGISS_[5-8]xxx)/(VGISS_[5-8]...)/(DATA/.*)_[A-Z]+\.(IMG|DAT|LBL|TAB)',
-                0, [r'volumes/\1/\2/\3_*',
-                    r'previews/\1/\2/\3_*',
-                    r'metadata/\1/\2/\2_*summary.*',
-                    r'metadata/\1/\2/\2_inventory.*',
-                    r'metadata/\1/\2/\2_*index.*'
-                    ])
+    (r'.*volumes/(VGISS_[5-8]xxx/VGISS_[5-8]...)/DATA/(C\d{5}XX/C\d{7})_[A-Z]+\.(IMG|DAT|LBL|TAB)', 0,
+                    [r'volumes/\1/DATA/\2_CALIB.IMG',
+                     r'volumes/\1/DATA/\2_CALIB.LBL',
+                     r'volumes/\1/DATA/\2_CLEANED.IMG',
+                     r'volumes/\1/DATA/\2_CLEANED.LBL',
+                     r'volumes/\1/DATA/\2_GEOMED.IMG',
+                     r'volumes/\1/DATA/\2_GEOMED.LBL',
+                     r'volumes/\1/DATA/\2_RAW.IMG',
+                     r'volumes/\1/DATA/\2_RAW.LBL',
+                     r'volumes/\1/DATA/\2_GEOMA.DAT',
+                     r'volumes/\1/DATA/\2_GEOMA.TAB',
+                     r'volumes/\1/DATA/\2_GEOMA.LBL',
+                     r'volumes/\1/DATA/\2_RESLOC.DAT',
+                     r'volumes/\1/DATA/\2_RESLOC.TAB',
+                     r'volumes/\1/DATA/\2_RESLOC.LBL',
+                     r'volumes/\1/BROWSE/\2_CALIB.JPG',
+                     r'volumes/\1/BROWSE/\2_CALIB.LBL',
+                     r'volumes/\1/BROWSE/\2_CLEANED.JPG',
+                     r'volumes/\1/BROWSE/\2_CLEANED.LBL',
+                     r'volumes/\1/BROWSE/\2_GEOMED.JPG',
+                     r'volumes/\1/BROWSE/\2_GEOMED.LBL',
+                     r'volumes/\1/BROWSE/\2_RAW.JPG',
+                     r'volumes/\1/BROWSE/\2_RAW.LBL',
+                     r'previews/\1/DATA/\2_full.jpg',
+                     r'previews/\1/DATA/\2_med.jpg',
+                     r'previews/\1/DATA/\2_small.jpg',
+                     r'previews/\1/DATA/\2_thumb.jpg',
+                     r'metadata/\1/\2/\2_moon_summary.tab',
+                     r'metadata/\1/\2/\2_moon_summary.lbl',
+                     r'metadata/\1/\2/\2_ring_summary.tab',
+                     r'metadata/\1/\2/\2_ring_summary.lbl',
+                     r'metadata/\1/\2/\2_saturn_summary.tab',
+                     r'metadata/\1/\2/\2_saturn_summary.lbl',
+                     r'metadata/\1/\2/\2_jupiter_summary.tab',
+                     r'metadata/\1/\2/\2_jupiter_summary.lbl',
+                     r'metadata/\1/\2/\2_inventory.csv',
+                     r'metadata/\1/\2/\2_inventory.lbl',
+                     r'metadata/\1/\2/\2_index.tab',
+                     r'metadata/\1/\2/\2_index.lbl',
+                    ]),
 ])
 
 ####################################################################################################################################
@@ -344,10 +411,10 @@ opus_products = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_id = translator.TranslatorByRegex([
-    (r'.*/VGISS_5([12])../DATA/C.....XX/C([0-9]{7})_.*', 0, r'vg-iss-\1-j-c\2'),
-    (r'.*/VGISS_6([12])../DATA/C.....XX/C([0-9]{7})_.*', 0, r'vg-iss-\1-s-c\2'),
-    (r'.*/VGISS_7.../DATA/C.....XX/C([0-9]{7})_.*',      0, r'vg-iss-2-u-c\1'),
-    (r'.*/VGISS_8.../DATA/C.....XX/C([0-9]{7})_.*',      0, r'vg-iss-2-n-c\1'),
+    (r'.*/VGISS_5([12])../DATA/C\d{5}XX/C(\d{7})_.*', 0, r'vg-iss-\1-j-c\2'),
+    (r'.*/VGISS_6([12])../DATA/C\d{5}XX/C(\d{7})_.*', 0, r'vg-iss-\1-s-c\2'),
+    (r'.*/VGISS_7.../DATA/C\d{5}XX/C(\d{7})_.*',      0, r'vg-iss-2-u-c\1'),
+    (r'.*/VGISS_8.../DATA/C\d{5}XX/C(\d{7})_.*',      0, r'vg-iss-2-n-c\1'),
 ])
 
 ####################################################################################################################################

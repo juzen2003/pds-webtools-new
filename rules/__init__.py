@@ -9,6 +9,7 @@ __all__ = [
     "COCIRS_xxxx",
     "COISS_xxxx" ,
     "CORSS_8xxx" ,
+    "COSP_8xxx"  ,
     "COUVIS_0xxx",
     "COUVIS_8xxx",
     "COVIMS_0xxx",
@@ -26,3 +27,46 @@ __all__ = [
     "VGIRIS_xxxx",
     "VGISS_xxxx" ,
 ]
+
+# Methods used for rule debugging
+import pdsfile
+import translator
+import re
+
+def translate_first(trans, path):
+    """Logical paths of "first" files found using given translator on path."""
+
+    pattern = trans.first(path)
+    if not pattern: return ''
+
+    pattern = pdsfile.abspath_for_logical_path(pattern)
+    return pdsfile.PdsFile.glob_glob(pattern)
+
+def translate_all(trans, path):
+    """Logical paths of all files found using given translator on path."""
+
+    patterns = trans.all(path)
+    patterns = [p for p in patterns if p]       # skip empty translations
+    patterns = pdsfile.PdsFile.abspaths_for_logicals(patterns)
+
+    abspaths = []
+    for pattern in patterns:
+        abspaths += pdsfile.PdsFile.glob_glob(pattern)
+
+    return abspaths
+
+def unmatched_patterns(trans, path):
+    """List all translated patterns that did not find a matching path in the
+    file system."""
+
+    patterns = trans.all(path)
+    patterns = [p for p in patterns if p]       # skip empty translations
+    patterns = pdsfile.PdsFile.abspaths_for_logicals(patterns)
+
+    unmatched = []
+    for pattern in patterns:
+        abspaths = pdsfile.PdsFile.glob_glob(pattern)
+        if not abspaths:
+            unmatched.append(pattern)
+
+    return unmatched

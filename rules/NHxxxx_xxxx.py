@@ -107,36 +107,48 @@ default_viewables = translator.TranslatorByRegex([
 associations_to_volumes = translator.TranslatorByRegex([
 
     # This handles the special case that file names in v1 of NHJUMV_1001 are upper case
-    (r'.*/NHxxMV_xxxx_v1/NHJUMV_[12]001/DATA/(\w+/[A-Z0-9]{3}_[0-9]{10}_0X...)_ENG(_\d+)\.*',
-                            re.I,  [r'volumes/NHxxMV_xxxx_v1/NHJUMV_1001/DATA/#UPPER#\1_ENG\2.FIT',
-                                    r'volumes/NHxxMV_xxxx_v1/NHJUMV_1001/DATA/#UPPER#\1_ENG\2.LBL',
-                                    r'volumes/NHxxMV_xxxx_v1/NHJUMV_2001/data/#LOWER#\1_sci\2.fit',
-                                    r'volumes/NHxxMV_xxxx_v1/NHJUMV_2001/data/#LOWER#\1_sci\2.lbl']),
+    (r'.*/NHxxMV_xxxx_v1/NHJUMV_[12]001/DATA/(\w+/[A-Z0-9]{3}_[0-9]{10}_0X...)_ENG(_\d+)\.*', re.I,
+                    [r'volumes/NHxxMV_xxxx_v1/NHJUMV_1001/DATA/#UPPER#\1_ENG\2.FIT',
+                     r'volumes/NHxxMV_xxxx_v1/NHJUMV_1001/DATA/#UPPER#\1_ENG\2.LBL',
+                     r'volumes/NHxxMV_xxxx_v1/NHJUMV_2001/data/#LOWER#\1_sci\2.fit',
+                     r'volumes/NHxxMV_xxxx_v1/NHJUMV_2001/data/#LOWER#\1_sci\2.lbl',
+                    ]),
 
-    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data/(\w+/[a-z0-9]{3}_[0-9]{10})_0x..*',
-                            0,  [r'volumes/\1\2/\3_1\4/data/\5*',
-                                 r'volumes/\1\2/\3_2\4/data/\5*']),
-    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data(|/\w+)',
-                            0,  [r'volumes/\1\2/\3_1\4/data\5',
-                                 r'volumes/\1\2/\3_2\4/data\5']),
+    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data/(\w+/[a-z0-9]{3}_[0-9]{10})_0x..*', 0,
+                    [r'volumes/\1\2/\3_1\4/data/\5*',
+                     r'volumes/\1\2/\3_2\4/data/\5*',
+                    ]),
+    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data(|/\w+)', 0,
+                    [r'volumes/\1\2/\3_1\4/data\5',
+                     r'volumes/\1\2/\3_2\4/data\5',
+                    ]),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
-    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH...._[12]...)/data/(\w+/[a-z0-9]{3}_[0-9]{10}_0x...)_(eng|sci).*',
-                            re.I,  r'previews/\1/\3/data/#LOWER#\4_\5_*'),
-    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data(|/\w+)',
-                            re.I,  r'previews/\1/\3_1\4/data\5'),
+    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data/(\w+/[a-z0-9]{3}_[0-9]{10}_0x...)_(eng|sci).*', re.I,
+                    [r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_full.jpg',
+                     r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_med.jpg',
+                     r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_small.jpg',
+                     r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_thumb.jpg',
+                     r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_full.jpg',
+                     r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_med.jpg',
+                     r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_small.jpg',
+                     r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_thumb.jpg',
+                    ]),
+    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data(|/\w+)', re.I,
+                    r'previews/\1/\3_1\4/data\5'),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH...._[12]...)/data/\w+/([a-z0-9]{3}_[0-9]{10}_0x...)_(eng|sci).*',
-                            re.I,   [r'metadata/\1/\3/\3_index.tab/#LOWER#\4_\5',
-                                     r'metadata/\1/\3/\3_supplemental_index.tab/#LOWER#\4_\5',
-                                     r'metadata/\1/\3/\3_moon_summary.tab/#LOWER#\4_\5',
-                                     r'metadata/\1/\3/\3_ring_summary.tab/#LOWER#\4_\5',
-                                     r'metadata/\1/\3/\3_charon_summary.tab/#LOWER#\4_\5',
-                                     r'metadata/\1/\3/\3_pluto_summary.tab/#LOWER#\4_\5',
-                                     r'metadata/\1/\3/\3_jupiter_summary.tab/#LOWER#\4_\5']),
+    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH...._[12]...)/data/\w+/([a-z0-9]{3}_[0-9]{10}_0x...)_(eng|sci).*', re.I,
+                    [r'metadata/\1/\3/\3_index.tab/#LOWER#\4_\5',
+                     r'metadata/\1/\3/\3_supplemental_index.tab/#LOWER#\4_\5',
+                     r'metadata/\1/\3/\3_moon_summary.tab/#LOWER#\4_\5',
+                     r'metadata/\1/\3/\3_ring_summary.tab/#LOWER#\4_\5',
+                     r'metadata/\1/\3/\3_charon_summary.tab/#LOWER#\4_\5',
+                     r'metadata/\1/\3/\3_pluto_summary.tab/#LOWER#\4_\5',
+                     r'metadata/\1/\3/\3_jupiter_summary.tab/#LOWER#\4_\5',
+                    ]),
 ])
 
 ####################################################################################################################################
@@ -176,10 +188,13 @@ sort_key = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/NH..LO_1.../data/.*\.(fit|lbl)', re.I, ('New Horizons LORRI',   0, 'nh_lorri_raw'  , 'Raw Image',        True)),
-    (r'volumes/.*/NH..LO_2.../data/.*\.(fit|lbl)', re.I, ('New Horizons LORRI', 100, 'nh_lorri_calib', 'Calibrated Image', True)),
-    (r'volumes/.*/NH..MV_1.../data/.*\.(fit|lbl)', re.I, ('New Horizons MVIC' ,   0, 'nh_mvic_raw'   , 'Raw Image',        True)),
-    (r'volumes/.*/NH..MV_2.../data/.*\.(fit|lbl)', re.I, ('New Horizons MVIC' , 100, 'nh_mvic_calib' , 'Calibrated Image', True)),
+    (r'volumes/.*/NH..LO_1.../data/.*\.(fit|lbl)', re.I, ('New Horizons LORRI',   0, 'nh_lorri_raw',          'Raw Image',        True)),
+    (r'volumes/.*/NH..LO_2.../data/.*\.(fit|lbl)', re.I, ('New Horizons LORRI', 100, 'nh_lorri_calib',        'Calibrated Image', True)),
+    (r'previews/.*/NH..LO_2.../data/.*\.jpg',      0,    ('New Horizons LORRI', 200, 'nh_lorri_calib_browse', 'Extra Preview (calibrated)', False)),
+
+    (r'volumes/.*/NH..MV_1.../data/.*\.(fit|lbl)', re.I, ('New Horizons MVIC',   0, 'nh_mvic_raw',            'Raw Image',        True)),
+    (r'volumes/.*/NH..MV_2.../data/.*\.(fit|lbl)', re.I, ('New Horizons MVIC', 100, 'nh_mvic_calib',          'Calibrated Image', True)),
+    (r'previews/.*/NH..MV_2.../data/.*\.jpg',      0,    ('New Horizons MVIC', 200, 'nh_mvic_calib_browse',   'Extra Preview (calibrated)', False)),
 ])
 
 ####################################################################################################################################
@@ -188,13 +203,27 @@ opus_type = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_([12])(...)/data/(\w+/[a-z0-9]{3}_\d{10})_(0x...)_(eng|sci)(|_\d+)(|_[a-z]+)\..*', re.I,
-                    [r'volumes/\1*/\3_1\5/data/#LOWER#\6*',
-                     r'volumes/\1*/\3_2\5/data/#LOWER#\6*',
-                     r'previews/\1/\3_1\5/data/#LOWER#\6_\7_*',
-                     r'metadata/\1/\3_1\5/\3_1\5_*inventory.*',
-                     r'metadata/\1/\3_1\5/\3_1\5_*index.*',
-                     r'metadata/\1/\3_1\5/\3_1\5_*summary.*',
-                     ]),
+                    [r'volumes/\1*/\3_1\5/data/#LOWER#\6_*',
+                     r'volumes/\1*/\3_2\5/data/#LOWER#\6_*',
+                     r'previews/\1/\3_1\5/data/#LOWER#\6_*',
+                     r'previews/\1/\3_2\5/data/#LOWER#\6_*',
+                     r'metadata/\1/\3_1\5/\3_1\5_index.tab',
+                     r'metadata/\1/\3_1\5/\3_1\5_index.lbl',
+                     r'metadata/\1/\3_1\5/\3_1\5_supplemental_index.tab',
+                     r'metadata/\1/\3_1\5/\3_1\5_supplemental_index.lbl',
+                     r'metadata/\1/\3_1\5/\3_1\5_inventory.csv',
+                     r'metadata/\1/\3_1\5/\3_1\5_inventory.lbl',
+                     r'metadata/\1/\3_1\5/\3_1\5_jupiter_summary.tab',
+                     r'metadata/\1/\3_1\5/\3_1\5_jupiter_summary.lbl',
+                     r'metadata/\1/\3_1\5/\3_1\5_moon_summary.tab',
+                     r'metadata/\1/\3_1\5/\3_1\5_moon_summary.lbl',
+                     r'metadata/\1/\3_1\5/\3_1\5_ring_summary.tab',
+                     r'metadata/\1/\3_1\5/\3_1\5_ring_summary.lbl',
+                     r'metadata/\1/\3_1\5/\3_1\5_pluto_summary.tab',
+                     r'metadata/\1/\3_1\5/\3_1\5_pluto_summary.lbl',
+                     r'metadata/\1/\3_1\5/\3_1\5_charon_summary.tab',
+                     r'metadata/\1/\3_1\5/\3_1\5_charon_summary.lbl',
+                    ]),
 ])
 
 ####################################################################################################################################
