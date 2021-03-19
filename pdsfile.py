@@ -1418,7 +1418,7 @@ class PdsFile(object):
 
         if self._is_index is None:
             abspath = self.indexshelf_abspath
-            if abspath and PdsFile.os_path_exists(abspath):
+            if abspath and os.path.exists(abspath):
                 self._is_index = True
             else:
                 self._is_index = False
@@ -3760,8 +3760,8 @@ class PdsFile(object):
         by a tuple containing this information:
           (group, priority, opus_type, description, default_checked)
         Examples:
-          ('Cassini ISS',    0, 'coiss_raw',       'Raw image',                  True)
-          ('Cassini VIMS', 130, 'covims_full',     'Extra preview (full-size)',  True)
+          ('Cassini ISS',    0, 'coiss_raw',       'Raw Image',                  True)
+          ('Cassini VIMS', 130, 'covims_full',     'Extra Preview (full-size)',  True)
           ('Cassini CIRS', 618, 'cirs_browse_pan', 'Extra Browse Diagram (Pan)', True)
           ('metadata',      40, 'ring_geometry',   'Ring Geometry Index',        True)
           ('browse',        30, 'browse_medium',   'Browse Image (medium)',      True)
