@@ -109,7 +109,7 @@ opus_type = translator.TranslatorByRegex([
     (r'volumes/.*\.(qub|lbl)',                       0, ('Cassini VIMS',   0, 'covims_raw',    'Raw Cube',                  True)),
     (r'volumes/.*/extras/thumbnail/.*\.jpeg_small',  0, ('Cassini VIMS', 110, 'covims_thumb',  'Extra Preview (thumbnail)', False)),
     (r'volumes/.*/extras/browse/.*\.jpeg',           0, ('Cassini VIMS', 120, 'covims_medium', 'Extra Preview (medium)',    False)),
-    (r'volumes/.*/extras/(tiff|full)/.*\.\w+',       0, ('Cassini VIMS', 130, 'covims_full',   'Extra Preview (full)',      True)),
+    (r'volumes/.*/extras/(tiff|full)/.*\.\w+',       0, ('Cassini VIMS', 130, 'covims_full',   'Extra Preview (full)',      False)),
 ])
 
 ####################################################################################################################################

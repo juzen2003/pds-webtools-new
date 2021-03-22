@@ -92,12 +92,12 @@ view_options = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/DATA/\w+/\w+\.(TAB|LBL)',          0, ('Earth-based Occultations',  0, 'ebro_profile', 'Radial Profile',   True)),
-    (r'volumes/.*/GEOMETRY/\w+/\w+\.(TAB|LBL)',      0, ('Earth-based Occultations', 10, 'ebro_geom',    'Geometry Table',   True)),
-    (r'volumes/.*/BROWSE/\w+/\w+PB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 20, 'ebro_preview', 'Preview Plot',     True)),
-    (r'volumes/.*/BROWSE/\w+/\w+GB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 30, 'ebro_diagram', 'Geometry Diagram', False)),
-    (r'volumes/.*/SORCDATA/\w+/\w+_GEOMETRY\..*',    0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',      False)),
-    (r'volumes/.*/SORCDATA/\w+/\w+GRESS\.(OUT|LBL)', 0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',      False)),
+    (r'volumes/.*/DATA/\w+/\w+\.(TAB|LBL)',          0, ('Earth-based Occultations',  0, 'ebro_profile', 'Occultation Profile', True)),
+    (r'volumes/.*/GEOMETRY/\w+/\w+\.(TAB|LBL)',      0, ('Earth-based Occultations', 10, 'ebro_geom',    'Geometry Table',      True)),
+    (r'volumes/.*/BROWSE/\w+/\w+PB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 20, 'ebro_preview', 'Preview Plot',        True)),
+    (r'volumes/.*/BROWSE/\w+/\w+GB\.(PDF|PS|LBL)',   0, ('Earth-based Occultations', 30, 'ebro_diagram', 'Geometry Diagram',    False)),
+    (r'volumes/.*/SORCDATA/\w+/\w+_GEOMETRY\..*',    0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',         False)),
+    (r'volumes/.*/SORCDATA/\w+/\w+GRESS\.(OUT|LBL)', 0, ('Earth-based Occultations', 40, 'ebro_source',  'Source Data',         False)),
 ])
 
 ####################################################################################################################################
