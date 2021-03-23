@@ -154,7 +154,7 @@ opus_products = translator.TranslatorByRegex([
                  r'previews/\1/\2/\3\4_small.jpg',
                  r'previews/\1/\2/\3\4_thumb.jpg',
                  r'metadata/\1/\2/\2_index.lbl',
-                 r'metadata/\1/\2/\2_index.tab'
+                 r'metadata/\1/\2/\2_index.tab',
                 ]),
 ])
 

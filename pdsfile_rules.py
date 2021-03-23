@@ -169,8 +169,8 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
     (r'.*/catalog/SOFTWARE\.CAT',       re.I, ('Software information',          'INFO'    )),
 
     # Index files
-    ('.*/index/cum.*\.tab',             re.I, ('Cumulative index',              'INDEX'   )),
-    ('.*/index/.*\.tab',                re.I, ('Index table',                   'INDEX'   )),
+    ('r.*/index/cum.*\.tab',            re.I, ('Cumulative index',              'INDEX'   )),
+    ('r.*/index/.*\.tab',               re.I, ('Index table',                   'INDEX'   )),
 
     # SPICE kernels
     (r'.*\.(bsp|spk)',                  re.I, ('SPICE trajectory kernel',       'GEOM'    )),

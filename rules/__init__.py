@@ -36,16 +36,32 @@ import re
 def translate_first(trans, path):
     """Logical paths of "first" files found using given translator on path."""
 
-    pattern = trans.first(path)
-    if not pattern: return ''
+    patterns = trans.first(path)
+    if not patterns:
+        return []
 
-    pattern = pdsfile.abspath_for_logical_path(pattern)
-    return pdsfile.PdsFile.glob_glob(pattern)
+    if isinstance(patterns, str):
+        patterns = [patterns]
+
+    patterns = [p for p in patterns if p]       # skip empty translations
+    patterns = pdsfile.PdsFile.abspaths_for_logicals(patterns)
+
+    abspaths = []
+    for pattern in patterns:
+        abspaths += pdsfile.PdsFile.glob_glob(pattern)
+
+    return abspaths
 
 def translate_all(trans, path):
     """Logical paths of all files found using given translator on path."""
 
     patterns = trans.all(path)
+    if not patterns:
+        return []
+
+    if isinstance(patterns, str):
+        patterns = [patterns]
+
     patterns = [p for p in patterns if p]       # skip empty translations
     patterns = pdsfile.PdsFile.abspaths_for_logicals(patterns)
 

@@ -41,7 +41,7 @@ DATAFILE_EXTS = set(['dat', 'img', 'cub', 'qub', 'fit', 'fits'])
 VOLSET_REGEX        = re.compile(r'^([A-Z][A-Z0-9x]{1,5}_[0-9x]{3}x)$')
 VOLSET_REGEX_I      = re.compile(VOLSET_REGEX.pattern, re.I)
 VOLSET_PLUS_REGEX   = re.compile(VOLSET_REGEX.pattern[:-1] +
-                        r'(_v[0-9]+.[0-9]+.[0-9]+|_v[0-9]+.[0-9]+|_v[0-9]+|' +
+                        r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
                         r'_in_prep|_prelim|_peer_review|_lien_resolution|)' +
                         r'((|_calibrated|_diagrams|_metadata|_previews)' +
                         r'(|_md5\.txt|\.tar\.gz))$')
@@ -1585,8 +1585,7 @@ class PdsFile(object):
                 else:       # volset AAREADME file
                     file_bytes = os.path.getsize(self.abspath)
                     timestamp = os.path.getmtime(self.abspath)
-                    dt = datetime.datetime.fromtimestamp(timestamp)
-                    modtime = dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+                    modtime = datetime.datetime.fromtimestamp(timestamp)
                     self._info_filled = (file_bytes, 0, modtime, '', (0,0))
 
             else:

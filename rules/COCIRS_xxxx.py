@@ -433,12 +433,12 @@ default_viewables = translator.TranslatorByRegex([
 ])
 
 s_rings_viewables = translator.TranslatorByRegex([
-    (r'volumes/(COCIRS_[56].*)/DATA/\w+/(SPEC|ISPM|TAR)(\w+)\..*',  0, r'diagrams/\1/BROWSE/S_RINGS/RIN\2_*'),
+    (r'volumes/(COCIRS_[56].*)/DATA/\w+/(SPEC|ISPM|TAR)(\w+)\..*',  0, r'diagrams/\1/BROWSE/S_RINGS/RIN\3_*'),
     (r'volumes/(COCIRS_[56].*)/DATA/\w+/GEO(\w+)_699\..*',          0, r'diagrams/\1/BROWSE/S_RINGS/RIN\2_*'),
 ])
 
 saturn_viewables = translator.TranslatorByRegex([
-    (r'volumes/(COCIRS_[56].*)/DATA/\w+/(SPEC|ISPM|TAR|POI)(\w+)\..*', 0, r'diagrams/\1/BROWSE/SATURN/POI\2_*'),
+    (r'volumes/(COCIRS_[56].*)/DATA/\w+/(SPEC|ISPM|TAR|POI)(\w+)\..*', 0, r'diagrams/\1/BROWSE/SATURN/POI\3_*'),
     (r'volumes/(COCIRS_[56].*)/DATA/\w+/GEO(\w+)_699\..*',             0, r'diagrams/\1/BROWSE/SATURN/POI\2_*'),
 ])
 
