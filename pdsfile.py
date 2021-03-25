@@ -962,10 +962,16 @@ class PdsFile(object):
 
     @staticmethod
     @functools.lru_cache(maxsize=_PATH_EXISTS_CACHE_SIZE)
-    def os_path_exists(abspath):
+    def os_path_exists(abspath, force_case_sensitive=False):
         """True if the given absolute path points to a file that exists; False
         otherwise. This replaces os.path.exists(path) but might use infoshelf
         files rather than refer to the holdings directory.
+
+        Note: This function is case-insensitive under SHELVES_ONLY. Otherwise,
+        its behavior matches that of the file system. For Macs, this usually
+        means that it is case insensitive. If force_case_sensitive=True, then
+        the check of the basename will be case-sensitive regardless of the file
+        system.
         """
 
         if SHELVES_ONLY:
@@ -999,6 +1005,15 @@ class PdsFile(object):
                 testpath = PdsFile._non_checksum_abspath(abspath)
                 if testpath and PdsFile.os_path_exists(testpath):
                     return True
+
+        if force_case_sensitive:
+            test = os.path.exists(abspath)
+            if not test:
+                return False
+
+            (parent,basename) = os.path.split(abspath)
+            childnames = os.listdir(parent)
+            return (basename in childnames)
 
         return os.path.exists(abspath)
 
@@ -2109,21 +2124,21 @@ class PdsFile(object):
             return ''
 
         # Take a first guess at the label filename; PDS3 only!
-        if self.extension == '.tar.gz' and self.basename[:-7].isupper():
-            ext = '.LBL'            # for COCIRS_0xxx/COCIRS_1xxx CUBE weirdness
-        elif self.extension.isupper():
-            ext = '.LBL'
+        if self.extension.isupper():
+            ext_guesses = ('.LBL', '.lbl')
         else:
-            ext = '.lbl'
+            ext_guesses = ('.lbl', '.LBL')
 
-        test_basename = self.basename[:-len(self.extension)] + ext
+        rootname = self.basename[:-len(self.extension)]
+        test_basenames = [rootname + ext for ext in ext_guesses]
 
-        # If the test label file exists, it's the label
-        test_abspath = self.abspath.rpartition('/')[0] + '/' + test_basename
-        if PdsFile.os_path_exists(test_abspath):
-            self._label_basename_filled = test_basename
-            self._recache()
-            return self._label_basename_filled
+        # If one of the guessed files exist, it's the label
+        for test_basename in test_basenames:
+            test_abspath = self.abspath.rpartition('/')[0] + '/' + test_basename
+            if PdsFile.os_path_exists(test_abspath, force_case_sensitive=True):
+                self._label_basename_filled = test_basename
+                self._recache()
+                return self._label_basename_filled
 
         # If this file doesn't exist, then it's OK to return a nonexistent
         # label basename. Do we really care?
@@ -2131,7 +2146,7 @@ class PdsFile(object):
             if self.extension.lower() in ('.fmt', '.cat', '.txt'):
                 self._label_basename_filled = ''
             else:
-                self._label_basename_filled = test_basename
+                self._label_basename_filled = test_basenames[0]
             self._recache()
             return self._label_basename_filled
 

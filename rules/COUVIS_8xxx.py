@@ -98,8 +98,8 @@ split_rules = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*_TAU01KM\.(TAB|LBL)', 0, ('Cassini UVIS', 10, 'couvis_occ_01', 'Occultation Profile (1 km)',  True)),
-    (r'volumes/.*_TAU10KM\.(TAB|LBL)', 0, ('Cassini UVIS', 20, 'couvis_occ_10', 'Occultation Profile (10 km)', True)),
+    (r'volumes/.*_TAU_?01KM\.(TAB|LBL)', 0, ('Cassini UVIS', 10, 'couvis_occ_01', 'Occultation Profile (1 km)',  True)),
+    (r'volumes/.*_TAU_?10KM\.(TAB|LBL)', 0, ('Cassini UVIS', 20, 'couvis_occ_10', 'Occultation Profile (10 km)', True)),
 ])
 
 ####################################################################################################################################
@@ -109,10 +109,14 @@ opus_type = translator.TranslatorByRegex([
 # Use of explicit file names means we don't need to invoke glob.glob(); this goes much faster
 opus_products = translator.TranslatorByRegex([
     (r'.*/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_....)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_(TAU.*|[a-z]+)\..*', 0,
-                    [r'volumes/COUVIS_8xxx*/\2/\3/\4_TAU01KM.LBL',
-                     r'volumes/COUVIS_8xxx*/\2/\3/\4_TAU01KM.TAB',
-                     r'volumes/COUVIS_8xxx*/\2/\3/\4_TAU10KM.LBL',
-                     r'volumes/COUVIS_8xxx*/\2/\3/\4_TAU10KM.TAB',
+                    [r'volumes/COUVIS_8xxx*/\2/data/\4_TAU01KM.LBL',
+                     r'volumes/COUVIS_8xxx*/\2/data/\4_TAU01KM.TAB',
+                     r'volumes/COUVIS_8xxx*/\2/data/\4_TAU10KM.LBL',
+                     r'volumes/COUVIS_8xxx*/\2/data/\4_TAU10KM.TAB',
+                     r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_01KM.LBL',
+                     r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_01KM.TAB',
+                     r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_10KM.LBL',
+                     r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_10KM.TAB',
                      r'previews/COUVIS_8xxx/\2/data/\4_full.jpg',
                      r'previews/COUVIS_8xxx/\2/data/\4_med.jpg',
                      r'previews/COUVIS_8xxx/\2/data/\4_small.jpg',
