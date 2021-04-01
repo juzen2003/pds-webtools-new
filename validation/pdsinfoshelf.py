@@ -84,8 +84,8 @@ def generate_infodict(pdsdir, selection, old_infodict={},
             try:
                 checksum = checkdict[abspath]
             except KeyError:
-                logger.fatal('Missing entry in checksum file', abspath)
-                raise
+                logger.error('Missing entry in checksum file', abspath)
+                checksum = '-------------------------------'
 
             size = (0,0)
             ext = os.path.splitext(abspath)[1]
@@ -604,7 +604,7 @@ if __name__ == '__main__':
             print('No infoshelves for checksum files: ' + path)
             sys.exit(1)
 
-        if pdsf.is_volset_dir():
+        if pdsf.is_volset_dir:
             # Info about archive directories is stored by volset
             if pdsf.archives_:
                 info.append((pdsf, None))
@@ -615,7 +615,7 @@ if __name__ == '__main__':
                 info += [(c, None) for c in children if c.isdir]
                         # "if c.isdir" is False for volset level readme files
 
-        elif pdsf.is_volume_dir():
+        elif pdsf.is_volume_dir:
             # Shelve one volume
             info.append((pdsf, None))
 
@@ -625,10 +625,10 @@ if __name__ == '__main__':
 
         else:
             pdsdir = pdsf.parent()
-            if pdsf.is_volume_file():
+            if pdsf.is_volume_file:
                 # Shelve one archive file
                 info.append((pdsdir, pdsf.basename))
-            elif pdsdir.is_volume_dir():
+            elif pdsdir.is_volume_dir:
                 # Shelve one top-level file in volume
                 info.append((pdsdir, pdsf.basename))
             else:

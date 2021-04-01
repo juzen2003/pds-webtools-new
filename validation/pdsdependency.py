@@ -818,7 +818,7 @@ if __name__ == '__main__':
     for path in args.volume:
         path = os.path.abspath(path)
         pdsdir = pdsfile.PdsFile.from_abspath(path)
-        if not pdsdir.is_volume_dir() and not pdsdir.is_volset_dir():
+        if not pdsdir.is_volume_dir and not pdsdir.is_volset_dir:
           print('pdsdependency error: ' + \
                 'not a volume or volume set directory: ' + pdsdir.logical_path)
           sys.exit(1)
@@ -862,7 +862,7 @@ if __name__ == '__main__':
             print('No pdsdependency for archive files: ' + path)
             sys.exit(1)
 
-        if pdsf.is_volset_dir():
+        if pdsf.is_volset_dir:
             paths += [os.path.join(path, c) for c in pdsf.childnames]
 
         else:

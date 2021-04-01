@@ -407,11 +407,11 @@ if __name__ == '__main__':
             print('No archives for archive files: ' + path)
             sys.exit(1)
 
-        try:
-            pdsdir = pdsf.volume_pdsdir()
+        pdsdir = pdsf.volume_pdsfile()
+        if pdsdir and pdsdir.isdir:
             pdsdirs.append(pdsdir)
-        except ValueError:
-            pdsdir = pdsf.volset_pdsdir()
+        else:
+            pdsdir = pdsf.volset_pdsfile()
             children = [pdsdir.child(c) for c in pdsdir.childnames]
             pdsdirs += [c for c in children if c.isdir]
                     # "if c.isdir" is False for volset level readme files

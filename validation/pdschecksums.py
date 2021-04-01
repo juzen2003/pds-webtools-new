@@ -607,7 +607,7 @@ if __name__ == '__main__':
             print('No checksums for checksum files: ' + path)
             sys.exit(1)
 
-        if pdsf.is_volset_dir():
+        if pdsf.is_volset_dir:
             # Archive directories are checksumed by volset
             if pdsf.archives_:
                 info.append((pdsf, None))
@@ -617,7 +617,7 @@ if __name__ == '__main__':
                 info += [(c, None) for c in children if c.isdir]
                         # "if c.isdir" is False for volset level readme files
 
-        elif pdsf.is_volume_dir():
+        elif pdsf.is_volume_dir:
             # Checksum one volume
             info.append((pdsf, None))
 
@@ -627,10 +627,10 @@ if __name__ == '__main__':
 
         else:
             pdsdir = pdsf.parent()
-            if pdsf.is_volume_file():
+            if pdsf.is_volume_file:
                 # Checksum one archive file
                 info.append((pdsdir, pdsf.basename))
-            elif pdsdir.is_volume_dir():
+            elif pdsdir.is_volume_dir:
                 # Checksum one top-level file in volume
                 info.append((pdsdir, pdsf.basename))
             else:

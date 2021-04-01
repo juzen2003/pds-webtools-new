@@ -1252,7 +1252,7 @@ if __name__ == '__main__':
             print('No linkshelves for archive files: ' + path)
             sys.exit(1)
 
-        if pdsf.is_volset_dir():
+        if pdsf.is_volset_dir:
             paths += [os.path.join(path, c) for c in pdsf.childnames]
 
         else:
