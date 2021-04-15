@@ -1,0 +1,34 @@
+Minimal testing needed:
+
+DESCRIPTION_AND_ICON
+INFO_FILE_BASENAMES
+SORT_KEY
+SPLIT_RULES
+VIEW_OPTIONS
+VOLSET_TRANSLATOR
+
+
+OPUS import pipeline testing should suffice:
+
+OPUS_ID
+OPUS_ID_TO_SUBCLASS
+OPUS_PRODUCTS
+OPUS_TYPE
+
+
+Full testing needed:
+
+ASSOCIATIONS
+DATA_SET_ID (only used by COCIRS_xxxx.py, COUVIS_0xxx, EBROCC_xxxx)
+FILESPEC_TO_VOLSET
+NEIGHBORS
+VERSIONS
+VIEWABLES
+
+
+Not currently used, worry about testing later:
+
+LID_AFTER_DSID
+OPUS_FORMAT
+OPUS_ID_TO_PRIMARY_LOGICAL_PATH
+
