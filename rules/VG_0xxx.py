@@ -164,8 +164,8 @@ class VG_0xxx(pdsfile.PdsFile):
     VIEWABLES = {'default': default_viewables}
 
     ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
-    ASSOCIATIONS['volumes']  = associations_to_volumes
-    ASSOCIATIONS['previews'] = associations_to_previews
+    ASSOCIATIONS['volumes']  += associations_to_volumes
+    ASSOCIATIONS['previews'] += associations_to_previews
 
     FILENAME_KEYLEN = 8     # trim off suffixes
 

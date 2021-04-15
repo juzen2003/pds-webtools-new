@@ -22,6 +22,7 @@ class PdsGroup(object):
         self._iconset_filled = None
         self._viewset_filled = None
         self._local_viewset_filled = None
+        self._all_viewsets_filled = None
 
         if isinstance(pdsfiles, (list, tuple)):
             for pdsf in pdsfiles:
@@ -31,6 +32,17 @@ class PdsGroup(object):
 
     def __len__(self):
         return len(self.rows) - len(self.hidden)
+
+    def __repr__(self):
+        if self.rows:
+            path = self.rows[0].logical_path
+
+            if len(self.rows) >= 2:
+                return f'PdsGroup({path},...[{len(self.rows)}])'
+            else:
+                return f'PdsGroup({path})'
+        else:
+            return f'PdsGroup()'
 
     def copy(self):
         this = PdsGroup()
@@ -43,6 +55,7 @@ class PdsGroup(object):
         this._iconset_filled = self._iconset_filled
         this._viewset_filled = self._viewset_filled
         this._local_viewset_filled = self._local_viewset_filled
+        this._all_viewsets_filled = self._all_viewsets_filled
 
         return this
 
@@ -126,6 +139,23 @@ class PdsGroup(object):
                 self._local_viewset_filled = False
 
         return self._local_viewset_filled
+
+    @property
+    def all_viewsets(self):
+        """A dictionary of all the PdsViewSets for this object
+        """
+
+        if self._all_viewsets_filled is None:
+
+            merged_dict = {}
+            for pdsf in self.rows:
+                for key in pdsf.all_viewsets:
+                    if key not in merged_dict:
+                        merged_dict[key] = pdsf.all_viewsets[key]
+
+            self._all_viewsets_filled = merged_dict
+
+        return self._all_viewsets_filled
 
     @property
     def global_anchor(self):

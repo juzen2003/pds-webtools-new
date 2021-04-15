@@ -23,11 +23,12 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 
 default_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl', re.I, ''),
-    (r'volumes/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE)/(\w+/\w+)\.TAB',
-                            0,  (r'previews/EBROCC_xxxx/\2/\3/\4_full.jpg',
-                                 r'previews/EBROCC_xxxx/\2/\3/\4_med.jpg',
-                                 r'previews/EBROCC_xxxx/\2/\3/\4_small.jpg',
-                                 r'previews/EBROCC_xxxx/\2/\3/\4_thumb.jpg')),
+    (r'volumes/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE)/(\w+/\w+)\.TAB', 0,
+            [r'previews/EBROCC_xxxx/\2/\3/\4_full.jpg',
+             r'previews/EBROCC_xxxx/\2/\3/\4_med.jpg',
+             r'previews/EBROCC_xxxx/\2/\3/\4_small.jpg',
+             r'previews/EBROCC_xxxx/\2/\3/\4_thumb.jpg',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -35,48 +36,50 @@ default_viewables = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
-    (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)(|/\w+)',
-                            0,  [r'volumes/EBROCC_xxxx\1/\2/DATA\4',
-                                 r'volumes/EBROCC_xxxx\1/\2/BROWSE\4',
-                                 r'volumes/EBROCC_xxxx\1/\2/GEOMETRY\4',
-                                 r'volumes/EBROCC_xxxx\1/\2/SORCDATA\4',
-                                ]),
-    (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)/(\w+/\w{3}_[EI]).*',
-                            0,  [r'volumes/EBROCC_xxxx\1/\2/DATA\4PD.LBL',
-                                 r'volumes/EBROCC_xxxx\1/\2/DATA\4PD.TAB',
-                                 r'volumes/EBROCC_xxxx\1/\2/BROWSE\4GB.LBL',
-                                 r'volumes/EBROCC_xxxx\1/\2/BROWSE\4GB.PDF',
-                                 r'volumes/EBROCC_xxxx\1/\2/BROWSE\4GB.PS',
-                                 r'volumes/EBROCC_xxxx\1/\2/GEOMETRY\4GD.LBL',
-                                 r'volumes/EBROCC_xxxx\1/\2/GEOMETRY\4GD.TAB',
-                                 r'volumes/EBROCC_xxxx\1/\2/SORCDATA\4*',
-                                ]),
+    (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)(|/\w+)', 0,
+            [r'volumes/EBROCC_xxxx\1/\2/DATA\4',
+             r'volumes/EBROCC_xxxx\1/\2/BROWSE\4',
+             r'volumes/EBROCC_xxxx\1/\2/GEOMETRY\4',
+             r'volumes/EBROCC_xxxx\1/\2/SORCDATA\4',
+            ]),
+    (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)/(\w+/\w{3}_[EI]).*', 0,
+            [r'volumes/EBROCC_xxxx\1/\2/DATA\4PD.LBL',
+             r'volumes/EBROCC_xxxx\1/\2/DATA\4PD.TAB',
+             r'volumes/EBROCC_xxxx\1/\2/BROWSE\4GB.LBL',
+             r'volumes/EBROCC_xxxx\1/\2/BROWSE\4GB.PDF',
+             r'volumes/EBROCC_xxxx\1/\2/BROWSE\4GB.PS',
+             r'volumes/EBROCC_xxxx\1/\2/GEOMETRY\4GD.LBL',
+             r'volumes/EBROCC_xxxx\1/\2/GEOMETRY\4GD.TAB',
+             r'volumes/EBROCC_xxxx\1/\2/SORCDATA\4*',
+            ]),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
-    (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)(|/\w+)',
-                            0,  [r'previews/EBROCC_xxxx/\2/DATA\4',
-                                 r'previews/EBROCC_xxxx/\2/BROWSE\4',
-                                 r'previews/EBROCC_xxxx/\2/GEOMETRY\4',
-                                 r'previews/EBROCC_xxxx/\2/SORCDATA\4']),
-    (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)/(\w+/\w{3}_[EI]).*',
-                            0,  [r'previews/EBROCC_xxxx/\2/DATA\4PD_full.jpg',
-                                 r'previews/EBROCC_xxxx/\2/DATA\4PD_med.jpg',
-                                 r'previews/EBROCC_xxxx/\2/DATA\4PD_small.jpg',
-                                 r'previews/EBROCC_xxxx/\2/DATA\4PD_thumb.jpg',
-                                 r'previews/EBROCC_xxxx/\2/BROWSE\4GB_full.jpg',
-                                 r'previews/EBROCC_xxxx/\2/BROWSE\4GB_med.jpg',
-                                 r'previews/EBROCC_xxxx/\2/BROWSE\4GB_small.jpg',
-                                 r'previews/EBROCC_xxxx/\2/BROWSE\4GB_thumb.jpg',
-                                ]),
+    (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)(|/\w+)', 0,
+           [r'previews/EBROCC_xxxx/\2/DATA\4',
+            r'previews/EBROCC_xxxx/\2/BROWSE\4',
+            r'previews/EBROCC_xxxx/\2/GEOMETRY\4',
+            r'previews/EBROCC_xxxx/\2/SORCDATA\4',
+           ]),
+    (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)/(\w+/\w{3}_[EI]).*', 0,
+           [r'previews/EBROCC_xxxx/\2/DATA\4PD_full.jpg',
+            r'previews/EBROCC_xxxx/\2/DATA\4PD_med.jpg',
+            r'previews/EBROCC_xxxx/\2/DATA\4PD_small.jpg',
+            r'previews/EBROCC_xxxx/\2/DATA\4PD_thumb.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE\4GB_full.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE\4GB_med.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE\4GB_small.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE\4GB_thumb.jpg',
+           ]),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'volumes/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)/\w+/(\w+)\.\w+',
-                            0,   r'metadata/EBROCC_xxxx/\2/\2_index.tab/\4'),
-    (r'volumes/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/DATA/\w+/(\w+)\.\w+',
-                            0,  [r'metadata/EBROCC_xxxx/\2/\2_profile_index.tab/\4',
-                                 r'metadata/EBROCC_xxxx/\2/\2_supplemental_index.tab/\4']),
+    (r'volumes/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)/\w+/(\w+)\.\w+', 0,
+           r'metadata/EBROCC_xxxx/\2/\2_index.tab/\4'),
+    (r'volumes/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/DATA/\w+/(\w+)\.\w+', 0,
+           [r'metadata/EBROCC_xxxx/\2/\2_profile_index.tab/\4',
+            r'metadata/EBROCC_xxxx/\2/\2_supplemental_index.tab/\4',
+           ]),
 ])
 
 ####################################################################################################################################
@@ -115,58 +118,37 @@ opus_format = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE|SORCDATA|GEOMETRY)/(\w+/\w{3}_[EI]).*', 0,
-                    [r'volumes/EBROCC_xxxx*/\2/DATA/\4PD.LBL',
-                     r'volumes/EBROCC_xxxx*/\2/DATA/\4PD.TAB',
-                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.LBL',
-                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.PDF',
-                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.PS',
-                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4PB.LBL',
-                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4PB.PDF',
-                     r'volumes/EBROCC_xxxx*/\2/BROWSE/\4PB.PS',
-                     r'volumes/EBROCC_xxxx*/\2/GEOMETRY/\4GD.LBL',
-                     r'volumes/EBROCC_xxxx*/\2/GEOMETRY/\4GD.TAB',
-                     r'volumes/EBROCC_xxxx*/\2/SORCDATA/\4*',
-                     r'previews/EBROCC_xxxx/\2/DATA/\4PD_full.jpg',
-                     r'previews/EBROCC_xxxx/\2/DATA/\4PD_med.jpg',
-                     r'previews/EBROCC_xxxx/\2/DATA/\4PD_small.jpg',
-                     r'previews/EBROCC_xxxx/\2/DATA/\4PD_thumb.jpg',
-                     r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_full.jpg',
-                     r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_med.jpg',
-                     r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_small.jpg',
-                     r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_thumb.jpg',
-                     r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_full.jpg',
-                     r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_med.jpg',
-                     r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_small.jpg',
-                     r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_thumb.jpg',
-                     r'metadata/EBROCC_xxxx/\2/\2_index.lbl',
-                     r'metadata/EBROCC_xxxx/\2/\2_index.tab',
-                     r'metadata/EBROCC_xxxx/\2/\2_profile_index.lbl',
-                     r'metadata/EBROCC_xxxx/\2/\2_profile_index.tab',
-                     r'metadata/EBROCC_xxxx/\2/\2_supplemental_index.lbl',
-                     r'metadata/EBROCC_xxxx/\2/\2_supplemental_index.tab',
-                    ]),
+           [r'volumes/EBROCC_xxxx*/\2/DATA/\4PD.LBL',
+            r'volumes/EBROCC_xxxx*/\2/DATA/\4PD.TAB',
+            r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.LBL',
+            r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.PDF',
+            r'volumes/EBROCC_xxxx*/\2/BROWSE/\4GB.PS',
+            r'volumes/EBROCC_xxxx*/\2/BROWSE/\4PB.LBL',
+            r'volumes/EBROCC_xxxx*/\2/BROWSE/\4PB.PDF',
+            r'volumes/EBROCC_xxxx*/\2/BROWSE/\4PB.PS',
+            r'volumes/EBROCC_xxxx*/\2/GEOMETRY/\4GD.LBL',
+            r'volumes/EBROCC_xxxx*/\2/GEOMETRY/\4GD.TAB',
+            r'volumes/EBROCC_xxxx*/\2/SORCDATA/\4*',
+            r'previews/EBROCC_xxxx/\2/DATA/\4PD_full.jpg',
+            r'previews/EBROCC_xxxx/\2/DATA/\4PD_med.jpg',
+            r'previews/EBROCC_xxxx/\2/DATA/\4PD_small.jpg',
+            r'previews/EBROCC_xxxx/\2/DATA/\4PD_thumb.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_full.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_med.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_small.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE/\4GB_thumb.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_full.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_med.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_small.jpg',
+            r'previews/EBROCC_xxxx/\2/BROWSE/\4PB_thumb.jpg',
+            r'metadata/EBROCC_xxxx/\2/\2_index.lbl',
+            r'metadata/EBROCC_xxxx/\2/\2_index.tab',
+            r'metadata/EBROCC_xxxx/\2/\2_profile_index.lbl',
+            r'metadata/EBROCC_xxxx/\2/\2_profile_index.tab',
+            r'metadata/EBROCC_xxxx/\2/\2_supplemental_index.lbl',
+            r'metadata/EBROCC_xxxx/\2/\2_supplemental_index.tab',
+           ]),
 ])
-
-def test_opus_products():
-
-    TESTS = [
-        (2, 'volumes.*/DATA/.*'),
-        (6, 'volumes.*/BROWSE/.*'),
-        (2, 'volumes.*/GEOMETRY/.*'),
-        (4, 'volumes.*/SORCDATA/.*'),
-        (4, 'previews.*/DATA/.*'),
-        (8, 'previews/.*/BROWSE/.*'),
-        (6, 'metadata.*index.*'),
-        (2, 'metadata.*profile.*'),
-        (2, 'metadata.*supplemental.*'),
-    ]
-
-    PATH = 'volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL'
-    abspaths = pdsfile.rules.translate_all(opus_products, PATH)
-    trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
-    for (count, pattern) in TESTS:
-        subset = [p for p in trimmed if re.fullmatch(pattern, p)]
-        assert len(subset) == count, f'Miscount: {pattern} {len(subset)} {trimmed}'
 
 ####################################################################################################################################
 # OPUS_ID
@@ -238,9 +220,9 @@ class EBROCC_xxxx(pdsfile.PdsFile):
     VIEWABLES = {'default': default_viewables}
 
     ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
-    ASSOCIATIONS['volumes']  = associations_to_volumes
-    ASSOCIATIONS['previews'] = associations_to_previews
-    ASSOCIATIONS['metadata'] = associations_to_metadata
+    ASSOCIATIONS['volumes']  += associations_to_volumes
+    ASSOCIATIONS['previews'] += associations_to_previews
+    ASSOCIATIONS['metadata'] += associations_to_metadata
 
 # Global attribute shared by all subclasses
 pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'.*-28sgr-.*', 0, EBROCC_xxxx)]) + \
@@ -253,5 +235,28 @@ pdsfile.PdsFile.FILESPEC_TO_VOLSET = filespec_to_volset + pdsfile.PdsFile.FILESP
 ####################################################################################################################################
 
 pdsfile.PdsFile.SUBCLASSES['EBROCC_xxxx'] = EBROCC_xxxx
+
+####################################################################################################################################
+
+def test_opus_products():
+
+    TESTS = [
+        (2, 'volumes.*/DATA/.*'),
+        (6, 'volumes.*/BROWSE/.*'),
+        (2, 'volumes.*/GEOMETRY/.*'),
+        (4, 'volumes.*/SORCDATA/.*'),
+        (4, 'previews.*/DATA/.*'),
+        (8, 'previews/.*/BROWSE/.*'),
+        (6, 'metadata.*index.*'),
+        (2, 'metadata.*profile.*'),
+        (2, 'metadata.*supplemental.*'),
+    ]
+
+    PATH = 'volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL'
+    abspaths = pdsfile.rules.translate_all(opus_products, PATH)
+    trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
+    for (count, pattern) in TESTS:
+        subset = [p for p in trimmed if re.fullmatch(pattern, p)]
+        assert len(subset) == count, f'Miscount: {pattern} {len(subset)} {trimmed}'
 
 ####################################################################################################################################

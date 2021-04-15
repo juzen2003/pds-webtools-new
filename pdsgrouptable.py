@@ -18,6 +18,23 @@ class PdsGroupTable(object):
         for group in pdsgroups:
             self.insert_group(group)
 
+    def __repr__(self):
+        first = None
+        count = 0
+        for group in self.groups:
+            count += len(group.rows)
+            if not first and group.rows:
+                first = group.rows[0].logical_path
+
+        if count > 1:
+            return f'PdsGroupTable({first},...[{count}])'
+
+        elif count == 1:
+            return f'PdsGroupTable({first})'
+
+        else:
+            return f'PdsGroupTable()'
+
     def copy(self):
         this = PdsGroupTable()
         this.parent_pdsf = self.parent_pdsf
@@ -234,6 +251,15 @@ class PdsGroupTable(object):
         """Return a sorted list of PdsGroupTables accommodating the given list
         of PdsFiles."""
 
+        # Exclusions list can be given as PdsFiles, logical paths, or abspaths
+        new_exclusions = set()
+        for item in exclusions:
+            if isinstance(item, pdsfile.PdsFile):
+                new_exclusions.add(item.logical_path)
+            else:
+                new_exclusions.add(item)
+        exclusions = new_exclusions
+
         table_dict = {}
         for pdsf in pdsfiles:
             if isinstance(pdsf, str):
@@ -243,7 +269,7 @@ class PdsGroupTable(object):
             if pdsf.abspath in exclusions: continue
 
             parent_pdsf = pdsf.parent()
-            parent_path = parent_pdsf.logical_path
+            parent_path = parent_pdsf.logical_path if parent_pdsf else ''
 
             if parent_path not in table_dict:
                 table_dict[parent_path] = PdsGroupTable(parent=parent_pdsf)

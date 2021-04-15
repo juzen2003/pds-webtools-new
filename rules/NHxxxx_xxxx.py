@@ -88,6 +88,18 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'volumes/.*/data(|\w+)'       , re.I, ('Data files organized by date',            'IMAGEDIR')),
     (r'.*/NH...._1...\.tar\.gz'     , 0,    ('Downloadable archive of raw data',        'TARBALL' )),
     (r'.*/NH...._2...\.tar\.gz'     , 0,    ('Downloadable archive of calibrated data', 'TARBALL' )),
+
+    (r'.*/calib/sap.*\.fit'         , re.I, ('Debias image',                            'IMAGE'   )),
+    (r'.*/calib/c?flat.*\.fit'      , re.I, ('Flat field image',                        'IMAGE'   )),
+    (r'.*/calib/dead.*\.fit'        , re.I, ('Dead pixel image',                        'IMAGE'   )),
+    (r'.*/calib/hot.*\.fit'         , re.I, ('Hot pixel image',                         'IMAGE'   )),
+
+    (r'volumes/.*/document/lorri_ssr\.pdf', 0, ('&#11013; <b>LORRI Description (Space Science Reviews)</b>',
+                                                                                        'INFO')),
+    (r'volumes/.*/document/ralph_ssr\.pdf', 0, ('&#11013; <b>Ralph Description (Space Science Reviews)</b>',
+                                                                                        'INFO')),
+    (r'volumes/.*/document/payload_ssr\.pdf', 0, ('&#11013; <b>Payload Description (Space Science Reviews)</b>',
+                                                                                        'INFO')),
 ])
 
 ####################################################################################################################################
@@ -96,8 +108,32 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 
 default_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl',  re.I, ''),
-    (r'volumes/(NHxx.._xxxx)(|_[0-9]\.]+)/(NH...._....)/data/(\w+/\w{3}_[0-9]{10}_0x...)_(eng|sci).*',
-                            0,  r'previews/\1/\3/data/#LOWER#\4_\5_*'),
+    (r'volumes/(NHxx.._xxxx)(|_[0-9]\.]+)/(NH...._....)/data/(\w+/\w{3}_[0-9]{10}_0x...)_(eng|sci).*', 0,
+            [r'previews/\1/\3/data/#LOWER#\4_\5_full.jpg',
+             r'previews/\1/\3/data/#LOWER#\4_\5_med.jpg',
+             r'previews/\1/\3/data/#LOWER#\4_\5_small.jpg',
+             r'previews/\1/\3/data/#LOWER#\4_\5_thumb.jpg',
+            ]),
+])
+
+raw_viewables = translator.TranslatorByRegex([
+    (r'.*\.lbl',  re.I, ''),
+    (r'volumes/(NHxx.._xxxx)(|_[0-9]\.]+)/(NH....)_1(...)/data/(\w+/\w{3}_[0-9]{10}_0x...)_eng.*', 0,
+           [r'previews/\1/\3_1\4/data/#LOWER#\5_eng_full.jpg',
+            r'previews/\1/\3_1\4/data/#LOWER#\5_eng_med.jpg',
+            r'previews/\1/\3_1\4/data/#LOWER#\5_eng_small.jpg',
+            r'previews/\1/\3_1\4/data/#LOWER#\5_eng_thumb.jpg',
+           ]),
+])
+
+calibrated_viewables = translator.TranslatorByRegex([
+    (r'.*\.lbl',  re.I, ''),
+    (r'volumes/(NHxx.._xxxx)(|_[0-9]\.]+)/(NH....)_1(...)/data/(\w+/\w{3}_[0-9]{10}_0x...)_sci.*', 0,
+           [r'previews/\1/\3_2\4/data/#LOWER#\5_sci_full.jpg',
+            r'previews/\1/\3_2\4/data/#LOWER#\5_sci_med.jpg',
+            r'previews/\1/\3_2\4/data/#LOWER#\5_sci_small.jpg',
+            r'previews/\1/\3_2\4/data/#LOWER#\5_sci_thumb.jpg',
+           ]),
 ])
 
 ####################################################################################################################################
@@ -105,50 +141,72 @@ default_viewables = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
-
-    # This handles the special case that file names in v1 of NHJUMV_1001 are upper case
-    (r'.*/NHxxMV_xxxx_v1/NHJUMV_[12]001/DATA/(\w+/[A-Z0-9]{3}_[0-9]{10}_0X...)_ENG(_\d+)\.*', re.I,
-                    [r'volumes/NHxxMV_xxxx_v1/NHJUMV_1001/DATA/#UPPER#\1_ENG\2.FIT',
-                     r'volumes/NHxxMV_xxxx_v1/NHJUMV_1001/DATA/#UPPER#\1_ENG\2.LBL',
-                     r'volumes/NHxxMV_xxxx_v1/NHJUMV_2001/data/#LOWER#\1_sci\2.fit',
-                     r'volumes/NHxxMV_xxxx_v1/NHJUMV_2001/data/#LOWER#\1_sci\2.lbl',
-                    ]),
-
-    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data/(\w+/[a-z0-9]{3}_[0-9]{10})_0x..*', 0,
-                    [r'volumes/\1\2/\3_1\4/data/\5*',
-                     r'volumes/\1\2/\3_2\4/data/\5*',
-                    ]),
-    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data(|/\w+)', 0,
-                    [r'volumes/\1\2/\3_1\4/data\5',
-                     r'volumes/\1\2/\3_2\4/data\5',
-                    ]),
+    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data/(\w+/[a-z0-9]{3}_[0-9]{10})_0x.*', re.I,
+            [r'volumes/\1\2/\3_1\4/data/#LOWER#\5*',
+             r'volumes/\1\2/\3_1\4/DATA/#UPPER#\5*',    # NHxxMV_xxxx_v1/NHJUMV_1001 is upper case
+             r'volumes/\1\2/\3_2\4/data/#LOWER#\5*',
+            ]),
+    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data(|/\w+)', re.I,
+            [r'volumes/\1\2/\3_1\4/data\5',
+             r'volumes/\1\2/\3_1\4/DATA\5',
+             r'volumes/\1\2/\3_2\4/data\5',
+            ]),
+    (r'documents/NHxxxx_xxxx.*', 0,
+            [r'volumes/NHxxLO_xxxx',
+             r'volumes/NHxxMV_xxxx'
+            ]),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
     (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data/(\w+/[a-z0-9]{3}_[0-9]{10}_0x...)_(eng|sci).*', re.I,
-                    [r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_full.jpg',
-                     r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_med.jpg',
-                     r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_small.jpg',
-                     r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_thumb.jpg',
-                     r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_full.jpg',
-                     r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_med.jpg',
-                     r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_small.jpg',
-                     r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_thumb.jpg',
-                    ]),
+            [r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_full.jpg',
+             r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_med.jpg',
+             r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_small.jpg',
+             r'previews/\1/\3_1\4/data/#LOWER#\4_\5_eng_thumb.jpg',
+             r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_full.jpg',
+             r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_med.jpg',
+             r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_small.jpg',
+             r'previews/\1/\3_2\4/data/#LOWER#\4_\5_sci_thumb.jpg',
+            ]),
     (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH....)_[12](...)/data(|/\w+)', re.I,
-                    r'previews/\1/\3_1\4/data\5'),
+            r'previews/\1/\3_1\4/data\5'),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
     (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH...._[12]...)/data/\w+/([a-z0-9]{3}_[0-9]{10}_0x...)_(eng|sci).*', re.I,
-                    [r'metadata/\1/\3/\3_index.tab/#LOWER#\4_\5',
-                     r'metadata/\1/\3/\3_supplemental_index.tab/#LOWER#\4_\5',
-                     r'metadata/\1/\3/\3_moon_summary.tab/#LOWER#\4_\5',
-                     r'metadata/\1/\3/\3_ring_summary.tab/#LOWER#\4_\5',
-                     r'metadata/\1/\3/\3_charon_summary.tab/#LOWER#\4_\5',
-                     r'metadata/\1/\3/\3_pluto_summary.tab/#LOWER#\4_\5',
-                     r'metadata/\1/\3/\3_jupiter_summary.tab/#LOWER#\4_\5',
-                    ]),
+            [r'metadata/\1/\3/\3_index.tab/#LOWER#\4_\5',
+             r'metadata/\1/\3/\3_supplemental_index.tab/#LOWER#\4_\5',
+             r'metadata/\1/\3/\3_moon_summary.tab/#LOWER#\4_\5',
+             r'metadata/\1/\3/\3_ring_summary.tab/#LOWER#\4_\5',
+             r'metadata/\1/\3/\3_charon_summary.tab/#LOWER#\4_\5',
+             r'metadata/\1/\3/\3_pluto_summary.tab/#LOWER#\4_\5',
+             r'metadata/\1/\3/\3_jupiter_summary.tab/#LOWER#\4_\5',
+            ]),
+])
+
+associations_to_documents = translator.TranslatorByRegex([
+    (r'(volumes/.*/NH...._.001).*', 0,
+            [r'\1/document/lorri_ssr.pdf',
+             r'\1/document/ralph_ssr.pdf',
+             r'\1/document/payload_ssr.pdf',
+            ]),
+])
+
+####################################################################################################################################
+# VERSIONS
+####################################################################################################################################
+
+# Sometimes NH .fits files have a numeric suffix, other times not
+# Also, volume NHJUMV_1001 is in upper case
+versions = translator.TranslatorByRegex([
+    (r'volumes/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH...._....)/(data/\w+/\w+0x\d\d\d_[a-z]{3}).*\.(.*)', re.I,
+            [r'volumes/\1*/\3/#LOWER#\4*.\5',
+             r'volumes/\1_v1/\3/#UPPER#\4*.\5',
+            ]),
+    (r'volumes/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH...._....)/(.*)', re.I,
+            [r'volumes/\1*/\3/#LOWER#\4',
+             r'volumes/\1_v1/\3/#UPPER#\4',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -226,25 +284,6 @@ opus_products = translator.TranslatorByRegex([
              r'metadata/\1/\3_1\5/\3_1\5_charon_summary.lbl',
             ]),
 ])
-
-def test_opus_products():
-
-    TESTS = [
-        (4, 'volumes/NHxx.._xxxx/.*/data/.*'),
-        (4, 'volumes/NHxx.._xxxx_v1/.*/data/.*'),
-        (8, 'previews/NHxx.._xxxx/.*/data/.*'),
-        (4, 'metadata/.*index.*'),
-        (8, 'metadata/.*summary.*'),
-        (2, 'metadata/.*supplemental.*'),
-        (2, 'metadata/.*inventory.*'),
-    ]
-
-    PATH = 'volumes/NHxxLO_xxxx/NHPELO_2001/data/20150125_028445/lor_0284457178_0x630_sci.lbl'
-    abspaths = pdsfile.rules.translate_all(opus_products, PATH)
-    trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
-    for (count, pattern) in TESTS:
-        subset = [p for p in trimmed if re.fullmatch(pattern, p)]
-        assert len(subset) == count, f'Miscount: {pattern} {len(subset)} {trimmed}'
 
 ####################################################################################################################################
 # OPUS_ID
@@ -377,12 +416,25 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
-    VIEWABLES = {'default': default_viewables}
+    VIEWABLES = {
+        'default'   : default_viewables,
+        'raw'       : raw_viewables,
+        'calibrated': calibrated_viewables,
+    }
+
+    VIEWABLE_TOOLTIPS = {
+        'default'   : 'Default browse product for this file',
+        'raw'       : 'Preview of the raw image',
+        'calibrated': 'Preview of the calibrated image',
+    }
 
     ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
-    ASSOCIATIONS['volumes']  = associations_to_volumes
-    ASSOCIATIONS['previews'] = associations_to_previews
-    ASSOCIATIONS['metadata'] = associations_to_metadata
+    ASSOCIATIONS['volumes']   += associations_to_volumes
+    ASSOCIATIONS['previews']  += associations_to_previews
+    ASSOCIATIONS['metadata']  += associations_to_metadata
+    ASSOCIATIONS['documents'] += associations_to_documents
+
+    VERSIONS = versions + pdsfile.PdsFile.VERSIONS
 
     FILENAME_KEYLEN = 14    # trim off suffixes
 
@@ -437,5 +489,26 @@ pdsfile.PdsFile.FILESPEC_TO_VOLSET = filespec_to_volset + pdsfile.PdsFile.FILESP
 ####################################################################################################################################
 
 pdsfile.PdsFile.SUBCLASSES['NHxxxx_xxxx'] = NHxxxx_xxxx
+
+####################################################################################################################################
+
+def test_opus_products():
+
+    TESTS = [
+        (4, 'volumes/NHxx.._xxxx/.*/data/.*'),
+        (4, 'volumes/NHxx.._xxxx_v1/.*/data/.*'),
+        (8, 'previews/NHxx.._xxxx/.*/data/.*'),
+        (4, 'metadata/.*index.*'),
+        (8, 'metadata/.*summary.*'),
+        (2, 'metadata/.*supplemental.*'),
+        (2, 'metadata/.*inventory.*'),
+    ]
+
+    PATH = 'volumes/NHxxLO_xxxx/NHPELO_2001/data/20150125_028445/lor_0284457178_0x630_sci.lbl'
+    abspaths = pdsfile.rules.translate_all(opus_products, PATH)
+    trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
+    for (count, pattern) in TESTS:
+        subset = [p for p in trimmed if re.fullmatch(pattern, p)]
+        assert len(subset) == count, f'Miscount: {pattern} {len(subset)} {trimmed}'
 
 ####################################################################################################################################

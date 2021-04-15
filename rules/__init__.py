@@ -9,7 +9,7 @@ __all__ = [
     "COCIRS_xxxx",
     "COISS_xxxx" ,
     "CORSS_8xxx" ,
-    "COSP_8xxx"  ,
+    "COSP_xxxx"  ,
     "COUVIS_0xxx",
     "COUVIS_8xxx",
     "COVIMS_0xxx",

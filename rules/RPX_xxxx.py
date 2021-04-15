@@ -54,19 +54,19 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 default_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl',  re.I, ''),
     (r'volumes/(RPX_xxxx/RPX_000./199...XX/U...XXXX)/(BROWSE|.*IMAGE)/(U[^_]+)(|_\w\w\w)\.(FITS|IMG|DAT|ZIP)', 0,
-                    (r'previews/\1/\3_full.jpg',
-                     r'previews/\1/\3_med.jpg',
-                     r'previews/\1/\3_small.jpg',
-                     r'previews/\1/\3_thumb.jpg',
-                    )),
+            [r'previews/\1/\3_full.jpg',
+             r'previews/\1/\3_med.jpg',
+             r'previews/\1/\3_small.jpg',
+             r'previews/\1/\3_thumb.jpg',
+            ]),
     (r'volumes/RPX_xxxx_v1/(RPX_000./199...XX)/(U...)XXXX/(BROWSE|.*IMAGE)/([^_]+)(|_\w\w\w)\.(FITS|IMG|DAT|ZIP)', 0,
-                    r'previews/RPX_xxxx/\1/\2XXXX/\2\4?_*.jpg'),
+            r'previews/RPX_xxxx/\1/\2XXXX/\2\4?_*.jpg'),
     (r'volumes/(RPX_xxxx/.*)\.(GIF|IMG)', 0,
-                    (r'previews/\1_full.jpg',
-                     r'previews/\1_med.jpg',
-                     r'previews/\1_small.jpg',
-                     r'previews/\1_thumb.jpg',
-                    )),
+            [r'previews/\1_full.jpg',
+             r'previews/\1_med.jpg',
+             r'previews/\1_small.jpg',
+             r'previews/\1_thumb.jpg',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -75,69 +75,98 @@ default_viewables = translator.TranslatorByRegex([
 
 associations_to_volumes = translator.TranslatorByRegex([
     (r'.*/RPX_xxxx(|_v[0-9\.]+)/(RPX_000./199...XX/U...XXXX)/(|\w+/)([A-Z0-9]+)(|_\w+)\..*', 0,
-                    [r'volumes/RPX_xxxx\1/\2/BROWSE//\4.GIF',
-                     r'volumes/RPX_xxxx\1/\2/BROWSE/\4.LBL',
-                     r'volumes/RPX_xxxx\1/\2/CALIMAGE/\4_C0F.FITS',
-                     r'volumes/RPX_xxxx\1/\2/CALIMAGE/\4_C0F.LBL',
-                     r'volumes/RPX_xxxx\1/\2/CALMASK/\4_C1F.FITS',
-                     r'volumes/RPX_xxxx\1/\2/CALMASK/\4_C1F.LBL',
-                     r'volumes/RPX_xxxx\1/\2/ENGDATA/\4_X0F.FITS',
-                     r'volumes/RPX_xxxx\1/\2/ENGDATA/\4_X0F.LBL',
-                     r'volumes/RPX_xxxx\1/\2/ENGMASK/\4_Q1F.FITS',
-                     r'volumes/RPX_xxxx\1/\2/ENGMASK/\4_Q1F.LBL',
-                     r'volumes/RPX_xxxx\1/\2/HEADER/\4_SHF.FITS',
-                     r'volumes/RPX_xxxx\1/\2/HEADER/\4_SHF.LBL',
-                     r'volumes/RPX_xxxx\1/\2/RAWIMAGE/\4_D0F.FITS',
-                     r'volumes/RPX_xxxx\1/\2/RAWIMAGE/\4_D0F.LBL',
-                     r'volumes/RPX_xxxx\1/\2/RAWMASK/\4_Q0F.FITS',
-                     r'volumes/RPX_xxxx\1/\2/RAWMASK/\4_Q0F.LBL',
-                    ]),
+            [r'volumes/RPX_xxxx\1/\2/BROWSE//\4.GIF',
+             r'volumes/RPX_xxxx\1/\2/BROWSE/\4.LBL',
+             r'volumes/RPX_xxxx\1/\2/CALIMAGE/\4_C0F.FITS',
+             r'volumes/RPX_xxxx\1/\2/CALIMAGE/\4_C0F.LBL',
+             r'volumes/RPX_xxxx\1/\2/CALMASK/\4_C1F.FITS',
+             r'volumes/RPX_xxxx\1/\2/CALMASK/\4_C1F.LBL',
+             r'volumes/RPX_xxxx\1/\2/ENGDATA/\4_X0F.FITS',
+             r'volumes/RPX_xxxx\1/\2/ENGDATA/\4_X0F.LBL',
+             r'volumes/RPX_xxxx\1/\2/ENGMASK/\4_Q1F.FITS',
+             r'volumes/RPX_xxxx\1/\2/ENGMASK/\4_Q1F.LBL',
+             r'volumes/RPX_xxxx\1/\2/HEADER/\4_SHF.FITS',
+             r'volumes/RPX_xxxx\1/\2/HEADER/\4_SHF.LBL',
+             r'volumes/RPX_xxxx\1/\2/RAWIMAGE/\4_D0F.FITS',
+             r'volumes/RPX_xxxx\1/\2/RAWIMAGE/\4_D0F.LBL',
+             r'volumes/RPX_xxxx\1/\2/RAWMASK/\4_Q0F.FITS',
+             r'volumes/RPX_xxxx\1/\2/RAWMASK/\4_Q0F.LBL',
+            ]),
     (r'.*/RPX_xxxx(|_v[0-9\.]+)/(RPX_000./199...XX/U...XXXX/\w+)', 0,
-                    [r'volumes/RPX_xxxx\1/\2/BROWSE',
-                     r'volumes/RPX_xxxx\1/\2/CALIMAGE',
-                     r'volumes/RPX_xxxx\1/\2/CALMASK',
-                     r'volumes/RPX_xxxx\1/\2/ENGDATA',
-                     r'volumes/RPX_xxxx\1/\2/ENGMASK',
-                     r'volumes/RPX_xxxx\1/\2/HEADER',
-                     r'volumes/RPX_xxxx\1/\2/RAWIMAGE',
-                     r'volumes/RPX_xxxx\1/\2/RAWMASK',
-                    ]),
+            [r'volumes/RPX_xxxx\1/\2/BROWSE',
+             r'volumes/RPX_xxxx\1/\2/CALIMAGE',
+             r'volumes/RPX_xxxx\1/\2/CALMASK',
+             r'volumes/RPX_xxxx\1/\2/ENGDATA',
+             r'volumes/RPX_xxxx\1/\2/ENGMASK',
+             r'volumes/RPX_xxxx\1/\2/HEADER',
+             r'volumes/RPX_xxxx\1/\2/RAWIMAGE',
+             r'volumes/RPX_xxxx\1/\2/RAWMASK',
+                ]),
     (r'metadata/RPX_xxxx/(RPX_000.)/RPX_...._index.tab/(U...)([^_\.]+).*', 0,
-                    r'volumes/RPX_xxxx/\1/199*/\2XXXX/*/\2\3.*'),
+            r'volumes/RPX_xxxx/\1/199*/\2XXXX/*/\2\3.*'),
+    (r'volumes/(\w+/\w+)/199.*', 0,
+            [r'volumes/\1/DOCUMENT',
+             r'volumes/\1/CATALOG',
+             r'volumes/\1/AAREADME.TXT',
+             r'volumes/\1/ERRATA.TXT',
+             r'volumes/\1/VOLDESC.CAT',
+            ]),
 
     (r'.*/(RPX_xxxx/RPX_0[1-9].*)_([a-z]+).jpg', 0,
-                    r'volumes/\1.*'),
+            r'volumes/\1.*'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
     (r'.*/(RPX_xxxx/RPX_000./199...XX/U...XXXX)/(|\w+/)(U[^_]+)(|_\w\w\w)\.(FITS|IMG|DAT|ZIP)', 0,
-                    [r'previews/\1/\3_full.jpg',
-                     r'previews/\1/\3_med.jpg',
-                     r'previews/\1/\3_small.jpg',
-                     r'previews/\1/\3_thumb.jpg',
-                    ]),
+            [r'previews/\1/\3_full.jpg',
+             r'previews/\1/\3_med.jpg',
+             r'previews/\1/\3_small.jpg',
+             r'previews/\1/\3_thumb.jpg',
+            ]),
     (r'.*/RPX_xxxx_v1/(RPX_000./199...XX)/(U...)XXXX/(|\w+/)([^_]+)(|_\w\w\w)\.(FITS|IMG|DAT|ZIP)', 0,
-                    r'previews/RPX_xxxx/\1/\2XXXX/\2\3?_*.jpg'),
+            r'previews/RPX_xxxx/\1/\2XXXX/\2\3?_*.jpg'),
     (r'.*/RPX_xxxx(|_v[0-9\.]+)/(RPX_000./199...XX/U...XXXX)(|/\w+)', 0,
-                    r'previews/RPX_xxxx/\2'),
+            r'previews/RPX_xxxx/\2'),
 
     (r'.*/(RPX_xxxx/.*)\.(IMG|GIF)', 0,
-                    r'previews/\1_*.jpg'),
+            r'previews/\1_*.jpg'),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
     (r'.*/RPX_xxxx/(RPX_000.)/199...XX/U...XXXX/(|\w+/)(U[^_]+)(|_\w\w\w)\..*', 0,
-                    [r'metadata/RPX_xxxx/\1/\1_index.tab/\3',
-                     r'metadata/RPX_xxxx/\1/\1_obsindex.tab/\3']),
+            [r'metadata/RPX_xxxx/\1/\1_index.tab/\3',
+             r'metadata/RPX_xxxx/\1/\1_obsindex.tab/\3',
+            ]),
     (r'.*/RPX_xxxx_v1/(RPX_000.)/199...XX/(U...)XXXX/(|\w+/)([^_]+)(|_\w\w\w)\..*', 0,
-                    r'metadata/RPX_xxxx/\1/\1_index.tab/\2\4'),
+            r'metadata/RPX_xxxx/\1/\1_index.tab/\2\4'),
     (r'metadata/RPX_xxxx/(RPX_000.)/RPX_...._index.tab/(U[^_\.]+).*', 0,
-                    r'metadata/RPX_xxxx/\1/\1_obsindex.tab/\2'),
+            r'metadata/RPX_xxxx/\1/\1_obsindex.tab/\2'),
     (r'metadata/RPX_xxxx/(RPX_000.)/RPX_...._obsindex.tab/(U[^_\.]+).*', 0,
-                    r'metadata/RPX_xxxx/\1/\1_index.tab/\3'),
+            r'metadata/RPX_xxxx/\1/\1_index.tab/\3'),
 
     (r'.*/RPX_xxxx/(RPX_0[1-9]..)/.*/(\w+)\.IMG', 0,
-                    r'metadata/RPX_xxxx/\1/\1_index.tab/\2'),
+            r'metadata/RPX_xxxx/\1/\1_index.tab/\2'),
+])
+
+####################################################################################################################################
+# VERSIONS
+####################################################################################################################################
+
+versions = translator.TranslatorByRegex([
+    (r'volumes/RPX_xxxx_v1/(RPX_00../199...XX)/(U...)XXXX/BROWSE/(\w{4})\.(\w+)', 0,
+            r'volumes/RPX_xxxx*/\1/\2XXXX/BROWSE/\2\3?.\4'),
+    (r'volumes/RPX_xxxx.*/(RPX_00../199...XX)/(U...)XXXX/BROWSE/\2(\w{4}).\.(\w+)', 0,
+            r'volumes/RPX_xxxx_v1/\1/\2XXXX/BROWSE/\3.\4'),
+    (r'volumes/RPX_xxxx_v1/(RPX_00../199...XX)/(U...)XXXX/([A-Z]+)/(\w{4})_(\w{3})\.(ZIP|GIF|IMG)', 0,
+            r'volumes/RPX_xxxx*/\1/\2XXXX/\3/\2\4?_\5.FITS'),
+    (r'volumes/RPX_xxxx_v1/(RPX_00../199...XX)/(U...)XXXX/([A-Z]+)/(\w{4})_(\w{3})\.LBL', 0,
+            r'volumes/RPX_xxxx*/\1/\2XXXX/\3/\2\4?_\5.LBL'),
+    (r'volumes/RPX_xxxx*/(RPX_00../199...XX)/(U...)XXXX/([A-Z]+)/\2(\w{4})._(\w{3})\.FITS', 0,
+            [r'volumes/RPX_xxxx_v1/\1/\2XXXX/\3/\4_\5.ZIP',
+             r'volumes/RPX_xxxx_v1/\1/\2XXXX/\3/\4_\5.IMG'
+            ]),
+    (r'volumes/RPX_xxxx*/(RPX_00../199...XX)/(U...)XXXX/([A-Z]+)/\2(\w{4})._(\w{3})\.LBL', 0,
+            r'volumes/RPX_xxxx_v1/\1/\2XXXX/\3/\4_\5.LBL'),
 ])
 
 ####################################################################################################################################
@@ -185,9 +214,11 @@ class RPX_xxxx(pdsfile.PdsFile):
     VIEWABLES = {'default': default_viewables}
 
     ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
-    ASSOCIATIONS['volumes']  = associations_to_volumes
-    ASSOCIATIONS['previews'] = associations_to_previews
-    ASSOCIATIONS['metadata'] = associations_to_metadata
+    ASSOCIATIONS['volumes']  += associations_to_volumes
+    ASSOCIATIONS['previews'] += associations_to_previews
+    ASSOCIATIONS['metadata'] += associations_to_metadata
+
+    VERSIONS = versions + pdsfile.PdsFile.VERSIONS
 
     def FILENAME_KEYLEN(self):
         """9 for files in the HST series RPX_0001-5; 0 otherwise."""

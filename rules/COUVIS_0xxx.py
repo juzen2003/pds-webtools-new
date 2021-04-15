@@ -5,19 +5,23 @@
 import pdsfile
 import translator
 import re
+import os
 
 ####################################################################################################################################
 # DESCRIPTION_AND_ICON
 ####################################################################################################################################
 
 description_and_icon_by_regex = translator.TranslatorByRegex([
-    (r'volumes/.*/DATA',          re.I, ('Data files grouped by date', 'CUBEDIR')),
-    (r'volumes/.*/DATA/\w+',      re.I, ('Data files grouped by date', 'CUBEDIR')),
-    (r'volumes/.*/HSP\w+\.DAT',   re.I, ('Time series data',           'DATA')),
-    (r'volumes/.*/HDAC\w+\.DAT',  re.I, ('Binary data cube',           'DATA')),
-    (r'volumes/.*/\w+\.DAT',      re.I, ('Spectral data cube',         'CUBE')),
-    (r'volumes/.*\.txt_[0-9].*',  re.I, ('Text file',                  'INFO')),
-    (r'volumes/.*OLD.DIR',        re.I, ('Directory',                  'FOLDER')),
+    (r'volumes/.*/DATA',                re.I, ('Data files grouped by date', 'CUBEDIR')),
+    (r'volumes/.*/DATA/\w+',            re.I, ('Data files grouped by date', 'CUBEDIR')),
+    (r'volumes/.*/HSP\w+\.DAT',         re.I, ('Time series data',           'DATA')),
+    (r'volumes/.*/HDAC\w+\.DAT',        re.I, ('Binary data cube',           'DATA')),
+    (r'volumes/.*/\w+\.DAT',            re.I, ('Spectral data cube',         'CUBE')),
+    (r'volumes/.*\.txt_[0-9].*',        re.I, ('Text file',                  'INFO')),
+    (r'volumes/.*OLD.DIR',              re.I, ('Directory',                  'FOLDER')),
+    (r'metadata/.*versions\.tab',       0,    ('Table to associate data files with DATA_SET_IDs and versions',
+                                                                             'INDEX')),
+    (r'volumes/.*/DOCUMENT/UVIS.TXT',   re.I, ('PDS3 Archive Description',   'INFO' )),
 ])
 
 ####################################################################################################################################
@@ -26,8 +30,12 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 
 default_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl', re.I, ''),
-    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+/\w+).*',
-                            0,  r'previews/COUVIS_0xxx/\2_*'),
+    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+/\w+).*', 0,
+            [r'previews/COUVIS_0xxx/\2_full.png',
+             r'previews/COUVIS_0xxx/\2_med.png',
+             r'previews/COUVIS_0xxx/\2_small.png',
+             r'previews/COUVIS_0xxx/\2_thumb.png',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -62,24 +70,25 @@ associations_to_volumes = translator.TranslatorByRegex([
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
-    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+/\w+)\..*',
-                            0,  [r'previews/COUVIS_0xxx/\2_full.png',
-                                 r'previews/COUVIS_0xxx/\2_med.png',
-                                 r'previews/COUVIS_0xxx/\2_small.png',
-                                 r'previews/COUVIS_0xxx/\2_thumb.png',
-                                ]),
-    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+)',
-                            0,  r'previews/COUVIS_0xxx/\2'),
-    (r'.*/COUVIS_0999.*',   0,  r'previews/COUVIS_0xxx'),
+    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+/\w+)\..*', 0,
+            [r'previews/COUVIS_0xxx/\2_full.png',
+             r'previews/COUVIS_0xxx/\2_med.png',
+             r'previews/COUVIS_0xxx/\2_small.png',
+             r'previews/COUVIS_0xxx/\2_thumb.png',
+            ]),
+    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+)', 0,
+            r'previews/COUVIS_0xxx/\2'),
+    (r'.*/COUVIS_0999.*', 0, r'previews/COUVIS_0xxx'),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0...)/DATA/\w+/(\w+)\..*',
-                            0,  [r'metadata/COUVIS_0xxx/\2/\2_index.tab/\3',
-                                 r'metadata/COUVIS_0xxx/\2/\2_supplemental_index.tab/\3',
-                                 r'metadata/COUVIS_0xxx/\2/\2_ring_summary.tab/\3',
-                                 r'metadata/COUVIS_0xxx/\2/\2_moon_summary.tab/\3',
-                                 r'metadata/COUVIS_0xxx/\2/\2_jupiter_summary.tab/\3']),
+    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0...)/DATA/\w+/(\w+)\..*', 0,
+            [r'metadata/COUVIS_0xxx/\2/\2_index.tab/\3',
+             r'metadata/COUVIS_0xxx/\2/\2_supplemental_index.tab/\3',
+             r'metadata/COUVIS_0xxx/\2/\2_ring_summary.tab/\3',
+             r'metadata/COUVIS_0xxx/\2/\2_moon_summary.tab/\3',
+             r'metadata/COUVIS_0xxx/\2/\2_jupiter_summary.tab/\3'
+            ]),
 ])
 
 ####################################################################################################################################
@@ -136,29 +145,29 @@ opus_format = translator.TranslatorByRegex([
 
 opus_products = translator.TranslatorByRegex([
     (r'.*/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0...)/DATA/(\w+/\w+[0-9])(|_CAL.*|_[a-z]+)\..*', 0,
-                    [r'volumes/COUVIS_0xxx*/\2/DATA/\3.DAT',
-                     r'volumes/COUVIS_0xxx*/\2/DATA/\3.LBL',
-                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_3/\3_CAL_3.DAT',
-                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_3/\3_CAL_3.LBL',
-                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_4/\3_CAL_4.DAT',
-                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_4/\3_CAL_4.LBL',
-                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_5/\3_CAL_5.DAT',
-                     r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_5/\3_CAL_5.LBL',
-                     r'previews/COUVIS_0xxx/\2/DATA/\3_full.png',
-                     r'previews/COUVIS_0xxx/\2/DATA/\3_med.png',
-                     r'previews/COUVIS_0xxx/\2/DATA/\3_small.png',
-                     r'previews/COUVIS_0xxx/\2/DATA/\3_thumb.png',
-                     r'metadata/COUVIS_0xxx/\2/\2_moon_summary.tab',
-                     r'metadata/COUVIS_0xxx/\2/\2_moon_summary.lbl',
-                     r'metadata/COUVIS_0xxx/\2/\2_ring_summary.tab',
-                     r'metadata/COUVIS_0xxx/\2/\2_ring_summary.lbl',
-                     r'metadata/COUVIS_0xxx/\2/\2_saturn_summary.tab',
-                     r'metadata/COUVIS_0xxx/\2/\2_saturn_summary.lbl',
-                     r'metadata/COUVIS_0xxx/\2/\2_index.tab',
-                     r'metadata/COUVIS_0xxx/\2/\2_index.lbl',
-                     r'metadata/COUVIS_0xxx/\2/\2_supplemental_index.tab',
-                     r'metadata/COUVIS_0xxx/\2/\2_supplemental_index.lbl',
-                    ]),
+            [r'volumes/COUVIS_0xxx*/\2/DATA/\3.DAT',
+             r'volumes/COUVIS_0xxx*/\2/DATA/\3.LBL',
+             r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_3/\3_CAL_3.DAT',
+             r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_3/\3_CAL_3.LBL',
+             r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_4/\3_CAL_4.DAT',
+             r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_4/\3_CAL_4.LBL',
+             r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_5/\3_CAL_5.DAT',
+             r'volumes/COUVIS_0xxx*/\2/CALIB/VERSION_5/\3_CAL_5.LBL',
+             r'previews/COUVIS_0xxx/\2/DATA/\3_full.png',
+             r'previews/COUVIS_0xxx/\2/DATA/\3_med.png',
+             r'previews/COUVIS_0xxx/\2/DATA/\3_small.png',
+             r'previews/COUVIS_0xxx/\2/DATA/\3_thumb.png',
+             r'metadata/COUVIS_0xxx/\2/\2_moon_summary.tab',
+             r'metadata/COUVIS_0xxx/\2/\2_moon_summary.lbl',
+             r'metadata/COUVIS_0xxx/\2/\2_ring_summary.tab',
+             r'metadata/COUVIS_0xxx/\2/\2_ring_summary.lbl',
+             r'metadata/COUVIS_0xxx/\2/\2_saturn_summary.tab',
+             r'metadata/COUVIS_0xxx/\2/\2_saturn_summary.lbl',
+             r'metadata/COUVIS_0xxx/\2/\2_index.tab',
+             r'metadata/COUVIS_0xxx/\2/\2_index.lbl',
+             r'metadata/COUVIS_0xxx/\2/\2_supplemental_index.tab',
+             r'metadata/COUVIS_0xxx/\2/\2_supplemental_index.lbl',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -222,14 +231,15 @@ class COUVIS_0xxx(pdsfile.PdsFile):
     VIEWABLES = {'default': default_viewables}
 
     ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
-    ASSOCIATIONS['volumes']  = associations_to_volumes
-    ASSOCIATIONS['previews'] = associations_to_previews
-    ASSOCIATIONS['metadata'] = associations_to_metadata
+    ASSOCIATIONS['volumes']  += associations_to_volumes
+    ASSOCIATIONS['previews'] += associations_to_previews
+    ASSOCIATIONS['metadata'] += associations_to_metadata
 
     ############################################################################
     # DATA_SET_ID is defined as a function rather than a translator
     ############################################################################
 
+    # Version tables reside in shelves/more_metadata/COUVIS_0xxx and _0xxx_v1
     VERSIONS_PATH_AND_KEY = translator.TranslatorByRegex([
         (r'volumes/COUVIS_0xxx(|_v\d)/(COUVIS_0...)/(.*)/(\w+)\.(DAT|LBL)', 0,
                     (r'metadata/COUVIS_0xxx/\2/\2\1_versions.tab', r'\4.LBL'))
@@ -239,17 +249,30 @@ class COUVIS_0xxx(pdsfile.PdsFile):
         """Look up the ID of this product using one of the "versions" indices in
         the metadata tree."""
 
+        if not self.exists or self.isdir:
+            return ''
+
         result = COUVIS_0xxx.VERSIONS_PATH_AND_KEY.first(self.logical_path)
         if not result:
-            return ''
+            raise ValueError('Undefined DATA_SET_ID index for %s' %
+                             self.logical_path)
 
         (versions_path, key) = result
-        versions_table = pdsfile.PdsFile.from_logical_path(versions_path)
-        row = versions_table.child_of_index(key)
-        if not row.exists:
-            return ''
 
-        return row.row_dicts[0].get('DATA_SET_ID', '')
+        # Confirm the file really exists, so we need to use os.path.exists, not
+        # PdsFile.os_path_exists.
+        abspath = self.root_ + versions_path
+        if not os.path.exists(abspath):
+            raise FileNotFoundError('Missing DATA_SET_ID index for %s: %s' %
+                                    (self.logical_path, abspath))
+
+        versions_table = pdsfile.PdsFile.from_abspath(abspath)
+        row = versions_table.child_of_index(key, flag='')
+        if not row.exists:
+            raise ValueError('DATA_SET_ID for %s not found in index: %s' %
+                             (self.logical_path, versions_table))
+
+        return row.row_dicts[0]['DATA_SET_ID']
 
 # Global attribute shared by all subclasses
 pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-uvis-[efh].*', 0, COUVIS_0xxx)]) + \

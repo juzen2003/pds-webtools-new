@@ -5,6 +5,8 @@
 import os
 from PIL import Image
 
+import pdslogger
+
 ################################################################################
 # Class definitions
 ################################################################################
@@ -12,7 +14,7 @@ from PIL import Image
 class PdsViewable(object):
     """Contains the minimum information needed to show an image in HTML."""
 
-    def __init__(self, abspath, url, width, height, bytes, alt='',
+    def __init__(self, abspath, url, width, height, bytecount, alt='',
                        name='', pdsf=None):
 
         # Core properties of a viewable
@@ -20,7 +22,7 @@ class PdsViewable(object):
         self.url = url
         self.width = width
         self.height = height
-        self.bytes = bytes
+        self.bytes = bytecount
         self.alt = alt
 
         # Optional
@@ -118,6 +120,9 @@ class PdsViewSet(object):
 
         for viewable in viewables:
             self.append(viewable, include_named_in_sizes=include_named_in_sizes)
+
+    def __bool__(self):
+        return len(self.viewables) > 0
 
     def append(self, viewable, include_named_in_sizes=False):
         """Append the given PdsViewable to this PdsViewSet.
@@ -312,6 +317,7 @@ ICON_FILENAME_VS_TYPE = {       # (priority, icon URL)
     'INFO'     : (21, 'document_info.png'),
     'INDEX'    : (31, 'document_index.png'),
     'CODE'     : (41, 'document_software.png'),
+    'LINK'     : (51, 'document_link.png'),
 
     'FOLDER'   : ( 4, 'folder_generic%s.png' ),
     'INFODIR'  : (24, 'folder_info%s.png'),
@@ -329,7 +335,7 @@ ICON_FILENAME_VS_TYPE = {       # (priority, icon URL)
     'DATADIR'  : (22, 'folder_binary%s.png'),
     'BROWDIR'   :(52, 'folder_previews%s.png'),
     'GEOMDIR'  : (62, 'folder_geometry%s.png'),
-    'DIAGDIR'  : (53, 'folder_geometry%s.png'),
+    'DIAGDIR'  : (53, 'folder_diagrams%s.png'),
 
     'CHECKSUM' : (90, 'document_checksums.png'),
     'TARBALL'  : (91, 'document_archive.png'),
@@ -351,7 +357,7 @@ ICON_DIR_VS_SIZE = [( 30, 'png-30/'),
 
 ICON_SET_BY_TYPE = {}
 
-def load_icons(path, url, color='blue'):
+def load_icons(path, url, color='blue', logger=None):
     """Loads icons for use by PdsViewable.iconset_for()."""
 
     for (icon_type, icon_info) in ICON_FILENAME_VS_TYPE.items():
@@ -360,11 +366,11 @@ def load_icons(path, url, color='blue'):
         icon_path_ = path.rstrip('/') + '/'
         icon_url_  = url.rstrip('/') + '/'
 
-        for open in (True, False):
+        for is_open in (True, False):
             pdsviews = []
 
             if '%s' in template:
-                if open:
+                if is_open:
                     basename = template % '_open'
                 else:
                     basename = template % ''
@@ -375,17 +381,25 @@ def load_icons(path, url, color='blue'):
                 relpath = color + '/' + icon_dir_ + basename
                 abspath = icon_path_ + relpath
 
-                im = Image.open(abspath)
-                (width, height) = im.size
-                im.close()
-
-                bytes = os.stat(abspath).st_size
+                try:
+                    im = Image.open(abspath)
+                except FileNotFoundError:
+                    (width, height) = (size, size)
+                    bytecount = 0
+                    if logger:
+                        logger.error('Missing icon file', abspath)
+                else:
+                    (width, height) = im.size
+                    im.close()
+                    bytecount = os.stat(abspath).st_size
 
                 pdsview = PdsViewable(icon_path_ + relpath, icon_url_ + relpath,
-                                      width, height, icon_type + ' icon', bytes)
+                                      width, height, icon_type + ' icon',
+                                      bytecount)
                 pdsviews.append(pdsview)
 
-            ICON_SET_BY_TYPE[icon_type, open] = PdsViewSet(pdsviews, priority)
+            ICON_SET_BY_TYPE[icon_type,
+                             is_open] = PdsViewSet(pdsviews, priority)
 
         ICON_SET_BY_TYPE[icon_type] = ICON_SET_BY_TYPE[icon_type, False]
 
@@ -393,7 +407,7 @@ def load_icons(path, url, color='blue'):
 # Method to select among multiple icons
 ################################################################################
 
-def iconset_for(pdsfiles, open=False):
+def iconset_for(pdsfiles, is_open=False):
     """Select the icon set for a list of PdsFiles. Use the icon_type highest in
     priority."""
 
@@ -410,6 +424,6 @@ def iconset_for(pdsfiles, open=False):
             priority = new_priority
             icon_type = test_type
 
-    return ICON_SET_BY_TYPE[icon_type, open]
+    return ICON_SET_BY_TYPE[icon_type, is_open]
 
 ################################################################################

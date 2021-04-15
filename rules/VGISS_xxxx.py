@@ -25,6 +25,9 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'volumes/.*_resloc\.tab',      re.I, ('ASCII Reseau table',                'TABLE'   )),
     (r'volumes/.*/MIPL/.*\.dat',     re.I, ('VICAR data file',                   'DATA'    )),
     (r'volumes/.*/DARKS/.*\.img',    re.I, ('Dark current image, VICAR',         'IMAGE'   )),
+
+    (r'volumes/.*/DOCUMENT/TUTORIAL.TXT',   0, ('&#11013; <b>Detailed tutorial</b> for this data set', 'INFO')),
+    (r'volumes/.*/DOCUMENT/PROCESSING.TXT', 0, ('&#11013; <b>Processing history</b> of this data set', 'INFO')),
 ])
 
 ####################################################################################################################################
@@ -63,39 +66,45 @@ split_rules = translator.TranslatorByRegex([
 
 associations_to_volumes = translator.TranslatorByRegex([
     (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C\d{5}XX/C\d{7})_\w+\..*', 0,
-                    [r'volumes/\1/DATA/\3_CALIB.IMG',
-                     r'volumes/\1/DATA/\3_CALIB.LBL',
-                     r'volumes/\1/DATA/\3_CLEANED.IMG',
-                     r'volumes/\1/DATA/\3_CLEANED.LBL',
-                     r'volumes/\1/DATA/\3_GEOMED.IMG',
-                     r'volumes/\1/DATA/\3_GEOMED.LBL',
-                     r'volumes/\1/DATA/\3_RAW.IMG',
-                     r'volumes/\1/DATA/\3_RAW.LBL',
-                     r'volumes/\1/DATA/\3_GEOMA.DAT',
-                     r'volumes/\1/DATA/\3_GEOMA.TAB',
-                     r'volumes/\1/DATA/\3_GEOMA.LBL',
-                     r'volumes/\1/DATA/\3_RESLOC.DAT',
-                     r'volumes/\1/DATA/\3_RESLOC.TAB',
-                     r'volumes/\1/DATA/\3_RESLOC.LBL',
-                     r'volumes/\1/BROWSE/\3_CALIB.JPG',
-                     r'volumes/\1/BROWSE/\3_CALIB.LBL',
-                     r'volumes/\1/BROWSE/\3_CLEANED.JPG',
-                     r'volumes/\1/BROWSE/\3_CLEANED.LBL',
-                     r'volumes/\1/BROWSE/\3_GEOMED.JPG',
-                     r'volumes/\1/BROWSE/\3_GEOMED.LBL',
-                     r'volumes/\1/BROWSE/\3_RAW.JPG',
-                     r'volumes/\1/BROWSE/\3_RAW.LBL',
-                    ]),
+            [r'volumes/\1/DATA/\3_CALIB.IMG',
+             r'volumes/\1/DATA/\3_CALIB.LBL',
+             r'volumes/\1/DATA/\3_CLEANED.IMG',
+             r'volumes/\1/DATA/\3_CLEANED.LBL',
+             r'volumes/\1/DATA/\3_GEOMED.IMG',
+             r'volumes/\1/DATA/\3_GEOMED.LBL',
+             r'volumes/\1/DATA/\3_RAW.IMG',
+             r'volumes/\1/DATA/\3_RAW.LBL',
+             r'volumes/\1/DATA/\3_GEOMA.DAT',
+             r'volumes/\1/DATA/\3_GEOMA.TAB',
+             r'volumes/\1/DATA/\3_GEOMA.LBL',
+             r'volumes/\1/DATA/\3_RESLOC.DAT',
+             r'volumes/\1/DATA/\3_RESLOC.TAB',
+             r'volumes/\1/DATA/\3_RESLOC.LBL',
+             r'volumes/\1/BROWSE/\3_CALIB.JPG',
+             r'volumes/\1/BROWSE/\3_CALIB.LBL',
+             r'volumes/\1/BROWSE/\3_CLEANED.JPG',
+             r'volumes/\1/BROWSE/\3_CLEANED.LBL',
+             r'volumes/\1/BROWSE/\3_GEOMED.JPG',
+             r'volumes/\1/BROWSE/\3_GEOMED.LBL',
+             r'volumes/\1/BROWSE/\3_RAW.JPG',
+             r'volumes/\1/BROWSE/\3_RAW.LBL',
+            ]),
 
     (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C\d{5}XX)', 0,
-                    [r'volumes/\1/DATA/\3',
-                     r'volumes/\1/BROWSE/\3'
-                    ]),
+            [r'volumes/\1/DATA/\3',
+             r'volumes/\1/BROWSE/\3'
+            ]),
     (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)', 0,
-                    [r'volumes/\1/DATA',
-                     r'volumes/\1/BROWSE'
-                    ]),
+            [r'volumes/\1/DATA',
+             r'volumes/\1/BROWSE'
+            ]),
     (r'.*/(VGISS_.)999.*', 0, r'volumes/\1xxx'),
+    (r'documents/VGISS_xxxx.*', 0,
+            [r'volumes/VGISS_5xxx',
+             r'volumes/VGISS_6xxx',
+             r'volumes/VGISS_7xxx',
+             r'volumes/VGISS_8xxx',
+            ]),
 
 # These associations are very slow to execute, not important.
 #     # VG_0006 to VG_0008, selected Jupiter
@@ -277,11 +286,11 @@ associations_to_volumes = translator.TranslatorByRegex([
 
 associations_to_previews = translator.TranslatorByRegex([
     (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C\d{5}XX/C\d{7})_\w+\..*', 0,
-                    [r'previews/\1/DATA/\3_full.jpg',
-                     r'previews/\1/DATA/\3_med.jpg',
-                     r'previews/\1/DATA/\3_small.jpg',
-                     r'previews/\1/DATA/\3_thumb.jpg',
-                    ]),
+            [r'previews/\1/DATA/\3_full.jpg',
+             r'previews/\1/DATA/\3_med.jpg',
+             r'previews/\1/DATA/\3_small.jpg',
+             r'previews/\1/DATA/\3_thumb.jpg',
+            ]),
     (r'.*/(VGISS_.xxx/VGISS_....)/(DATA|BROWSE)/(C\d{5}XX)',    0, r'previews/\1/DATA/\3'),
     (r'.*/(VGISS_.xxx/VGISS_....)/BROWSE',                      0, r'previews/\1/DATA'),
     (r'.*/(VGISS_.)999.*',                                      0, r'previews/\1xxx'),
@@ -289,18 +298,31 @@ associations_to_previews = translator.TranslatorByRegex([
 
 associations_to_metadata = translator.TranslatorByRegex([
     (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)/(C\d{5}XX)/(C\d{7})_\w+\..*', 0,
-                    [r'metadata/\1/\2/\2_index.tab/\5',
-                     r'metadata/\1/\2/\2_raw_image_index.tab/\5',
-                     r'metadata/\1/\2/\2_supplemental_index.tab/\5',
-                     r'metadata/\1/\2/\2_ring_summary.tab/\5',
-                     r'metadata/\1/\2/\2_moon_summary.tab/\5',
-                     r'metadata/\1/\2/\2_jupiter_summary.tab/\5',
-                     r'metadata/\1/\2/\2_saturn_summary.tab/\5',
-                     r'metadata/\1/\2/\2_uranus_summary.tab/\5',
-                     r'metadata/\1/\2/\2_neptune_summary.tab/\5',
-                    ]),
+            [r'metadata/\1/\2/\2_index.tab/\5',
+             r'metadata/\1/\2/\2_raw_image_index.tab/\5',
+             r'metadata/\1/\2/\2_supplemental_index.tab/\5',
+             r'metadata/\1/\2/\2_ring_summary.tab/\5',
+             r'metadata/\1/\2/\2_moon_summary.tab/\5',
+             r'metadata/\1/\2/\2_jupiter_summary.tab/\5',
+             r'metadata/\1/\2/\2_saturn_summary.tab/\5',
+             r'metadata/\1/\2/\2_uranus_summary.tab/\5',
+             r'metadata/\1/\2/\2_neptune_summary.tab/\5',
+            ]),
     (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)/C\d{5}XX',    0,  r'metadata/\1/\2'),
     (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)',             0,  r'metadata/\1/\2'),
+])
+
+associations_to_documents = translator.TranslatorByRegex([
+    (r'volumes/VGISS_.xxx.*', 0,
+        r'documents/VGISS_xxxx/*'),
+    (r'(volumes/VGISS_.xxx/VGISS_....).*', 0,
+        [r'\1/DOCUMENT/TUTORIAL.TXT',
+         r'\1/DOCUMENT/PROCESSING.TXT',
+        ]),
+    (r'volumes/(VGISS_.)xxx.*', 0,
+        [r'volumes/\1xxx/\g<1>201/DOCUMENT/TUTORIAL.TXT',
+         r'volumes/\1xxx/\g<1>201/DOCUMENT/PROCESSING.TXT',
+        ]),
 ])
 
 ####################################################################################################################################
@@ -327,7 +349,12 @@ neighbors = translator.TranslatorByRegex([
 
 default_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl',  re.I, ''),
-    (r'volumes/(.*)/(DATA/\w+/.*)_(RAW|CLEANED|CALIB|GEOMED)\..*', 0, r'previews/\1/\2_*'),
+    (r'volumes/(.*)/(DATA/\w+/.*)_(RAW|CLEANED|CALIB|GEOMED)\..*', 0,
+            [r'previews/\1/\2_full.jpg',
+             r'previews/\1/\2_med.jpg',
+             r'previews/\1/\2_small.jpg',
+             r'previews/\1/\2_thumb.jpg',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -365,53 +392,53 @@ opus_format = translator.TranslatorByRegex([
 # Note: These patterns do not currently support version numbers in the volset directory name.
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(VGISS_[5-8]xxx)/(VGISS_[5-8]...)/DATA/(C\d{5}XX/C\d{7})_[A-Z]+\.(IMG|DAT|LBL|TAB)', 0,
-                    [r'volumes/\1/\2/DATA/\3_CALIB.IMG',
-                     r'volumes/\1/\2/DATA/\3_CALIB.LBL',
-                     r'volumes/\1/\2/DATA/\3_CLEANED.IMG',
-                     r'volumes/\1/\2/DATA/\3_CLEANED.LBL',
-                     r'volumes/\1/\2/DATA/\3_GEOMED.IMG',
-                     r'volumes/\1/\2/DATA/\3_GEOMED.LBL',
-                     r'volumes/\1/\2/DATA/\3_RAW.IMG',
-                     r'volumes/\1/\2/DATA/\3_RAW.LBL',
-                     r'volumes/\1/\2/DATA/\3_GEOMA.DAT',
-                     r'volumes/\1/\2/DATA/\3_GEOMA.TAB',
-                     r'volumes/\1/\2/DATA/\3_GEOMA.LBL',
-                     r'volumes/\1/\2/DATA/\3_RESLOC.DAT',
-                     r'volumes/\1/\2/DATA/\3_RESLOC.TAB',
-                     r'volumes/\1/\2/DATA/\3_RESLOC.LBL',
-                     r'volumes/\1/\2/BROWSE/\3_CALIB.JPG',
-                     r'volumes/\1/\2/BROWSE/\3_CALIB.LBL',
-                     r'volumes/\1/\2/BROWSE/\3_CLEANED.JPG',
-                     r'volumes/\1/\2/BROWSE/\3_CLEANED.LBL',
-                     r'volumes/\1/\2/BROWSE/\3_GEOMED.JPG',
-                     r'volumes/\1/\2/BROWSE/\3_GEOMED.LBL',
-                     r'volumes/\1/\2/BROWSE/\3_RAW.JPG',
-                     r'volumes/\1/\2/BROWSE/\3_RAW.LBL',
-                     r'previews/\1/\2/DATA/\3_full.jpg',
-                     r'previews/\1/\2/DATA/\3_med.jpg',
-                     r'previews/\1/\2/DATA/\3_small.jpg',
-                     r'previews/\1/\2/DATA/\3_thumb.jpg',
-                     r'metadata/\1/\2/\2_moon_summary.tab',
-                     r'metadata/\1/\2/\2_moon_summary.lbl',
-                     r'metadata/\1/\2/\2_ring_summary.tab',
-                     r'metadata/\1/\2/\2_ring_summary.lbl',
-                     r'metadata/\1/\2/\2_jupiter_summary.tab',
-                     r'metadata/\1/\2/\2_jupiter_summary.lbl',
-                     r'metadata/\1/\2/\2_saturn_summary.tab',
-                     r'metadata/\1/\2/\2_saturn_summary.lbl',
-                     r'metadata/\1/\2/\2_uranus_summary.tab',
-                     r'metadata/\1/\2/\2_uranus_summary.lbl',
-                     r'metadata/\1/\2/\2_neptune_summary.tab',
-                     r'metadata/\1/\2/\2_neptune_summary.lbl',
-                     r'metadata/\1/\2/\2_inventory.csv',
-                     r'metadata/\1/\2/\2_inventory.lbl',
-                     r'metadata/\1/\2/\2_index.tab',
-                     r'metadata/\1/\2/\2_index.lbl',
-                     r'metadata/\1/\2/\2_raw_image_index.tab',
-                     r'metadata/\1/\2/\2_raw_image_index.lbl',
-                     r'metadata/\1/\2/\2_supplemental_index.tab',
-                     r'metadata/\1/\2/\2_supplemental_index.lbl',
-                    ]),
+            [r'volumes/\1/\2/DATA/\3_CALIB.IMG',
+             r'volumes/\1/\2/DATA/\3_CALIB.LBL',
+             r'volumes/\1/\2/DATA/\3_CLEANED.IMG',
+             r'volumes/\1/\2/DATA/\3_CLEANED.LBL',
+             r'volumes/\1/\2/DATA/\3_GEOMED.IMG',
+             r'volumes/\1/\2/DATA/\3_GEOMED.LBL',
+             r'volumes/\1/\2/DATA/\3_RAW.IMG',
+             r'volumes/\1/\2/DATA/\3_RAW.LBL',
+             r'volumes/\1/\2/DATA/\3_GEOMA.DAT',
+             r'volumes/\1/\2/DATA/\3_GEOMA.TAB',
+             r'volumes/\1/\2/DATA/\3_GEOMA.LBL',
+             r'volumes/\1/\2/DATA/\3_RESLOC.DAT',
+             r'volumes/\1/\2/DATA/\3_RESLOC.TAB',
+             r'volumes/\1/\2/DATA/\3_RESLOC.LBL',
+             r'volumes/\1/\2/BROWSE/\3_CALIB.JPG',
+             r'volumes/\1/\2/BROWSE/\3_CALIB.LBL',
+             r'volumes/\1/\2/BROWSE/\3_CLEANED.JPG',
+             r'volumes/\1/\2/BROWSE/\3_CLEANED.LBL',
+             r'volumes/\1/\2/BROWSE/\3_GEOMED.JPG',
+             r'volumes/\1/\2/BROWSE/\3_GEOMED.LBL',
+             r'volumes/\1/\2/BROWSE/\3_RAW.JPG',
+             r'volumes/\1/\2/BROWSE/\3_RAW.LBL',
+             r'previews/\1/\2/DATA/\3_full.jpg',
+             r'previews/\1/\2/DATA/\3_med.jpg',
+             r'previews/\1/\2/DATA/\3_small.jpg',
+             r'previews/\1/\2/DATA/\3_thumb.jpg',
+             r'metadata/\1/\2/\2_moon_summary.tab',
+             r'metadata/\1/\2/\2_moon_summary.lbl',
+             r'metadata/\1/\2/\2_ring_summary.tab',
+             r'metadata/\1/\2/\2_ring_summary.lbl',
+             r'metadata/\1/\2/\2_jupiter_summary.tab',
+             r'metadata/\1/\2/\2_jupiter_summary.lbl',
+             r'metadata/\1/\2/\2_saturn_summary.tab',
+             r'metadata/\1/\2/\2_saturn_summary.lbl',
+             r'metadata/\1/\2/\2_uranus_summary.tab',
+             r'metadata/\1/\2/\2_uranus_summary.lbl',
+             r'metadata/\1/\2/\2_neptune_summary.tab',
+             r'metadata/\1/\2/\2_neptune_summary.lbl',
+             r'metadata/\1/\2/\2_inventory.csv',
+             r'metadata/\1/\2/\2_inventory.lbl',
+             r'metadata/\1/\2/\2_index.tab',
+             r'metadata/\1/\2/\2_index.lbl',
+             r'metadata/\1/\2/\2_raw_image_index.tab',
+             r'metadata/\1/\2/\2_raw_image_index.lbl',
+             r'metadata/\1/\2/\2_supplemental_index.tab',
+             r'metadata/\1/\2/\2_supplemental_index.lbl',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -535,7 +562,7 @@ opus_id_to_primary_logical_path = translator.TranslatorByRegex([
 
 class VGISS_xxxx(pdsfile.PdsFile):
 
-    pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('VGISS_[5678]xxx', re.I, 'VGISS_xxxx')]) + \
+    pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('VGISS_[5678x]xxx', re.I, 'VGISS_xxxx')]) + \
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
@@ -551,9 +578,10 @@ class VGISS_xxxx(pdsfile.PdsFile):
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
     ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
-    ASSOCIATIONS['volumes']  = associations_to_volumes
-    ASSOCIATIONS['previews'] = associations_to_previews
-    ASSOCIATIONS['metadata'] = associations_to_metadata
+    ASSOCIATIONS['volumes']   += associations_to_volumes
+    ASSOCIATIONS['previews']  += associations_to_previews
+    ASSOCIATIONS['metadata']  += associations_to_metadata
+    ASSOCIATIONS['documents'] += associations_to_documents
 
     VIEWABLES = {'default': default_viewables}
 

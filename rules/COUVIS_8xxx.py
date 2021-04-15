@@ -21,20 +21,20 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 
 default_viewables = translator.TranslatorByRegex([
     (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_TAU_?\d+KM\.TAB', 0,
-                    (r'previews/COUVIS_8xxx/\2/data/\4_full.jpg',
-                     r'previews/COUVIS_8xxx/\2/data/\4_med.jpg',
-                     r'previews/COUVIS_8xxx/\2/data/\4_small.jpg',
-                     r'previews/COUVIS_8xxx/\2/data/\4_thumb.jpg',
-                    )),
+            [r'previews/COUVIS_8xxx/\2/data/\4_full.jpg',
+             r'previews/COUVIS_8xxx/\2/data/\4_med.jpg',
+             r'previews/COUVIS_8xxx/\2/data/\4_small.jpg',
+             r'previews/COUVIS_8xxx/\2/data/\4_thumb.jpg',
+            ]),
 ])
 
 diagrams_viewables = translator.TranslatorByRegex([
     (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_TAU_?\d+KM\.TAB', 0,
-                    (r'diagrams/COUVIS_8xxx/\2/data/\4_full.jpg',
-                     r'diagrams/COUVIS_8xxx/\2/data/\4_med.jpg',
-                     r'diagrams/COUVIS_8xxx/\2/data/\4_small.jpg',
-                     r'diagrams/COUVIS_8xxx/\2/data/\4_thumb.jpg',
-                    )),
+            [r'diagrams/COUVIS_8xxx/\2/data/\4_full.jpg',
+             r'diagrams/COUVIS_8xxx/\2/data/\4_med.jpg',
+             r'diagrams/COUVIS_8xxx/\2/data/\4_small.jpg',
+             r'diagrams/COUVIS_8xxx/\2/data/\4_thumb.jpg',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -43,37 +43,61 @@ diagrams_viewables = translator.TranslatorByRegex([
 
 associations_to_volumes = translator.TranslatorByRegex([
     (r'.*/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_(TAU\w+KM|[a-z]+)\..*', 0,
-                    [r'volumes/COUVIS_8xxx\1/\2/\3/\4_TAU_01KM.LBL',
-                     r'volumes/COUVIS_8xxx\1/\2/\3/\4_TAU_01KM.TAB',
-                     r'volumes/COUVIS_8xxx\1/\2/\3/\4_TAU_10KM.LBL',
-                     r'volumes/COUVIS_8xxx\1/\2/\3/\4_TAU_10KM.TAB',
-                    ]),
+            [r'volumes/COUVIS_8xxx\1/\2/\3/\4_TAU_01KM.LBL',
+             r'volumes/COUVIS_8xxx\1/\2/\3/\4_TAU_01KM.TAB',
+             r'volumes/COUVIS_8xxx\1/\2/\3/\4_TAU_10KM.LBL',
+             r'volumes/COUVIS_8xxx\1/\2/\3/\4_TAU_10KM.TAB',
+            ]),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
     (r'.*/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_(TAU\w+KM|[a-z]+)\..*', 0,
-                    [r'previews/COUVIS_8xxx/\2/data/\3_full.jpg',
-                     r'previews/COUVIS_8xxx/\2/data/\3_med.jpg',
-                     r'previews/COUVIS_8xxx/\2/data/\3_small.jpg',
-                     r'previews/COUVIS_8xxx/\2/data/\3_thumb.jpg',
-                    ]),
+            [r'previews/COUVIS_8xxx/\2/data/\3_full.jpg',
+             r'previews/COUVIS_8xxx/\2/data/\3_med.jpg',
+             r'previews/COUVIS_8xxx/\2/data/\3_small.jpg',
+             r'previews/COUVIS_8xxx/\2/data/\3_thumb.jpg',
+            ]),
 ])
 
 associations_to_diagrams = translator.TranslatorByRegex([
     (r'.*/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_(TAU\w+KM|[a-z]+)\..*', 0,
-                    [r'diagrams/COUVIS_8xxx/\2/data/\3_full.jpg',
-                     r'diagrams/COUVIS_8xxx/\2/data/\3_med.jpg',
-                     r'diagrams/COUVIS_8xxx/\2/data/\3_small.jpg',
-                     r'diagrams/COUVIS_8xxx/\2/data/\3_thumb.jpg',
-                    ]),
+            [r'diagrams/COUVIS_8xxx/\2/data/\3_full.jpg',
+             r'diagrams/COUVIS_8xxx/\2/data/\3_med.jpg',
+             r'diagrams/COUVIS_8xxx/\2/data/\3_small.jpg',
+             r'diagrams/COUVIS_8xxx/\2/data/\3_thumb.jpg',
+            ]),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
     (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_(TAU\w+KM)\..*', 0,
-                    [r'metadata/COUVIS_8xxx/\2/\2_index.tab/\4_\5',
-                     r'metadata/COUVIS_8xxx/\2/\2_profile_index.tab/\4_TAU01',
-                     r'metadata/COUVIS_8xxx/\2/\2_supplemental_index.tab/\4_TAU01',
-                    ]),
+            [r'metadata/COUVIS_8xxx/\2/\2_index.tab/\4_\5',
+             r'metadata/COUVIS_8xxx/\2/\2_profile_index.tab/\4_TAU01',
+             r'metadata/COUVIS_8xxx/\2/\2_supplemental_index.tab/\4_TAU01',
+            ]),
+])
+
+####################################################################################################################################
+# VERSIONS
+####################################################################################################################################
+
+# _v1 had upper case file names and used "DATA/EASYDATA" in place of "data"
+# _v1 data files had an underscore after "TAU".
+# Case conversions are inconsistent, sometimes mixed case file names are unchanged
+versions = translator.TranslatorByRegex([
+    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(.*_TAU)_?(.*)', 0,
+            [r'volumes/COUVIS_8xxx*/\2/data/\4\5',
+             r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_\5',
+            ]),
+    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)', 0,
+            [r'volumes/COUVIS_8xxx*/\2/data',
+             r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA',
+            ]),
+    (r'volumes/COVIMS_8xxx(|_v[0-9\.]+)/(COVIMS_8...)/(\w+[^aA])(|/.*)', 0,   # don't match "data" directory
+            [r'volumes/COUVIS_8xxx*/\2/#LOWER#\3\4',
+             r'volumes/COUVIS_8xxx*/\2/#LOWER#\3#MIXED#\4',
+             r'volumes/COUVIS_8xxx_v1/\2/#UPPER#\3\4',
+             r'volumes/COUVIS_8xxx_v1/\2/#UPPER#\3#MIXED#\4',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -109,29 +133,29 @@ opus_type = translator.TranslatorByRegex([
 # Use of explicit file names means we don't need to invoke glob.glob(); this goes much faster
 opus_products = translator.TranslatorByRegex([
     (r'.*/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_....)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_(TAU.*|[a-z]+)\..*', 0,
-                    [r'volumes/COUVIS_8xxx*/\2/data/\4_TAU01KM.LBL',
-                     r'volumes/COUVIS_8xxx*/\2/data/\4_TAU01KM.TAB',
-                     r'volumes/COUVIS_8xxx*/\2/data/\4_TAU10KM.LBL',
-                     r'volumes/COUVIS_8xxx*/\2/data/\4_TAU10KM.TAB',
-                     r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_01KM.LBL',
-                     r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_01KM.TAB',
-                     r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_10KM.LBL',
-                     r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_10KM.TAB',
-                     r'previews/COUVIS_8xxx/\2/data/\4_full.jpg',
-                     r'previews/COUVIS_8xxx/\2/data/\4_med.jpg',
-                     r'previews/COUVIS_8xxx/\2/data/\4_small.jpg',
-                     r'previews/COUVIS_8xxx/\2/data/\4_thumb.jpg',
-                     r'diagrams/COUVIS_8xxx/\2/data/\4_full.jpg',
-                     r'diagrams/COUVIS_8xxx/\2/data/\4_med.jpg',
-                     r'diagrams/COUVIS_8xxx/\2/data/\4_small.jpg',
-                     r'diagrams/COUVIS_8xxx/\2/data/\4_thumb.jpg',
-                     r'metadata/COUVIS_8xxx/\2/\2_index.lbl',
-                     r'metadata/COUVIS_8xxx/\2/\2_index.tab',
-                     r'metadata/COUVIS_8xxx/\2/\2_profile_index.lbl',
-                     r'metadata/COUVIS_8xxx/\2/\2_profile_index.tab',
-                     r'metadata/COUVIS_8xxx/\2/\2_supplemental_index.lbl',
-                     r'metadata/COUVIS_8xxx/\2/\2_supplemental_index.tab',
-                    ]),
+            [r'volumes/COUVIS_8xxx*/\2/data/\4_TAU01KM.LBL',
+             r'volumes/COUVIS_8xxx*/\2/data/\4_TAU01KM.TAB',
+             r'volumes/COUVIS_8xxx*/\2/data/\4_TAU10KM.LBL',
+             r'volumes/COUVIS_8xxx*/\2/data/\4_TAU10KM.TAB',
+             r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_01KM.LBL',
+             r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_01KM.TAB',
+             r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_10KM.LBL',
+             r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_TAU_10KM.TAB',
+             r'previews/COUVIS_8xxx/\2/data/\4_full.jpg',
+             r'previews/COUVIS_8xxx/\2/data/\4_med.jpg',
+             r'previews/COUVIS_8xxx/\2/data/\4_small.jpg',
+             r'previews/COUVIS_8xxx/\2/data/\4_thumb.jpg',
+             r'diagrams/COUVIS_8xxx/\2/data/\4_full.jpg',
+             r'diagrams/COUVIS_8xxx/\2/data/\4_med.jpg',
+             r'diagrams/COUVIS_8xxx/\2/data/\4_small.jpg',
+             r'diagrams/COUVIS_8xxx/\2/data/\4_thumb.jpg',
+             r'metadata/COUVIS_8xxx/\2/\2_index.lbl',
+             r'metadata/COUVIS_8xxx/\2/\2_index.tab',
+             r'metadata/COUVIS_8xxx/\2/\2_profile_index.lbl',
+             r'metadata/COUVIS_8xxx/\2/\2_profile_index.tab',
+             r'metadata/COUVIS_8xxx/\2/\2_supplemental_index.lbl',
+             r'metadata/COUVIS_8xxx/\2/\2_supplemental_index.tab',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -174,10 +198,12 @@ class COUVIS_8xxx(pdsfile.PdsFile):
     }
 
     ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
-    ASSOCIATIONS['volumes']  = associations_to_volumes
-    ASSOCIATIONS['previews'] = associations_to_previews
-    ASSOCIATIONS['diagrams'] = associations_to_diagrams
-    ASSOCIATIONS['metadata'] = associations_to_metadata
+    ASSOCIATIONS['volumes']  += associations_to_volumes
+    ASSOCIATIONS['previews'] += associations_to_previews
+    ASSOCIATIONS['diagrams'] += associations_to_diagrams
+    ASSOCIATIONS['metadata'] += associations_to_metadata
+
+    VERSIONS = versions + pdsfile.PdsFile.VERSIONS
 
 # Global attribute shared by all subclasses
 pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-uvis-occ.*', 0, COUVIS_8xxx)]) + \
