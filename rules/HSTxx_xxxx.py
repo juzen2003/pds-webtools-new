@@ -21,7 +21,10 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'volumes/.*/data/visit.*/.*\.ASC',             re.I, ('Listing of FITS label info',               'INFO')    ),
     (r'volumes/.*/data/visit.*/.*\.LBL',             re.I, ('PDS label with download instructions',     'LABEL')   ),
     (r'volumes/.*/index/hstfiles\..*',               re.I, ('Index of associations between data files', 'INDEX')   ),
-    (r'metadata/.*hstfiles\..*',                     re.I, ('Index of associations between data files', 'INDEX')   ),
+    (r'volumes/.*/index/hstfiles\..*',               re.I, ('Index of associations between data files', 'INDEX')   ),
+    (r'metadata/.*9999/.*hstfiles\..*',              re.I, ('Cumulative index of associations between data files', 'INDEX')),
+    (r'metadata/.*9999/.*index\..*',                 re.I, ('Cumulative product index with RMS Node updates',      'INDEX')),
+    (r'metadata/.*hstfiles\..*',                     re.I, ('Index of associations between data files, updated',   'INDEX')),
 ])
 
 ####################################################################################################################################
@@ -50,27 +53,34 @@ default_viewables = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 associations_to_volumes = translator.TranslatorByRegex([
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_../\w{9}).*',   0, r'volumes/\1/\3*'),
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_..)',           0, r'volumes/\1/\3'),
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA)',                    0, r'volumes/\1/\3'),
+    (r'.*/(HST.x_xxxx)(|_.*)/(HST.._..../DATA/VISIT_../\w{9}).*',   0, r'volumes/\1/\3*'),
+    (r'.*/(HST.x_xxxx)(|_.*)/(HST.._..../DATA/VISIT_..)',           0, r'volumes/\1/\3'),
+    (r'.*/(HST.x_xxxx)(|_.*)/(HST.._..../DATA)',                    0, r'volumes/\1/\3'),
     (r'.*/(HST.)9_9999.*',                                          0, r'volumes/\1x_xxxx'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_../\w{9}).*',   0, [r'previews/\1/\3_full.jpg',
+    (r'.*/(HST.._xxxx)(|_.*)/(HST.._..../DATA/VISIT_../\w{9}).*',   0, [r'previews/\1/\3_full.jpg',
                                                                         r'previews/\1/\3_med.jpg',
                                                                         r'previews/\1/\3_small.jpg',
                                                                         r'previews/\1/\3_thumb.jpg']),
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA/VISIT_..)',           0, r'previews/\1/\3'),
-    (r'.*/(HST.._....)(|_.*)/(HST.._..../DATA)',                    0, r'previews/\1/\3'),
+    (r'.*/(HST.x_xxxx)(|_.*)/(HST.._..../DATA/VISIT_..)',           0, r'previews/\1/\3'),
+    (r'.*/(HST.x_xxxx)(|_.*)/(HST.._..../DATA)',                    0, r'previews/\1/\3'),
     (r'.*/(HST.)9_9999.*',                                          0, r'previews/\1x_xxxx'),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA/VISIT_../(\w{9}).*', 0, [r'metadata/\1/\3/\3_index.tab/\4',
-                                                                        r'metadata/\1/\3/\3_hstfiles.tab/\4']),
-    (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA/VISIT_..',           0,  r'metadata/\1/\3'),
-    (r'.*/(HST.._....)(|_.*)/(HST.._....)/DATA',                    0,  r'metadata/\1/\3'),
+    (r'volumes/(HST.x_xxxx)(|_.*)/(HST.._....)/DATA/VISIT_../(\w{9}).*', 0, [r'metadata/\1/\3/\3_index.tab/\4',
+                                                                             r'metadata/\1/\3/\3_hstfiles.tab/\4']),
+    (r'volumes/(HST.x_xxxx)(|_.*)/(HST.._....)/DATA(|/VISIT_..)',        0,  r'metadata/\1/\3'),
+    (r'volumes/(HST.x_xxxx)(|_.*)/(HST.._....)/INDEX/INDEX\..*',         0, [r'metadata/\1/\3/\3_index.tab',
+                                                                             r'metadata/\1/\3/\3_index.lbl']),
+    (r'volumes/(HST.x_xxxx)(|_.*)/(HST.._....)/INDEX/HSTFILES\..*',      0, [r'metadata/\1/\3/\3_hstfiles.tab',
+                                                                             r'metadata/\1/\3/\3_hstfiles.lbl']),
+    (r'metadata/(HST.)x_xxxx(|_v[0-9\.]+)/HST.[^9]_....',                0,  r'metadata/\1x_xxxx\2/\g<1>9_9999'),
+    (r'metadata/(HST.)x_xxxx(|_v[0-9\.]+)/HST.[^9]_..../HST.._....(_.*)\..*',  0,
+                                                                       [r'metadata/\1x_xxxx\2/\g<1>9_9999/\g<1>9_9999\3.tab',
+                                                                        r'metadata/\1x_xxxx\2/\g<1>9_9999/\g<1>9_9999\3.lbl']),
 ])
 
 associations_to_documents = translator.TranslatorByRegex([

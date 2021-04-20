@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# rules/__init__.py
+# pdsfile_rules.py
 #
 # Definitions of Translator objects used by the PdsFile class.
 ####################################################################################################################################
@@ -79,7 +79,7 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
     (r'previews/[^/]+/[^/]+',      0, ('Preview images for volume',                    'IMAGEDIR')),
 
     # Metadata directory file names
-    (r'metadata/.*999.*_index\.tab',           0, ('Cumulative product index of volume series',       'INDEX')),
+    (r'metadata/.*999.*_index\.tab',           0, ('Cumulative product index with RMS Node updates',  'INDEX')),
     (r'metadata/.*999.*_inventory\.(csv|tab)', 0, ('Cumulative list of observed bodies by product',   'INDEX')),
     (r'metadata/.*999.*_moon_summary\.tab',    0, ('Cumulative list of observed geometry on moons',   'INDEX')),
     (r'metadata/.*999.*_ring_summary\.tab',    0, ('Cumulative list of observed geometry on rings',   'INDEX')),
@@ -90,16 +90,16 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
     (r'metadata/.*999.*_pluto_summary\.tab',   0, ('Cumulative list of observed geometry on Pluto',   'INDEX')),
     (r'metadata/.*999.*_charon_summary\.tab',  0, ('Cumulative list of observed geometry on Charon',  'INDEX')),
 
-    (r'metadata/.*_index\.tab',           0, ('Product index delivered by data provider', 'INDEX')),
-    (r'metadata/.*_inventory\.(csv|tab)', 0, ('List of observed bodies by product',       'INDEX')),
-    (r'metadata/.*_moon_summary\.tab',    0, ('Index of observed geometry on moons',      'INDEX')),
-    (r'metadata/.*_ring_summary\.tab',    0, ('Index of observed geometry on rings',      'INDEX')),
-    (r'metadata/.*_saturn_summary\.tab',  0, ('Index of observed geometry on Saturn',     'INDEX')),
-    (r'metadata/.*_jupiter_summary\.tab', 0, ('Index of observed geometry on Jupiter',    'INDEX')),
-    (r'metadata/.*_uranus_summary\.tab',  0, ('Index of observed geometry on Uranus',     'INDEX')),
-    (r'metadata/.*_neptune_summary\.tab', 0, ('Index of observed geometry on Neptune',    'INDEX')),
-    (r'metadata/.*_pluto_summary\.tab',   0, ('Index of observed geometry on Pluto',      'INDEX')),
-    (r'metadata/.*_charon_summary\.tab',  0, ('Index of observed geometry on Charon',     'INDEX')),
+    (r'metadata/.*_index\.tab',           0, ('Product index with RMS Node updates',   'INDEX')),
+    (r'metadata/.*_inventory\.(csv|tab)', 0, ('List of observed bodies by product',    'INDEX')),
+    (r'metadata/.*_moon_summary\.tab',    0, ('Index of observed geometry on moons',   'INDEX')),
+    (r'metadata/.*_ring_summary\.tab',    0, ('Index of observed geometry on rings',   'INDEX')),
+    (r'metadata/.*_saturn_summary\.tab',  0, ('Index of observed geometry on Saturn',  'INDEX')),
+    (r'metadata/.*_jupiter_summary\.tab', 0, ('Index of observed geometry on Jupiter', 'INDEX')),
+    (r'metadata/.*_uranus_summary\.tab',  0, ('Index of observed geometry on Uranus',  'INDEX')),
+    (r'metadata/.*_neptune_summary\.tab', 0, ('Index of observed geometry on Neptune', 'INDEX')),
+    (r'metadata/.*_pluto_summary\.tab',   0, ('Index of observed geometry on Pluto',   'INDEX')),
+    (r'metadata/.*_charon_summary\.tab',  0, ('Index of observed geometry on Charon',  'INDEX')),
 
     # Previews
     (r'previews/.*_thumb\.(jpg|png)',     0, ('Thumbnail preview image',        'BROWSE')),
@@ -118,7 +118,7 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
     # Standard information files
     (r'.*/aareadme\.(txt|vms)',         re.I, ('Read Me First!',                'INFO'    )),
     (r'.*/voldesc\.(cat|sfd)',          re.I, ('PDS3 volume description',       'INFO'    )),
-    (r'.*/errata\.txt',                 re.I, ('Errata file',                   'INFO'    )),
+    (r'.*/errata\.txt',                 re.I, ('Volume errata',                 'INFO'    )),
     (r'.*info\.txt',                    re.I, ('Info about this directory',     'INFO'    )),
     (r'.*/vicar2.txt',                  re.I, ('VICAR documentation',           'INFO'    )),
     (r'.*/fitsinfo\..*',                re.I, ('FITS documentation',            'INFO'    )),
@@ -147,14 +147,10 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
     (r'.*/document/.*basis.*\.pdf',     re.I, ('PDF document',                  'INFO'    )),
     (r'.*/document/.*sis(|_.*)\.[^L].*',re.I, ('PDS3 Archive Description',      'INFO'    )), # contains "sis_" or "sis.", but not "basis"
     (r'.*/document/.*\.(txt|asc)',      re.I, ('Text document',                 'INFO'    )),
-    (r'.*/document(/\w+)*(|/)',         re.I, ('Documentation',                 'INFODIR' )),
+    (r'.*/document',                    re.I, ('Volume documentation',          'INFODIR' )),
+    (r'.*/document(/\w+)+',             re.I, ('Documentation',                 'INFODIR' )),
     (r'.*/document/.*\.(gif|jpg|jpeg|tif|tiff|png)',
                                         re.I, ('Documentation figure',          'BROWSE'  )),
-    (r'.*\.asc',                        re.I, ('ASCII document',                'INFO'    )),
-    (r'.*\.pdf',                        re.I, ('PDF document',                  'INFO'    )),
-    (r'.*\.(eps|ps)',                   re.I, ('Postscript document',           'INFO'    )),
-    (r'.*\.(htm|html)',                 re.I, ('HTML document',                 'INFO'    )),
-    (r'.*\.doc',                        re.I, ('Word document',                 'INFO'    )),
 
     # Software directories
     (r'.*/software(.*)/bin/\w+',        re.I, ('Program binary',                'CODE'    )),
@@ -182,8 +178,8 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
     (r'.*/catalog/SOFTWARE\.CAT',       re.I, ('Software information',          'INFO'    )),
 
     # Index files
-    ('r.*/index/cum.*\.tab',            re.I, ('Cumulative index',              'INDEX'   )),
-    ('r.*/index/.*\.tab',               re.I, ('Index table',                   'INDEX'   )),
+    (r'.*/index/cum.*\.tab',            re.I, ('Cumulative index of data products',     'INDEX')),
+    (r'.*/index/(img|)index\.tab',      re.I, ('Index of data products on this volume', 'INDEX')),
 
     # SPICE kernels
     (r'.*\.(bsp|spk)',                  re.I, ('SPICE trajectory kernel',       'GEOM'    )),
@@ -238,6 +234,12 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
     (r'.*\.a',                          re.I, ('Unix object library',           'CODE'    )),
     (r'.*\.o',                          re.I, ('Unix object file',              'CODE'    )),
 
+    (r'.*\.asc',                        re.I, ('ASCII document',                'INFO'    )),
+    (r'.*\.pdf',                        re.I, ('PDF document',                  'INFO'    )),
+    (r'.*\.(eps|ps)',                   re.I, ('Postscript document',           'INFO'    )),
+    (r'.*\.(htm|html)',                 re.I, ('HTML document',                 'INFO'    )),
+    (r'.*\.doc',                        re.I, ('Word document',                 'INFO'    )),
+
     (r'',                               0,    ('Root directory',                'FOLDER'  )),
     (r'.*/[^\.]+',                      0,    ('Directory',                     'FOLDER'  )),
     (r'.*\..*',                         0,    ('Document',                      'UNKNOWN' )),
@@ -261,6 +263,16 @@ ASSOCIATIONS = {
     'diagrams'  : translator.NullTranslator(),
     'metadata'  : translator.TranslatorByRegex([
                         (r'metadata/([\w\.]+)/.*', 0, r'metadata/\1/AAREADME.txt'),
+                        (r'volumes/([A-Z][A-Z0-9x]{1,5}_....)(|_[\w\.]+)/([\w]+)/index', re.I,
+                            r'metadata/\1/\3'),
+                        (r'volumes/([A-Z][A-Z0-9x]{1,5}_....)(|_[\w\.]+)/([\w]+)/index/(img|)index\..*', re.I,
+                            [r'metadata/\1/\3/\3_index.tab',
+                             r'metadata/\1/\3/\3_index.lbl',
+                            ]),
+                        (r'volumes/([A-Z][A-Z0-9x]{1,5}_....)(|_[\w\.]+)/([\w]+)\d\d\d/index/cumindex\..*', re.I,
+                            [r'metadata/\1/\g<3>999/\g<3>999_index.tab',
+                             r'metadata/\1/\g<3>999/\g<3>999_index.lbl',
+                            ]),
                     ]),
     'documents' : translator.TranslatorByRegex([
                         (r'volumes/([A-Z][A-Z0-9x]{1,5}_....).*', 0,
@@ -553,3 +565,5 @@ LID_AFTER_DSID = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 DATA_SET_ID = translator.NullTranslator()
+
+####################################################################################################################################

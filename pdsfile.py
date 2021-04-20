@@ -689,7 +689,9 @@ class PdsFile(object):
         'labels_after': True,
         'dirs_first'  : False,
         'dirs_last'   : False,
-        'info_first'  : True,
+        'info_first'  : 20,     # info files first if there are at least this
+                                # many files; 0 or False for never, 1 or True
+                                # for always.
     }
 
     def sort_labels_after(self, labels_after):
@@ -714,7 +716,10 @@ class PdsFile(object):
         self.SORT_ORDER['dirs_last'] = dirs_last
 
     def sort_info_first(self, info_first):
-        """If True, info files will be listed first in all sorted lists."""
+        """If True or 1, info files will be listed first in all sorted lists;
+        if False or 0, info files will appear alphabetically;
+        if an integer bigger than 1, put the info file first only if there are
+        at least this many files in the directory."""
 
         self.SORT_ORDER = self.SORT_ORDER.copy()
         self.SORT_ORDER['info_first'] = info_first
@@ -1052,6 +1057,15 @@ class PdsFile(object):
         if '/shelves/info/' in abspath:
             return os.path.exists(abspath)
 
+        # Handle index rows
+        if '.tab/' in abspath:
+            parts = abspath.partition('.tab/')
+            if not PdsFile.os_path_exists(parts[0] + '.tab'):
+                return False
+            pdsf = PdsFile.from_abspath(parts[0] + '.tab')
+            return (pdsf.exists and
+                    pdsf.child_of_index(parts[2], flag='').exists)
+
         if SHELVES_ONLY:
             try:
                 (shelf_abspath,
@@ -1286,15 +1300,16 @@ class PdsFile(object):
         file paths will only match if the case is exact.
         """
 
-        if not SHELVES_ONLY:
-            return _clean_glob(abspath, force_case_sensitive)
-
         # We can save a lot of trouble if there's no match pattern
+        # This also enables support for index row notation "index.tab/whatever"
         if not _needs_glob(abspath):
-            if PdsFile.os_path_exists(abspath):
+            if PdsFile.os_path_exists(abspath, force_case_sensitive):
                 return [abspath]
             else:
                 return []
+
+        if not SHELVES_ONLY:
+            return _clean_glob(abspath, force_case_sensitive)
 
         # Find the shelf file(s) if any
         abspath = abspath.rstrip('/')
@@ -4514,6 +4529,24 @@ class PdsFile(object):
             except KeyError:
                 pass
 
+            # Try the second line of the .py file; this is quicker than reading
+            # the whole .pickle file. This is useful because it avoids the need
+            # to open every info shelf file during preload.
+            if id == 'info':
+                py_path = shelf_path.replace('.pickle', '.py')
+                if LOGGER:
+                    LOGGER.debug('Retrieving key ""', py_path)
+
+                with open(py_path) as f:
+                    rec = f.readline()
+                    rec = f.readline()
+
+                # Format is "": (bytes, count, date, checksum, (0,0)),
+                parts = rec.partition(':')
+                values = eval(parts[2].strip()[:-1])
+                PdsFile.SHELF_NULL_KEY_VALUES[shelf_path] = values
+                return values
+
         shelf = PdsFile._get_shelf(shelf_path)
         return shelf[key]
 
@@ -4784,7 +4817,7 @@ class PdsFile(object):
                 else:
                     parts = [isdir] + parts
 
-            if info_first:
+            if apply_info_first:
                 parts = [self.info_basename != basename] + parts
 
             return parts
@@ -4800,6 +4833,15 @@ class PdsFile(object):
 
         if info_first is None:
             info_first = self.SORT_ORDER['info_first']
+
+        # Put info file first only if the number of children exceeds the
+        # specified threshold:
+        #   info_first = 0 or False: never put info files first
+        #   info_first = 1 or True: always put info files first
+        #   info_first > 1: put info files first only if the number of files is
+        #                   this large or larger
+        apply_info_first = (int(info_first) >= 1 and
+                            int(info_first) <= len(basenames))
 
         basenames = list(basenames)
         basenames.sort(key=modified_sort_key)
@@ -5062,9 +5104,9 @@ class PdsFile(object):
                     pass
 
             # Remove duplicates
-            abspaths = [p for (k,p) in enumerate(abspaths)
-                        if p not in abspaths[:k]]
-            return abspaths
+            new_abspaths = [p for (k,p) in enumerate(new_abspaths)
+                            if p not in new_abspaths[:k]]
+            return new_abspaths
 
         # Handle archives by finding associated files in subcategory
         if category.startswith('archives-'):
@@ -5084,9 +5126,9 @@ class PdsFile(object):
                     pass
 
             # Remove duplicates
-            abspaths = [p for (k,p) in enumerate(abspaths)
-                        if p not in abspaths[:k]]
-            return abspaths
+            new_abspaths = [p for (k,p) in enumerate(new_abspaths)
+                            if p not in new_abspaths[:k]]
+            return new_abspaths
 
         # No more recursive calls...
 
@@ -5297,8 +5339,13 @@ PdsFile.SUBCLASSES['default'] = PdsFile
 # This import must wait until after the PdsFile class has been fully initialized
 ################################################################################
 
-from rules import *     # Data set-specific rules are implemented as subclasses
-                        # of PdsFile
+try:
+    from rules import *     # Data set-specific rules are implemented as
+                            # subclasses of PdsFile
+except AttributeError:
+    pass                    # This occurs when running pytests on individual
+                            # rule subclasses, where pdsfile can be imported
+                            # recursively.
 
 ################################################################################
 # After the constructors are defined, always create and cache permanent,
@@ -5449,7 +5496,7 @@ def abspath_for_logical_path(path):
 
     # If no preload occurred, check the /Library/WebSever/Documents directory
     # for a symlink. This only works for MacOS, but it is almost never needed
-    # so that's OK.
+    # otherwise so that's OK.
     elif LOCAL_HOLDINGS_DIRS is None:
         holdings_dirs = glob.glob('/Library/WebServer/Documents/holdings*')
         holdings_dirs.sort()

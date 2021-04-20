@@ -237,6 +237,10 @@ pdsfile.PdsFile.FILESPEC_TO_VOLSET = filespec_to_volset + pdsfile.PdsFile.FILESP
 pdsfile.PdsFile.SUBCLASSES['EBROCC_xxxx'] = EBROCC_xxxx
 
 ####################################################################################################################################
+# Unit tests
+####################################################################################################################################
+
+from .pytest_support import *
 
 def test_opus_products():
 
@@ -253,7 +257,7 @@ def test_opus_products():
     ]
 
     PATH = 'volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL'
-    abspaths = pdsfile.rules.translate_all(opus_products, PATH)
+    abspaths = translate_all(opus_products, PATH)
     trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
     for (count, pattern) in TESTS:
         subset = [p for p in trimmed if re.fullmatch(pattern, p)]

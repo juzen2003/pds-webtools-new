@@ -106,7 +106,7 @@ def file_handler(logpath, level=HIDDEN_STATUS+1, rotation='none', suffix=''):
     if rotation == 'number':
 
         # Find the maximum version number
-        version_regex = re.compile('.*' + rootname + '_v([0-9]+)(|_\w+)' + ext)
+        version_regex = re.compile('.*' + rootname + r'_v([0-9]+)(|_\w+)' + ext)
         previous = glob.glob(prefix + '_v*' + ext)
         max_version = 0
         for filepath in previous:
@@ -115,7 +115,7 @@ def file_handler(logpath, level=HIDDEN_STATUS+1, rotation='none', suffix=''):
                 max_version = max(int(match_obj.group(1)), max_version)
 
         # Rename any files without a version number
-        latest_regex = re.compile('.*' + rootname + '(|_\w+)' + ext)
+        latest_regex = re.compile('.*' + rootname + r'(|_\w+)' + ext)
         vno_regex = re.compile('.*_v[0-9]+.*')
 
         previous = glob.glob(prefix + '*' + ext)

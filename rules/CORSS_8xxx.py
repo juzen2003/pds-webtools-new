@@ -208,10 +208,21 @@ associations_to_previews = translator.TranslatorByRegex([
             [r'previews/CORSS_8xxx/\2/data',
              r'previews/CORSS_8xxx/\2/browse'
             ]),
+    (r'.*/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/(data|browse|EASYDATA)/(Rev...)', 0,
+            r'previews/CORSS_8xxx/\2/data/\4'),
+    (r'.*/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/(data|browse|EASYDATA)/(Rev.../Rev...C?[IE])', 0,
+            [r'previews/CORSS_8xxx/\2/data/\4',
+             r'previews/CORSS_8xxx/\2/data/\4_full.jpg',
+             r'previews/CORSS_8xxx/\2/data/\4_med.jpg',
+             r'previews/CORSS_8xxx/\2/data/\4_small.jpg',
+             r'previews/CORSS_8xxx/\2/data/\4_thumb.jpg',
+            ]),
     (r'previews/CORSS_8xxx/(CORSS_8.../.*)_[a-z]+\.jpg', 0,
-            r'previews/CORSS_8xxx/\1_*.jpg'),
-    (r'diagrams/CORSS_8xxx/(CORSS_8...)/.*/(Rev...)(C?[IE])_(RSS_2..._..._..._[IE]).*', 0,
-            r'previews/CORSS_8xxx/\1/data/\2/\2\3/\2\3_\4'),
+            [r'previews/CORSS_8xxx/\1_full.jpg',
+             r'previews/CORSS_8xxx/\1_med.jpg',
+             r'previews/CORSS_8xxx/\1_small.jpg',
+             r'previews/CORSS_8xxx/\1_thumb.jpg'
+            ]),
     (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/.*/(Rev\d\d\d)(|_.*)', 0,
             [r'previews/CORSS_8xxx/\2/data/\3',
              r'previews/CORSS_8xxx/\2/browse/\3_OccTrack_Geometry_full.jpg',
@@ -235,7 +246,15 @@ associations_to_previews = translator.TranslatorByRegex([
 associations_to_diagrams = translator.TranslatorByRegex([
     (r'.*/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/(data|browse|EASYDATA)', 0,
             r'diagrams/CORSS_8xxx/\2/data'),
-    (r'.*/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/.*/(Rev...)(C?[IE]_RSS_2..._..._..._[IE]).*', 0,
+    (r'.*/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/(data|browse|EASYDATA)/(Rev...)', 0,
+            r'diagrams/CORSS_8xxx/\2/data/\4'),
+    (r'diagrams/CORSS_8xxx/(CORSS_8.../.*)_[a-z]+\.jpg', 0,
+            [r'diagrams/CORSS_8xxx/\1_full.jpg',
+             r'diagrams/CORSS_8xxx/\1_med.jpg',
+             r'diagrams/CORSS_8xxx/\1_small.jpg',
+             r'diagrams/CORSS_8xxx/\1_thumb.jpg'
+            ]),
+    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/.*/(Rev...)(C?[IE]_RSS_2..._..._..._[IE]).*', 0,
             [r'diagrams/CORSS_8xxx/\2/data/\3/\3\4_full.jpg',
              r'diagrams/CORSS_8xxx/\2/data/\3/\3\4_med.jpg',
              r'diagrams/CORSS_8xxx/\2/data/\3/\3\4_small.jpg',
@@ -250,21 +269,23 @@ associations_to_diagrams = translator.TranslatorByRegex([
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/data.*/(\w+)\..*', 0,
-            r'metadata/CORSS_8xxx/\2/\2_index.tab/\3'),
-    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/data.*/(\w+)_TAU.*', 0,
-            [r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\3_TAU_01KM',
-             r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\3_TAU_1400M',
-             r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\3_TAU_1600M',
-             r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\3_TAU_2400M',
-             r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\3_TAU_3000M',
-             r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\3_TAU_4000M',
-             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\3_TAU_01KM',
-             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\3_TAU_1400M',
-             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\3_TAU_1600M',
-             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\3_TAU_2400M',
-             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\3_TAU_3000M',
-             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\3_TAU_4000M',
+    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/(data|EASYDATA)', 0,
+            r'metadata/CORSS_8xxx/\2'),
+    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/(data|EASYDATA).*/(\w+)\..*', 0,
+            r'metadata/CORSS_8xxx/\2/\2_index.tab/\4'),
+    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/(data|EASYDATA).*/(\w+)_TAU.*', 0,
+            [r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\4_TAU_01KM',
+             r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\4_TAU_1400M',
+             r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\4_TAU_1600M',
+             r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\4_TAU_2400M',
+             r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\4_TAU_3000M',
+             r'metadata/CORSS_8xxx/\2/\2_profile_index.tab/\4_TAU_4000M',
+             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\4_TAU_01KM',
+             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\4_TAU_1400M',
+             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\4_TAU_1600M',
+             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\4_TAU_2400M',
+             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\4_TAU_3000M',
+             r'metadata/CORSS_8xxx/\2/\2_supplemental_index.tab/\4_TAU_4000M',
             ]),
 ])
 
@@ -484,202 +505,261 @@ pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-rss-oc
 pdsfile.PdsFile.SUBCLASSES['CORSS_8xxx'] = CORSS_8xxx
 
 ####################################################################################################################################
+# Unit tests
+####################################################################################################################################
+
+import pytest
+from .pytest_support import *
 
 def test_default_viewables():
+    # ((number of default viewables, diagrams, profiles, skyviews, dsntracks, timelines), logical_path)
     TESTS = [
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.LBL'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.pdf'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_TimeLine_Figure.pdf'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_TimeLine_Table.pdf'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E'),
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_CAL.TAB'),
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_DLP_500M.TAB'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_GEO.TAB'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_01KM.TAB'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_10KM.TAB'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev137/Rev137E/Rev137E_RSS_2010_245_S24_E/RSS_2010_245_S24_E_TAU_1600M.TAB'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry.pdf'),
-        (4, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/Rev07E_RSS_2005_123_X43_E_Summary.pdf'),
-        (0, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_CAL.TAB'),
-        (4, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_01KM.TAB'),
-        (4, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_10KM.TAB'),
+        ((0, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.LBL'),
+        ((4, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.pdf'),
+        ((4, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_TimeLine_Figure.pdf'),
+        ((4, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_TimeLine_Table.pdf'),
+        ((4, 0, 0, 4, 4, 4), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E'),
+        ((4, 4, 4, 4, 4, 4), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E'),
+        ((0, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_CAL.TAB'),
+        ((0, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_DLP_500M.TAB'),
+        ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_GEO.TAB'),
+        ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_01KM.TAB'),
+        ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_10KM.TAB'),
+        ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev137/Rev137E/Rev137E_RSS_2010_245_S24_E/RSS_2010_245_S24_E_TAU_1600M.TAB'),
+        ((4, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry.pdf'),
+        ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/Rev07E_RSS_2005_123_X43_E_Summary.pdf'),
+        ((0, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_CAL.TAB'),
+        ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_01KM.TAB'),
+        ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_10KM.TAB'),
     ]
 
-    for (count, path) in TESTS:
-        abspaths = pdsfile.rules.translate_first(default_viewables, path)
+    for (counts, path) in TESTS:
+        abspaths = translate_all(default_viewables, path)
         trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
-        assert len(abspaths) == count, f'{path} {len(abspaths)} {trimmed}'
+        assert len(abspaths) == counts[0], f'{path} {len(abspaths)} {trimmed}'
 
-def test_diagram_viewables():
-    TESTS = [
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.LBL'),
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.pdf'),
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_TimeLine_Figure.pdf'),
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_TimeLine_Table.pdf'),
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_CAL.TAB'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_DLP_500M.TAB'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_GEO.TAB'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_01KM.TAB'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_10KM.TAB'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev137/Rev137E/Rev137E_RSS_2010_245_S24_E/RSS_2010_245_S24_E_TAU_1600M.TAB'),
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry.pdf'),
-        (4, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/Rev07E_RSS_2005_123_X43_E_Summary.pdf'),
-        (4, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_CAL.TAB'),
-        (4, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_01KM.TAB'),
-        (4, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_10KM.TAB'),
-    ]
-
-    for (count, path) in TESTS:
-        abspaths = pdsfile.rules.translate_first(diagram_viewables, path)
+        abspaths = translate_all(diagram_viewables, path)
         trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
-        assert len(abspaths) == count, f'Miscount: {path} {len(abspaths)} {trimmed}'
+        assert len(abspaths) == counts[1], f'{path} {len(abspaths)} {trimmed}'
 
-def test_associations_to_volumes():
+        abspaths = translate_all(profile_viewables, path)
+        trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
+        assert len(abspaths) == counts[2], f'{path} {len(abspaths)} {trimmed}'
+
+        abspaths = translate_all(skyview_viewables, path)
+        trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
+        assert len(abspaths) == counts[3], f'{path} {len(abspaths)} {trimmed}'
+
+        abspaths = translate_all(dsntrack_viewables, path)
+        trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
+        assert len(abspaths) == counts[4], f'{path} {len(abspaths)} {trimmed}'
+
+        abspaths = translate_all(timeline_viewables, path)
+        trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
+        assert len(abspaths) == counts[5], f'{path} {len(abspaths)} {trimmed}'
+
+def test_associations():
+    # ((number of volume associations, previews, diagrams, metadata, documents), logical_path)
     TESTS = [
-        (2, 'volumes/CORSS_8xxx/CORSS_8001/data'),
-        (2, 'volumes/CORSS_8xxx/CORSS_8001/browse'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/data'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/browse'),
-        (2, 'diagrams/CORSS_8xxx/CORSS_8001/data'),
-        (2, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry_full.jpg'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation_full.jpg'),
-        (1, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E_full.jpg'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/Rev007E_RSS_2005_123_K34_E_Summary_thumb.jpg'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_GEO_thumb.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_thumb.jpg'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/browse/Rev054_OccTrack_Geometry_full.jpg'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054_DSN_Elevation_full.jpg'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054_TimeLine_Figure_full.jpg'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054_TimeLine_Table_full.jpg'),
-        (1, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE_full.jpg'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/Rev054CE_RSS_2007_353_K55_E_Summary_thumb.jpg'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_GEO_thumb.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_TAU_thumb.jpg'),
-        (1, 'diagrams/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E_RSS_2005_123_K34_E_full.jpg'),
-        (1, 'diagrams/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE_RSS_2007_353_K55_E_full.jpg'),
-        (1, 'volumes/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry.pdf'),
-        (1, 'volumes/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry.LBL'),
-        (2, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007'),
-        (8, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E'),
-        (8, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_01KM.TAB'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_01KM.LBL'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_10KM.TAB'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_CAL.TAB'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_DLP_500M.TAB'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_GEO.TAB'),
-        (8, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE'),
-        (8, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_TAU_01KM.TAB'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_TAU_01KM.LBL'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_TAU_10KM.TAB'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_CAL.TAB'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_DLP_500M.TAB'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_GEO.TAB'),
-        (20, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/Rev054CE_RSS_2007_353_K55_E_Summary.pdf'),
-        (1, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_K34_E'),
-        (1, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_01KM.TAB'),
-        (1, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_01KM.LBL'),
-        (1, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_10KM.TAB'),
-        (1, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_CAL.TAB'),
-        (1, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_GEO.TAB'),
-        (1, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/Rev07E_RSS_2005_123_X43_E_Summary.pdf'),
+        (( 2, 2, 1, 1, 1), 'volumes/CORSS_8xxx/CORSS_8001/data'),
+        (( 2, 2, 1, 0, 1), 'volumes/CORSS_8xxx/CORSS_8001/browse'),
+        (( 2, 2, 1, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data'),
+        (( 2, 2, 1, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/browse'),
+        (( 2, 2, 1, 0, 0), 'diagrams/CORSS_8xxx/CORSS_8001/data'),
+        (( 2, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry_full.jpg'),
+        (( 2, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation_full.jpg'),
+        (( 1, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E_full.jpg'),
+        (( 2, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/Rev007E_RSS_2005_123_K34_E_Summary_thumb.jpg'),
+        (( 2, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_GEO_thumb.jpg'),
+        (( 4, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_thumb.jpg'),
+        (( 2, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/browse/Rev054_OccTrack_Geometry_full.jpg'),
+        (( 2, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054_DSN_Elevation_full.jpg'),
+        (( 2, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054_TimeLine_Figure_full.jpg'),
+        (( 2, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054_TimeLine_Table_full.jpg'),
+        (( 1, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE_full.jpg'),
+        (( 2, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/Rev054CE_RSS_2007_353_K55_E_Summary_thumb.jpg'),
+        (( 2, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_GEO_thumb.jpg'),
+        (( 4, 4, 0, 0, 0), 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_TAU_thumb.jpg'),
+        (( 1, 0, 4, 0, 0), 'diagrams/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E_RSS_2005_123_K34_E_full.jpg'),
+        (( 1, 0, 4, 0, 0), 'diagrams/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE_RSS_2007_353_K55_E_full.jpg'),
+        (( 1, 5, 0, 0, 1), 'volumes/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry.pdf'),
+        (( 1, 5, 0, 0, 1), 'volumes/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry.LBL'),
+        (( 2, 5, 1, 0, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007'),
+        (( 8, 5, 0, 0, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E'),
+        (( 8, 1, 4, 0, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E'),
+        ((20, 1, 4, 3, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_01KM.TAB'),
+        ((20, 1, 4, 3, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_01KM.LBL'),
+        ((20, 1, 4, 3, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_10KM.TAB'),
+        ((20, 1, 4, 1, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_CAL.TAB'),
+        ((20, 1, 4, 1, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_DLP_500M.TAB'),
+        ((20, 1, 4, 1, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_GEO.TAB'),
+        (( 8, 5, 0, 0, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE'),
+        (( 8, 1, 4, 0, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E'),
+        ((20, 1, 4, 3, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_TAU_01KM.TAB'),
+        ((20, 1, 4, 3, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_TAU_01KM.LBL'),
+        ((20, 1, 4, 3, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_TAU_10KM.TAB'),
+        ((20, 1, 4, 1, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_CAL.TAB'),
+        ((20, 1, 4, 1, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_DLP_500M.TAB'),
+        ((20, 1, 4, 1, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_GEO.TAB'),
+        ((20, 1, 4, 1, 1), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/Rev054CE_RSS_2007_353_K55_E_Summary.pdf'),
+        (( 2, 2, 1, 1, 1), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA'),
+        (( 1, 1, 4, 0, 1), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_K34_E'),
+        (( 1, 1, 4, 3, 1), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_01KM.TAB'),
+        (( 1, 1, 4, 3, 1), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_01KM.LBL'),
+        (( 1, 1, 4, 3, 1), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_10KM.TAB'),
+        (( 1, 1, 4, 1, 1), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_CAL.TAB'),
+        (( 1, 1, 4, 1, 1), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_GEO.TAB'),
+        (( 1, 1, 4, 0, 1), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/Rev07E_RSS_2005_123_X43_E_Summary.pdf'),
     ]
 
-    for (count, path) in TESTS:
-        unmatched = pdsfile.rules.unmatched_patterns(associations_to_volumes, path)
+    for (counts, path) in TESTS:
+        unmatched = unmatched_patterns(associations_to_volumes, path)
         trimmed = [p.rpartition('holdings/')[-1] for p in unmatched]
         assert len(unmatched) == 0, f'Unmatched: {path} {trimmed}'
 
-        abspaths = pdsfile.rules.translate_all(associations_to_volumes, path)
+        abspaths = translate_all(associations_to_volumes, path)
         trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
-        assert len(abspaths) == count, f'Miscount: {path} {len(abspaths)} {trimmed}'
+        assert len(abspaths) == counts[0], f'Miscount: {path} {len(abspaths)} {trimmed}'
 
-def test_associations_to_previews():
-    TESTS = [
-        (2, 'volumes/CORSS_8xxx/CORSS_8001/data'),
-        (2, 'volumes/CORSS_8xxx/CORSS_8001/browse'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/data'),
-        (2, 'previews/CORSS_8xxx/CORSS_8001/browse'),
-        (2, 'diagrams/CORSS_8xxx/CORSS_8001/data'),
-        (2, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry_full.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation_full.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E_full.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/Rev007E_RSS_2005_123_K34_E_Summary_thumb.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_GEO_thumb.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_thumb.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/browse/Rev054_OccTrack_Geometry_full.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054_DSN_Elevation_full.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054_TimeLine_Figure_full.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054_TimeLine_Table_full.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE_full.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/Rev054CE_RSS_2007_353_K55_E_Summary_thumb.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_GEO_thumb.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_TAU_thumb.jpg'),
-        (1, 'diagrams/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E_RSS_2005_123_K34_E_full.jpg'),
-        (1, 'diagrams/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE_RSS_2007_353_K55_E_full.jpg'),
-        (5, 'volumes/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry.pdf'),
-        (5, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007'),
-        (5, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E'),
-        (1, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E'),
-        (1, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_01KM.TAB'),
-        (5, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE'),
-        (1, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E'),
-        (1, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_TAU_01KM.TAB'),
-        (1, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_K34_E'),
-        (1, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_01KM.TAB'),
-    ]
-
-    for (count, path) in TESTS:
-        unmatched = pdsfile.rules.unmatched_patterns(associations_to_previews, path)
+        unmatched = unmatched_patterns(associations_to_previews, path)
         trimmed = [p.rpartition('holdings/')[-1] for p in unmatched]
         assert len(unmatched) == 0, f'Unmatched: {path} {trimmed}'
 
-        abspaths = pdsfile.rules.translate_all(associations_to_previews, path)
+        abspaths = translate_all(associations_to_previews, path)
         trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
-        assert len(abspaths) == count, f'Miscount: {path} {len(abspaths)} {trimmed}'
+        assert len(abspaths) == counts[1], f'Miscount: {path} {len(abspaths)} {trimmed}'
 
-def test_associations_to_diagrams():
-    TESTS = [
-        (1, 'volumes/CORSS_8xxx/CORSS_8001/data'),
-        (1, 'volumes/CORSS_8xxx/CORSS_8001/browse'),
-        (1, 'previews/CORSS_8xxx/CORSS_8001/data'),
-        (1, 'previews/CORSS_8xxx/CORSS_8001/browse'),
-        (1, 'diagrams/CORSS_8xxx/CORSS_8001/data'),
-        (1, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA'),
-        (0, 'previews/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry_full.jpg'),
-        (0, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007'),
-        (0, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E_full.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/Rev007E_RSS_2005_123_K34_E_Summary_thumb.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_GEO_thumb.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/Rev054CE_RSS_2007_353_K55_E_Summary_thumb.jpg'),
-        (4, 'previews/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E/RSS_2007_353_K55_E_GEO_thumb.jpg'),
-        (4, 'diagrams/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E_RSS_2005_123_K34_E_full.jpg'),
-        (4, 'diagrams/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE_RSS_2007_353_K55_E_full.jpg'),
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry.pdf'),
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_01KM.TAB'),
-        (0, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE'),
-        (4, 'volumes/CORSS_8xxx/CORSS_8001/data/Rev054/Rev054CE/Rev054CE_RSS_2007_353_K55_E'),
-        (4, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_K34_E'),
-        (4, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_01KM.TAB'),
-        (4, 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/Rev07E_RSS_2005_123_X43_E_Summary.pdf'),
-    ]
-
-    for (count, path) in TESTS:
-        unmatched = pdsfile.rules.unmatched_patterns(associations_to_diagrams, path)
+        unmatched = unmatched_patterns(associations_to_diagrams, path)
         trimmed = [p.rpartition('holdings/')[-1] for p in unmatched]
         assert len(unmatched) == 0, f'Unmatched: {path} {trimmed}'
 
-        abspaths = pdsfile.rules.translate_all(associations_to_diagrams, path)
+        abspaths = translate_all(associations_to_diagrams, path)
         trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
-        assert len(abspaths) == count, f'Miscount: {path} {len(abspaths)} {trimmed}'
+        assert len(abspaths) == counts[2], f'Miscount: {path} {len(abspaths)} {trimmed}'
+
+        abspaths = translate_all(associations_to_metadata, path)
+        trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
+        assert len(abspaths) == counts[3], f'Miscount: {path} {len(abspaths)} {trimmed}'
+
+        abspaths = translate_all(associations_to_documents, path)
+        trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
+        assert len(abspaths) == counts[4], f'Miscount: {path} {len(abspaths)} {trimmed}'
+
+@pytest.mark.parametrize(
+    'input_path,expected',
+    [
+        ('volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_01KM.TAB',
+            {('Cassini RSS',
+              10,
+              'corss_occ_best_res',
+              'Occultation Profile (~1 km res)',
+              True): ['volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_01KM.TAB',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_01KM.LBL'],
+             ('Cassini RSS',
+              60,
+              'corss_occ_doc',
+              'Occultation Documentation',
+              True): ['volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Table.pdf',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Table.LBL',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Figure.pdf',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Figure.LBL',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_DSN_Elevation.pdf',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_DSN_Elevation.LBL',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/Rev009E_RSS_2005_159_K55_E_Summary.pdf',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/Rev009E_RSS_2005_159_K55_E_Summary.LBL',
+                      'volumes/CORSS_8xxx/CORSS_8001/browse/Rev009_OccTrack_Geometry.pdf',
+                      'volumes/CORSS_8xxx/CORSS_8001/browse/Rev009_OccTrack_Geometry.LBL'],
+             ('Cassini RSS',
+              50,
+              'corss_occ_geo',
+              'Occultation Geometry Parameters',
+              True): ['volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_GEO.TAB',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_GEO.LBL'],
+             ('Cassini RSS',
+              30,
+              'corss_occ_dlp',
+              'Diffraction-Ltd Occultation Profile',
+              True): ['volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_DLP_500M.TAB',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_DLP_500M.LBL'],
+             ('Cassini RSS',
+              40,
+              'corss_occ_cal',
+              'Occultation Calibration Parameters',
+              True): ['volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_CAL.TAB',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_CAL.LBL'],
+             ('Cassini RSS',
+              20,
+              'corss_occ_10km_res',
+              'Occultation Profile (10 km res)',
+              True): ['volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_10KM.TAB',
+                      'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_10KM.LBL'],
+             ('browse',
+              40,
+              'browse_full',
+              'Browse Image (full)',
+              True): ['previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Table_full.jpg',
+                      'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Figure_full.jpg',
+                      'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_DSN_Elevation_full.jpg',
+                      'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/Rev009E_RSS_2005_159_K55_E_Summary_full.jpg',
+                      'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_full.jpg',
+                      'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_GEO_full.jpg',
+                      'previews/CORSS_8xxx/CORSS_8001/browse/Rev009_OccTrack_Geometry_full.jpg'],
+             ('browse',
+              10,
+              'browse_thumb',
+              'Browse Image (thumbnail)',
+              False): ['previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Table_thumb.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Figure_thumb.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_DSN_Elevation_thumb.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/Rev009E_RSS_2005_159_K55_E_Summary_thumb.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_thumb.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_GEO_thumb.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/browse/Rev009_OccTrack_Geometry_thumb.jpg'],
+             ('browse',
+              20,
+              'browse_small',
+              'Browse Image (small)',
+              False): ['previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Table_small.jpg',
+                        'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Figure_small.jpg',
+                        'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_DSN_Elevation_small.jpg',
+                        'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/Rev009E_RSS_2005_159_K55_E_Summary_small.jpg',
+                        'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_small.jpg',
+                        'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_GEO_small.jpg',
+                        'previews/CORSS_8xxx/CORSS_8001/browse/Rev009_OccTrack_Geometry_small.jpg'],
+             ('browse',
+              30,
+              'browse_medium',
+              'Browse Image (medium)',
+              False): ['previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Table_med.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_TimeLine_Figure_med.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009_DSN_Elevation_med.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/Rev009E_RSS_2005_159_K55_E_Summary_med.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_med.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_GEO_med.jpg',
+                       'previews/CORSS_8xxx/CORSS_8001/browse/Rev009_OccTrack_Geometry_med.jpg'],
+             ('metadata',
+              5,
+              'rms_index',
+              'RMS Node Augmented Index',
+              False): ['metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.tab',
+                       'metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_index.lbl'],
+             ('metadata',
+              8,
+              'profile_index',
+              'Profile Index',
+              False): ['metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_profile_index.tab',
+                       'metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_profile_index.lbl'],
+             ('metadata',
+              9,
+              'supplemental_index',
+              'Supplemental Index',
+              False): ['metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.tab',
+                       'metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.lbl']}
+        )
+    ]
+)
+def test_opus_products(input_path, expected):
+    opus_products_test(input_path, expected)
 
 ####################################################################################################################################
 

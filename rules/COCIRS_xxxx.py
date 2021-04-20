@@ -724,6 +724,10 @@ pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-cirs-.
 pdsfile.PdsFile.SUBCLASSES['COCIRS_xxxx'] = COCIRS_xxxx
 
 ####################################################################################################################################
+# Unit tests
+####################################################################################################################################
+
+from .pytest_support import *
 
 def test_associations_to_volumes():
     TESTS = [
@@ -753,9 +757,9 @@ def test_associations_to_volumes():
     ]
 
     for (count, path) in TESTS:
-        abspaths = pdsfile.rules.translate_all(associations_to_volumes, path)
+        abspaths = translate_all(associations_to_volumes, path)
         trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
-        assert len(abspaths) == count, f'Miscount: {path} {len(abspaths)} {trimmed}'
+        assert len(abspaths) == count, f'Miscount: {path} {len(abspaths)} {abspaths}'
 
 
 def test_associations_to_diagrams():
@@ -790,7 +794,7 @@ def test_associations_to_diagrams():
     ]
 
     for (count, path) in TESTS:
-        abspaths = pdsfile.rules.translate_all(associations_to_diagrams, path)
+        abspaths = translate_all(associations_to_diagrams, path)
         trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
         assert len(abspaths) == count, f'Miscount: {path} {len(abspaths)} {trimmed}'
 

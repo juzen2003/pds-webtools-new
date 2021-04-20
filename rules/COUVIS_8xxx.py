@@ -216,3 +216,102 @@ pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-uvis-o
 pdsfile.PdsFile.SUBCLASSES['COUVIS_8xxx'] = COUVIS_8xxx
 
 ####################################################################################################################################
+# Unit tests
+####################################################################################################################################
+
+import pytest
+from .pytest_support import *
+
+@pytest.mark.parametrize(
+    'input_path,expected',
+    [
+        ('volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU01KM.TAB',
+          {('Cassini UVIS',
+            10,
+            'couvis_occ_01',
+            'Occultation Profile (1 km)',
+            True): ['volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU01KM.TAB',
+                    'volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU01KM.LBL',
+                    'volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU01KM.TAB',
+                    'volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU01KM.LBL',
+                    'volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU01KM.TAB',
+                    'volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU01KM.LBL',
+                    'volumes/COUVIS_8xxx_v1/COUVIS_8001/DATA/EASYDATA/UVIS_HSP_2005_139_126TAU_E_TAU_01KM.TAB',
+                    'volumes/COUVIS_8xxx_v1/COUVIS_8001/DATA/EASYDATA/UVIS_HSP_2005_139_126TAU_E_TAU_01KM.LBL'],
+           ('Cassini UVIS',
+            20,
+            'couvis_occ_10',
+            'Occultation Profile (10 km)',
+            True): ['volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU10KM.TAB',
+                    'volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU10KM.LBL',
+                    'volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU10KM.TAB',
+                    'volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU10KM.LBL',
+                    'volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU10KM.TAB',
+                    'volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU10KM.LBL',
+                    'volumes/COUVIS_8xxx_v1/COUVIS_8001/DATA/EASYDATA/UVIS_HSP_2005_139_126TAU_E_TAU_10KM.TAB',
+                    'volumes/COUVIS_8xxx_v1/COUVIS_8001/DATA/EASYDATA/UVIS_HSP_2005_139_126TAU_E_TAU_10KM.LBL'],
+           ('browse',
+            40,
+            'browse_full',
+            'Browse Image (full)',
+            True): ['previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_full.jpg'],
+           ('browse',
+            30,
+            'browse_medium',
+            'Browse Image (medium)',
+            False): ['previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_med.jpg'],
+           ('browse',
+            20,
+            'browse_small',
+            'Browse Image (small)',
+            False): ['previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_small.jpg'],
+           ('browse',
+            10,
+            'browse_thumb',
+            'Browse Image (thumbnail)',
+            False): ['previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_thumb.jpg'],
+           ('diagram',
+            40,
+            'diagram_full',
+            'Browse Diagram (full)',
+            True): ['diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_full.jpg'],
+           ('diagram',
+            30,
+            'diagram_medium',
+            'Browse Diagram (medium)',
+            False): ['diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_med.jpg'],
+           ('diagram',
+            20,
+            'diagram_small',
+            'Browse Diagram (small)',
+            False): ['diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_small.jpg'],
+           ('diagram',
+            10,
+            'diagram_thumb',
+            'Browse Diagram (thumbnail)',
+            False): ['diagrams/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_thumb.jpg'],
+           ('metadata',
+            5,
+            'rms_index',
+            'RMS Node Augmented Index',
+            False): ['metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.tab',
+             'metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.lbl'],
+           ('metadata',
+            8,
+            'profile_index',
+            'Profile Index',
+            False): ['metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_profile_index.tab',
+             'metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_profile_index.lbl'],
+           ('metadata',
+            9,
+            'supplemental_index',
+            'Supplemental Index',
+            False): ['metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.tab',
+                     'metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.lbl']}
+        )
+    ]
+)
+def test_opus_products(input_path, expected):
+    opus_products_test(input_path, expected)
+
+####################################################################################################################################

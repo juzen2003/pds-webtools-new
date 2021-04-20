@@ -177,6 +177,13 @@ associations_to_metadata = translator.TranslatorByRegex([
              r'metadata/\1/\3/\3_saturn_summary.tab/\5',
              r'metadata/\1/\3/\3_jupiter_summary.tab/\5',
             ]),
+    (r'metadata/(COISS_.xxx/COISS_[12])...', 0,
+            r'metadata/\g<1>999'),
+    (r'metadata/(COISS_.xxx/COISS_[12]).../(COISS_.)..._(.*)\..*', 0,
+            [r'metadata/\g<1>999/\g<2>999_\3.tab',
+             r'metadata/\g<1>999/\g<2>999_\3.csv',
+             r'metadata/\g<1>999/\g<2>999_\3.lbl',
+            ]),
 ])
 
 associations_to_documents = translator.TranslatorByRegex([

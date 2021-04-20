@@ -87,7 +87,14 @@ associations_to_metadata = translator.TranslatorByRegex([
              r'metadata/COUVIS_0xxx/\2/\2_supplemental_index.tab/\3',
              r'metadata/COUVIS_0xxx/\2/\2_ring_summary.tab/\3',
              r'metadata/COUVIS_0xxx/\2/\2_moon_summary.tab/\3',
-             r'metadata/COUVIS_0xxx/\2/\2_jupiter_summary.tab/\3'
+             r'metadata/COUVIS_0xxx/\2/\2_saturn_summary.tab/\3',
+            ]),
+    (r'metadata/COUVIS_0xxx(|_v[0-9\.]+)/COUVIS_0[^9]..', 0,
+            r'metadata/COUVIS_0xxx\1/COUVIS_0999'),
+    (r'metadata/COUVIS_0xxx(|_v[0-9\.]+)/COUVIS_0[^9].._(\w+)\..*', 0,
+            [r'metadata/COUVIS_0xxx\1/COUVIS_0999/COUVIS_0999_\2.tab',
+             r'metadata/COUVIS_0xxx\1/COUVIS_0999/COUVIS_0999_\2.csv',
+             r'metadata/COUVIS_0xxx\1/COUVIS_0999/COUVIS_0999_\2.lbl',
             ]),
 ])
 

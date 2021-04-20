@@ -6,3 +6,4 @@ pyparsing
 numpy
 pylibmc
 app
+pytest

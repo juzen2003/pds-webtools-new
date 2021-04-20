@@ -173,7 +173,7 @@ associations_to_previews = translator.TranslatorByRegex([
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'.*/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH...._[12]...)/data/\w+/([a-z0-9]{3}_[0-9]{10}_0x...)_(eng|sci).*', re.I,
+    (r'volumes/(NHxx.._xxxx)(|_v[0-9\.]+)/(NH...._[12]...)/data/\w+/([a-z0-9]{3}_[0-9]{10}_0x...)_(eng|sci).*', re.I,
             [r'metadata/\1/\3/\3_index.tab/#LOWER#\4_\5',
              r'metadata/\1/\3/\3_supplemental_index.tab/#LOWER#\4_\5',
              r'metadata/\1/\3/\3_moon_summary.tab/#LOWER#\4_\5',
@@ -190,6 +190,8 @@ associations_to_documents = translator.TranslatorByRegex([
              r'\1/document/ralph_ssr.pdf',
              r'\1/document/payload_ssr.pdf',
             ]),
+    (r'volumes/NH...._xxxx.*', 0,
+            r'documents/NHxxxx_xxxx/*'),
 ])
 
 ####################################################################################################################################
@@ -492,6 +494,8 @@ pdsfile.PdsFile.SUBCLASSES['NHxxxx_xxxx'] = NHxxxx_xxxx
 
 ####################################################################################################################################
 
+from .pytest_support import *
+
 def test_opus_products():
 
     TESTS = [
@@ -505,7 +509,7 @@ def test_opus_products():
     ]
 
     PATH = 'volumes/NHxxLO_xxxx/NHPELO_2001/data/20150125_028445/lor_0284457178_0x630_sci.lbl'
-    abspaths = pdsfile.rules.translate_all(opus_products, PATH)
+    abspaths = translate_all(opus_products, PATH)
     trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
     for (count, pattern) in TESTS:
         subset = [p for p in trimmed if re.fullmatch(pattern, p)]

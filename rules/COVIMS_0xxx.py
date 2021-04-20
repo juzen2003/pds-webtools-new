@@ -82,13 +82,20 @@ associations_to_previews = translator.TranslatorByRegex([
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'.*/COVIMS_0xxx(|_v[0-9\.]+)/(COVIMS_....)/(data|extras/\w+)/\w+/(v[0-9]{10}_[0-9]+)(_0[0-6][0-9]|).*', 0,
+    (r'volumes/COVIMS_0xxx(|_v[0-9\.]+)/(COVIMS_....)/(data|extras/\w+)/\w+/(v[0-9]{10}_[0-9]+)(_0[0-6][0-9]|).*', 0,
             [r'metadata/COVIMS_0xxx/\2/\2_index.tab/\4\5',
              r'metadata/COVIMS_0xxx/\2/\2_supplemental_index.tab/\4\5',
              r'metadata/COVIMS_0xxx/\2/\2_ring_summary.tab/\4\5',
              r'metadata/COVIMS_0xxx/\2/\2_moon_summary.tab/\4\5',
              r'metadata/COVIMS_0xxx/\2/\2_saturn_summary.tab/\4\5',
              r'metadata/COVIMS_0xxx/\2/\2_jupiter_summary.tab/\4\5',
+            ]),
+    (r'metadata/COVIMS_0xxx(|_v[0-9\.]+)/COVIMS_00..', 0,
+            r'metadata/COVIMS_0xxx\1/COVIMS_0999'),
+    (r'metadata/COVIMS_0xxx(|_v[0-9\.]+)/COVIMS_00../COVIMS_0..._(\w+)\.\w+', 0,
+            [r'metadata/COVIMS_0xxx\1/COVIMS_0999/COVIMS_0999_\2.tab',
+             r'metadata/COVIMS_0xxx\1/COVIMS_0999/COVIMS_0999_\2.csv',
+             r'metadata/COVIMS_0xxx\1/COVIMS_0999/COVIMS_0999_\2.lbl',
             ]),
 ])
 
@@ -300,6 +307,10 @@ pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-vims-v
 pdsfile.PdsFile.SUBCLASSES['COVIMS_0xxx'] = COVIMS_0xxx
 
 ####################################################################################################################################
+# Unit tests
+####################################################################################################################################
+
+from .pytest_support import *
 
 def test_opus_products():
 
@@ -314,7 +325,7 @@ def test_opus_products():
     ]
 
     PATH = 'volumes/COVIMS_0xxx/COVIMS_0006/data/2005015T175855_2005016T184233/v1484504505_4.qub'
-    abspaths = pdsfile.rules.translate_all(opus_products, PATH)
+    abspaths = translate_all(opus_products, PATH)
     trimmed = [p.rpartition('holdings/')[-1] for p in abspaths]
     for (count, pattern) in TESTS:
         subset = [p for p in trimmed if re.fullmatch(pattern, p)]

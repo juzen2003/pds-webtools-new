@@ -87,10 +87,16 @@ associations_to_previews = translator.TranslatorByRegex([
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'.*/(GO_0xxx)/(GO_....)/.*/(C[0-9]{10})[A-Z].*', 0,
+    (r'volumes/(GO_0xxx)/(GO_....)/.*/(C[0-9]{10})[A-Z].*', 0,
             r'metadata/\1/\2/\2_index.tab/\3'),
-    (r'.*/(GO_0xxx_v1)/(GO_....).*', 0,
+    (r'volumes/(GO_0xxx_v1)/(GO_....).*', 0,
             r'metadata/\1/\2'),
+    (r'metadata/GO_0xxx(|_v[\d\.]+)/GO_00..', 0,
+            r'metadata/GO_0xxx/GO_0999'),
+    (r'metadata/GO_0xxx(|_v[\d\.]+)/GO_00../GO_00.._(.*)\..*', 0,
+            [r'metadata/GO_0xxx/GO_0999/GO_0999_\2.tab',
+             r'metadata/GO_0xxx/GO_0999/GO_0999_\2.lbl',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -174,6 +180,7 @@ opus_format = translator.TranslatorByRegex([
 # OPUS_PRODUCTS
 ####################################################################################################################################
 
+# NOTE: _v1 files have been intentionally removed
 opus_products = translator.TranslatorByRegex([
     (r'.*volumes/(GO_0xxx)/(GO_0...)/(.*/C[0-9]{6})([0-9]{4}[A-Z])\.(IMG|LBL)', 0,
             [r'volumes/\1/\2/\3\4.IMG',
@@ -267,5 +274,56 @@ pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'go-ssi-.*
 ####################################################################################################################################
 
 pdsfile.PdsFile.SUBCLASSES['GO_0xxx'] = GO_0xxx
+
+####################################################################################################################################
+# Unit tests
+####################################################################################################################################
+
+import pytest
+from .pytest_support import *
+
+@pytest.mark.parametrize(
+    'input_path,expected',
+    [
+        ('volumes/GO_0xxx/GO_0017/J0/OPNAV/C0346405900R.IMG',
+         {('Galileo SSI',
+           10,
+           'gossi_raw',
+           'Raw Image',
+           True): ['volumes/GO_0xxx/GO_0017/J0/OPNAV/C0346405900R.IMG',
+                   'volumes/GO_0xxx/GO_0017/J0/OPNAV/C0346405900R.LBL',
+                   'volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT',
+                   'volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT'],
+          ('browse',
+           10,
+           'browse_thumb',
+           'Browse Image (thumbnail)',
+           False): ['previews/GO_0xxx/GO_0017/J0/OPNAV/C0346405900R_thumb.jpg'],
+          ('browse',
+           20,
+           'browse_small',
+           'Browse Image (small)',
+           False): ['previews/GO_0xxx/GO_0017/J0/OPNAV/C0346405900R_small.jpg'],
+          ('browse',
+           30,
+           'browse_medium',
+           'Browse Image (medium)',
+           False): ['previews/GO_0xxx/GO_0017/J0/OPNAV/C0346405900R_med.jpg'],
+          ('browse',
+           40,
+           'browse_full',
+           'Browse Image (full)',
+           True): ['previews/GO_0xxx/GO_0017/J0/OPNAV/C0346405900R_full.jpg'],
+          ('metadata',
+           5,
+           'rms_index',
+           'RMS Node Augmented Index',
+           False): ['metadata/GO_0xxx/GO_0017/GO_0017_index.tab',
+                    'metadata/GO_0xxx/GO_0017/GO_0017_index.lbl']}
+        )
+    ]
+)
+def test_opus_products(input_path, expected):
+    opus_products_test(input_path, expected)
 
 ####################################################################################################################################

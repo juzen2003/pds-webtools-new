@@ -11,20 +11,21 @@ import re
 ####################################################################################################################################
 
 description_and_icon_by_regex = translator.TranslatorByRegex([
-    (r'volumes/.*/data',             re.I, ('Images grouped by SC clock',        'IMAGEDIR')),
-    (r'volumes/.*/data/C\d+X+',      re.I, ('Images grouped by SC clock',        'IMAGEDIR')),
-    (r'volumes/.*/browse',           re.I, ('Browse images grouped by SC clock', 'IMAGEDIR')),
-    (r'volumes/.*/browse/C\d+X+',    re.I, ('Browse images grouped by SC clock', 'IMAGEDIR')),
-    (r'volumes/.*_raw\.img',         re.I, ('Raw image, VICAR',                  'IMAGE'   )),
-    (r'volumes/.*_cleaned\.img',     re.I, ('Cleaned raw image, VICAR',          'IMAGE'   )),
-    (r'volumes/.*_calib\.img',       re.I, ('Calibrated image, VICAR',           'IMAGE'   )),
-    (r'volumes/.*_geomed\.img',      re.I, ('Undistorted image, VICAR',          'IMAGE'   )),
-    (r'volumes/.*_geoma\.tab',       re.I, ('ASCII distortion table',            'TABLE'   )),
-    (r'volumes/.*_geoma\.dat',       re.I, ('Distortion file, VICAR',            'DATA'    )),
-    (r'volumes/.*_resloc\.dat',      re.I, ('Reseau table, VICAR',               'DATA'    )),
-    (r'volumes/.*_resloc\.tab',      re.I, ('ASCII Reseau table',                'TABLE'   )),
-    (r'volumes/.*/MIPL/.*\.dat',     re.I, ('VICAR data file',                   'DATA'    )),
-    (r'volumes/.*/DARKS/.*\.img',    re.I, ('Dark current image, VICAR',         'IMAGE'   )),
+    (r'volumes/.*/DATA',                 0, ('Images grouped by SC clock',          'IMAGEDIR')),
+    (r'volumes/.*/DATA/C\d+X+',          0, ('Images grouped by SC clock',          'IMAGEDIR')),
+    (r'volumes/.*/BROWSE',               0, ('Browse images grouped by SC clock',   'IMAGEDIR')),
+    (r'volumes/.*/BROWSE/C\d+X+',        0, ('Browse images grouped by SC clock',   'IMAGEDIR')),
+    (r'volumes/.*_RAW\.IMG',             0, ('Raw image, VICAR',                    'IMAGE'   )),
+    (r'volumes/.*_CLEANED\.IMG',         0, ('Cleaned raw image, VICAR',            'IMAGE'   )),
+    (r'volumes/.*_CALIB\.IMG',           0, ('Calibrated image, VICAR',             'IMAGE'   )),
+    (r'volumes/.*_GEOMED\.IMG',          0, ('Undistorted image, VICAR',            'IMAGE'   )),
+    (r'volumes/.*_GEOMA\.TAB',           0, ('ASCII distortion table',              'TABLE'   )),
+    (r'volumes/.*_GEOMA\.DAT',           0, ('Distortion file, VICAR',              'DATA'    )),
+    (r'volumes/.*_RESLOC\.DAT',          0, ('Reseau table, VICAR',                 'DATA'    )),
+    (r'volumes/.*_RESLOC\.TAB',          0, ('ASCII Reseau table',                  'TABLE'   )),
+    (r'volumes/.*/MIPL/.*\.DAT',         0, ('VICAR data file',                     'DATA'    )),
+    (r'volumes/.*/DARKS/.*\.IMG',        0, ('Dark current image, VICAR',           'IMAGE'   )),
+    (r'volumes/.*/INDEX/RAWIMAGES\.TAB', 0, ('Cumulative index of raw images only', 'IMAGE'   )),
 
     (r'volumes/.*/DOCUMENT/TUTORIAL.TXT',   0, ('&#11013; <b>Detailed tutorial</b> for this data set', 'INFO')),
     (r'volumes/.*/DOCUMENT/PROCESSING.TXT', 0, ('&#11013; <b>Processing history</b> of this data set', 'INFO')),
@@ -37,19 +38,19 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 sort_key = translator.TranslatorByRegex([
 
     # Sort data files into increasing level of processing
-    (r'(\w+)(_RAW)\.(JPG|IMG)',        0, r'\1_1RAW.\3'    ),
-    (r'(\w+)(_CLEANED)\.(JPG|IMG)',    0, r'\1_2CLEANED.\3'),
-    (r'(\w+)(_CALIB)\.(JPG|IMG)',      0, r'\1_3CALIB.\3'  ),
-    (r'(\w+)(_GEOMED)\.(JPG|IMG)',     0, r'\1_4GEOMED.\3' ),
-    (r'(\w+)(_RESLOC)\.(DAT|TAB)',     0, r'\1_5RESLOC.\3' ),
-    (r'(\w+)(_GEOMA)\.(DAT|TAB)',      0, r'\1_6GEOMA.\3'  ),
+    (r'(\w+)(_RAW)\.(JPG|IMG)',     0, r'\1_1RAW.\3'    ),
+    (r'(\w+)(_CLEANED)\.(JPG|IMG)', 0, r'\1_2CLEANED.\3'),
+    (r'(\w+)(_CALIB)\.(JPG|IMG)',   0, r'\1_3CALIB.\3'  ),
+    (r'(\w+)(_GEOMED)\.(JPG|IMG)',  0, r'\1_4GEOMED.\3' ),
+    (r'(\w+)(_RESLOC)\.(DAT|TAB)',  0, r'\1_5RESLOC.\3' ),
+    (r'(\w+)(_GEOMA)\.(DAT|TAB)',   0, r'\1_6GEOMA.\3'  ),
 
-    (r'(\w+)(_RAW)\.LBL',        0, r'\1_1RAW.zLBL'    ),    # Label after matching file, not after everything
-    (r'(\w+)(_CLEANED)\.LBL',    0, r'\1_2CLEANED.zLBL'),
-    (r'(\w+)(_CALIB)\.LBL',      0, r'\1_3CALIB.zLBL'  ),
-    (r'(\w+)(_GEOMED)\.LBL',     0, r'\1_4GEOMED.zLBL' ),
-    (r'(\w+)(_RESLOC)\.LBL',     0, r'\1_5RESLOC.zLBL' ),
-    (r'(\w+)(_GEOMA)\.LBL',      0, r'\1_6GEOMA.zLBL'  ),
+    (r'(\w+)(_RAW)\.LBL',           0, r'\1_1RAW.zLBL'    ),    # Label after matching file, not after everything
+    (r'(\w+)(_CLEANED)\.LBL',       0, r'\1_2CLEANED.zLBL'),
+    (r'(\w+)(_CALIB)\.LBL',         0, r'\1_3CALIB.zLBL'  ),
+    (r'(\w+)(_GEOMED)\.LBL',        0, r'\1_4GEOMED.zLBL' ),
+    (r'(\w+)(_RESLOC)\.LBL',        0, r'\1_5RESLOC.zLBL' ),
+    (r'(\w+)(_GEOMA)\.LBL',         0, r'\1_6GEOMA.zLBL'  ),
 ])
 
 ####################################################################################################################################
@@ -297,7 +298,7 @@ associations_to_previews = translator.TranslatorByRegex([
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)/(C\d{5}XX)/(C\d{7})_\w+\..*', 0,
+    (r'volumes/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)/(C\d{5}XX)/(C\d{7})_\w+\..*', 0,
             [r'metadata/\1/\2/\2_index.tab/\5',
              r'metadata/\1/\2/\2_raw_image_index.tab/\5',
              r'metadata/\1/\2/\2_supplemental_index.tab/\5',
@@ -308,21 +309,32 @@ associations_to_metadata = translator.TranslatorByRegex([
              r'metadata/\1/\2/\2_uranus_summary.tab/\5',
              r'metadata/\1/\2/\2_neptune_summary.tab/\5',
             ]),
-    (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)/C\d{5}XX',    0,  r'metadata/\1/\2'),
-    (r'.*/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)',             0,  r'metadata/\1/\2'),
+    (r'volumes/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)/C\d{5}XX',  0, r'metadata/\1/\2'),
+    (r'volumes/(VGISS_.xxx)/(VGISS_....)/(DATA|BROWSE)',           0, r'metadata/\1/\2'),
+    (r'volumes/(VGISS_.xxx)/(VGISS_....)/INDEX/RAWIMAGES\..*',     0,
+            [r'metadata/\1/\2/\2_raw_image_index.tab',
+             r'metadata/\1/\2/\2_raw_image_index.lbl',
+            ]),
+    (r'metadata/(VGISS_.xxx/VGISS_.)[12]..', 0,
+            r'metadata/\g<1>999'),
+    (r'metadata/(VGISS_.xxx/VGISS_.)[12]../(VGISS_.)..._(.*)\..*', 0,
+            [r'metadata/\g<1>999/\g<2>999_\3.tab',
+             r'metadata/\g<1>999/\g<2>999_\3.csv',
+             r'metadata/\g<1>999/\g<2>999_\3.lbl',
+            ]),
 ])
 
 associations_to_documents = translator.TranslatorByRegex([
     (r'volumes/VGISS_.xxx.*', 0,
-        r'documents/VGISS_xxxx/*'),
+            r'documents/VGISS_xxxx/*'),
     (r'(volumes/VGISS_.xxx/VGISS_....).*', 0,
-        [r'\1/DOCUMENT/TUTORIAL.TXT',
-         r'\1/DOCUMENT/PROCESSING.TXT',
-        ]),
+            [r'\1/DOCUMENT/TUTORIAL.TXT',
+             r'\1/DOCUMENT/PROCESSING.TXT',
+            ]),
     (r'volumes/(VGISS_.)xxx.*', 0,
-        [r'volumes/\1xxx/\g<1>201/DOCUMENT/TUTORIAL.TXT',
-         r'volumes/\1xxx/\g<1>201/DOCUMENT/PROCESSING.TXT',
-        ]),
+            [r'volumes/\1xxx/\g<1>201/DOCUMENT/TUTORIAL.TXT',
+             r'volumes/\1xxx/\g<1>201/DOCUMENT/PROCESSING.TXT',
+            ]),
 ])
 
 ####################################################################################################################################
