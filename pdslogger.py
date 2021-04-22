@@ -470,7 +470,7 @@ class PdsLogger(object):
         self.suppressed_by_level.append(zeros)
 
         # Write header
-        self.logger.log(self.level_by_name['header'],
+        self.logger_log(self.level_by_name['header'],
             '%s | %s %s|%s| %s | %s' %
             (timetag, self.logname, self.pidstr, depth*'-', 'HEADER', title))
 
@@ -507,7 +507,7 @@ class PdsLogger(object):
             if abspath:
                 message += ': ' + self.logpath(abspath)
 
-            self.logger.log(level, '%s | %s %s|%s| %s | %s' %
+            self.logger_log(level, '%s | %s %s|%s| %s | %s' %
                 (timetag, self.logname, self.pidstr, depth*'-', tag, message))
 
         # Otherwise, count suppressed_by_name messages
@@ -525,7 +525,7 @@ class PdsLogger(object):
                 else:
                     info = name + ' ' + tag
                 message = 'Additional %s messages suppressed' % info
-                self.logger.log(level, '%s | %s %s|%s| %s | %s' %
+                self.logger_log(level, '%s | %s %s|%s| %s | %s' %
                   (timetag, self.logname, self.pidstr, depth*'-', tag, message))
 
     def close(self):
@@ -541,12 +541,12 @@ class PdsLogger(object):
         timetag = time.strftime(TIME_FMT)
 
         # Summarize results
-        self.logger.log(self.level_by_name['header'],
+        self.logger_log(self.level_by_name['header'],
                         '%s | %s %s|%s| %s | Completed: %s' %
                         (timetag, self.logname, self.pidstr, (depth-1)*'-',
                          'SUMMARY', self.titles[-1]))
 
-        self.logger.log(self.level_by_name['header'],
+        self.logger_log(self.level_by_name['header'],
                         '%s | %s %s|%s| %s | Elapsed time = %s' %
                         (timetag, self.logname, self.pidstr, (depth-1)*'-',
                          'SUMMARY', str(time - self.start_times[-1])))
@@ -569,13 +569,13 @@ class PdsLogger(object):
                 message = '%d %s message%s reported of %d total' % \
                           (unsuppressed, tag, plural, count)
 
-            self.logger.log(max(level, self.level_by_name['header']),
+            self.logger_log(max(level, self.level_by_name['header']),
                             '%s | %s %s|%s| %s | %s' %
                             (timetag, self.logname, self.pidstr, (depth-1)*'-',
                              'SUMMARY', message))
 
         # Blank line
-        self.logger.log(self.level_by_name['header'], '')
+        self.logger_log(self.level_by_name['header'], '')
 
         # Transfer the totals to the hierarchy depth above
         if depth > 1:
@@ -683,8 +683,64 @@ class PdsLogger(object):
                               abspath, force=True)
 
         if stacktrace:
-            self.logger.log(self.level_by_name['exception'],
+            self.logger_log(self.level_by_name['exception'],
                             ''.join(traceback.format_tb(tb)))
 
     def blankline(self):
         self.logger.log(self.level_by_name['header'], '')
+
+    def logger_log(self, level, message):
+        self.logger.log(level, message)
+
+class EasyLogger(PdsLogger):
+    """Simple subclass of PdsLogger that prints all messages to the terminal."""
+
+    def __init__(self, logname='easylog', status={}, limits={}, roots=[],
+                 pid=False, default_prefix='pds'):
+
+        global LOOKUP
+
+        # Override the test regarding whether this logger already exists
+        saved_lookup = LOOKUP.copy()
+        LOOKUP.clear()
+        try:
+            self.pdslogger = PdsLogger(logname, status, limits, roots, pid,
+                                       default_prefix)
+        finally:
+            for (key, value) in saved_lookup.items():
+                LOOKUP[key] = value
+
+        self.logname       = self.pdslogger.logname
+        self.logger        = self.pdslogger.logger
+        self.handlers      = self.pdslogger.handlers
+        self.roots_        = self.pdslogger.roots_
+        self.level_by_name = self.pdslogger.level_by_name
+        self.level_tags    = self.pdslogger.level_tags
+        self.default_limits_by_name = self.pdslogger.default_limits_by_name
+        self.titles              = self.pdslogger.titles
+        self.start_times         = self.pdslogger.start_times
+        self.limits_by_name      = self.pdslogger.limits_by_name
+        self.counters_by_name    = self.pdslogger.counters_by_name
+        self.suppressed_by_name  = self.pdslogger.suppressed_by_name
+        self.counters_by_level   = self.pdslogger.counters_by_level
+        self.suppressed_by_level = self.pdslogger.suppressed_by_level
+        self.local_handlers      = self.pdslogger.local_handlers
+        self.pid                 = self.pdslogger.pid
+        self.pidstr              = self.pdslogger.pidstr
+
+    def replace_root(self, roots):
+        self.pdslogger.replace_root(roots)
+        self.roots_ = self.pdslogger.roots_
+
+    def remove_all_handlers(self):
+        self.pdslogger.remove_all_handlers()
+        self.handlers = self.pdslogger.handlers
+
+    def logger_log(self, level, message):
+        print(message)
+
+class NullLogger(EasyLogger):
+    """Supports the full PdsLogger interface but does no logging."""
+
+    def logger_log(self, level, message):
+        pass
