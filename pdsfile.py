@@ -3154,149 +3154,156 @@ class PdsFile(object):
             flag = '=' if must_exist else ''
             return self.child_of_index(basename, flag=flag)
 
-        # Fix the case if necessary
-        if fix_case:
-            if basename not in self.childnames:
-                try:
-                    k = self.childnames_lc.index(basename.lower())
-                except ValueError:
-                    pass
-                else:
-                    basename = self.childnames[k]
-
-        # Create the logical path and return from cache if available
-        child_logical_path = _clean_join(self.logical_path, basename)
+        ### Pause cache
+        CACHE.pause()
         try:
-            pdsf = CACHE[child_logical_path.lower()]
-        except KeyError:
-            pass
+            # Fix the case if necessary
+            if fix_case:
+                if basename not in self.childnames:
+                    try:
+                        k = self.childnames_lc.index(basename.lower())
+                    except ValueError:
+                        pass
+                    else:
+                        basename = self.childnames[k]
 
-        # Confirm existence if necessary
-        basename_lc = basename.lower()
-        if must_exist and not basename_lc in self.childnames_lc:
-            raise IOError('File not found: ' + child_logical_path)
+            # Create the logical path and return from cache if available
+            child_logical_path = _clean_join(self.logical_path, basename)
+            try:
+                pdsf = CACHE[child_logical_path.lower()]
+            except KeyError:
+                pass
 
-        # Fill in the absolute path if possible. This will fail for children
-        # of category-level directories; we address that case later
-        if self.abspath:
-            child_abspath = _clean_join(self.abspath, basename)
-        else:
-            child_abspath = None
+            # Confirm existence if necessary
+            basename_lc = basename.lower()
+            if must_exist and not basename_lc in self.childnames_lc:
+                raise IOError('File not found: ' + child_logical_path)
 
-        # Select the correct subclass for the child...
-        if self.volset:
-            class_key = self.volset
-        elif self.category_:
-            matchobj = VOLSET_PLUS_REGEX_I.match(basename)
-            if matchobj is None:
-                raise ValueError('Illegal volume set directory "%s": %s' %
-                                 (basename, self.logical_path))
-            class_key = matchobj.group(1)
-        else:
-            class_key = 'default'
+            # Fill in the absolute path if possible. This will fail for children
+            # of category-level directories; we address that case later
+            if self.abspath:
+                child_abspath = _clean_join(self.abspath, basename)
+            else:
+                child_abspath = None
 
-        # "this" is a copy of the parent object with internally cached values
-        # removed but with path information duplicated.
-        this = self.new_pdsfile(key=class_key, copypath=True)
+            # Select the correct subclass for the child...
+            if self.volset:
+                class_key = self.volset
+            elif self.category_:
+                matchobj = VOLSET_PLUS_REGEX_I.match(basename)
+                if matchobj is None:
+                    raise ValueError('Illegal volume set directory "%s": %s' %
+                                     (basename, self.logical_path))
+                class_key = matchobj.group(1)
+            else:
+                class_key = 'default'
 
-        # Update the path for the child
-        this.logical_path = child_logical_path
-        this.abspath = child_abspath    # might be None, for now
-        this.basename = basename
+            # "this" is a copy of the parent object with internally cached
+            # values removed but with path information duplicated.
+            this = self.new_pdsfile(key=class_key, copypath=True)
 
-        if self.interior:
-            this.interior = _clean_join(self.interior, basename)
-            return this._complete(must_exist, caching, lifetime)
+            # Update the path for the child
+            this.logical_path = child_logical_path
+            this.abspath = child_abspath    # might be None, for now
+            this.basename = basename
 
-        if self.volname_:
-            this.interior = basename
-            return this._complete(must_exist, caching, lifetime)
+            if self.interior:
+                this.interior = _clean_join(self.interior, basename)
+                return this._complete(must_exist, caching, lifetime)
 
-        if self.volset_:
+            if self.volname_:
+                this.interior = basename
+                return this._complete(must_exist, caching, lifetime)
 
-            # Handle volume name
-            matchobj = VOLNAME_PLUS_REGEX_I.match(basename)
-            if matchobj:
-                this.volname_ = basename + '/'
-                this.volname  = matchobj.group(1)
+            if self.volset_:
+
+                # Handle volume name
+                matchobj = VOLNAME_PLUS_REGEX_I.match(basename)
+                if matchobj:
+                    this.volname_ = basename + '/'
+                    this.volname  = matchobj.group(1)
+
+                    if self.checksums_ or self.archives_:
+                        this.volname_ = ''
+                        this.interior = basename
 
                 if self.checksums_ or self.archives_:
                     this.volname_ = ''
                     this.interior = basename
 
-            if self.checksums_ or self.archives_:
-                this.volname_ = ''
-                this.interior = basename
+                return this._complete(must_exist, caching, lifetime)
 
-            return this._complete(must_exist, caching, lifetime)
+            if self.category_:
 
-        if self.category_:
+                # Handle volume set and suffix
+                matchobj = VOLSET_PLUS_REGEX_I.match(basename)
+                if matchobj is None:
+                    raise ValueError('Illegal volume set directory "%s": %s' %
+                                     (basename, this.logical_path))
 
-            # Handle volume set and suffix
-            matchobj = VOLSET_PLUS_REGEX_I.match(basename)
-            if matchobj is None:
-                raise ValueError('Illegal volume set directory "%s": %s' %
-                                 (basename, this.logical_path))
+                this.volset_ = basename + '/'
+                this.volset  = matchobj.group(1)
+                this.suffix  = matchobj.group(2)
 
-            this.volset_ = basename + '/'
-            this.volset  = matchobj.group(1)
-            this.suffix  = matchobj.group(2)
+                if matchobj.group(3):
+                    this.volset_ = ''
+                    this.interior = basename
+                    parts = this.suffix.split('_')
+                    if parts[-1] == this.voltype_[:-1]:
+                        this.suffix = '_'.join(parts[:-1])
 
-            if matchobj.group(3):
-                this.volset_ = ''
-                this.interior = basename
-                parts = this.suffix.split('_')
-                if parts[-1] == this.voltype_[:-1]:
-                    this.suffix = '_'.join(parts[:-1])
+                (this.version_rank,
+                 this.version_message,
+                 this.version_id) = self.version_info(this.suffix)
 
-            (this.version_rank,
-             this.version_message,
-             this.version_id) = self.version_info(this.suffix)
+                # If this is the child of a category, then we must ensure that
+                # it is added to the child list of the merged parent.
 
-            # If this is the child of a category, then we must ensure that it
-            # is added to the child list of the merged parent.
+                if self.abspath:
+                    try:
+                        merged_parent = CACHE[self.logical_path.lower()]
+                    except KeyError:
+                        pass
+                    else:
+                        childnames = merged_parent._childnames_filled
+                        if basename not in childnames:
+                            merged_parent._childnames_filled.append(basename)
+                            merged_parent._childnames_filled.sort()
+                            CACHE.set(self.logical_path.lower(), merged_parent,
+                                                                 lifetime=0)
 
-            if self.abspath:
-                try:
-                    merged_parent = CACHE[self.logical_path.lower()]
-                except KeyError:
-                    pass
+                return this._complete(must_exist, caching, lifetime)
+
+            if not self.category_:
+
+                # Handle voltype and category
+                this.category_ = basename + '/'
+                matchobj = CATEGORY_REGEX_I.match(basename)
+                if matchobj is None:
+                    raise ValueError('Invalid category "%s": %s' %
+                                     (basename, this.logical_path))
+
+                if fix_case:
+                    this.checksums_ = matchobj.group(1).lower()
+                    this.archives_  = matchobj.group(2).lower()
+                    this.voltype_   = matchobj.group(3).lower() + '/'
                 else:
-                    childnames = merged_parent._childnames_filled
-                    if basename not in childnames:
-                        merged_parent._childnames_filled.append(basename)
-                        merged_parent._childnames_filled.sort()
-                        CACHE.set(self.logical_path.lower(), merged_parent,
-                                                             lifetime=0)
+                    this.checksums_ = matchobj.group(1)
+                    this.archives_  = matchobj.group(2)
+                    this.voltype_   = matchobj.group(3) + '/'
 
-            return this._complete(must_exist, caching, lifetime)
+                if this.voltype_[:-1] not in VOLTYPES:
+                    raise ValueError('Unrecognized volume type "%s": %s' %
+                                     (this.voltype_[:-1], this.logical_path))
 
-        if not self.category_:
+                return this._complete(must_exist, caching, lifetime)
 
-            # Handle voltype and category
-            this.category_ = basename + '/'
-            matchobj = CATEGORY_REGEX_I.match(basename)
-            if matchobj is None:
-                raise ValueError('Invalid category "%s": %s' %
-                                 (basename, this.logical_path))
+            raise ValueError('Cannot define child from PDS root: ' +
+                             this.logical_path)
 
-            if fix_case:
-                this.checksums_ = matchobj.group(1).lower()
-                this.archives_  = matchobj.group(2).lower()
-                this.voltype_   = matchobj.group(3).lower() + '/'
-            else:
-                this.checksums_ = matchobj.group(1)
-                this.archives_  = matchobj.group(2)
-                this.voltype_   = matchobj.group(3) + '/'
-
-            if this.voltype_[:-1] not in VOLTYPES:
-                raise ValueError('Unrecognized volume type "%s": %s' %
-                                 (this.voltype_[:-1], this.logical_path))
-
-            return this._complete(must_exist, caching, lifetime)
-
-        raise ValueError('Cannot define child from PDS root: ' +
-                         this.logical_path)
+        ### Resume caching no matter what
+        finally:
+            CACHE.resume()
 
     def parent(self, must_exist=False, caching='default', lifetime=None):
         """Constructor for the parent PdsFile of this PdsFile."""
@@ -3365,16 +3372,24 @@ class PdsFile(object):
             except KeyError:
                 pass
 
-        # Ancestor found. Handle the rest of the tree using child()
-        parts = path.split('/')
-        if ancestor and ancestor.abspath:       # if not a logical directory
-            this = ancestor
-            for part in parts[lparts:]:
-                this = this.child(part, fix_case=fix_case,
-                                        must_exist=must_exist,
-                                        caching=caching, lifetime=lifetime)
+        ### Pause the cache
+        CACHE.pause()
+        try:
 
-            return this
+            # Ancestor found. Handle the rest of the tree using child()
+            parts = path.split('/')
+            if ancestor and ancestor.abspath:       # if not a logical directory
+                this = ancestor
+                for part in parts[lparts:]:
+                    this = this.child(part, fix_case=fix_case,
+                                            must_exist=must_exist,
+                                            caching=caching, lifetime=lifetime)
+
+                return this
+
+        ### Resume caching no matter what
+        finally:
+            CACHE.resume()
 
         # If there was no preload, CACHE will be empty but this still might work
         abspath = abspath_for_logical_path(path)
@@ -3423,54 +3438,61 @@ class PdsFile(object):
                 raise ValueError('"holdings" directory not found in: ' +
                                  abspath)
 
-        # Fill in this.disk_, the absolute path to the directory containing
-        # subdirectories "holdings", "shelves", and "volinfo"
-        this = PdsFile()
-        this.disk_ = drive_spec + '/'.join(parts[:holdings_index]) + '/'
-        this.root_ = this.disk_ + 'holdings/'
+        ### Pause the cache
+        CACHE.pause()
+        try:
+            # Fill in this.disk_, the absolute path to the directory containing
+            # subdirectories "holdings", "shelves", and "volinfo"
+            this = PdsFile()
+            this.disk_ = drive_spec + '/'.join(parts[:holdings_index]) + '/'
+            this.root_ = this.disk_ + 'holdings/'
 
-        # Get case right if necessary
-        if fix_case:
-            try:
-                this.disk_ = repair_case(this.disk_[:-1]) + '/'
-                this.root_ = repair_case(this.root_[:-1]) + '/'
-            except IOError:
-                if must_exist: raise
+            # Get case right if necessary
+            if fix_case:
+                try:
+                    this.disk_ = repair_case(this.disk_[:-1]) + '/'
+                    this.root_ = repair_case(this.root_[:-1]) + '/'
+                except IOError:
+                    if must_exist: raise
 
-        # Fill in the HTML root. This is the text between "http://domain.name/"
-        # and the logical path to appear in a URL that points to the file.
-        # Viewmaster creates symlinks inside /Library/WebServer/Documents
-        # named holdings, holding1, ... holdings9
+            # Fill in the HTML root. This is the text between "http://domain/"
+            # and the logical path to appear in a URL that points to the file.
+            # Viewmaster creates symlinks inside /Library/WebServer/Documents
+            # named holdings, holding1, ... holdings9
 
-        if len(LOCAL_PRELOADED) <= 1:   # There's only one holdings dir
-            this.html_root_ = '/holdings/'
-        else:                           # Find this holdings dir among preloaded
-            holdings_abspath = this.disk_ + 'holdings'
-            try:
-                k = LOCAL_PRELOADED.index(holdings_abspath)
-            except ValueError:
-                if LOGGER:
-                    LOGGER.warn('No URL: ' + holdings_abspath)
+            if len(LOCAL_PRELOADED) <= 1:   # There's only one holdings dir
+                this.html_root_ = '/holdings/'
+            else:                       # Find this holdings dir among preloaded
+                holdings_abspath = this.disk_ + 'holdings'
+                try:
+                    k = LOCAL_PRELOADED.index(holdings_abspath)
+                except ValueError:
+                    if LOGGER:
+                        LOGGER.warn('No URL: ' + holdings_abspath)
 
-                this.html_root_ = '/'
+                    this.html_root_ = '/'
 
-            else:       # "holdings", "holdings1", ... "holdings9"
-                if k:
-                    this.html_root_ = '/holdings' + str(k) + '/'
-                else:
-                    this.html_root_ = '/holdings/'
+                else:       # "holdings", "holdings1", ... "holdings9"
+                    if k:
+                        this.html_root_ = '/holdings' + str(k) + '/'
+                    else:
+                        this.html_root_ = '/holdings/'
 
-        this.logical_path = ''
-        this.abspath = this.disk_ + 'holdings'
-        this.basename = 'holdings'
+            this.logical_path = ''
+            this.abspath = this.disk_ + 'holdings'
+            this.basename = 'holdings'
 
-        # Handle the rest of the tree using child()
-        for part in parts[holdings_index + 1:]:
-            this = this.child(part, fix_case=fix_case, must_exist=must_exist,
-                                    caching=caching, lifetime=lifetime)
+            # Handle the rest of the tree using child()
+            for part in parts[holdings_index + 1:]:
+                this = this.child(part, fix_case=fix_case, must_exist=must_exist,
+                                        caching=caching, lifetime=lifetime)
 
-        if must_exist and not this.exists:
-            raise IOError('File not found', this.abspath)
+            if must_exist and not this.exists:
+                raise IOError('File not found', this.abspath)
+
+        ### Resume the cache no matter what
+        finally:
+            CACHE.resume()
 
         return this
 
@@ -3484,10 +3506,18 @@ class PdsFile(object):
         if len(parts) == 0:
             return self._complete(must_exist, caching, lifetime)
 
-        this = self
-        for part in parts:
-            this = this.child(part, fix_case=fix_case, must_exist=must_exist,
-                                    caching=caching, lifetime=lifetime)
+        ### Pause the cache
+        CACHE.pause()
+        try:
+            this = self
+            for part in parts:
+                this = this.child(part, fix_case=fix_case,
+                                        must_exist=must_exist,
+                                        caching=caching, lifetime=lifetime)
+
+        ### Resume caching no matter what
+        finally:
+            CACHE.resume()
 
         return this
 
@@ -5474,14 +5504,24 @@ def logical_path_from_abspath(abspath):
 LOCAL_HOLDINGS_DIRS = None  # Global will contain all the physical holdings
                             # directories on the system.
 
+def set_local_holdings_dirs(dirs):
+    """Set the paths to the holdings directories without a preload. After a
+    preload, any use of this method is ignored."""
+
+    global LOCAL_HOLDINGS_DIRS
+
+    if isinstance(dirs, str):
+        LOCAL_HOLDINGS_DIRS = [dirs]
+    else:
+        LOCAL_HOLDINGS_DIRS = dirs
+
 def abspath_for_logical_path(path):
     """Absolute path derived from a logical path.
 
     The logical path starts at the category, below the holdings/ directory. To
     get the absolute path, we need to figure out where the holdings directory is
     located. Note that there can be multiple drives hosting multiple holdings
-    directories.
-    """
+    directories."""
 
     global LOCAL_PRELOADED, LOCAL_HOLDINGS_DIRS
 

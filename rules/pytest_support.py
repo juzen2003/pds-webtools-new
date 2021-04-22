@@ -8,7 +8,8 @@ import re
 import os
 
 try:        # PDS_DATA_DIR overrides the default holdings directory location
-    pdsfile.LOCAL_HOLDINGS_DIRS = [os.environ['PDS_DATA_DIR']]
+    holdings_dir = os.environ['PDS_DATA_DIR']
+    pdsfile.set_local_holdings_dirs([holdings_dir])
 except KeyError:
     pass
 
@@ -104,6 +105,9 @@ def get_pdsgroups(paths_group, is_abspath=True):
 def opus_products_test(input_path, expected):
     target_pdsfile = instantiate_target_pdsfile(input_path)
     results = target_pdsfile.opus_products()
+    # Note that messages are more useful if extra values are identified before
+    # missing values. That's because extra items are generally more diagnostic
+    # of the issue at hand.
     for key in results:
         assert key in expected, f'Extra key: {key}'
     for key in expected:
