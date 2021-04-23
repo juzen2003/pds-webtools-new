@@ -62,6 +62,12 @@ VOLNAME_PLUS_REGEX_I = re.compile(VOLNAME_PLUS_REGEX.pattern, re.I)
 # Example: "VGISS_5101_previews_md5.txt" -> ("VGISS_5101", "_previews",
 #                                            "_md5.txt")
 
+VOLNAME_VERSION     = re.compile(VOLNAME_REGEX.pattern[:-1] +
+                        r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
+                        r'_in_prep|_prelim|_peer_review|_lien_resolution)$')
+VOLNAME_VERSION_I   = re.compile(VOLNAME_VERSION.pattern, re.I)
+# Example: "VGISS_5101_peer_review" -> ("VGISS_5101", "_peer_review")
+
 VIEWABLE_ANCHOR_REGEX = re.compile(r'(.*/\w+_)[a-z]+\.(jpg|png)')
 # path/A1234566_thumb.jpg -> path/A1234566
 
@@ -3710,6 +3716,20 @@ class PdsFile(object):
                     if extension[1:].startswith(test_type):
                         this.voltype_ = test_type + '/'
                         break
+
+                # Pop the first entry from the pseudo-path and try again
+                parts = parts[1:]
+
+        # Look for a volume name + version. Not standard but has been seen in
+        # Viewmaster URLs
+        if len(parts) > 0:
+            # Parse the next part of the pseudo-path as if it is a volname
+            # Parts are (volname, version)
+            # Example: "VGISS_5101_peer_review" -> (VGISS_5101, _peer_review)
+            matchobj = VOLNAME_VERSION_I.match(parts[0])
+            if matchobj:
+                this.volname = matchobj.group(1).upper()
+                this.suffix = matchobj.group(2).lower()
 
                 # Pop the first entry from the pseudo-path and try again
                 parts = parts[1:]
