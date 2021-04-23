@@ -71,7 +71,6 @@ default_viewables = translator.TranslatorByRegex([
              r'previews/CORSS_8xxx/\2/\3_\4_small.jpg',
              r'previews/CORSS_8xxx/\2/\3_\4_thumb.jpg',
             ]),
-
     (r'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev(..)(C?[IE])_RSS_(\w+)/(\w+)_(GEO|TAU)(\.TAB|_.*M\.TAB)', 0,
             [r'previews/CORSS_8xxx/CORSS_8001/data/Rev0\1/Rev0\1\2/Rev0\1\2_RSS_\3/\4_\5_full.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev0\1/Rev0\1\2/Rev0\1\2_RSS_\3/\4_\5_med.jpg',
@@ -94,29 +93,29 @@ default_viewables = translator.TranslatorByRegex([
 
 diagram_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl', re.I, ''),
-    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/.*/(Rev...)(C?[IE]_RSS_2..._..._..._[IE])', 0,
+    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/.*/(Rev...)(C?[IE]_RSS_2..._..._..._[IE])(|/.*GEO.*|/.*TAU.*)', 0,
             [r'diagrams/CORSS_8xxx/\2/data/\3/\3\4_full.jpg',
              r'diagrams/CORSS_8xxx/\2/data/\3/\3\4_med.jpg',
              r'diagrams/CORSS_8xxx/\2/data/\3/\3\4_small.jpg',
              r'diagrams/CORSS_8xxx/\2/data/\3/\3\4_thumb.jpg',
             ]),
-    (r'volumes/CORSS_8xxx_v1/(CORSS_8...)/.*/Rev(\d\d)(C?[IE]_RSS_2..._..._..._[IE])', 0,
+    (r'volumes/CORSS_8xxx_v1/(CORSS_8...)/.*/Rev(\d\d)(C?[IE]_RSS_2..._..._..._[IE])(|/.*GEO.*|/.*TAU.*)', 0,
             [r'diagrams/CORSS_8xxx/\1/data/Rev0\2/Rev0\2\3_full.jpg',
              r'diagrams/CORSS_8xxx/\1/data/Rev0\2/Rev0\2\3_med.jpg',
              r'diagrams/CORSS_8xxx/\1/data/Rev0\2/Rev0\2\3_small.jpg',
              r'diagrams/CORSS_8xxx/\1/data/Rev0\2/Rev0\2\3_thumb.jpg',
-                ]),
+            ]),
 ])
 
 profile_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl', re.I, ''),
-    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/.*/(Rev\d\d\d)(C?[IE])_(RSS_2..._..._..._[IE])', 0,
+    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/.*/(Rev\d\d\d)(C?[IE])_(RSS_2..._..._..._[IE])(|/.*TAU.*)', 0,
             [r'previews/CORSS_8xxx/\2/data/\3/\3\4/\3\4_\5/\5_TAU_full.jpg',
              r'previews/CORSS_8xxx/\2/data/\3/\3\4/\3\4_\5/\5_TAU_med.jpg',
              r'previews/CORSS_8xxx/\2/data/\3/\3\4/\3\4_\5/\5_TAU_small.jpg',
              r'previews/CORSS_8xxx/\2/data/\3/\3\4/\3\4_\5/\5_TAU_thumb.jpg',
             ]),
-    (r'volumes/CORSS_8xxx_v1/(CORSS_8...)/.*/Rev(\d\d)(C?[IE])_(RSS_2..._..._..._[IE])', 0,
+    (r'volumes/CORSS_8xxx_v1/(CORSS_8...)/.*/Rev(\d\d)(C?[IE])_(RSS_2..._..._..._[IE])(|/.*TAU.*)', 0,
             [r'previews/CORSS_8xxx/\1/data/Rev0\2/Rev0\2\3/Rev0\2\3_\4/\4_TAU_full.jpg',
              r'previews/CORSS_8xxx/\1/data/Rev0\2/Rev0\2\3/Rev0\2\3_\4/\4_TAU_med.jpg',
              r'previews/CORSS_8xxx/\1/data/Rev0\2/Rev0\2\3/Rev0\2\3_\4/\4_TAU_small.jpg',
@@ -126,7 +125,7 @@ profile_viewables = translator.TranslatorByRegex([
 
 skyview_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl', re.I, ''),
-    (r'volumes/.*/Rev(\d\d\d)[^\.]*', 0,
+    (r'volumes/.*/Rev(\d\d\d)([^\.]*|.*OccTrack_Geometry.pdf)', 0,
             [r'previews/CORSS_8xxx/CORSS_8001/browse/Rev\1_OccTrack_Geometry_full.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/browse/Rev\1_OccTrack_Geometry_med.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/browse/Rev\1_OccTrack_Geometry_small.jpg',
@@ -142,7 +141,7 @@ skyview_viewables = translator.TranslatorByRegex([
 
 dsntrack_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl', re.I, ''),
-    (r'volumes/.*/Rev(\d\d\d)[^\.]*', 0,
+    (r'volumes/.*/Rev(\d\d\d)([^\.]*|.*DSN_Elevation.pdf)', 0,
             [r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_DSN_Elevation_full.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_DSN_Elevation_med.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_DSN_Elevation_small.jpg',
@@ -158,7 +157,7 @@ dsntrack_viewables = translator.TranslatorByRegex([
 
 timeline_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl', re.I, ''),
-    (r'volumes/.*/Rev(\d\d\d)[^\.]*', 0,
+    (r'volumes/.*/Rev(\d\d\d)([^\.]*|.*TimeLine_Figure.pdf)', 0,
             [r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_TimeLine_Figure_full.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_TimeLine_Figure_med.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_TimeLine_Figure_small.jpg',
@@ -515,20 +514,21 @@ def test_default_viewables():
     # ((number of default viewables, diagrams, profiles, skyviews, dsntracks, timelines), logical_path)
     TESTS = [
         ((0, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.LBL'),
-        ((4, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.pdf'),
-        ((4, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_TimeLine_Figure.pdf'),
+        ((4, 0, 0, 0, 4, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.pdf'),
+        ((4, 0, 0, 0, 0, 4), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_TimeLine_Figure.pdf'),
         ((4, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_TimeLine_Table.pdf'),
         ((4, 0, 0, 4, 4, 4), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E'),
         ((4, 4, 4, 4, 4, 4), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E'),
-        ((0, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_CAL.TAB'),
-        ((0, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_DLP_500M.TAB'),
-        ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_GEO.TAB'),
+        ((0, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_CAL.TAB'),
+        ((0, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_DLP_500M.TAB'),
+        ((4, 4, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_GEO.TAB'),
         ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_01KM.TAB'),
         ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007E/Rev007E_RSS_2005_123_K34_E/RSS_2005_123_K34_E_TAU_10KM.TAB'),
         ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev137/Rev137E/Rev137E_RSS_2010_245_S24_E/RSS_2010_245_S24_E_TAU_1600M.TAB'),
-        ((4, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry.pdf'),
-        ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/Rev07E_RSS_2005_123_X43_E_Summary.pdf'),
-        ((0, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_CAL.TAB'),
+        ((4, 0, 0, 4, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/browse/Rev007_OccTrack_Geometry.pdf'),
+        ((4, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/Rev07E_RSS_2005_123_X43_E_Summary.pdf'),
+        ((0, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_CAL.TAB'),
+        ((4, 4, 0, 0, 0, 0), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_GEO.TAB'),
         ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_01KM.TAB'),
         ((4, 4, 4, 0, 0, 0), 'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev07E_RSS_2005_123_X43_E/RSS_2005_123_X43_E_TAU_10KM.TAB'),
     ]
