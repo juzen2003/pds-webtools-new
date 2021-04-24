@@ -68,7 +68,7 @@ VOLNAME_VERSION     = re.compile(VOLNAME_REGEX.pattern[:-1] +
 VOLNAME_VERSION_I   = re.compile(VOLNAME_VERSION.pattern, re.I)
 # Example: "VGISS_5101_peer_review" -> ("VGISS_5101", "_peer_review")
 
-VIEWABLE_ANCHOR_REGEX = re.compile(r'(.*/\w+_)[a-z]+\.(jpg|png)')
+VIEWABLE_ANCHOR_REGEX = re.compile(r'(.*/\w+)_[a-z]+\.(jpg|png)')
 # path/A1234566_thumb.jpg -> path/A1234566
 
 LOGFILE_TIME_FMT = '%Y-%m-%dT%H-%M-%S'
@@ -104,8 +104,8 @@ DEFAULT_HIGH_LEVEL_ICONS = {
   ('calibrated/', False): 'DATADIR',
   ('metadata/',   True ): 'INDEXDIR',
   ('metadata/',   False): 'INDEXDIR',
-  ('previews/',   True ): 'IMAGEDIR',
-  ('previews/',   False): 'IMAGEDIR',
+  ('previews/',   True ): 'BROWDIR',
+  ('previews/',   False): 'BROWDIR',
   ('diagrams/',   True ): 'DIAGDIR',
   ('diagrams/',   False): 'DIAGDIR',
   ('documents/',  True ): 'INFODIR',
@@ -2646,10 +2646,8 @@ class PdsFile(object):
         """True if a neighbor rule is available to go to the object just before
         or just after this one."""
 
-        if self.NEIGHBORS.first(self.parent().logical_path):
-            return True
-        else:
-            return False
+        parent = self.parent()
+        return bool(parent and self.NEIGHBORS.first(parent.logical_path))
 
     @property
     def filename_keylen(self):

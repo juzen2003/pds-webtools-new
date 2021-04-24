@@ -128,7 +128,13 @@ class PdsViewSet(object):
         """Append the given PdsViewable to this PdsViewSet.
 
         If include_named_in_sizes is True, then a named viewable is added to the
-        dictionaries keyed by size. Otherwise, not.
+        dictionaries keyed by size. Otherwise, not. This allows a PdsViewable
+        object called "full" to be accessible by name but never to be used by
+        for_width, for_height, or for_frame. Often, our "full" products do not
+        look the same as the smaller versions because, for example, the smaller
+        versions are color-coded but the "full" version is not. In this case,
+        we want to ensure that the color-coded are always used in web pages
+        unless "full" is requested explicitly.
         """
 
         if viewable in self.viewables: return
@@ -268,21 +274,35 @@ class PdsViewSet(object):
         return pdsview
 
     @staticmethod
-    def from_pdsfiles(pdsfiles, validate=False):
+    def from_pdsfiles(pdsfiles, validate=False, full_is_special=True):
         """A PdsViewSet constructed from a list of viewable PdsFile objects."""
 
         if type(pdsfiles) not in (list,tuple):
             pdsfiles = [pdsfiles]
 
-        pdsviews = []
+        viewables = []
+        full_viewable = None
         for pdsf in pdsfiles:
+            if full_is_special and '_full.' in pdsf.logical_path:
+                name = 'full'
+            else:
+                name = ''
+
             try:
-                pdsviews.append(PdsViewable.from_pdsfile(pdsf))
+                viewable = PdsViewable.from_pdsfile(pdsf, name=name)
             except ValueError:
                 if validate: raise
+            else:
+                if name == 'full':
+                    full_viewable = viewable
+                else:
+                    viewables.append(viewable)
 
-        if pdsviews:
-            return PdsViewSet(pdsviews)
+        if viewables or full_viewable:
+            viewset = PdsViewSet(viewables)
+            if full_viewable:
+                viewset.append(full_viewable)
+            return viewset
 
         return None
 

@@ -190,7 +190,8 @@ associations_to_volumes = translator.TranslatorByRegex([
 
     (r'volumes/(COCIRS_[56]xxx/COCIRS_[56]...)/DATA/\w+', 0,
             [r'volumes/\1/BROWSE',
-             r'volumes/\1/DATA/*'
+             r'volumes/\1/DATA/APODSPEC',
+             r'volumes/\1/DATA/*DATA',
             ]),
 
     (r'volumes/(COCIRS_[56]xxx/COCIRS_[56]...)/DATA', 0,
@@ -740,8 +741,8 @@ def test_associations_to_volumes():
         (14, 'volumes/COCIRS_5xxx/COCIRS_5512/BROWSE/SATURN/POI0512010000_FP1.LBL'),
         (24, 'volumes/COCIRS_5xxx/COCIRS_5512/BROWSE/TARGETS/IMG0512010000_FP1.LBL'),
         ( 1, 'volumes/COCIRS_5xxx/COCIRS_5512/DATA'),
-        ( 8, 'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC'),
-        ( 8, 'volumes/COCIRS_5xxx/COCIRS_5512/DATA/GEODATA'),
+        ( 7, 'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC'),
+        ( 7, 'volumes/COCIRS_5xxx/COCIRS_5512/DATA/GEODATA'),
         (24, 'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512010000_FP1.DAT'),
         (26, 'volumes/COCIRS_5xxx/COCIRS_5512/DATA/GEODATA/GEO0512010000_601.LBL'),
         (24, 'volumes/COCIRS_5xxx/COCIRS_5512/DATA/ISPMDATA/ISPM0512010000_FP1.LBL'),
