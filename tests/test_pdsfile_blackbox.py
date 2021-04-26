@@ -4,6 +4,7 @@ import pdsfile
 import pdsgroup
 import pdsgrouptable
 import pdsviewable
+import rules
 import pytest
 import re
 import sys
@@ -16,6 +17,49 @@ PDS_PDSDATA_PATH = PDS_HOLDINGS_DIR[:PDS_HOLDINGS_DIR.index('holdings')]
 # Blackbox test for functions & properties in PdsFile class
 ################################################################################
 class TestPdsFileBlackBox:
+    ############################################################################
+    # Test on SUBCLASS, make sure rules all exist in the dictionary
+    ############################################################################
+    @pytest.mark.parametrize(
+        'expected',
+        [
+            ({
+                'default': pdsfile.PdsFile,
+                'ASTROM_xxxx': rules.ASTROM_xxxx.ASTROM_xxxx,
+                'COCIRS_xxxx': rules.COCIRS_xxxx.COCIRS_xxxx,
+                'COISS_xxxx': rules.COISS_xxxx.COISS_xxxx,
+                'CORSS_8xxx': rules.CORSS_8xxx.CORSS_8xxx,
+                'COSP_xxxx': rules.COSP_xxxx.COSP_xxxx,
+                'COUVIS_0xxx': rules.COUVIS_0xxx.COUVIS_0xxx,
+                'COUVIS_8xxx': rules.COUVIS_8xxx.COUVIS_8xxx,
+                'COVIMS_0xxx': rules.COVIMS_0xxx.COVIMS_0xxx,
+                'COVIMS_8xxx': rules.COVIMS_8xxx.COVIMS_8xxx,
+                'EBROCC_xxxx': rules.EBROCC_xxxx.EBROCC_xxxx,
+                'GO_0xxx': rules.GO_0xxx.GO_0xxx,
+                'HSTxx_xxxx': rules.HSTxx_xxxx.HSTxx_xxxx,
+                'NHSP_xxxx': rules.NHSP_xxxx.NHSP_xxxx,
+                'NHxxxx_xxxx': rules.NHxxxx_xxxx.NHxxxx_xxxx,
+                'RES_xxxx': rules.RES_xxxx.RES_xxxx,
+                'RPX_xxxx': rules.RPX_xxxx.RPX_xxxx,
+                'VG_0xxx': rules.VG_0xxx.VG_0xxx,
+                'VG_20xx': rules.VG_20xx.VG_20xx,
+                'VG_28xx': rules.VG_28xx.VG_28xx,
+                'VGIRIS_xxxx': rules.VGIRIS_xxxx.VGIRIS_xxxx,
+                'VGISS_xxxx': rules.VGISS_xxxx.VGISS_xxxx
+             }),
+        ]
+    )
+    def test_subclasses_dict(self, expected):
+        res_dict = pdsfile.PdsFile.SUBCLASSES
+        assert len(res_dict) == len(expected), "Mismatch on the list of SUBCLASSES"
+        for key in res_dict:
+            current_class = res_dict[key]
+            assert key in expected, f"{key} is not in the SUBCLASSES dictionary"
+            expected_class = expected[key]
+            assert current_class != None, f"Rules is not loaded on {key} in the SUBCLASSES"
+            assert current_class == expected_class, f"Mismatch on {key} in the SUBCLASSES"
+            assert (f"{current_class.__module__ + current_class.__name__}"
+                    == f"{expected_class.__module__ + expected_class.__name__}")
     ############################################################################
     # Local implementations of basic filesystem operations
     ############################################################################
