@@ -7,12 +7,6 @@ import translator
 import re
 import os
 
-try:        # PDS_DATA_DIR overrides the default holdings directory location
-    holdings_dir = os.environ['PDS_DATA_DIR']
-    pdsfile.set_local_holdings_dirs([holdings_dir])
-except KeyError:
-    pass
-
 def translate_first(trans, path):
     """Logical paths of "first" files found using given translator on path."""
 
@@ -30,8 +24,6 @@ def translate_first(trans, path):
     for pattern in patterns:
         abspaths += pdsfile.PdsFile.glob_glob(pattern)
 
-    for p in abspaths:
-        print(p)
     return abspaths
 
 def translate_all(trans, path):
@@ -51,8 +43,6 @@ def translate_all(trans, path):
     for pattern in patterns:
         abspaths += pdsfile.PdsFile.glob_glob(pattern)
 
-    for p in abspaths:
-        print(p)
     return abspaths
 
 def unmatched_patterns(trans, path):

@@ -5522,17 +5522,6 @@ def logical_path_from_abspath(abspath):
 LOCAL_HOLDINGS_DIRS = None  # Global will contain all the physical holdings
                             # directories on the system.
 
-def set_local_holdings_dirs(dirs):
-    """Set the paths to the holdings directories without a preload. After a
-    preload, any use of this method is ignored."""
-
-    global LOCAL_HOLDINGS_DIRS
-
-    if isinstance(dirs, str):
-        LOCAL_HOLDINGS_DIRS = [dirs]
-    else:
-        LOCAL_HOLDINGS_DIRS = dirs
-
 def abspath_for_logical_path(path):
     """Absolute path derived from a logical path.
 
@@ -5552,16 +5541,21 @@ def abspath_for_logical_path(path):
     if LOCAL_PRELOADED:
         holdings_list = LOCAL_PRELOADED
 
-    # If no preload occurred, check the /Library/WebSever/Documents directory
-    # for a symlink. This only works for MacOS, but it is almost never needed
-    # otherwise so that's OK.
-    elif LOCAL_HOLDINGS_DIRS is None:
+    elif LOCAL_HOLDINGS_DIRS:
+        holdings_list = LOCAL_HOLDINGS_DIRS
+
+    elif 'PDS_DATA_DIR' in os.environ:
+        holdings_list = [os.environ['PDS_DATA_DIR']]
+        LOCAL_HOLDINGS_DIRS = holdings_list
+
+    # Without a preload or an environment variable, check the
+    # /Library/WebSever/Documents directory for a symlink. This only works for
+    # MacOS with the website installed, but that's OK.
+    else:
         holdings_dirs = glob.glob('/Library/WebServer/Documents/holdings*')
         holdings_dirs.sort()
         holdings_list = [os.path.realpath(h) for h in holdings_dirs]
-
-    else:
-        holdings_list = LOCAL_HOLDINGS_DIRS
+        LOCAL_HOLDINGS_DIRS = holdings_list
 
     # With exactly one holdings/ directory, the answer is easy
     if len(holdings_list) == 1:
