@@ -418,3 +418,98 @@ pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-iss-.*
 pdsfile.PdsFile.SUBCLASSES['COISS_xxxx'] = COISS_xxxx
 
 ####################################################################################################################################
+# Unit tests
+####################################################################################################################################
+
+import pytest
+from .pytest_support import *
+
+@pytest.mark.parametrize(
+    'input_path,expected',
+    [
+        ('volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.IMG',
+         {('Cassini ISS',
+           0,
+           'coiss_raw',
+           'Raw Image',
+           True): ['volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.IMG',
+                   'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.LBL',
+                   'volumes/COISS_1xxx/COISS_1001/label/prefix.fmt',
+                   'volumes/COISS_1xxx/COISS_1001/label/tlmtab.fmt'],
+          ('Cassini ISS',
+           110,
+           'coiss_thumb',
+           'Extra Preview (thumbnail)',
+           False): ['volumes/COISS_1xxx/COISS_1001/extras/thumbnail/1294561143_1295221348/W1294561202_1.IMG.jpeg_small'],
+          ('Cassini ISS',
+           120,
+           'coiss_medium',
+           'Extra Preview (medium)',
+           False): ['volumes/COISS_1xxx/COISS_1001/extras/browse/1294561143_1295221348/W1294561202_1.IMG.jpeg'],
+          ('Cassini ISS',
+           10,
+           'coiss_calib',
+           'Calibrated Image',
+           True): ['calibrated/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1_CALIB.IMG',
+                   'calibrated/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1_CALIB.LBL',
+                   'calibrated/COISS_1xxx_v1/COISS_1001/data/1294561143_1295221348/W1294561202_1_CALIB.IMG',
+                   'calibrated/COISS_1xxx_v1/COISS_1001/data/1294561143_1295221348/W1294561202_1_CALIB.LBL',
+                   'calibrated/COISS_1xxx_v2/COISS_1001/data/1294561143_1295221348/W1294561202_1_CALIB.IMG',
+                   'calibrated/COISS_1xxx_v2/COISS_1001/data/1294561143_1295221348/W1294561202_1_CALIB.LBL'],
+          ('browse',
+           10,
+           'browse_thumb',
+           'Browse Image (thumbnail)',
+           False): ['previews/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1_thumb.jpg'],
+          ('browse',
+           20,
+           'browse_small',
+           'Browse Image (small)',
+           False): ['previews/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1_small.jpg'],
+          ('browse',
+           30,
+           'browse_medium',
+           'Browse Image (medium)',
+           False): ['previews/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1_med.jpg'],
+          ('browse',
+           40,
+           'browse_full',
+           'Browse Image (full)',
+           True): ['previews/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1_full.png'],
+          ('metadata',
+           20,
+           'planet_geometry',
+           'Planet Geometry Index',
+           False): ['metadata/COISS_1xxx/COISS_1001/COISS_1001_jupiter_summary.tab',
+                    'metadata/COISS_1xxx/COISS_1001/COISS_1001_jupiter_summary.lbl'],
+          ('metadata',
+           30,
+           'moon_geometry',
+           'Moon Geometry Index',
+           False): ['metadata/COISS_1xxx/COISS_1001/COISS_1001_moon_summary.tab',
+                    'metadata/COISS_1xxx/COISS_1001/COISS_1001_moon_summary.lbl'],
+          ('metadata',
+           40,
+           'ring_geometry',
+           'Ring Geometry Index',
+           False): ['metadata/COISS_1xxx/COISS_1001/COISS_1001_ring_summary.tab',
+                    'metadata/COISS_1xxx/COISS_1001/COISS_1001_ring_summary.lbl'],
+          ('metadata',
+           10,
+           'inventory',
+           'Target Body Inventory',
+           False): ['metadata/COISS_1xxx/COISS_1001/COISS_1001_inventory.csv',
+                    'metadata/COISS_1xxx/COISS_1001/COISS_1001_inventory.lbl'],
+          ('metadata',
+           5,
+           'rms_index',
+           'RMS Node Augmented Index',
+           False): ['metadata/COISS_1xxx/COISS_1001/COISS_1001_index.tab',
+                    'metadata/COISS_1xxx/COISS_1001/COISS_1001_index.lbl']}
+        ),
+    ]
+)
+def test_opus_products(input_path, expected):
+    opus_products_test(input_path, expected)
+
+####################################################################################################################################

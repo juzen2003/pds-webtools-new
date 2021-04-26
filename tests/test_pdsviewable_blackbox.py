@@ -5,7 +5,7 @@ import pytest
 
 from tests.helper import instantiate_target_pdsfile
 
-PDS_DATA_DIR = os.environ['PDS_DATA_DIR']
+PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
 
 ################################################################################
 # Blackbox test for functions & properties in PdsViewSet class
@@ -14,7 +14,7 @@ class TestPdsViewSetBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39_thumb.png',
+            ('previews/COUVIS_0xxx/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39_thumb.png',
              'EUV2004_274_01_39_thumb.png')
         ]
     )
@@ -27,7 +27,7 @@ class TestPdsViewSetBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_09_50_small.png',
+            ('previews/COUVIS_0xxx/COUVIS_0009/DATA/D2004_274/EUV2004_274_09_50_small.png',
              'EUV2004_274_09_50_small.png')
         ]
     )
@@ -39,7 +39,7 @@ class TestPdsViewSetBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_02_25_med.png',
+            ('previews/COUVIS_0xxx/COUVIS_0009/DATA/D2004_274/EUV2004_274_02_25_med.png',
              'EUV2004_274_02_25_med.png')
         ]
     )
@@ -51,7 +51,7 @@ class TestPdsViewSetBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('previews/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_07_10_full.png',
+            ('previews/COUVIS_0xxx/COUVIS_0009/DATA/D2004_274/EUV2004_274_07_10_full.png',
              'EUV2004_274_07_10_full.png')
         ]
     )

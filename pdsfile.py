@@ -4247,6 +4247,9 @@ class PdsFile(object):
                 opus_pdsfiles[key] = []
 
             if pdsf.label_abspath:
+                # print("================")
+                # print(f"pdsf.label_abspath: {pdsf.label_abspath}")
+                # print(label_pdsfiles)
                 sublist = [pdsf] + label_pdsfiles[pdsf.label_abspath]
             else:
                 sublist = [pdsf]
@@ -5331,7 +5334,7 @@ class PdsFile(object):
                 raise ValueError(f'unrecognized rank value "{rank}"')
 
             rank = all_ranks[new_index]
-    
+
             if (category, rank) in self._associated_parallels_filled:
                 abspath = self._associated_parallels_filled[category, rank]
                 return PdsFile.from_abspath(abspath) if abspath else None
@@ -5544,8 +5547,8 @@ def abspath_for_logical_path(path):
     elif LOCAL_HOLDINGS_DIRS:
         holdings_list = LOCAL_HOLDINGS_DIRS
 
-    elif 'PDS_DATA_DIR' in os.environ:
-        holdings_list = [os.environ['PDS_DATA_DIR']]
+    elif 'PDS_HOLDINGS_DIR' in os.environ:
+        holdings_list = [os.environ['PDS_HOLDINGS_DIR']]
         LOCAL_HOLDINGS_DIRS = holdings_list
 
     # Without a preload or an environment variable, check the

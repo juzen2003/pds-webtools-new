@@ -169,11 +169,11 @@ opus_id = translator.TranslatorByRegex([
 
 opus_id_to_primary_logical_path = translator.TranslatorByRegex([
     (r'eso1m-apph-occ-1989-184-28sgr-(.*)',   0, r'volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_#UPPER#\1PD.TAB'),
-    (r'eso22m-apph-occ-1989-184-28sgr-(.*)',  0, r'volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO22M/ES2_#UPPER#\1PD\.TAB'),
-    (r'irtf-urac-occ-1989-184-28sgr-(.*)',    0, r'volumes/EBROCC_xxxx/EBROCC_0001/DATA/IRTF/IRT_#UPPER#\1PD\.TAB'),
-    (r'lick1m-ccdc-occ-1989-184-28sgr-(.*)',  0, r'volumes/EBROCC_xxxx/EBROCC_0001/DATA/LICK1M/LIC_#UPPER#\1PD\.TAB'),
-    (r'mcd27m-iirar-occ-1989-184-28sgr-(.*)', 0, r'volumes/EBROCC_xxxx/EBROCC_0001/DATA/MCD27M/MCD_#UPPER#\1PD\.TAB'),
-    (r'pal200-circ-occ-1989-184-28sgr-(.*)',  0, r'volumes/EBROCC_xxxx/EBROCC_0001/DATA/PAL200/PAL_#UPPER#\1PD\.TAB'),
+    (r'eso22m-apph-occ-1989-184-28sgr-(.*)',  0, r'volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO22M/ES2_#UPPER#\1PD.TAB'),
+    (r'irtf-urac-occ-1989-184-28sgr-(.*)',    0, r'volumes/EBROCC_xxxx/EBROCC_0001/DATA/IRTF/IRT_#UPPER#\1PD.TAB'),
+    (r'lick1m-ccdc-occ-1989-184-28sgr-(.*)',  0, r'volumes/EBROCC_xxxx/EBROCC_0001/DATA/LICK1M/LIC_#UPPER#\1PD.TAB'),
+    (r'mcd27m-iirar-occ-1989-184-28sgr-(.*)', 0, r'volumes/EBROCC_xxxx/EBROCC_0001/DATA/MCD27M/MCD_#UPPER#\1PD.TAB'),
+    (r'pal200-circ-occ-1989-184-28sgr-(.*)',  0, r'volumes/EBROCC_xxxx/EBROCC_0001/DATA/PAL200/PAL_#UPPER#\1PD.TAB'),
 ])
 
 ####################################################################################################################################
@@ -240,9 +240,10 @@ pdsfile.PdsFile.SUBCLASSES['EBROCC_xxxx'] = EBROCC_xxxx
 # Unit tests
 ####################################################################################################################################
 
+import pytest
 from .pytest_support import *
 
-def test_opus_products():
+def test_opus_products_count():
 
     TESTS = [
         (2, 'volumes.*/DATA/.*'),
@@ -263,4 +264,98 @@ def test_opus_products():
         subset = [p for p in trimmed if re.fullmatch(pattern, p)]
         assert len(subset) == count, f'Miscount: {pattern} {len(subset)} {trimmed}'
 
+@pytest.mark.parametrize(
+# Allow duplicated '/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.LBL'
+# and '/volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.LBL' here. OPUS
+# will ignore the duplicated items
+    'input_path,expected',
+    [
+        ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.TAB',
+        {('Earth-based Occultations',
+          0,
+          'ebro_profile',
+          'Occultation Profile',
+          True): ['volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.TAB',
+                  'volumes/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL'],
+         ('Earth-based Occultations',
+          30,
+          'ebro_diagram',
+          'Geometry Diagram',
+          False): ['volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PS',
+                   'volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.PDF',
+                   'volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.LBL',
+                   'volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB.LBL'],
+         ('Earth-based Occultations',
+          20,
+          'ebro_preview',
+          'Preview Plot',
+          True): ['volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PS',
+                  'volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.PDF',
+                  'volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.LBL',
+                  'volumes/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB.LBL'],
+         ('Earth-based Occultations',
+          10,
+          'ebro_geom',
+          'Geometry Table',
+          True): ['volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.TAB',
+                  'volumes/EBROCC_xxxx/EBROCC_0001/GEOMETRY/ESO1M/ES1_EGD.LBL'],
+         ('Earth-based Occultations',
+          40,
+          'ebro_source',
+          'Source Data',
+          False): ['volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.DAT',
+                   'volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS_GEOMETRY.LBL',
+                   'volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS.OUT',
+                   'volumes/EBROCC_xxxx/EBROCC_0001/SORCDATA/ESO1M/ES1_EGRESS.LBL'],
+         ('browse',
+          40,
+          'browse_full',
+          'Browse Image (full)',
+          True): ['previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_full.jpg',
+                  'previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_full.jpg',
+                  'previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_full.jpg'],
+         ('browse',
+          30,
+          'browse_medium',
+          'Browse Image (medium)',
+          False): ['previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_med.jpg',
+                   'previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_med.jpg',
+                   'previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_med.jpg'],
+         ('browse',
+          20,
+          'browse_small',
+          'Browse Image (small)',
+          False): ['previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_small.jpg',
+                   'previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_small.jpg',
+                   'previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_small.jpg'],
+         ('browse',
+          10,
+          'browse_thumb',
+          'Browse Image (thumbnail)',
+          False): ['previews/EBROCC_xxxx/EBROCC_0001/DATA/ESO1M/ES1_EPD_thumb.jpg',
+                   'previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EPB_thumb.jpg',
+                   'previews/EBROCC_xxxx/EBROCC_0001/BROWSE/ESO1M/ES1_EGB_thumb.jpg'],
+         ('metadata',
+          5,
+          'rms_index',
+          'RMS Node Augmented Index',
+          False): ['metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.tab',
+                   'metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_index.lbl'],
+         ('metadata',
+          8,
+          'profile_index',
+          'Profile Index',
+          False): ['metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_profile_index.tab',
+                   'metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_profile_index.lbl'],
+         ('metadata',
+          9,
+          'supplemental_index',
+          'Supplemental Index',
+          False): ['metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.tab',
+                   'metadata/EBROCC_xxxx/EBROCC_0001/EBROCC_0001_supplemental_index.lbl']}
+        )
+    ]
+)
+def test_opus_products(input_path, expected):
+    opus_products_test(input_path, expected)
 ####################################################################################################################################

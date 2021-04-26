@@ -292,3 +292,141 @@ pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-uvis-[
 pdsfile.PdsFile.SUBCLASSES['COUVIS_0xxx'] = COUVIS_0xxx
 
 ####################################################################################################################################
+# Unit tests
+####################################################################################################################################
+
+import pytest
+from .pytest_support import *
+
+@pytest.mark.parametrize(
+    'input_path,expected',
+    [
+        ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
+         {('Cassini UVIS',
+           10,
+           'couvis_raw',
+           'Raw Data',
+           True): ['volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
+                   'volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.LBL'],
+          ('Cassini UVIS',
+           20,
+           'couvis_calib_corr',
+           'Calibration Data',
+           True): ['volumes/COUVIS_0xxx/COUVIS_0001/CALIB/VERSION_3/D1999_007/FUV1999_007_16_57_CAL_3.DAT',
+                   'volumes/COUVIS_0xxx/COUVIS_0001/CALIB/VERSION_3/D1999_007/FUV1999_007_16_57_CAL_3.LBL'],
+          ('browse',
+           10,
+           'browse_thumb',
+           'Browse Image (thumbnail)',
+           False): ['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57_thumb.png'],
+          ('browse',
+           20,
+           'browse_small',
+           'Browse Image (small)',
+           False): ['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57_small.png'],
+          ('browse',
+           30,
+           'browse_medium',
+           'Browse Image (medium)',
+           False): ['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57_med.png'],
+          ('browse',
+           40,
+           'browse_full',
+           'Browse Image (full)',
+           True): ['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57_full.png'],
+          ('metadata',
+           5,
+           'rms_index',
+           'RMS Node Augmented Index',
+           False): ['metadata/COUVIS_0xxx/COUVIS_0001/COUVIS_0001_index.tab',
+                    'metadata/COUVIS_0xxx/COUVIS_0001/COUVIS_0001_index.lbl'],
+          ('metadata',
+           9,
+           'supplemental_index',
+           'Supplemental Index',
+           False): ['metadata/COUVIS_0xxx/COUVIS_0001/COUVIS_0001_supplemental_index.tab',
+                    'metadata/COUVIS_0xxx/COUVIS_0001/COUVIS_0001_supplemental_index.lbl']}
+        )
+    ]
+)
+def test_opus_products(input_path, expected):
+    opus_products_test(input_path, expected)
+
+
+@pytest.mark.parametrize(
+    'input_path,expected',
+    [
+        ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
+         [
+            'volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
+            'volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.LBL',
+            'volumes/COUVIS_0xxx/COUVIS_0001/CALIB/VERSION_3/D1999_007/FUV1999_007_16_57_CAL_3.DAT',
+            'volumes/COUVIS_0xxx/COUVIS_0001/CALIB/VERSION_3/D1999_007/FUV1999_007_16_57_CAL_3.LBL'
+         ]),
+        # Check if the last "/" is ignored
+        ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/',
+         [
+            'volumes/COUVIS_0xxx/COUVIS_0001/DATA',
+            'volumes/COUVIS_0xxx/COUVIS_0001/CALIB/VERSION_3'
+         ]),
+    ]
+)
+def test_associated_logical_paths(input_path, expected):
+    target_pdsfile = instantiate_target_pdsfile(input_path)
+    target_associated_logical_paths = target_pdsfile.associated_logical_paths(
+        'volumes')
+    for path in expected:
+        assert path in target_associated_logical_paths
+
+@pytest.mark.parametrize(
+    'input_path,category,expected',
+    [
+        ('volumes/HSTUx_xxxx/HSTU0_5167/DATA/VISIT_04/U2NO0404T.LBL',
+         'metadata',
+         # should we have the "/" at the end?
+         ['metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab/U2NO0404T',
+          'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_hstfiles.tab/U2NO0404T',
+          'metadata/HSTUx_xxxx/HSTU0_5167/',
+          'metadata/HSTUx_xxxx/HSTU0_5167',
+         ]),
+        ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
+         'archives-volumes',
+         ['archives-volumes/COUVIS_0xxx/COUVIS_0001.tar.gz']),
+        ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
+         'checksums-volumes',
+         ['checksums-volumes/COUVIS_0xxx/COUVIS_0001_md5.txt']),
+        ('volumes/COUVIS_0xxx/COUVIS_0058/DATA/D2017_001/EUV2017_001_03_49.LBL',
+         'volumes',
+         [
+            'volumes/COUVIS_0xxx/COUVIS_0058/CALIB/VERSION_5/D2017_001/EUV2017_001_03_49_CAL_5.DAT',
+            'volumes/COUVIS_0xxx/COUVIS_0058/DATA/D2017_001/EUV2017_001_03_49.LBL',
+            'volumes/COUVIS_0xxx/COUVIS_0058/DATA/D2017_001/EUV2017_001_03_49.DAT',
+            'volumes/COUVIS_0xxx/COUVIS_0058/CALIB/VERSION_5/D2017_001/EUV2017_001_03_49_CAL_5.LBL',
+            'volumes/COUVIS_0xxx/COUVIS_0058/CALIB/VERSION_4/D2017_001/EUV2017_001_03_49_CAL_4.LBL',
+            'volumes/COUVIS_0xxx/COUVIS_0058/CALIB/VERSION_4/D2017_001/EUV2017_001_03_49_CAL_4.DAT'
+         ]),
+        ('volumes/COUVIS_0xxx/COUVIS_0058/DATA',
+         'volumes',
+         [
+            'volumes/COUVIS_0xxx/COUVIS_0058/DATA',
+            'volumes/COUVIS_0xxx/COUVIS_0058/CALIB/VERSION_5',
+            'volumes/COUVIS_0xxx/COUVIS_0058/CALIB/VERSION_4',
+         ]),
+        ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
+         'archives-volumes',
+         'archives-volumes/COUVIS_0xxx/COUVIS_0001.tar.gz'),
+        ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
+         'checksums-volumes',
+         'checksums-volumes/COUVIS_0xxx/COUVIS_0001_md5.txt'),
+    ]
+)
+def test_associated_abspaths(input_path, category, expected):
+    target_pdsfile = instantiate_target_pdsfile(input_path)
+    res = target_pdsfile.associated_abspaths(
+        category=category)
+    result_paths = []
+    result_paths += pdsfile.PdsFile.logicals_for_abspaths(res)
+    for path in result_paths:
+        assert path in expected
+
+####################################################################################################################################

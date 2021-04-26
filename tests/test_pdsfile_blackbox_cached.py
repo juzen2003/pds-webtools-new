@@ -1,13 +1,15 @@
 import datetime
 import os
 import pdsfile
+import pdsgroup
+import pdsgrouptable
 import pdsviewable
 import pytest
 
 from tests.helper import instantiate_target_pdsfile, get_pdsfiles
 
-PDS_DATA_DIR = os.environ['PDS_DATA_DIR']
-PDS_TESTING_ROOT = PDS_DATA_DIR[:PDS_DATA_DIR.index('pdsdata')]
+PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+PDS_TESTING_ROOT = PDS_HOLDINGS_DIR[:PDS_HOLDINGS_DIR.index('pdsdata')]
 ICON_ROOT_ = PDS_TESTING_ROOT + 'icons-local/'
 ICON_URL_  = 'icons-local/'
 ICON_COLOR = 'blue'
@@ -72,7 +74,7 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('metadata/VGISS_7xxx/VGISS_7201/VGISS_7201_inventory.tab',
-             ('VGISS_7201', '_inventory', '.tab')),
+             ('VGISS_7201_inventory', '', '.tab')),
             ('previews/NHxxMV_xxxx/NHLAMV_1001/data/20060321_000526/mc1_0005261846_0x536_eng_1_thumb.jpg',
              ('mc1_0005261846_0x536_eng_1', '_thumb', '.jpg')),
             ('previews/VGISS_7xxx/VGISS_7201/DATA/C24476XX/C2447654_small.jpg',
@@ -107,7 +109,7 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('volumes/RPX_xxxx/RPX_0001/CALIB/F130LP.lbl', []),
+            ('volumes/RPX_xxxx/RPX_0001/CALIB/F130LP.LBL', []),
             ('previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX',
              [
                 'C1385455_full.jpg', 'C1385455_med.jpg',
@@ -177,12 +179,12 @@ class TestPdsFileBlackBox:
             ('volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1.LBL',
              (
                 'Cassini ISS Saturn images 2004-04-18 to 2004-05-18 (SC clock 1460960653-1463538454)',
-                'VOLUME', '1.0', '2005-07-01', ['CO-S-ISSNA/ISSWA-2-EDR-V1.0']
+                None, '1.0', '2005-07-01', ['CO-S-ISSNA/ISSWA-2-EDR-V1.0']
              )),
             ('metadata/COVIMS_0xxx/COVIMS_0001',
              (
-                'Cassini VIMS near IR image cubes 1999-01-10 to 2000-09-18 (SC clock 1294638283-1347975444)',
-                'VOLUME', '1.0', '2005-07-01', ['CO-E/V/J/S-VIMS-2-QUBE-V1.0']
+                'Cassini VIMS metadata 1999-01-10 to 2000-09-18 (SC clock 1294638283-1347975444)',
+                None, '1.2', '2020-10-13', ['CO-E/V/J/S-VIMS-2-QUBE-V1.0']
              )),
         ]
     )
@@ -228,7 +230,7 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('volumes/NHxxMV_xxxx/NHLAMV_1001/data/20060321_000526/mc0_0005261846_0x536_eng_1.fit', 'image/fits'),
-            ('volumes/RPX_xxxx/RPX_0001/CALIB/F130LP.tab', 'text/plain'),
+            ('volumes/RPX_xxxx/RPX_0001/CALIB/F130LP.TAB', 'text/plain'),
             ('previews/HSTUx_xxxx/HSTU0_5167/DATA/VISIT_04/U2NO0401T_thumb.jpg',
              'image/jpg')
         ]
@@ -312,14 +314,17 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('volumes/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39.lbl', ()),
+            ('volumes/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39.LBL',
+             [
+                (58, 'EUV2004_274_01_39.DAT', PDS_HOLDINGS_DIR + '/volumes/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39.DAT'),
+             ]),
             ('volumes/COCIRS_0xxx/COCIRS_0012/DATA', []),
             ('previews/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561261_1_thumb.jpg', []),
             ('volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL',
              [
-                (24, 'GEO00120100.DAT', PDS_DATA_DIR + '/volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT'),
-                (25, 'GEO00120100.DAT', PDS_DATA_DIR + '/volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT'),
-                (32, 'GEO.FMT', PDS_DATA_DIR + '/volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO.FMT')
+                (24, 'GEO00120100.DAT', PDS_HOLDINGS_DIR + '/volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT'),
+                (25, 'GEO00120100.DAT', PDS_HOLDINGS_DIR + '/volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT'),
+                (32, 'GEO.FMT', PDS_HOLDINGS_DIR + '/volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO.FMT')
              ])
         ]
     )
@@ -334,8 +339,8 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2017_228_BETORI_I_TAU10KM.tab',
-             'UVIS_HSP_2017_228_BETORI_I_TAU10KM.lbl')
+            ('volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2017_228_BETORI_I_TAU10KM.TAB',
+             'UVIS_HSP_2017_228_BETORI_I_TAU10KM.LBL')
         ]
     )
     def test_label_basename(self, input_path, expected):
@@ -351,10 +356,10 @@ class TestPdsFileBlackBox:
         [
             ('previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_thumb.jpg',
              [
-                'holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_full.jpg',
-                'holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_thumb.jpg',
-                'holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_med.jpg',
-                'holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_small.jpg',
+                '/holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_full.jpg',
+                '/holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_thumb.jpg',
+                '/holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_med.jpg',
+                '/holdings/previews/COCIRS_1xxx/COCIRS_1001/DATA/CUBE/EQUIRECTANGULAR/123RI_EQLBS002_____CI____699_F1_039E_small.jpg',
              ]
             )
         ]
@@ -375,7 +380,7 @@ class TestPdsFileBlackBox:
         [
             ('previews/HSTIx_xxxx/HSTI1_1556/DATA/VISIT_01/IB4W01I5Q_thumb.jpg',
              True,
-             ['holdings/previews/HSTIx_xxxx/HSTI1_1556/DATA/VISIT_01/IB4W01I5Q_thumb.jpg']),
+             ['/holdings/previews/HSTIx_xxxx/HSTI1_1556/DATA/VISIT_01/IB4W01I5Q_thumb.jpg']),
             ('volumes/HSTIx_xxxx/HSTI1_1556/DATA/VISIT_01/IB4W01I5Q.asc', False, [])
         ]
     )
@@ -672,7 +677,7 @@ class TestPdsFileBlackBox:
             # Return '' for COUVIS_0xxx (multiple data set ids) since
             # we don't have a properly defined DATA_SET_ID rule for it.
             ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31.DAT',
-             ''),
+             'CO-J-UVIS-2-SSB-V1.2'),
             # Return '' for files under volume that have multiple data
             # set ids.
             ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/DATAINFO.TXT',
@@ -682,16 +687,19 @@ class TestPdsFileBlackBox:
     def test_data_set_id_multi_data_set_id(self, input_path, expected):
         """lid: return self._data_set_id_filled"""
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        res1 = target_pdsfile.data_set_id
-        res2 = target_pdsfile.data_set_id
-        assert res1 == expected
-        assert res1 == res2
+        # When SHELVES_ONLY is True, there is no metadata tree for COUVIS and
+        # it will have empty row_dicts in DATA_SET_ID of COUVIS_0xxx.py rules.
+        if not pdsfile.SHELVES_ONLY:
+            res1 = target_pdsfile.data_set_id
+            res2 = target_pdsfile.data_set_id
+            assert res1 == expected
+            assert res1 == res2
 
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31.DAT',
-             ''),
+            ('volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT',
+             'CO-J-CIRS-2/3/4-TSDR-V2.0:COCIRS_0012:DATA/NAV_DATA:GEO00120100.DAT'),
             ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/DATAINFO.TXT',
              ''),
         ]
@@ -707,8 +715,8 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31.DAT',
-             ''),
+            ('volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.DAT',
+             'CO-J-CIRS-2/3/4-TSDR-V2.0:COCIRS_0012:DATA/NAV_DATA:GEO00120100.DAT::1.0'),
             ('volumes/EBROCC_xxxx/EBROCC_0001/DATA/DATAINFO.TXT',
              ''),
         ]
@@ -733,10 +741,10 @@ class TestPdsGroupBlackBox:
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL'
              ],
              [
-                'icons-local/blue/png-30/document_binary.png',
-                'icons-local/blue/png-50/document_binary.png',
-                'icons-local/blue/png-200/document_binary.png',
-                'icons-local/blue/png-100/document_binary.png',
+                'icons-local/blue/png-100/document_geometry.png',
+                'icons-local/blue/png-30/document_geometry.png',
+                'icons-local/blue/png-200/document_geometry.png',
+                'icons-local/blue/png-50/document_geometry.png',
              ]
             ),
             (['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007'],
@@ -759,7 +767,7 @@ class TestPdsGroupBlackBox:
             assert True
         else:
             target_pdsfile = get_pdsfiles(input_paths)
-            target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
+            target_pdsgroup = pdsgroup.PdsGroup(pdsfiles=target_pdsfile)
             res1 = target_pdsgroup._iconset
             res2 = target_pdsgroup._iconset
             assert isinstance(res1, pdsviewable.PdsViewSet)
@@ -776,10 +784,10 @@ class TestPdsGroupBlackBox:
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL'
              ],
              [
-                'icons-local/blue/png-30/document_binary.png',
-                'icons-local/blue/png-50/document_binary.png',
-                'icons-local/blue/png-200/document_binary.png',
-                'icons-local/blue/png-100/document_binary.png',
+                'icons-local/blue/png-100/document_geometry.png',
+                'icons-local/blue/png-30/document_geometry.png',
+                'icons-local/blue/png-200/document_geometry.png',
+                'icons-local/blue/png-50/document_geometry.png',
              ]
             ),
             (['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007'],
@@ -802,7 +810,7 @@ class TestPdsGroupBlackBox:
             assert True
         else:
             target_pdsfile = get_pdsfiles(input_paths)
-            target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
+            target_pdsgroup = pdsgroup.PdsGroup(pdsfiles=target_pdsfile)
             res1 = target_pdsgroup.iconset_open
             res2 = target_pdsgroup.iconset_open
             assert isinstance(res1, pdsviewable.PdsViewSet)
@@ -819,10 +827,10 @@ class TestPdsGroupBlackBox:
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL'
              ],
              [
-                'icons-local/blue/png-30/document_binary.png',
-                'icons-local/blue/png-50/document_binary.png',
-                'icons-local/blue/png-200/document_binary.png',
-                'icons-local/blue/png-100/document_binary.png',
+                'icons-local/blue/png-100/document_geometry.png',
+                'icons-local/blue/png-30/document_geometry.png',
+                'icons-local/blue/png-200/document_geometry.png',
+                'icons-local/blue/png-50/document_geometry.png',
              ]
             ),
             (['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007'],
@@ -845,7 +853,7 @@ class TestPdsGroupBlackBox:
             assert True
         else:
             target_pdsfile = get_pdsfiles(input_paths)
-            target_pdsgroup = pdsfile.PdsGroup(pdsfiles=target_pdsfile)
+            target_pdsgroup = pdsgroup.PdsGroup(pdsfiles=target_pdsfile)
             res1 = target_pdsgroup.iconset_closed
             res2 = target_pdsgroup.iconset_closed
             assert isinstance(res1, pdsviewable.PdsViewSet)

@@ -3,7 +3,7 @@ import pdsfile
 import pdslogger
 import pytest
 
-PDS_DATA_DIR = os.environ['PDS_DATA_DIR']
+PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
 ################################################################################
 # Setup before all tests
 ################################################################################
@@ -19,19 +19,10 @@ def turn_on_logger(filename):
 def setup(request):
     mode = request.config.option.mode
     if mode == '1':
-        pdsfile.use_pickles(True)
         pdsfile.use_shelves_only(True)
     elif mode == '2':
-        pdsfile.use_pickles(True)
-        pdsfile.use_shelves_only(False)
-    elif mode == '3':
-        pdsfile.use_pickles(False)
-        pdsfile.use_shelves_only(True)
-    elif mode == '4':
-        pdsfile.use_pickles(False)
         pdsfile.use_shelves_only(False)
     else: # default
-        pdsfile.use_pickles(True)
         pdsfile.use_shelves_only(True)
     turn_on_logger("test_log.txt")
-    pdsfile.preload(PDS_DATA_DIR)
+    pdsfile.preload(PDS_HOLDINGS_DIR)
