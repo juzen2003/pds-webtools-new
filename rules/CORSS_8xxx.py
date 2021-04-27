@@ -292,7 +292,7 @@ associations_to_documents = translator.TranslatorByRegex([
     (r'volumes/CORSS_8xxx/CORSS_8001.*', 0,
             r'volumes/CORSS_8xxx/CORSS_8001/document/archived_rss_ring_profiles_2018.pdf'),
     (r'volumes/CORSS_8xxx_v1/CORSS_8001.*', 0,
-            r'volumes/CORSS_8xxx_v1/CORSS_8001/document/archived_rss_ring_profiles.pdf'),
+            r'volumes/CORSS_8xxx_v1/CORSS_8001/DOCUMENT/archived_rss_ring_profiles.pdf'),
 ])
 
 ####################################################################################################################################

@@ -4132,9 +4132,6 @@ class PdsFile(object):
             raise ValueError('Unrecognized OPUS ID: ' + opus_id)
 
         paths = pdsfile_class.OPUS_ID_TO_PRIMARY_LOGICAL_PATH.all(opus_id)
-        if not paths:
-            raise ValueError('Unrecognized OPUS ID: ' + opus_id)
-
         patterns = [abspath_for_logical_path(p) for p in paths]
         matches = []
         for pattern in patterns:
@@ -4147,9 +4144,12 @@ class PdsFile(object):
 
             matches += abspaths
 
-            # One match is easy to handle
-            if len(matches) == 1:
-                return PdsFile.from_abspath(matches[0])
+        # One match is easy to handle
+        if len(matches) == 1:
+            return PdsFile.from_abspath(matches[0])
+
+        if len(matches) == 0:
+            raise ValueError('Unrecognized OPUS ID: ' + opus_id)
 
         if LOGGER:
             for abspath in matches:
@@ -4247,9 +4247,6 @@ class PdsFile(object):
                 opus_pdsfiles[key] = []
 
             if pdsf.label_abspath:
-                # print("================")
-                # print(f"pdsf.label_abspath: {pdsf.label_abspath}")
-                # print(label_pdsfiles)
                 sublist = [pdsf] + label_pdsfiles[pdsf.label_abspath]
             else:
                 sublist = [pdsf]

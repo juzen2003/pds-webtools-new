@@ -512,4 +512,50 @@ from .pytest_support import *
 def test_opus_products(input_path, expected):
     opus_products_test(input_path, expected)
 
+def test_opus_id_to_primary_logical_path():
+    TESTS = [
+        'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561202_1.IMG',
+        'volumes/COISS_1xxx/COISS_1001/data/1294561143_1295221348/W1294561143_1.IMG',
+        'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460960868_1.IMG',
+    ]
+
+    for logical_path in TESTS:
+        test_pdsf = pdsfile.PdsFile.from_logical_path(logical_path)
+        opus_id = test_pdsf.opus_id
+        opus_id_pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+        assert opus_id_pdsf.logical_path == logical_path
+
+        # Gather all the associated OPUS products
+        product_dict = test_pdsf.opus_products()
+        product_pdsfiles = []
+        for pdsf_lists in product_dict.values():
+            for pdsf_list in pdsf_lists:
+                product_pdsfiles += pdsf_list
+
+        # Filter out the metadata products and format files
+        product_pdsfiles = [pdsf for pdsf in product_pdsfiles
+                                 if pdsf.voltype_ != 'metadata/']
+        product_pdsfiles = [pdsf for pdsf in product_pdsfiles
+                                 if pdsf.extension.lower() != '.fmt']
+
+        # Gather the set of absolute paths
+        opus_id_abspaths = set()
+        for pdsf in product_pdsfiles:
+            opus_id_abspaths.add(pdsf.abspath)
+
+        for pdsf in product_pdsfiles:
+            # Every version is in the product set
+            for version_pdsf in pdsf.all_versions().values():
+                assert version_pdsf.abspath in opus_id_abspaths
+
+            # Every viewset is in the product set
+            for viewset in pdsf.all_viewsets.values():
+                for viewable in viewset.viewables:
+                    assert viewable.abspath in opus_id_abspaths
+
+            # Every associated product is in the product set except metadata
+            for category in ('volumes', 'calibrated', 'previews', 'diagrams'):
+                for abspath in pdsf.associated_abspaths(category):
+                    assert abspath in opus_id_abspaths
+
 ####################################################################################################################################

@@ -610,7 +610,7 @@ opus_products = translator.TranslatorByRegex([
              r'volumes/\1*/\3/BROWSE/SATURN/POI\4_\5.LBL',
              r'volumes/\1*/\3/BROWSE/S_RINGS/RIN\4_\5.PNG',
              r'volumes/\1*/\3/BROWSE/S_RINGS/RIN\4_\5.LBL',
-             r'volumes/\1*/\3/BROWSE/*/POI\4_\5_*',
+             r'volumes/\1*/\3/BROWSE/*/POI\4_\5*',
              r'diagrams/\1/\3/BROWSE/*/POI\4_\5_*',
              r'diagrams/\1/\3/BROWSE/S_RINGS/RIN\4_\5_full.jpg',
              r'diagrams/\1/\3/BROWSE/S_RINGS/RIN\4_\5_med.jpg',
@@ -622,8 +622,6 @@ opus_products = translator.TranslatorByRegex([
              r'diagrams/\1/\3/BROWSE/TARGETS/IMG\4_\5_thumb.jpg',
             ]),
 ])
-
-opus_support_products = translator.TranslatorByRegex([])
 
 ####################################################################################################################################
 # OPUS_ID
@@ -918,5 +916,68 @@ def test_associations_to_diagrams():
 )
 def test_opus_products(input_path, expected):
     opus_products_test(input_path, expected)
+
+def test_opus_id_to_primary_logical_path():
+    TESTS = [
+        'volumes/COCIRS_5xxx/COCIRS_5912/DATA/APODSPEC/SPEC0912010101_FP1.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5912/DATA/APODSPEC/SPEC0912111106_FP3.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5912/DATA/APODSPEC/SPEC0912111106_FP1.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5912/DATA/APODSPEC/SPEC0912010101_FP3.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5912/DATA/APODSPEC/SPEC0912111106_FP4.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5912/DATA/APODSPEC/SPEC0912010101_FP4.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5408/DATA/APODSPEC/SPEC0408010000_FP1.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512011549_FP1.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512011549_FP3.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512011549_FP4.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512240325_FP3.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512240325_FP1.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512240325_FP4.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512010000_FP1.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512010000_FP3.DAT',
+        'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512010000_FP4.DAT',
+    ]
+
+    for logical_path in TESTS:
+        test_pdsf = pdsfile.PdsFile.from_logical_path(logical_path)
+        opus_id = test_pdsf.opus_id
+        opus_id_pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+        assert opus_id_pdsf.logical_path == logical_path
+
+        # Gather all the associated OPUS products
+        product_dict = test_pdsf.opus_products()
+        product_pdsfiles = []
+        for pdsf_lists in product_dict.values():
+            for pdsf_list in pdsf_lists:
+                product_pdsfiles += pdsf_list
+
+        # Filter out the metadata products and format files
+        product_pdsfiles = [pdsf for pdsf in product_pdsfiles
+                                 if pdsf.voltype_ != 'metadata/']
+        product_pdsfiles = [pdsf for pdsf in product_pdsfiles
+                                 if pdsf.extension.lower() != '.fmt']
+
+        # Gather the set of absolute paths
+        opus_id_abspaths = set()
+        for pdsf in product_pdsfiles:
+            opus_id_abspaths.add(pdsf.abspath)
+
+        parts = pdsf.abspath.split('_FP')
+        fpx = '_FP' + parts[1][1]
+        for pdsf in product_pdsfiles:
+            # Every version is in the product set
+            for version_pdsf in pdsf.all_versions().values():
+                assert version_pdsf.abspath in opus_id_abspaths
+
+            # Every viewset is in the product set
+            if fpx in pdsf.abspath:
+                for viewset in pdsf.all_viewsets.values():
+                    for viewable in viewset.viewables:
+                        assert viewable.abspath in opus_id_abspaths
+
+            # Every associated product is in the product set except metadata
+            for category in ('volumes', 'calibrated', 'previews', 'diagrams'):
+                for abspath in pdsf.associated_abspaths(category):
+                    if fpx in abspath:
+                        assert abspath in opus_id_abspaths
 
 ####################################################################################################################################
