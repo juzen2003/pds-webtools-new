@@ -278,10 +278,10 @@ opus_products = translator.TranslatorByRegex([
     (r'.*volumes/GO_0xxx/(GO_002[23]/...)(|/IO)/REPAIRED/(C[0-9]{6})([0-9]{4})S\.(IMG|LBL)', 0,
             [r'volumes/GO_0xxx/\1\2/GARBLED/\3\4R.IMG',
              r'volumes/GO_0xxx/\1\2/GARBLED/\3\4R.LBL',
-             r'previews/GO_0xxx/\1/\2/GARBLED/\3\4R_full.jpg',
-             r'previews/GO_0xxx/\1/\2/GARBLED/\3\4R_med.jpg',
-             r'previews/GO_0xxx/\1/\2/GARBLED/\3\4R_small.jpg',
-             r'previews/GO_0xxx/\1/\2/GARBLED/\3\4R_thumb.jpg',
+             r'previews/GO_0xxx/\1\2/GARBLED/\3\4R_full.jpg',
+             r'previews/GO_0xxx/\1\2/GARBLED/\3\4R_med.jpg',
+             r'previews/GO_0xxx/\1\2/GARBLED/\3\4R_small.jpg',
+             r'previews/GO_0xxx/\1\2/GARBLED/\3\4R_thumb.jpg',
             ]),
 ])
 

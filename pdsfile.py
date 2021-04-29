@@ -4156,9 +4156,9 @@ class PdsFile(object):
             raise ValueError('Unrecognized OPUS ID: ' + opus_id)
 
         if LOGGER:
-            for abspath in matches:
+            for k, abspath in enumerate(matches):
                 LOGGER.warn('Ambiguous primary product for OPUS ID ' + opus_id,
-                            abspath)
+                            abspath + (' (selected)' if k == 0 else ''))
 
         return PdsFile.from_abspath(matches[0])
 
