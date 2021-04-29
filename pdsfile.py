@@ -4131,6 +4131,10 @@ class PdsFile(object):
         if not pdsfile_class:
             raise ValueError('Unrecognized OPUS ID: ' + opus_id)
 
+        # If implemented as a function rather than as a translator...
+        if callable(pdsfile_class.OPUS_ID_TO_PRIMARY_LOGICAL_PATH):
+            return pdsfile_class.OPUS_ID_TO_PRIMARY_LOGICAL_PATH(opus_id)
+
         paths = pdsfile_class.OPUS_ID_TO_PRIMARY_LOGICAL_PATH.all(opus_id)
         patterns = [abspath_for_logical_path(p) for p in paths]
         matches = []

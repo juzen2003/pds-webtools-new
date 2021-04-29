@@ -171,7 +171,7 @@ opus_id = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_id_to_primary_logical_path = translator.TranslatorByRegex([
-    (r'co-uvis-occ-(.*)', 0,  r'volumes/COUVIS_8xxx/COUVIS_8001/data/#UPPER#UVIS_HSP_\1_TAU01KM.TAB'),
+    (r'co-uvis-occ-(....)-(...)-(.*)-([ie])', 0,  r'volumes/COUVIS_8xxx/COUVIS_8001/data/#UPPER#UVIS_HSP_\1_\2_\3_\4_TAU01KM.TAB'),
 ])
 
 ####################################################################################################################################
@@ -313,5 +313,50 @@ from .pytest_support import *
 )
 def test_opus_products(input_path, expected):
     opus_products_test(input_path, expected)
+
+def test_opus_id_to_primary_logical_path():
+    TESTS = [
+        'volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_139_126TAU_E_TAU01KM.TAB',
+    ]
+
+    for logical_path in TESTS:
+        test_pdsf = pdsfile.PdsFile.from_logical_path(logical_path)
+        opus_id = test_pdsf.opus_id
+        opus_id_pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+        assert opus_id_pdsf.logical_path == logical_path
+
+        # Gather all the associated OPUS products
+        product_dict = test_pdsf.opus_products()
+        product_pdsfiles = []
+        for pdsf_lists in product_dict.values():
+            for pdsf_list in pdsf_lists:
+                product_pdsfiles += pdsf_list
+
+        # Filter out the metadata products and format files
+        product_pdsfiles = [pdsf for pdsf in product_pdsfiles
+                                 if pdsf.voltype_ != 'metadata/']
+        product_pdsfiles = [pdsf for pdsf in product_pdsfiles
+                                 if pdsf.extension.lower() != '.fmt']
+
+        # Gather the set of absolute paths
+        opus_id_abspaths = set()
+        for pdsf in product_pdsfiles:
+            opus_id_abspaths.add(pdsf.abspath)
+
+        for pdsf in product_pdsfiles:
+            # Every version is in the product set
+            for version_pdsf in pdsf.all_versions().values():
+                assert version_pdsf.abspath in opus_id_abspaths
+
+            # Every viewset is in the product set
+            for viewset in pdsf.all_viewsets.values():
+                for viewable in viewset.viewables:
+                    assert viewable.abspath in opus_id_abspaths
+
+            # Every associated product is in the product set except metadata
+            for category in ('volumes', 'previews'):
+                for abspath in pdsf.associated_abspaths(category):
+                    if '.' not in os.path.basename(abspath): continue   # skip dirs
+                    assert abspath in opus_id_abspaths
 
 ####################################################################################################################################

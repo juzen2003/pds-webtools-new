@@ -451,31 +451,36 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
             if 'browse' in header[2]:
                 continue
 
-            priority = []
+            # Sort items in each sublist by priority
+            priority = []       # (negative version rank, negative priority from hex code,
+                                #  hex code, sublist)
             for sublist in sublists:
                 code = (sublist[0].basename.replace('X','x')
                         .partition('_0x')[2][:3]).upper()
                 rank = sublist[0].version_rank
-                priority.append((FILE_CODE_PRIORITY[code],
-                                code, -rank, sublist))
+                priority.append((-rank, FILE_CODE_PRIORITY[code], code, sublist))
 
             priority.sort()
-            code0 = priority[0][1]
-            list0 = [priority[0][3]]
 
-            for (prio, code, _, sublist) in priority[1:]:
+            # Select the best product
+            code0 = priority[0][2]
+            list0 = [priority[0][3]]
+            for (_, prio, code, sublist) in priority[1:]:
                 if code == code0:
                     list0.append(sublist)
                     continue
 
                 new_header = (header[0],
-                              header[1]+50,
-                              header[2]+'_alternate',
-                              header[3]+' Alternate Downlink',
+                              header[1] + 50,
+                              header[2] + '_alternate',
+                              header[3] + ' Alternate Downlink',
                               True)
+
                 if new_header not in pdsfiles:
                     pdsfiles[new_header] = []
+
                 pdsfiles[new_header].append(sublist)
+
             pdsfiles[header] = list0
 
         return pdsfiles
@@ -646,5 +651,5 @@ def test_opus_products_count():
 )
 def test_opus_products(input_path, expected):
     opus_products_test(input_path, expected)
-    
+
 ####################################################################################################################################

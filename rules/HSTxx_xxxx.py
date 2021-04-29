@@ -341,4 +341,57 @@ def test_associated_abspaths(input_path, category, selection, flag, expected):
     result_paths += pdsfile.PdsFile.logicals_for_abspaths(res)
     for path in result_paths:
         assert path in expected
+
+
+def test_opus_id_to_primary_logical_path():
+    TESTS = [
+        'volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_11/IB4V11MNQ.LBL',
+        'volumes/HSTIx_xxxx/HSTI1_1556/DATA/VISIT_01/IB4W01I5Q.LBL',
+        'volumes/HSTJx_xxxx/HSTJ0_9296/DATA/VISIT_B1/J8M3B1021.LBL',
+        'volumes/HSTNx_xxxx/HSTN0_7176/DATA/VISIT_01/N4BI01L4Q.LBL',
+        'volumes/HSTOx_xxxx/HSTO0_7308/DATA/VISIT_05/O43B05C1Q.LBL',
+        'volumes/HSTUx_xxxx/HSTU0_5167/DATA/VISIT_04/U2NO0401T.LBL',
+        'volumes/HSTUx_xxxx/HSTU0_5167/DATA/VISIT_04/U2NO0404T.LBL',
+    ]
+
+    for logical_path in TESTS:
+        test_pdsf = pdsfile.PdsFile.from_logical_path(logical_path)
+        opus_id = test_pdsf.opus_id
+        opus_id_pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+        assert opus_id_pdsf.logical_path == logical_path
+
+        # Gather all the associated OPUS products
+        product_dict = test_pdsf.opus_products()
+        product_pdsfiles = []
+        for pdsf_lists in product_dict.values():
+            for pdsf_list in pdsf_lists:
+                product_pdsfiles += pdsf_list
+
+        # Filter out the metadata products and format files
+        product_pdsfiles = [pdsf for pdsf in product_pdsfiles
+                                 if pdsf.voltype_ != 'metadata/']
+        product_pdsfiles = [pdsf for pdsf in product_pdsfiles
+                                 if pdsf.extension.lower() != '.fmt']
+
+        # Gather the set of absolute paths
+        opus_id_abspaths = set()
+        for pdsf in product_pdsfiles:
+            opus_id_abspaths.add(pdsf.abspath)
+
+        for pdsf in product_pdsfiles:
+            # Every viewset is in the product set
+            for viewset in pdsf.all_viewsets.values():
+                for viewable in viewset.viewables:
+                    assert viewable.abspath in opus_id_abspaths
+
+            # Every viewset is in the product set
+            for viewset in pdsf.all_viewsets.values():
+                for viewable in viewset.viewables:
+                    assert viewable.abspath in opus_id_abspaths
+
+            # Every associated product is in the product set except metadata
+            for category in ('volumes', 'previews'):
+                for abspath in pdsf.associated_abspaths(category):
+                    assert abspath in opus_id_abspaths
+
 ####################################################################################################################################
