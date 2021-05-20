@@ -778,6 +778,22 @@ class TestPdsFileBlackBox:
                 '/holdings/previews/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_thumb.jpg',
              ]
             ),
+            ('volumes/NHxxMV_xxxx/NHJUMV_1001/data/20070131_003252/mc0_0032528036_0x536_eng_1.fit',
+             [
+                '/holdings/previews/NHxxMV_xxxx/NHJUMV_1001/data/20070131_003252/mc0_0032528036_0x536_eng_1_small.jpg',
+                '/holdings/previews/NHxxMV_xxxx/NHJUMV_1001/data/20070131_003252/mc0_0032528036_0x536_eng_1_med.jpg',
+                '/holdings/previews/NHxxMV_xxxx/NHJUMV_1001/data/20070131_003252/mc0_0032528036_0x536_eng_1_full.jpg',
+                '/holdings/previews/NHxxMV_xxxx/NHJUMV_1001/data/20070131_003252/mc0_0032528036_0x536_eng_1_thumb.jpg',
+             ]
+            ),
+            ('volumes/NHxxLO_xxxx/NHJULO_1001/data/20070108_003059/lor_0030598439_0x630_eng.fit',
+             [
+                '/holdings/previews/NHxxLO_xxxx/NHJULO_1001/data/20070108_003059/lor_0030598439_0x630_eng_small.jpg',
+                '/holdings/previews/NHxxLO_xxxx/NHJULO_1001/data/20070108_003059/lor_0030598439_0x630_eng_med.jpg',
+                '/holdings/previews/NHxxLO_xxxx/NHJULO_1001/data/20070108_003059/lor_0030598439_0x630_eng_full.jpg',
+                '/holdings/previews/NHxxLO_xxxx/NHJULO_1001/data/20070108_003059/lor_0030598439_0x630_eng_thumb.jpg',
+             ]
+            ),
         ]
     )
     def test_viewset_lookup(self, input_path, expected):
