@@ -122,7 +122,7 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
              IE_DICT    + r'["\3"]' + ' profile for ring ' +
              URING_DICT + r'["\2"]'                                                         , 'SERIES')),
 
-    (r'.*/PS2([DGR])\w+\.(TAB|DAT)', 0,
+    (r'.*/PS2([CDGR])\w+\.(TAB|DAT)', 0,
             (KIND_UC +  r'["\1"] for the Saturn ring occultation, low-rate extension'       , 'SERIES')),
     (r'.*/P(S|U)[3-9](D|R)\w+\.(TAB|DAT)', 0,
             ('Un-occulted star ' +
