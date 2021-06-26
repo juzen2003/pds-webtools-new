@@ -422,6 +422,16 @@ class TranslatorByRegex(Translator):
 
             return ''.join(newparts)
 
+        def _evaluate_dict(string):
+            # Evaluate an in-line dictionary expression
+
+            dicts = re.findall(r'{.*?}\[.*?\]', string)
+            for d in dicts:
+                value = eval(d)
+                string = string.replace(d, value)
+
+            return string
+
         matchobj = regex.match(string)
         if matchobj is None: return []
 
@@ -435,6 +445,7 @@ class TranslatorByRegex(Translator):
             if isinstance(replacement, str):
                 result = matchobj.expand(replacement)
                 result = _fix_case(result)
+                result = _evaluate_dict(result)
                 results.append(result)
 
             # Deal with a tuple
@@ -442,7 +453,10 @@ class TranslatorByRegex(Translator):
                 items = []
                 for item in replacement:
                     if isinstance(item, str):
-                        items.append(matchobj.expand(item))
+                        result = matchobj.expand(item)
+                        result = _fix_case(result)
+                        result = _evaluate_dict(result)
+                        items.append(matchobj.expand(result))
                     else:
                         items.append(item)
 

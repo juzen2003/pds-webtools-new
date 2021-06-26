@@ -182,7 +182,7 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
     (r'.*/index/(img|)index\.tab',      re.I, ('Index of data products on this volume', 'INDEX')),
 
     # SPICE kernels
-    (r'.*\.(bsp|spk)',                  re.I, ('SPICE trajectory kernel',       'GEOM'    )),
+    (r'.*\.(bsp|xsp|spk)',              re.I, ('SPICE trajectory kernel',       'GEOM'    )),
     (r'.*\.(ck|bc)',                    re.I, ('SPICE pointing kernel',         'GEOM'    )),
     (r'.*\.(pck|tpc)',                  re.I, ('SPICE constants kernel',        'GEOM'    )),
     (r'.*\.tf',                         re.I, ('SPICE frames kernel',           'GEOM'    )),

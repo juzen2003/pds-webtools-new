@@ -279,6 +279,7 @@ class COVIMS_0xxx(pdsfile.PdsFile):
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
     OPUS_PRODUCTS = opus_products
     OPUS_ID = opus_id
+    OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
     VIEWABLES = {'default': default_viewables}
 
