@@ -32,6 +32,9 @@ class PdsViewable(object):
         self.width_over_height = float(self.width) / float(self.height)
         self.height_over_width = float(self.height) / float(self.width)
 
+    def __repr__(self):
+        return 'PdsViewable("' + self.abspath + '")'
+
     def assign_name(self, name):
         """Assign a name to this PdsViewable"""
 
@@ -123,6 +126,21 @@ class PdsViewSet(object):
 
     def __bool__(self):
         return len(self.viewables) > 0
+
+    def __repr__(self):
+        if not self.viewables:
+            return 'PdsViewSet()'
+
+        if self.widths:
+            selected = self.by_width[self.widths[-1]]
+        else:
+            selected = list(self.viewables)[0]
+
+        count = len(self.viewables)
+        if count == 1:
+            return f'PdsViewSet("{selected.abspath}")'
+        else:
+            return f'PdsViewSet("{selected.abspath}"...[{count}])'
 
     def append(self, viewable, include_named_in_sizes=False):
         """Append the given PdsViewable to this PdsViewSet.
@@ -231,14 +249,19 @@ class PdsViewSet(object):
     def for_width(self, size):
         """The PdsViewable for the specified width."""
 
-        if not self.widths:
+        if not self.viewables:
             raise IOError('No viewables have been defined')
 
-        for key in self.widths:
-            if key >= size:
-                break
+        if self.widths:
+            for key in self.widths:
+                if key >= size:
+                    pdsview = self.by_width[key]
+                    break
+        elif 'full' in self.by_name:
+            pdsview = self.by_name['full']
+        else:
+            pdsview = list(self.viewables)[0]
 
-        pdsview = self.by_width[key]
         result = pdsview.copy()
         result.height = max(1, int(pdsview.height_over_width * size + 0.5))
         result.width = size
@@ -247,14 +270,19 @@ class PdsViewSet(object):
     def for_height(self, size):
         """The PdsViewable for the specified height."""
 
-        if not self.heights:
+        if not self.viewables:
             raise IOError('No viewables have been defined')
 
-        for key in self.heights:
-            if key >= size:
-                break
+        if self.heights:
+            for key in self.heights:
+                if key >= size:
+                    pdsview = self.by_height[key]
+                    break
+        elif 'full' in self.by_name:
+            pdsview = self.by_name['full']
+        else:
+            pdsview = list(self.viewables)[0]
 
-        pdsview = self.by_height[key]
         result = pdsview.copy()
         result.width = max(1, int(pdsview.width_over_height * size + 0.5))
         result.height = size

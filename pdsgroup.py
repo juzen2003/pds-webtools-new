@@ -38,9 +38,9 @@ class PdsGroup(object):
             path = self.rows[0].logical_path
 
             if len(self.rows) >= 2:
-                return f'PdsGroup({path},...[{len(self.rows)}])'
+                return f'PdsGroup("{path}",...[{len(self.rows)}])'
             else:
-                return f'PdsGroup({path})'
+                return f'PdsGroup("{path}")'
         else:
             return f'PdsGroup()'
 
@@ -95,12 +95,12 @@ class PdsGroup(object):
     @property
     def iconset_closed(self):
         _ = self._iconset
-        return self._iconset_filled[0]
+        return self._iconset_filled[False]
 
     @property
     def iconset_open(self):
         _ = self._iconset
-        return self._iconset_filled[1]
+        return self._iconset_filled[True]
 
     @property
     def viewset(self):
@@ -113,7 +113,7 @@ class PdsGroup(object):
                 self._viewset_filled = self.local_viewset
 
             else:
-                self._viewset_filled = []
+                self._viewset_filled = False
                 for pdsf in self.rows:
                     if pdsf.viewset:
                         self._viewset_filled = pdsf.viewset

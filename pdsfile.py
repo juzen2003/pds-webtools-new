@@ -2363,8 +2363,7 @@ class PdsFile(object):
 
         # Don't look for PdsViewSets at volume root; saves time
         if (self.exists and self.volname_ and
-            not self.archives_ and not self.checksums_ and
-            self.interior and ('/' in self.interior)):
+            not self.archives_ and not self.checksums_ and self.interior):
                 self._viewset_filled = self.viewset_lookup('default')
 
         if self._viewset_filled is None:
@@ -2395,7 +2394,7 @@ class PdsFile(object):
         """A dictionary of every available PdsViewSet for this object.
         """
 
-        if not self._all_viewsets_filled:
+        if self._all_viewsets_filled is None:
 
             viewset_dict = {}
 
@@ -2410,9 +2409,11 @@ class PdsFile(object):
                         if viewset:
                             viewset_dict[key] = viewset
 
-                # Add the unique viewsets of the children
-                for c in self.childnames[:20]:      # first 20 should be enough
+                # Add the unique viewset names of the non-directory children
+                for c in self.childnames[:20]:  # first 20 should be enough
                     child = self.child(c)
+                    if child.isdir:
+                        continue
                     for key in child.VIEWABLES:
                         if key not in viewset_dict and key != 'default':
                             viewset = child.viewset_lookup(key)
@@ -2793,8 +2794,16 @@ class PdsFile(object):
 
         if not self.exists: return None
 
+        if (self._all_viewsets_filled is not None and
+            name in self._all_viewsets_filled):
+                return self._all_viewsets_filled[name]
+
         # Check for associated viewables
-        patterns = self.VIEWABLES[name].all(self.logical_path)
+        try:
+            patterns = self.VIEWABLES[name].all(self.logical_path)
+        except KeyError:
+            patterns = []
+
         if patterns:
             if not isinstance(patterns, (list,tuple)):
                 patterns = [patterns]
@@ -2813,30 +2822,13 @@ class PdsFile(object):
                     anchor = match.group(1)
                     abspaths = [p for p in abspaths if p.startswith(anchor)]
 
-            # Treat a viewable named "full" as special
-            full_abspath = ''
-            for abspath in abspaths:
-                if '_full.' in abspath:
-                    full_abspath = abspath
-                    break
-
-            if full_abspath:
-                abspaths.remove(full_abspath)
-
-            # Create the viewset organized by size
+            # Create and return the viewset
             viewables = PdsFile.pdsfiles_for_abspaths(abspaths, must_exist=True)
             viewset = pdsviewable.PdsViewSet.from_pdsfiles(viewables)
-
-            # Append the full viewable by name
-            if full_abspath:
-                pdsf = PdsFile.from_abspath(full_abspath)
-                full_viewable = pdsviewable.PdsViewable.from_pdsfile(pdsf,
-                                                                    name='full')
-                viewset.append(full_viewable)
-
             return viewset
 
-        # If this is a directory, return the PdsViewSet of the first child
+        # If this is a directory, return the PdsViewSet of the first child with
+        # having one with this requested name
         if self.isdir:
             basenames = [b for b in self.childnames
                          if os.path.splitext(b)[1][1:].lower() in
@@ -2854,9 +2846,10 @@ class PdsFile(object):
 
             return None
 
-        # If this is viewable, return the PdsViewSet of its viewable siblings
-        # with the same anchor. This handles files in the previews tree.
-        if self.is_viewable:
+        # The default PdsViewSet of a viewable file is the one made from this
+        # file and its viewable siblings with the same anchor. This handles
+        # files in the previews tree.
+        if name == 'default' and self.is_viewable:
             parent = self.parent()
             if parent:
                 sibnames = parent.viewable_childnames_by_anchor(self.anchor)
