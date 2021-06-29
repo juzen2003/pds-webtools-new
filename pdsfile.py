@@ -227,7 +227,8 @@ def require_shelves(status=True):
 #       Returns the PdsFile object associated with the given path, if it has
 #       been cached.
 
-DEFAULT_FILE_CACHE_LIFETIME = 12 * 60 * 60      # 12 hours
+DEFAULT_FILE_CACHE_LIFETIME =  12 * 60 * 60      # 12 hours
+LONG_FILE_CACHE_LIFETIME = 7 * 24 * 60 * 60      # 7 days
 
 def cache_lifetime(arg):
     """Used by caches. Given any object, it returns the default lifetime in
@@ -241,14 +242,14 @@ def cache_lifetime(arg):
     elif not isinstance(arg, PdsFile):
         return 0
 
-    # Cache PdsFile volsets and volumes forever
+    # Cache PdsFile volsets/volumes for a long time, but not necessarily forever
     elif not arg.interior:
-        return 0
+        return LONG_FILE_CACHE_LIFETIME
 
     elif arg.isdir and arg.interior.lower().endswith('data'):
-        return 0                            # .../volname/*data forever
+        return LONG_FILE_CACHE_LIFETIME     # .../volname/*data for a long time
     elif arg.isdir:
-        return 3 * 24 * 60 * 60             # Other directories for three days
+        return 2 * 24 * 60 * 60             # Other directories for two days
     else:
         return DEFAULT_FILE_CACHE_LIFETIME
 

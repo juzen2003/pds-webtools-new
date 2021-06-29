@@ -995,10 +995,29 @@ class MemcachedCache(PdsCache):
                 self.permanent_values[key] = pair[0]
                 del local_dict[key]
 
-        # At this point local_dict contains all the permanent values currently
+        # At this point, local_dict contains all the permanent values currently
         # missing from the cache. Also, self.permanent_values is as up to date
         # as it can be.
 
         mydict = {k:(v,0) for (k,v) in local_dict.items()}
-        self.mc.set_multi(mydict, time=0)
+        try:
+            self.mc.set_multi(mydict, time=0)
+
+        except pylibmc.TooBig:
+
+        # This happens if a "TooBig" item is supposed to be in the permanent
+        # cache. It means that we have to remove it from the permanent_values
+        # dictionary so this doesn't happen again.
+
+            for (k,v) in mydict.items():
+                try:
+                    self.mc.set(k, v, time=0)
+                except pylibmc.TooBig:
+                    self.logger.warn(f'Permanent object is TooBig in process ' +
+                                     f'{self.pid}; ' +
+                                     'removed from permanent list and saved ' +
+                                     'to internal cache', k)
+                    self.toobig_dict[k] = v[0]
+                    del self.permanent_values[k]
+
 

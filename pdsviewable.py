@@ -253,7 +253,8 @@ class PdsViewSet(object):
             raise IOError('No viewables have been defined')
 
         if self.widths:
-            for key in self.widths:
+            pdsview = self.by_width[self.widths[-1]]
+            for key in self.widths[:-1]:
                 if key >= size:
                     pdsview = self.by_width[key]
                     break
@@ -274,7 +275,8 @@ class PdsViewSet(object):
             raise IOError('No viewables have been defined')
 
         if self.heights:
-            for key in self.heights:
+            pdsview = self.by_height[self.heights[-1]]
+            for key in self.heights[:-1]:
                 if key >= size:
                     pdsview = self.by_height[key]
                     break
