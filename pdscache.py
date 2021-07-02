@@ -87,10 +87,6 @@ class DictionaryCache(PdsCache):
         then obtain the block."""
         return
 
-    def block(self):
-        """Start a block as quickly as possible, no waiting."""
-        return
-
     def unblock(self, flush=True):
         """Un-block processes from touching the cache. Not used by
         DictionaryCache."""
@@ -391,33 +387,6 @@ class MemcachedCache(PdsCache):
         # finds a cached value that differs from its internal value, it knows
         # to clear its own contents.
 
-        # Process/race condition management
-        # Of all the objects that are initialized while the cache is nearly
-        # empty, only one will be identified as preload_eligible. Later, every
-        # object will be preload_eligible.
-
-        self.init_time = time.time()
-
-        self.startup_time = self.mc.get('$STARTUP_TIME')
-        while self.startup_time is None:
-            self.mc.set('$STARTUP_TIME', self.init_time, time=0)
-            time.sleep(0.5 * (1. + random.random()))
-            self.startup_time = self.mc.get('$STARTUP_TIME')
-
-    @property
-    def preload_eligible(self):
-
-        if self.len_mc() >= 20:
-            return True
-
-        startup_time = self.mc.get('$STARTUP_TIME')
-        if startup_time is None:        # value was deleted from cache
-            return True
-        if time.time() > self.startup_time + 20:
-            return True
-
-        return (self.init_time == self.startup_time)
-
     def _wait_for_ok(self, funcname='', try_to_block=False):
         """Pause until another process stops blocking, or until timeout."""
 
@@ -489,14 +458,6 @@ class MemcachedCache(PdsCache):
 
             self.logger.warn(f'Process {self.pid} was outraced by {test_pid} ' +
                              f'while waiting to block')
-
-    def block(self):
-        """Start a block as quickly as possible, no waiting."""
-
-        self.mc.set('$OK_PID', self.pid, 0)
-        self.logger.info(f'Process {self.pid} is starting a quick block of '
-                         f'MemcachedCache [{self.port}]')
-        return
 
     def unblock(self, flush=True):
         """Remove block preventing processes from touching the cache."""

@@ -347,13 +347,11 @@ def preload(holdings_list, port=0, clear=False, force_reload=False):
     #### Get the current list of preloaded holdings directories and decide how
     #### to proceed
 
-    blocking = False
     if clear:
         CACHE.clear(block=True) # For a MemcachedCache, this will pause for any
                                 # other thread's block, then clear, and retain
                                 # the block until the preload is finished.
         LOCAL_PRELOADED = []
-        blocking = True
         if LOGGER:
             LOGGER.info('Cache cleared')
 
@@ -361,48 +359,36 @@ def preload(holdings_list, port=0, clear=False, force_reload=False):
         LOCAL_PRELOADED = []
         if LOGGER:
             LOGGER.info('Forcing a complete new preload')
+        CACHE.wait_and_block()
 
     else:
-        LOCAL_PRELOADED = CACHE.get_now('$PRELOADED')
-        if LOCAL_PRELOADED is None:     # startup!
-            if CACHE.preload_eligible:  # Among the first processes, only one is
-                                        # preload-eligible. This prevents race
-                                        # conditions.
-                LOCAL_PRELOADED = []
-                CACHE.block()
-                blocking = True
-            else:
-                if LOGGER:
-                    LOGGER.info(f'Process {CACHE.pid} sleeping 20 seconds')
-                time.sleep(20.)         # Give the preloading thread time to
-                                        # get way ahead.
-                CACHE.wait_for_unblock()
-                LOCAL_PRELOADED = CACHE.get('$PRELOADED')
+        while True:
+            LOCAL_PRELOADED = CACHE.get_now('$PRELOADED') or []
 
-        # Report status
-        something_is_missing = False
-        for holdings in holdings_list:
-            if holdings in LOCAL_PRELOADED:
-                if LOGGER:
-                    LOGGER.info('Holdings are already cached', holdings)
-            else:
-                something_is_missing = True
+            # Report status
+            something_is_missing = False
+            for holdings in holdings_list:
+                if holdings in LOCAL_PRELOADED:
+                    if LOGGER:
+                        LOGGER.info('Holdings are already cached', holdings)
+                else:
+                    something_is_missing = True
 
-        if not something_is_missing:
-            if blocking:
-                CACHE.unblock()
+            if not something_is_missing:
+                if MEMCACHE_PORT:
+                    get_permanent_values(holdings_list, MEMCACHE_PORT)
+                    # Note that if any permanently cached values are missing,
+                    # this call will recursively clear the cache and preload
+                    # again. This reduces the chance of a corrupted cache.
 
-            if MEMCACHE_PORT:
-                get_permanent_values(holdings_list, MEMCACHE_PORT)
-                # Note that if any permanently cached values are missing, this
-                # call will recursively clear the cache and preload again. This
-                # reduces the chance of a corrupted cache.
+                return
 
-        return
+            waited = CACHE.wait_and_block()
+            if not waited:      # A wait suggests the answer might have changed,
+                                # so try again.
+                break
 
-    # Block the cache before proceeding
-    if not blocking:
-        CACHE.block()
+    # At this point, the cache is blocked.
 
     # Pause the cache before proceeding--saves I/O
     CACHE.pause()       # Paused means no local changes will be flushed to the
