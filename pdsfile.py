@@ -388,6 +388,8 @@ def preload(holdings_list, port=0, clear=False, force_reload=False):
                                 # so try again.
                 break
 
+            CACHE.unblock()
+
     # At this point, the cache is blocked.
 
     # Pause the cache before proceeding--saves I/O
