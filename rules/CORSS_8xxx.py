@@ -367,13 +367,13 @@ split_rules = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*_TAU_01KM\.(TAB|LBL)',  0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km res)', True)),
-    (r'volumes/.*_TAU_1400M\.(TAB|LBL)', 0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km res)', True)),
-    (r'volumes/.*_TAU_1600M\.(TAB|LBL)', 0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km res)', True)),
-    (r'volumes/.*_TAU_2400M\.(TAB|LBL)', 0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km res)', True)),
-    (r'volumes/.*_TAU_3000M\.(TAB|LBL)', 0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km res)', True)),
-    (r'volumes/.*_TAU_4000M\.(TAB|LBL)', 0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km res)', True)),
-    (r'volumes/.*_TAU_10KM\.(TAB|LBL)',  0, ('Cassini RSS', 20, 'corss_occ_10km_res', 'Occultation Profile (10 km res)', True)),
+    (r'volumes/.*_TAU_01KM\.(TAB|LBL)',  0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km)', True)),
+    (r'volumes/.*_TAU_1400M\.(TAB|LBL)', 0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km)', True)),
+    (r'volumes/.*_TAU_1600M\.(TAB|LBL)', 0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km)', True)),
+    (r'volumes/.*_TAU_2400M\.(TAB|LBL)', 0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km)', True)),
+    (r'volumes/.*_TAU_3000M\.(TAB|LBL)', 0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km)', True)),
+    (r'volumes/.*_TAU_4000M\.(TAB|LBL)', 0, ('Cassini RSS', 10, 'corss_occ_best_res', 'Occultation Profile (~1 km)', True)),
+    (r'volumes/.*_TAU_10KM\.(TAB|LBL)',  0, ('Cassini RSS', 20, 'corss_occ_10km_res', 'Occultation Profile (10 km)', True)),
 
     (r'volumes/.*_DLP_500M\.(TAB|LBL)',  0, ('Cassini RSS', 30, 'corss_occ_dlp', 'Diffraction-Ltd Occultation Profile', True)),
     (r'volumes/.*_CAL\.(TAB|LBL)',       0, ('Cassini RSS', 40, 'corss_occ_cal', 'Occultation Calibration Parameters',  True)),
@@ -652,7 +652,7 @@ def test_associations():
             {('Cassini RSS',
               10,
               'corss_occ_best_res',
-              'Occultation Profile (~1 km res)',
+              'Occultation Profile (~1 km)',
               True): ['volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_01KM.TAB',
                       'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_01KM.LBL'],
              ('Cassini RSS',
@@ -690,7 +690,7 @@ def test_associations():
              ('Cassini RSS',
               20,
               'corss_occ_10km_res',
-              'Occultation Profile (10 km res)',
+              'Occultation Profile (10 km)',
               True): ['volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_10KM.TAB',
                       'volumes/CORSS_8xxx/CORSS_8001/data/Rev009/Rev009E/Rev009E_RSS_2005_159_K55_E/RSS_2005_159_K55_E_TAU_10KM.LBL'],
              ('browse',

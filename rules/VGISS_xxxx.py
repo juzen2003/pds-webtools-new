@@ -604,7 +604,7 @@ class VGISS_xxxx(pdsfile.PdsFile):
     FILENAME_KEYLEN = 8     # trim off suffixes
 
 # Global attribute shared by all subclasses
-pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'vg-iss-.*', 0, VGISS_xxxx)]) + \
+pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'vg-iss-.*-(?!prof).*', 0, VGISS_xxxx)]) + \
                                       pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS
 
 ####################################################################################################################################
