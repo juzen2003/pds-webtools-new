@@ -166,7 +166,7 @@ REPAIRS = translator.TranslatorByRegex([
       translator.TranslatorByDict(
         {'SPECDS.CAT'           : 'SSPECDS.CAT',
          'CUBEDS.CAT'           : 'SCUBEDS.CAT'})),
-    ('.*/COUVIS_8.*/voldesc\.cat', 0,
+    ('.*/COUVIS_8xxx_v2.*/voldesc\.cat', 0,
       translator.TranslatorByDict(
         {'UVISINST.CAT'         : 'catalog/inst.cat',
          'PROJREF.CAT'          : ''})),
@@ -175,8 +175,7 @@ REPAIRS = translator.TranslatorByRegex([
         {'INST.CAT'             : 'UVISINST.CAT'})),
     ('.*/COUVIS_8xxx(|_v2\.0)/.*/voldesc\.cat', re.I,
       translator.TranslatorByDict(
-        {'UVISINST.CAT'         : 'catalog/inst.cat',
-         'PROJREF.CAT'          : ''})),
+        {'PROJREF.CAT'          : ''})),
     ('.*/COVIMS_0001/data/.*\.lbl', 0,
       translator.TranslatorByDict(
         {'band_bin_center.fmt'   : '../../../COVIMS_0002/label/band_bin_center.fmt',
@@ -345,7 +344,11 @@ REPAIRS = translator.TranslatorByRegex([
     ('.*/VG_2802/EDITDATA/US3D01P\.LBL', 0,
       translator.TranslatorByDict(
         {'US3D01I.DAT'          : 'US3D01P.DAT'})),
-    ('.*/VG_2803/.*/RS.R1BFV\.LBL', 0,
+    ('.*/VG_2802/SORCDATA/DATAINFO\.TXT', 0,
+      translator.TranslatorByDict(
+        {'BETAPER.VOY'          : 'BETPER.VOY',
+         'BETAPER.LBL'          : 'BETPER.LBL'})),
+    ('.*/VG_2803.*/RS.R1BFV\.LBL', 0,
       translator.TranslatorByDict(
         {'RS_R1BFT.FMT'         : 'RS_R1BFV.FMT'})),
     ('.*/VGISS.*/BROWSE/C34801XX/C3480139_.*\.LBL', 0,
@@ -398,7 +401,6 @@ KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
     (r'.*/VG.*/VG..NESR\.DAT',                              0,    'missing'),
     (r'.*/VG_0xxx.*/CUMINDEX.TAB',                          0,    'missing'),
     (r'.*/VG_0xxx.*/SOFTWARE/.*',                           0,    'missing'),
-    (r'.*/VG_28xx/VG_2802/EDITDATA/EASYDATA',               0,    'missing'),
 
 # These files have internal PDS3 labels, so these are not errors
     (r'.*/COISS_3xxx.*\.IMG',                               0,    'unneeded'),
