@@ -25,6 +25,13 @@ MAX_DEPTH = 8           # To avoid runaway opens that lack closes
 HIDDEN_STATUS = 1       # Used for messages that are never displayed but may be
                         # included in the summary
 
+FATAL   = logging.FATAL
+ERROR   = logging.ERROR
+WARN    = logging.WARN
+WARNING = logging.WARNING
+INFO    = logging.INFO
+DEBUG   = logging.DEBUG
+
 DEFAULT_LEVEL_BY_NAME = {
     # Standard status values
     'fatal'  : logging.FATAL,   # 50
@@ -89,7 +96,8 @@ stdout_handler.setLevel(HIDDEN_STATUS + 1)
 
 def file_handler(logpath, level=HIDDEN_STATUS+1, rotation='none', suffix=''):
 
-    assert rotation in ('none', 'number', 'midnight', 'ymd', 'ymdhms'), \
+    assert rotation in ('none', 'number', 'midnight',
+                        'ymd', 'ymdhms', 'replace'), \
         'Unrecognized rotation for log file %s: "%s"' % (logpath, rotation)
 
     # Create the parent directory if needed
@@ -101,6 +109,7 @@ def file_handler(logpath, level=HIDDEN_STATUS+1, rotation='none', suffix=''):
     (rootname, ext) = os.path.splitext(basename)
     if ext == '': ext = '.log'
     prefix = os.path.join(parent, rootname)
+    logpath = prefix + ext
 
     # Rename the previous log if rotation is 'number'
     if rotation == 'number':
@@ -134,6 +143,10 @@ def file_handler(logpath, level=HIDDEN_STATUS+1, rotation='none', suffix=''):
             except IOError:
                 pass
 
+    # Delete the previous log if rotation is 'replace'
+    if rotation == 'replace' and os.path.exists(logpath):
+        os.remove(logpath)
+
     # Construct the log file name
     if rotation == 'ymd':
         timetag = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -162,6 +175,15 @@ def file_handler(logpath, level=HIDDEN_STATUS+1, rotation='none', suffix=''):
     handler.setLevel(level)
 
     return handler
+
+def info_handler(path, name='INFO.log', rotation='none'):
+    path = os.path.abspath(path)
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    path = os.path.join(path, name)
+
+    return file_handler(path, level=logging.INFO, rotation=rotation)
 
 def warning_handler(path, name='WARNINGS.log', rotation='none'):
     path = os.path.abspath(path)
@@ -202,14 +224,18 @@ class PdsLogger(object):
     completely suppressed_by_name.
 
     Six "levels" of logging hierarchy (0-5) are supported. Each call to open()
-    increases the hierarchy level by one.
+    increases the hierarchy level by one. Each level in the logging hierarchy
+    can be assigned its own handlers, which record logged records only for that
+    level and those from deeper levels in the hierarchy.
 
     Headers and trailers are created at the beginning and end of each level.
     Trailers contain a summary of how many records were printed for each logging
     status.
 
-    Each log record automatically includes a time tags, log name, status, and
-    a message.
+    Each log record automatically includes a time tag, log name, status, and a
+    text message. The text message can be in two parts, typically a brief
+    description followed by a file path. Optionally, the process ID can also be
+    included.
     """
 
     def __init__(self, logname, status={}, limits={}, roots=[], pid=False,
@@ -328,7 +354,7 @@ class PdsLogger(object):
             self.default_limits_by_name[name] = limit
 
     def add_handler(self, handlers):
-        """Add one or more handlers to this PdsLogger."""
+        """Add one or more global handlers to this PdsLogger."""
 
         if type(handlers) not in (list, tuple):
             handlers = [handlers]
@@ -340,7 +366,7 @@ class PdsLogger(object):
                 self.handlers.append(handler)
 
     def remove_handler(self, handlers):
-        """Remove one or more handlers from this PdsLogger."""
+        """Remove one or more global handlers from this PdsLogger."""
 
         if type(handlers) not in (list, tuple):
             handlers = [handlers]
@@ -352,7 +378,7 @@ class PdsLogger(object):
                 self.handlers.remove(handler)
 
     def remove_all_handlers(self):
-        """Remove all the handlers from this PdsLogger."""
+        """Remove all the global handlers from this PdsLogger."""
 
         for handler in self.handlers:
             self.logger.removeHandler(handler)  # no exception if not present
@@ -361,7 +387,8 @@ class PdsLogger(object):
         self.logger.handlers = []
 
     def replace_handler(self, handlers):
-        """Replace the existing handlers with one or more new handlers."""
+        """Replace the existing global handlers with one or more new handlers.
+        """
 
         handlers = list(self.logger.handlers)
         for handler in handlers:
@@ -398,7 +425,9 @@ class PdsLogger(object):
             return LOOKUP[logname]
 
     def open(self, title, abspath='', limits={}, handler=[]):
-        """Begin a new set of tests at a new level in the hierarchy."""
+        """Begin a new set of tests at a new level in the hierarchy, possibly
+        including one or more local handlers, which are managed separately from
+        the global handlers."""
 
         # Increment the hierarchy depth
         depth = len(self.titles)
@@ -406,7 +435,8 @@ class PdsLogger(object):
             raise ValueError('Maximum logging hierarchy depth has been reached')
             sys.exit(1)
 
-        if abspath: title += ': ' + self.logpath(abspath)
+        if abspath:
+            title += ': ' + self.logpath(abspath)
         self.titles.append(title)
 
         time = datetime.datetime.now()
@@ -424,6 +454,8 @@ class PdsLogger(object):
         # Get list of full paths to the log files
         logfiles = [h.baseFilename for h in self.handlers if
                                             isinstance(h, logging.FileHandler)]
+
+        # Add the new handlers if unique
         for handler in handlers:
             if handler in self.handlers: continue
             if (isinstance(handler, logging.FileHandler) and
@@ -528,6 +560,29 @@ class PdsLogger(object):
                 self.logger_log(level, '%s | %s %s|%s| %s | %s' %
                   (timetag, self.logname, self.pidstr, depth*'-', tag, message))
 
+    def summarize(self):
+        """Return (number of errors, number of warnings, total number of tests).
+        """
+
+        fatal = 0
+        errors = 0
+        warnings = 0
+        tests = 0
+        for (level, count) in self.counters_by_level[-1].items():
+            if level >= logging.FATAL:
+                fatal += count
+            if level >= logging.ERROR:
+                errors += count
+            if level >= logging.WARNING:
+                warnings += count
+
+            tests += count
+
+        errors -= fatal
+        warnings -= errors
+
+        return (fatal, errors, warnings, tests)
+
     def close(self):
         """Close the log at its current hierarchy depth.
 
@@ -590,22 +645,7 @@ class PdsLogger(object):
                                             self.suppressed_by_level[-1][level]
 
         # Determine values to return
-        fatal = 0
-        errors = 0
-        warnings = 0
-        tests = 0
-        for (level, count) in self.counters_by_level[-1].items():
-            if level >= logging.FATAL:
-                fatal += count
-            if level >= logging.ERROR:
-                errors += count
-            if level >= logging.WARNING:
-                warnings += count
-
-            tests += count
-
-        errors -= fatal
-        warnings -= errors
+        (fatal, errors, warnings, tests) = self.summarize()
 
         # Back up one level in the hierarchy
         self.titles      = self.titles[:-1]
@@ -616,12 +656,19 @@ class PdsLogger(object):
         self.counters_by_level   = self.counters_by_level[:-1]
         self.suppressed_by_level = self.suppressed_by_level[:-1]
 
+        # List the handlers to close at this level
+        # If this is the top level, include the global handlers
         handlers = self.local_handlers[-1]
+        if len(self.local_handlers) == 1:
+            handlers += self.handlers
+
         for handler in handlers:
             if handler in self.handlers:
                 self.handlers.remove(handler)
                 self.logger.removeHandler(handler)
 
+            # If the xattr module has been imported on a Mac, set the colors of
+            # the log files to indicate outcome.
             try:        # in case the finder_colors module was not imported
                 logfile = handler.baseFilename
                 if fatal:
