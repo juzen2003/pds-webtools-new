@@ -219,12 +219,28 @@ REPAIRS = translator.TranslatorByRegex([
     ('.*/GO_0xxx.*/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'ttds.cat'             : '../GO_0020/CATALOG/TTDS.CAT'})),
-    ('.*/GO_0xxx.*/INDEX/IMGINDEX\.LBL', 0,
+    ('.*/GO_0xxx_v1//GO_00(0[789]|1[0-6])/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
-        {'IMGINDEX.LBL'         : 'IMGINDEX.TAB'})),
-    ('.*/GO_0xxx.*/INDEX/CUMINDEX\.LBL', 0,
+        {'CATSTATUS.TXT'        : 'DOCUMENT/CATSTAT.TXT'})),
+    ('.*/GO_0xxx.*/GO_0001/CATALOG/DATASET\.CAT', 0,
+      translator.TranslatorByRegex(
+        [(r'(\w\w\w[1-4][sf]_blm02\.img)', 0, r'../BLEMISH/#UPPER#\1'),
+         (r'(\w\w\w[sf]_cal0[1-5]\.dat)',  0, r'../SLOPE/#UPPER#\1'),
+         (r'([123][sf]\w+_dc0[1-5]\.dat)', 0, r'../DARK/#UPPER#\1'),
+         (r'calibration_so02.img',         0, r'../SHUTTER/CALIBRATION_SO02.IMG')])),
+    ('.*/GO_0xxx.*/GO_000[2-6]/CATALOG/DATASET\.CAT', 0,
+      translator.TranslatorByDict(
+        {'V_E1DS.CAT'           : ''})),
+    ('.*/GO_0xxx.*/GO_0001/DOCUMENT/PDSLABEL\.TXT', 0,
+      translator.TranslatorByDict(
+        {'RLINEPRX.FMT'         : '../../GO_0002/LABEL/RLINEPRX.FMT',
+         'RTLMTAB.FMT'          : '../../GO_0002/LABEL/RTLMTAB.FMT'})),
+    ('.*/GO_0xxx_v1/GO_0001/INDEX/CUMINDEX\.LBL', 0,
       translator.TranslatorByDict(
         {'IMGINDEX.TAB'         : 'CUMINDEX.TAB'})),
+    ('.*/GO_0xxx_v1/GO_0001/INDEX/P1CUMINDEX\.LBL', 0,
+      translator.TranslatorByDict(
+        {'IMGINDEX.TAB'         : 'P1CUMINDEX.TAB'})),
     ('.*/HSTJ.*/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'NST.CAT'              : 'CATALOG/INST.CAT'})),
@@ -391,6 +407,9 @@ KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
     (r'.*/COVIMS_0xxx.*/calib/.*\.(tab|qub|cub|bin|lbl)',   0,    'missing'),
     (r'.*/COVIMS_0xxx.*/browse/.*\.pdf',                    0,    'missing'),
     (r'.*/COVIMS_0xxx.*\.(lbl|qub)-old_V[0-9]+',            0,    'missing'),
+    (r'.*/GO_0xxx_v1/GO_0001/CATALOG/REF.CAT.BAK',          0,    'missing'),
+    (r'.*/GO_0xxx.*/GO_0001/SOFTWARE/GALSOS2.EXE',          0,    'missing'),
+    (r'.*/GO_0xxx_v1/GO_0016/AAREADME.SL9',                 0,    'missing'),
     (r'.*/JNOJNC_0xxx.*/EXTRAS/.*\.PNG',                    0,    'missing'),
     (r'.*/NH.*/browse/.*\.jpg',                             0,    'missing'),
     (r'.*/NH.*/index/newline',                              0,    'missing'),
