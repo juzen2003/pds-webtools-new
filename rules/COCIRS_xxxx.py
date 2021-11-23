@@ -392,6 +392,14 @@ associations_to_documents = translator.TranslatorByRegex([
             r'documents/COCIRS_xxxx/CIRS-Diagram-Interpretation-Guide.txt'),
 ])
 
+# For COCIRS_0xxx and COCIRS_1xxx CUBE
+associations_to_metadata = translator.TranslatorByRegex([
+    (r'volumes/(COCIRS_[01]xxx).*/(COCIRS_[01]...)/(:?DATA/CUBE|EXTRAS/CUBE_OVERVIEW)/(EQUI|POINT|RING)\w+/(.*)\.(tar.gz|LBL|JPG)', 0,
+            [r'metadata/\1/\2/\2_cube_#LOWER#\3_index.tab/\4',
+             r'metadata/\1/\2/\2_cube_#LOWER#\3_supplemental_index.tab/\4',
+            ]),
+])
+
 ####################################################################################################################################
 # VERSIONS
 ####################################################################################################################################
@@ -411,7 +419,7 @@ versions = translator.TranslatorByRegex([
 default_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl',  re.I, ''),
 
-    (r'volumes/(COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)\.tar\.gz',        0,
+    (r'volumes/(COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)\..*',        0,
             [r'previews/\1/DATA/CUBE/\2_full.jpg',
              r'previews/\1/DATA/CUBE/\2_med.jpg',
              r'previews/\1/DATA/CUBE/\2_small.jpg',
@@ -544,39 +552,48 @@ split_rules = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_type = translator.TranslatorByRegex([
-    (r'volumes/.*/DATA/APODSPEC/SPEC.*', 0, ('Cassini CIRS',   0, 'cocirs_spec', 'Calibrated Interferograms',    True)),
-    (r'volumes/.*/DATA/GEODATA/GEO.*',   0, ('Cassini CIRS', 110, 'cocirs_geo',  'System Geometry',              True)),
-    (r'volumes/.*/DATA/ISPMDATA/ISPM.*', 0, ('Cassini CIRS', 120, 'cocirs_ispm', 'Observation Metadata',         True)),
-    (r'volumes/.*/DATA/POIDATA/POI.*',   0, ('Cassini CIRS', 130, 'cocirs_poi',  'Footprint Geometry on Bodies', True)),
-    (r'volumes/.*/DATA/RINDATA/RIN.*',   0, ('Cassini CIRS', 140, 'cocirs_rin',  'Footprint Geometry on Rings',  True)),
-    (r'volumes/.*/DATA/TARDATA/TAR.*',   0, ('Cassini CIRS', 150, 'cocirs_tar',  'Target Body Identifications',  True)),
+    (r'volumes/COCIRS_[56]xxx.*/DATA/APODSPEC/SPEC.*', 0, ('Cassini CIRS',   0, 'cocirs_spec', 'Calibrated Interferograms',    True)),
+    (r'volumes/COCIRS_[56]xxx.*/DATA/GEODATA/GEO.*',   0, ('Cassini CIRS', 110, 'cocirs_geo',  'System Geometry',              True)),
+    (r'volumes/COCIRS_[56]xxx.*/DATA/ISPMDATA/ISPM.*', 0, ('Cassini CIRS', 120, 'cocirs_ispm', 'Observation Metadata',         True)),
+    (r'volumes/COCIRS_[56]xxx.*/DATA/POIDATA/POI.*',   0, ('Cassini CIRS', 130, 'cocirs_poi',  'Footprint Geometry on Bodies', True)),
+    (r'volumes/COCIRS_[56]xxx.*/DATA/RINDATA/RIN.*',   0, ('Cassini CIRS', 140, 'cocirs_rin',  'Footprint Geometry on Rings',  True)),
+    (r'volumes/COCIRS_[56]xxx.*/DATA/TARDATA/TAR.*',   0, ('Cassini CIRS', 150, 'cocirs_tar',  'Target Body Identifications',  True)),
 
-    (r'volumes/.*/BROWSE/TARGETS/IMG.*',  0, ('Cassini CIRS', 510, 'cocirs_browse_target',     'Extra Browse Diagram (Default)',    True)),
-    (r'volumes/.*/BROWSE/SATURN/POI.*',   0, ('Cassini CIRS', 520, 'cocirs_browse_saturn',     'Extra Browse Diagram (Saturn)',     True)),
-    (r'volumes/.*/BROWSE/S_RINGS/RIN.*',  0, ('Cassini CIRS', 530, 'cocirs_browse_rings',      'Extra Browse Diagram (Rings)',      True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_601.*', 0, ('Cassini CIRS', 601, 'cocirs_browse_mimas',      'Extra Browse Diagram (Mimas)',      True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_602.*', 0, ('Cassini CIRS', 602, 'cocirs_browse_enceladus',  'Extra Browse Diagram (Enceladus)',  True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_603.*', 0, ('Cassini CIRS', 603, 'cocirs_browse_tethys',     'Extra Browse Diagram (Tethys)',     True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_604.*', 0, ('Cassini CIRS', 604, 'cocirs_browse_dione',      'Extra Browse Diagram (Dione)',      True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_605.*', 0, ('Cassini CIRS', 605, 'cocirs_browse_rhea',       'Extra Browse Diagram (Rhea)',       True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_606.*', 0, ('Cassini CIRS', 606, 'cocirs_browse_titan',      'Extra Browse Diagram (Titan)',      True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_607.*', 0, ('Cassini CIRS', 607, 'cocirs_browse_hyperion',   'Extra Browse Diagram (Hyperion)',   True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_608.*', 0, ('Cassini CIRS', 608, 'cocirs_browse_iapetus',    'Extra Browse Diagram (Iapetus)',    True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_609.*', 0, ('Cassini CIRS', 609, 'cocirs_browse_phoebe',     'Extra Browse Diagram (Phoebe)',     True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_610.*', 0, ('Cassini CIRS', 610, 'cocirs_browse_janus',      'Extra Browse Diagram (Janus)',      True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_611.*', 0, ('Cassini CIRS', 611, 'cocirs_browse_epimetheus', 'Extra Browse Diagram (Epimetheus)', True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_612.*', 0, ('Cassini CIRS', 612, 'cocirs_browse_helene',     'Extra Browse Diagram (Helene)',     True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_613.*', 0, ('Cassini CIRS', 613, 'cocirs_browse_telesto',    'Extra Browse Diagram (Telesto)',    True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_614.*', 0, ('Cassini CIRS', 614, 'cocirs_browse_calypso',    'Extra Browse Diagram (Calypso)',    True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_615.*', 0, ('Cassini CIRS', 615, 'cocirs_browse_atlas',      'Extra Browse Diagram (Atlas)',      True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_616.*', 0, ('Cassini CIRS', 616, 'cocirs_browse_prometheus', 'Extra Browse Diagram (Prometheus)', True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_617.*', 0, ('Cassini CIRS', 617, 'cocirs_browse_pandora',    'Extra Browse Diagram (Pandora)',    True)),
-    (r'volumes/.*/BROWSE/.*/POI.*_618.*', 0, ('Cassini CIRS', 618, 'cocirs_browse_pan',        'Extra Browse Diagram (Pan)',        True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/TARGETS/IMG.*',  0, ('Cassini CIRS', 510, 'cocirs_browse_target',     'Extra Browse Diagram (Default)',    True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/SATURN/POI.*',   0, ('Cassini CIRS', 520, 'cocirs_browse_saturn',     'Extra Browse Diagram (Saturn)',     True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/S_RINGS/RIN.*',  0, ('Cassini CIRS', 530, 'cocirs_browse_rings',      'Extra Browse Diagram (Rings)',      True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_601.*', 0, ('Cassini CIRS', 601, 'cocirs_browse_mimas',      'Extra Browse Diagram (Mimas)',      True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_602.*', 0, ('Cassini CIRS', 602, 'cocirs_browse_enceladus',  'Extra Browse Diagram (Enceladus)',  True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_603.*', 0, ('Cassini CIRS', 603, 'cocirs_browse_tethys',     'Extra Browse Diagram (Tethys)',     True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_604.*', 0, ('Cassini CIRS', 604, 'cocirs_browse_dione',      'Extra Browse Diagram (Dione)',      True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_605.*', 0, ('Cassini CIRS', 605, 'cocirs_browse_rhea',       'Extra Browse Diagram (Rhea)',       True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_606.*', 0, ('Cassini CIRS', 606, 'cocirs_browse_titan',      'Extra Browse Diagram (Titan)',      True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_607.*', 0, ('Cassini CIRS', 607, 'cocirs_browse_hyperion',   'Extra Browse Diagram (Hyperion)',   True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_608.*', 0, ('Cassini CIRS', 608, 'cocirs_browse_iapetus',    'Extra Browse Diagram (Iapetus)',    True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_609.*', 0, ('Cassini CIRS', 609, 'cocirs_browse_phoebe',     'Extra Browse Diagram (Phoebe)',     True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_610.*', 0, ('Cassini CIRS', 610, 'cocirs_browse_janus',      'Extra Browse Diagram (Janus)',      True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_611.*', 0, ('Cassini CIRS', 611, 'cocirs_browse_epimetheus', 'Extra Browse Diagram (Epimetheus)', True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_612.*', 0, ('Cassini CIRS', 612, 'cocirs_browse_helene',     'Extra Browse Diagram (Helene)',     True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_613.*', 0, ('Cassini CIRS', 613, 'cocirs_browse_telesto',    'Extra Browse Diagram (Telesto)',    True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_614.*', 0, ('Cassini CIRS', 614, 'cocirs_browse_calypso',    'Extra Browse Diagram (Calypso)',    True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_615.*', 0, ('Cassini CIRS', 615, 'cocirs_browse_atlas',      'Extra Browse Diagram (Atlas)',      True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_616.*', 0, ('Cassini CIRS', 616, 'cocirs_browse_prometheus', 'Extra Browse Diagram (Prometheus)', True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_617.*', 0, ('Cassini CIRS', 617, 'cocirs_browse_pandora',    'Extra Browse Diagram (Pandora)',    True)),
+    (r'volumes/COCIRS_[56]xxx.*/BROWSE/.*/POI.*_618.*', 0, ('Cassini CIRS', 618, 'cocirs_browse_pan',        'Extra Browse Diagram (Pan)',        True)),
 
-    (r'diagrams/.*/TARGETS/.*_thumb\..*', 0, ('browse', 10, 'browse_thumb',  'Browse Image (thumbnail)', False)),
-    (r'diagrams/.*/TARGETS/.*_small\..*', 0, ('browse', 20, 'browse_small',  'Browse Image (small)',     False)),
-    (r'diagrams/.*/TARGETS/.*_med\..*',   0, ('browse', 30, 'browse_medium', 'Browse Image (medium)',    False)),
-    (r'diagrams/.*/TARGETS/.*_full\..*',  0, ('browse', 40, 'browse_full',   'Browse Image (full)',      True)),
+    (r'diagrams/COCIRS_[56]xxx.*/TARGETS/.*_thumb\..*', 0, ('browse', 10, 'browse_thumb',  'Browse Image (thumbnail)', False)),
+    (r'diagrams/COCIRS_[56]xxx.*/TARGETS/.*_small\..*', 0, ('browse', 20, 'browse_small',  'Browse Image (small)',     False)),
+    (r'diagrams/COCIRS_[56]xxx.*/TARGETS/.*_med\..*',   0, ('browse', 30, 'browse_medium', 'Browse Image (medium)',    False)),
+    (r'diagrams/COCIRS_[56]xxx.*/TARGETS/.*_full\..*',  0, ('browse', 40, 'browse_full',   'Browse Image (full)',      True)),
+
+    # CUBE 0xxx/1xxx
+    # Cube index
+    (r'metadata/COCIRS_[01]xxx.*/.*cube.*(?<!supplemental)_index\..*',      0, ('metadata',       8, 'cube_index',        'Cube Index',           False)),
+    # Data
+    (r'volumes/COCIRS_[01]xxx.*/DATA/CUBE/.*',             0, ('Cassini CIRS', 10, 'cocirs_cube',  'Spectral Image Cube', True)),
+    # Extra viewable image
+    (r'volumes/COCIRS_[01]xxx.*/EXTRAS/CUBE_OVERVIEW/.*',  0, ('Cassini CIRS', 20, 'cocirs_extra', 'Extra Cube Preview Image', False)),
+
 ])
 
 ####################################################################################################################################
@@ -621,6 +638,22 @@ opus_products = translator.TranslatorByRegex([
              r'diagrams/\1/\3/BROWSE/TARGETS/IMG\4_\5_small.jpg',
              r'diagrams/\1/\3/BROWSE/TARGETS/IMG\4_\5_thumb.jpg',
             ]),
+
+    # CUBE (COCIRS_0xxx, COCIRS_1xxx)
+    (r'.*/(COCIRS_[01]xxx)/(COCIRS_[01]...)/DATA/CUBE/((EQUI|POINT|RING).*)/(.*)\..*', 0,
+            [r'volumes/\1*/\2/DATA/CUBE/\3/\5.LBL',
+             r'volumes/\1*/\2/DATA/CUBE/\3/\5.tar.gz',
+             r'volumes/\1*/\2/EXTRAS/CUBE_OVERVIEW/\3/\5.JPG',
+             r'volumes/\1*/\2/EXTRAS/CUBE_OVERVIEW/\3/\5.LBL',
+             r'previews/\1/\2/DATA/CUBE/\3/\5_full.jpg',
+             r'previews/\1/\2/DATA/CUBE/\3/\5_med.jpg',
+             r'previews/\1/\2/DATA/CUBE/\3/\5_small.jpg',
+             r'previews/\1/\2/DATA/CUBE/\3/\5_thumb.jpg',
+             r'metadata/\1/\2/\2_cube_#LOWER#\4_index.lbl',
+             r'metadata/\1/\2/\2_cube_#LOWER#\4_index.tab',
+             r'metadata/\1/\2/\2_cube_#LOWER#\4_supplemental_index.lbl',
+             r'metadata/\1/\2/\2_cube_#LOWER#\4_supplemental_index.tab',
+            ]),
 ])
 
 ####################################################################################################################################
@@ -629,6 +662,19 @@ opus_products = translator.TranslatorByRegex([
 
 opus_id = translator.TranslatorByRegex([
     (r'.*COCIRS_[56]xxx.*/(DATA|BROWSE)/\w+/[A-Z]+([0-9]{10})_FP(.).*', 0, r'co-cirs-\2-fp\3'),
+
+    # COCIRS_0xxx and COCIRS_1xxx
+    # Cube file naming convention: Activity - subactivity - target code - focal plane - sepctral resoultion
+    # EX: 000PH_FP13LTCRV005_CI005_609_F3_038P.LBL
+    # Activity: 000PH_FP13LTCRV005
+    # Subactivity: CI005 (CI: prime instrument, 005: index of subactivity )
+    # Target code: 609
+    # Focal plane: F3
+    # Spectral resolution: 038, P: POINT
+    # Every record in the index file has an opus id in this format:
+    # 'co-cirs-cube-(filename)'
+    (r'.*COCIRS_[01]xxx.*/DATA/CUBE/(?:EQUI|POINT|RING).*/(.*?)\..*', 0, r'co-cirs-cube-#LOWER#\1'),
+    (r'.*COCIRS_[01]xxx.*/EXTRAS/CUBE_OVERVIEW/(?:EQUI|POINT|RING).*/(.*?)\..*', 0, r'co-cirs-cube-#LOWER#\1'),
 ])
 
 ####################################################################################################################################
@@ -637,6 +683,10 @@ opus_id = translator.TranslatorByRegex([
 
 opus_id_to_primary_logical_path = translator.TranslatorByRegex([
     (r'co-cirs-(.*)-fp(.)', 0, r'volumes/COCIRS_[56]xxx/COCIRS_[56]???/DATA/APODSPEC/SPEC\1_FP\2.DAT'),
+    # For COCIRS_0xxx & COCIRS_1xxx, point to .tar.gz (.DAT is in it)
+    (r'co-cirs-cube-(.*e)', 0, r'volumes/COCIRS_[01]xxx/COCIRS_[01]???/DATA/CUBE/EQUIRECTANGULAR/#UPPER#\1#LOWER#.tar.gz'),
+    (r'co-cirs-cube-(.*p)', 0, r'volumes/COCIRS_[01]xxx/COCIRS_[01]???/DATA/CUBE/POINT_PERSPECTIVE/#UPPER#\1#LOWER#.tar.gz'),
+    (r'co-cirs-cube-(.*r)', 0, r'volumes/COCIRS_[01]xxx/COCIRS_[01]???/DATA/CUBE/RING_POLAR/#UPPER#\1#LOWER#.tar.gz'),
 ])
 
 ####################################################################################################################################
@@ -707,6 +757,7 @@ class COCIRS_xxxx(pdsfile.PdsFile):
     ASSOCIATIONS['previews']  += associations_to_previews
     ASSOCIATIONS['diagrams']  += associations_to_diagrams
     ASSOCIATIONS['documents'] += associations_to_documents
+    ASSOCIATIONS['metadata']  += associations_to_metadata
 
     VERSIONS = versions + pdsfile.PdsFile.VERSIONS
 
@@ -911,6 +962,56 @@ def test_associations_to_diagrams():
            'browse_full',
            'Browse Image (full)',
            True): ['diagrams/COCIRS_5xxx/COCIRS_5408/BROWSE/TARGETS/IMG0408010000_FP1_full.jpg']}
+        ),
+        # COCIRS_0xxx
+        ('volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL',
+        {('Cassini CIRS',
+          10,
+          'cocirs_cube',
+          'Spectral Image Cube',
+          True): ['volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz',
+                  'volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL', 'volumes/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz',
+                  'volumes/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL'],
+         ('Cassini CIRS',
+          20,
+          'cocirs_extra',
+          'Extra Cube Preview Image',
+          False): ['volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.JPG',
+                   'volumes/COCIRS_0xxx/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL',
+                   'volumes/COCIRS_0xxx_v3/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.JPG',
+                   'volumes/COCIRS_0xxx_v3/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.LBL'],
+         ('browse',
+          40,
+          'browse_full',
+          'Browse Image (full)',
+          True): ['previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_full.jpg'],
+         ('browse',
+          30,
+          'browse_medium',
+          'Browse Image (medium)',
+          False): ['previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_med.jpg'],
+         ('browse',
+          20,
+          'browse_small',
+          'Browse Image (small)',
+          False): ['previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_small.jpg'],
+         ('browse',
+          10,
+          'browse_thumb',
+          'Browse Image (thumbnail)',
+          False): ['previews/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P_thumb.jpg'],
+         ('metadata',
+          8,
+          'cube_index',
+          'Cube Index',
+          False): ['metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.tab',
+                   'metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_index.lbl'],
+         ('metadata',
+          9,
+          'supplemental_index',
+          'Supplemental Index',
+          False): ['metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.tab',
+                   'metadata/COCIRS_0xxx/COCIRS_0406/COCIRS_0406_cube_point_supplemental_index.lbl']}
         )
     ]
 )
@@ -935,6 +1036,8 @@ def test_opus_id_to_primary_logical_path():
         'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512010000_FP1.DAT',
         'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512010000_FP3.DAT',
         'volumes/COCIRS_5xxx/COCIRS_5512/DATA/APODSPEC/SPEC0512010000_FP4.DAT',
+        # COCIRS_0xxx
+        'volumes/COCIRS_0xxx/COCIRS_0406/DATA/CUBE/POINT_PERSPECTIVE/000IA_PRESOI001____RI____699_F4_038P.tar.gz'
     ]
 
     for logical_path in TESTS:

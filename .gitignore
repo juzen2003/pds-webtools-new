@@ -7,3 +7,4 @@ p3venv*
 
 .coverage
 htmlcov
+opus_products_from_opus_id.py

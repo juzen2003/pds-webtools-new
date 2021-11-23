@@ -4227,7 +4227,7 @@ class PdsFile(object):
                 except (OSError, KeyError, ValueError):
                     if LOGGER:
                         LOGGER.warn('Missing links info',
-                                    label_pdsfile.logical_path)
+                                    pdsf.logical_path)
                     continue
                 links = set(pdsf.linked_abspaths)
                 fmts = [f for f in links if f.lower().endswith('.fmt')]
