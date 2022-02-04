@@ -28,6 +28,8 @@ LOGROOT_ENV = 'PDS_LOG_ROOT'
 LOGDIRS = []
 
 REPAIRS = translator.TranslatorByRegex([
+
+    # COCIRS
     ('.*/COCIRS_[01].*/DATAINFO\.TXT', 0,
       translator.TranslatorByDict(
         {'DIAG.FMT'             : 'UNCALIBR/DIAG.FMT',
@@ -109,6 +111,8 @@ REPAIRS = translator.TranslatorByRegex([
     ('.*/COCIRS_[56].*/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'REF.CAT'              : 'CATALOG/CIRSREF.CAT'})),
+
+    # COISS
     ('.*/COISS_0.*\.lbl', 0,
       translator.TranslatorByDict(
         {'PREFIX8.FMT'          : 'prefix.fmt'})),
@@ -148,9 +152,8 @@ REPAIRS = translator.TranslatorByRegex([
          'jupiterds.cat'        : '../../../COISS_1xxx/COISS_1001/catalog/jupiterds.cat',
          'Saturnds.CAT'         : '../../../COISS_2xxx/COISS_2001/catalog/saturnds.cat',
          'saturnds.cat'         : '../../../COISS_2xxx/COISS_2001/catalog/saturnds.cat'})),
-    ('.*/metadata/.*/COUVIS_0.*_index\.lbl', 0,
-      translator.TranslatorByDict(
-        {'CUBEDS.CAT'           : ''})),
+
+    # COUVIS
     ('.*/COUVIS_0.*/INDEX\.LBL', 0,
       translator.TranslatorByDict(
         {'CUBEDS.CAT'           : '../CATALOG/SCUBEDS.CAT'})),
@@ -176,6 +179,11 @@ REPAIRS = translator.TranslatorByRegex([
     ('.*/COUVIS_8xxx(|_v2\.0)/.*/voldesc\.cat', re.I,
       translator.TranslatorByDict(
         {'PROJREF.CAT'          : ''})),
+    ('.*/metadata/.*/COUVIS_0.*_index\.lbl', 0,
+      translator.TranslatorByDict(
+        {'CUBEDS.CAT'           : ''})),
+
+    # COVIMS
     ('.*/COVIMS_0001/data/.*\.lbl', 0,
       translator.TranslatorByDict(
         {'band_bin_center.fmt'   : '../../../COVIMS_0002/label/band_bin_center.fmt',
@@ -207,19 +215,23 @@ REPAIRS = translator.TranslatorByRegex([
     ('.*/COVIMS_8xxx_v2.*/voldesc.cat', 0,
       translator.TranslatorByDict(
         {'PROJREF.CAT'          : ''})),
+
+    # EBROCC
     ('.*/EBROCC_0001/INDEX/MCD_INDEX\.LBL', 0,
       translator.TranslatorByDict(
-        { 'LIC_INDEX.TAB'       : 'MCD_INDEX.TAB'})),
+        {'LIC_INDEX.TAB'        : 'MCD_INDEX.TAB'})),
     ('.*/EBROCC_0001/INDEX/PAL_INDEX\.LBL', 0,
       translator.TranslatorByDict(
-        { 'LIC_INDEX.TAB'       : 'PAL_INDEX.TAB'})),
+        {'LIC_INDEX.TAB'        : 'PAL_INDEX.TAB'})),
     ('.*/EBROCC_0001/SORCDATA/ESO1M/ES1_INGRESS_GEOMETRY\.LBL', 0,
       translator.TranslatorByDict(
-        { 'ES1_INGRESS_GEOMETRY.LBL': 'ES1_INGRESS_GEOMETRY.DAT'})),
+        {'ES1_INGRESS_GEOMETRY.LBL': 'ES1_INGRESS_GEOMETRY.DAT'})),
+
+    # GO
     ('.*/GO_0xxx.*/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'ttds.cat'             : '../GO_0020/CATALOG/TTDS.CAT'})),
-    ('.*/GO_0xxx_v1//GO_00(0[789]|1[0-6])/AAREADME\.TXT', 0,
+    ('.*/GO_0xxx_v1/GO_00(0[789]|1[0-6])/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'CATSTATUS.TXT'        : 'DOCUMENT/CATSTAT.TXT'})),
     ('.*/GO_0xxx.*/GO_0001/CATALOG/DATASET\.CAT', 0,
@@ -241,6 +253,8 @@ REPAIRS = translator.TranslatorByRegex([
     ('.*/GO_0xxx_v1/GO_0001/INDEX/P1CUMINDEX\.LBL', 0,
       translator.TranslatorByDict(
         {'IMGINDEX.TAB'         : 'P1CUMINDEX.TAB'})),
+
+    # HST
     ('.*/HSTJ.*/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'NST.CAT'              : 'CATALOG/INST.CAT'})),
@@ -264,17 +278,40 @@ REPAIRS = translator.TranslatorByRegex([
          'JBNY02SSQ_FLT_WFC2.JPG': 'JBNY02SSQ_FLT.JPG',
          'JBNYA1T2Q_FLT_WFC2.JPG': 'JBNYA1T2Q_FLT.JPG',
          'JBNYA2SUQ_FLT_WFC2.JPG': 'JBNYA2SUQ_FLT.JPG'})),
+
+    # JNOJIR
     ('.*/JNOJIR.*/AAREADME.TXT', 0,
       translator.TranslatorByDict(
         {'PERSON.CAT'           : 'JNO_JIRAM_PERSON.CAT',
          'DATAINFO.TXT'         : ''})),
+    ('.*/JNOJIR.*/JIR_IMG_\w+_RESPONSIVITY_V03.LBL', 0,
+      translator.TranslatorByRegex(
+        [(r'(JIR_IMG_\w+_RESPONSIVITY)_V02\.DAT', 0, r'\1_V03.DAT')])),
+    ('.*/JNOJIR_20(2[789]|3\d)/DATA/JIR_\w+.LBL', 0,
+      translator.TranslatorByRegex(
+        [(r'(JIR_IMG_\w+_RESPONSIVITY)_V02\.DAT', 0, r'../CALIB/\1_V03.DAT')])),
+    # Embedded list comprehension
+    # Each links a SOURCE_PRODUCT_ID on JNOJIR_2xxx to the associated EDR in
+    # the parallel directory on JNOJIR_1xxx. Set up through volume _2049.
+    ] + [
+        (f'.*/JNOJIR_20{nn:02d}/DATA/JIR_\w+.LBL', 0,
+          translator.TranslatorByRegex(
+            [(r'(JIR_\w+_EDR_20\w+)\.(DAT|IMG)', 0,
+                f'../../../JNOJIR_1xxx/JNOJIR_10{nn:02d}/DATA/' + r'\1.\2')]))
+        for nn in range(0,50)] + [
+
+    # JNOJNC
     ('.*/JNOJNC.*/(AAREADME|CATINFO).TXT', 0,
       translator.TranslatorByDict(
         {'JUNO_REF.CAT'         : 'JUNO_PROJREF.CAT'})),
+
+    # NHSP
     ('.*/NHSP.*/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'personel.cat'         : 'CATALOG/PERSONNEL.CAT',
          'spiceds.cat'          : 'CATALOG/SPICE_INST.CAT'})),
+
+    # RPX
     ('.*/RPX_0101.*/R_HARRIS\.LBL', 0,
       translator.TranslatorByDict(
         {'R_HARRIS.DF'          : 'R_HARRIS.PDF'})),
@@ -287,6 +324,91 @@ REPAIRS = translator.TranslatorByRegex([
     ('.*/RPX_0401/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'INSTHOST.CAT'         : 'CATALOG/HOST.CAT'})),
+
+    # Any VG
+    ('.*/VG.*/CATALOG/CATINFO\.TXT', 0,
+      translator.TranslatorByDict(
+        {'VGnNINST.CAT'         : 'VG1NINST.CAT',
+         'VGnHOST.CAT'          : 'VG1HOST.CAT'})),
+
+    # VG_20xx (IRIS)
+    ('.*/VG_2001/.*/VG2_SAT\.LBL', 0,
+      translator.TranslatorByDict(
+        {'IRIS_ROWFMT.FMT'      : '../JUPITER/IRISHEDR.FMT'})),
+    ('.*/VG_2001/AAREADME\.TXT', 0,
+      translator.TranslatorByDict(
+        {'IRISHEDR.FMT'         : 'JUPITER/IRISHEDR.FMT',
+         'IRISTRGP.FMT'         : 'JUPITER/CALIB/IRISTRGP.FMT'})),
+
+    # VG_28xx (ring profiles)
+    ('.*/VG_28[0-9]{2}/.*INFO\.TXT', 0,
+      translator.TranslatorByDict(
+        {'RS1SINST.CAT'         : 'VG1SINST.CAT',
+         'RS2UINST.CAT'         : 'VG2UINST.CAT'})),
+    ('.*/VG_28xx/VG_2801/CALIB/PS2C01\.LBL', 0,
+      translator.TranslatorByDict(
+        {'PS1C01.TAB'           : 'PS2C01.TAB'})),
+    ('.*/VG_28xx/VG_2801/JITTER/PS1J01\.LBL', 0,
+      translator.TranslatorByDict(
+        {'PS1J02.TAB'           : 'PS1J01.TAB'})),
+    ('.*/VG_28xx/VG_2801/JITTER/PU2J02\.LBL', 0,
+      translator.TranslatorByDict(
+        {'PU2J01.TAB'           : 'PU2J02.TAB'})),
+    ('.*/VG_280./.*/L3GUIDE\.TXT', 0,
+      translator.TranslatorByDict(
+        {'RTLMTAB.FMT'          : ''})),
+    ('.*/VG_2802/EDITDATA/DATAINFO\.TXT', 0,
+      translator.TranslatorByDict(
+        {'INST.CAT'             : '../CATALOG/VG1INST.CAT'})),
+    ('.*/VG_2802/EDITDATA/US3D01P\.LBL', 0,
+      translator.TranslatorByDict(
+        {'US3D01I.DAT'          : 'US3D01P.DAT'})),
+    ('.*/VG_2802/SORCDATA/DATAINFO\.TXT', 0,
+      translator.TranslatorByDict(
+        {'BETAPER.VOY'          : 'BETPER.VOY',
+         'BETAPER.LBL'          : 'BETPER.LBL'})),
+    ('.*/VG_2803.*/RS.R1BFV\.LBL', 0,
+      translator.TranslatorByDict(
+        {'RS_R1BFT.FMT'         : 'RS_R1BFV.FMT'})),
+
+
+    # VGn_9xxx (RSS)
+    ('.*/VG[12]_9.*/CHECKSUMS.TXT', 0,  # any file referenced in CHECKSUMS.TXT
+                                        # already has a full path; don't search
+      translator.TranslatorByRegex([(r'(.*)', 0, r'\1')])),
+    ('.*/VG[12]_9.*/ERRATA.TXT', 0,
+      translator.TranslatorByDict(
+        {'_PERSON.CAT'          : 'CATALOG/VG_RSS_PERSON.CAT'})),
+    ('.*/VG1_9050/CATALOG/CATINFO.TXT', 0,
+      translator.TranslatorByDict(
+        {'MISSION.CAT'          : 'VG_MISSION.CAT',
+         'INST_HOST.CAT'        : 'VG1_INST_HOST.CAT',
+         'INST.CAT'             : 'VG1_RSS_INST.CAT',
+         'DS.CAT'               : 'VG1_SAT_RSS_DS.CAT',
+         'PERSON.CAT'           : 'VG_RSS_PERSON.CAT',
+         'REF.CAT'              : 'VG1_S_RSS_REF.CAT',
+         'TARGET.CAT'           : 'VG_SAT_TARGET.CAT',
+         'VG1_SAT_TARGET.CAT'   : 'VG_SAT_TARGET.CAT'})),
+    ('.*/VG1_9056/CATALOG/CATINFO.TXT', 0,
+      translator.TranslatorByDict(
+        {'MISSION.CAT'          : 'VG_MISSION.CAT',
+         'INSTHOST.CAT'         : 'VG1_INST_HOST.CAT',
+         'INST.CAT'             : 'VG1_RSS_INST.CAT',
+         'DS.CAT'               : 'VG1_SSA_RSS_DS.CAT',
+         'PERSON.CAT'           : 'VG_RSS_PERSON.CAT',
+         'REF.CAT'              : 'VG1_SSA_RSS_REF.CAT',
+         'TARGET.CAT'           : 'VG_TITAN_TARGET.CAT'})),
+    ('.*/VG2_9065/CATALOG/CATINFO.TXT', 0,
+      translator.TranslatorByDict(
+        {'MISSION.CAT'          : 'VG_MISSION.CAT',
+         'INSTHOST.CAT'         : 'VG2_INST_HOST.CAT',
+         'INST.CAT'             : 'VG2_RSS_INST.CAT',
+         'DS.CAT'               : 'VG2_S_RSS_DS.CAT',
+         'PERSON.CAT'           : 'VG_RSS_PERSON.CAT',
+         'REF.CAT'              : 'VG2_S_RSS_REF.CAT',
+         'TARGET.CAT'           : 'VG_SAT_TARGET.CAT'})),
+
+    # VGIRIS
     ('.*/VGIRIS_0001/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'JUPITER_ASCII.FMT'    : 'DATA/JUPITER_VG1/JUPITER_ASCII.FMT',
@@ -327,46 +449,8 @@ REPAIRS = translator.TranslatorByRegex([
          'SATURN_MSB.FMT'       : 'SATURN_VG1/SATURN_MSB.FMT',
          'VGnINST.CAT'          : '../CATALOG/VG1INST.CAT',
          'VGnHOST.CAT'          : '../CATALOG/VG1HOST.CAT'})),
-    ('.*/VG_2001/.*/VG2_SAT\.LBL', 0,
-      translator.TranslatorByDict(
-        {'IRIS_ROWFMT.FMT'      : '../JUPITER/IRISHEDR.FMT'})),
-    ('.*/VG_2001/AAREADME\.TXT', 0,
-      translator.TranslatorByDict(
-        {'IRISHEDR.FMT'         : 'JUPITER/IRISHEDR.FMT',
-         'IRISTRGP.FMT'         : 'JUPITER/CALIB/IRISTRGP.FMT'})),
-    ('.*/VG.*/CATALOG/CATINFO\.TXT', 0,
-      translator.TranslatorByDict(
-        {'VGnNINST.CAT'         : 'VG1NINST.CAT',
-         'VGnHOST.CAT'          : 'VG1HOST.CAT'})),
-    ('.*/VG_28[0-9]{2}/.*INFO\.TXT', 0,
-      translator.TranslatorByDict(
-        {'RS1SINST.CAT'         : 'VG1SINST.CAT',
-         'RS2UINST.CAT'         : 'VG2UINST.CAT'})),
-    ('.*/VG_28xx/VG_2801/CALIB/PS2C01\.LBL', 0,
-      translator.TranslatorByDict(
-        {'PS1C01.TAB'           : 'PS2C01.TAB'})),
-    ('.*/VG_28xx/VG_2801/JITTER/PS1J01\.LBL', 0,
-      translator.TranslatorByDict(
-        {'PS1J02.TAB'           : 'PS1J01.TAB'})),
-    ('.*/VG_28xx/VG_2801/JITTER/PU2J02\.LBL', 0,
-      translator.TranslatorByDict(
-        {'PU2J01.TAB'           : 'PU2J02.TAB'})),
-    ('.*/VG_280./.*/L3GUIDE\.TXT', 0,
-      translator.TranslatorByDict(
-        {'RTLMTAB.FMT'          : ''})),
-    ('.*/VG_2802/EDITDATA/DATAINFO\.TXT', 0,
-      translator.TranslatorByDict(
-        {'INST.CAT'             : '../CATALOG/VG1INST.CAT'})),
-    ('.*/VG_2802/EDITDATA/US3D01P\.LBL', 0,
-      translator.TranslatorByDict(
-        {'US3D01I.DAT'          : 'US3D01P.DAT'})),
-    ('.*/VG_2802/SORCDATA/DATAINFO\.TXT', 0,
-      translator.TranslatorByDict(
-        {'BETAPER.VOY'          : 'BETPER.VOY',
-         'BETAPER.LBL'          : 'BETPER.LBL'})),
-    ('.*/VG_2803.*/RS.R1BFV\.LBL', 0,
-      translator.TranslatorByDict(
-        {'RS_R1BFT.FMT'         : 'RS_R1BFV.FMT'})),
+
+    # VGISS
     ('.*/VGISS.*/BROWSE/C34801XX/C3480139_.*\.LBL', 0,
       translator.TranslatorByDict(
         {'C3480140_CALIB.JPG'   : 'C3480139_CALIB.JPG',
@@ -379,9 +463,6 @@ REPAIRS = translator.TranslatorByRegex([
          'C4389209_CLEANED.JPG' : 'C4389208_CLEANED.JPG',
          'C4389209_GEOMED.JPG'  : 'C4389208_GEOMED.JPG',
          'C4389209_RAW.JPG'     : 'C4389208_RAW.JPG'})),
-    ('.*/metadata/COVIMS.*/.*supplemental_index.lbl', 0,
-      translator.TranslatorByDict(
-        {'dpsis.txt': '../../../volumes/COVIMS_0xxx/COVIMS_0001/document/dpsis.txt'})),
 ])
 
 KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
@@ -420,6 +501,8 @@ KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
     (r'.*/VG.*/VG..NESR\.DAT',                              0,    'missing'),
     (r'.*/VG_0xxx.*/CUMINDEX.TAB',                          0,    'missing'),
     (r'.*/VG_0xxx.*/SOFTWARE/.*',                           0,    'missing'),
+    (r'.*/VG._9xxx.*/SOFTWARE/.*',                          0,    'missing'),
+    (r'.*/VG2_9065/BROWSE/C0SR01AA.LOG',                    0,    'missing'),
 
 # These files have internal PDS3 labels, so these are not errors
     (r'.*/COISS_3xxx.*\.IMG',                               0,    'unneeded'),
@@ -428,14 +511,26 @@ KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
     (r'.*/VG_0xxx.*/(AAREADME.VMS|VTOC.SYS|IMGINDEX.DBF)',  0,    'unneeded'),
 ])
 
-# Regular expressions for filenames embedded in text files
-LINK_REGEX = re.compile(r'(?:|.*[^-@\w\.])' +
-                        r'(\w[-A-Z0-9_]+\.[A-Z]\w{0,3})(?!\w|\.|-)',
-                        re.I)
-
+# Match pattern for any file name, but possibly things that are not file names
 PATTERN = r'\'?\"?(\w[-A-Z0-9_]*\.[-A-Z0-9_.]+)\'?\"?'
+
+# Match pattern for the file name in anything of the form "keyword = filename"
 TARGET_REGEX1 = re.compile(r'^ *\^?\w+ *= *\(?\{? *' + PATTERN, re.I)
+
+# Match pattern for a file name on a line by itself
 TARGET_REGEX2 = re.compile(r'^ *,? *' + PATTERN, re.I)
+
+# Match pattern for a file name embedded in a text file. It must have a period
+# and 1-4 suffix characters, the first of which is a letter.
+LINK_REGEX = re.compile(r'(?:|.*[^-@\w\.])' +
+        r'(\w[-A-Z0-9_]+\.[A-Z]\w{0,3})(?!\w|\.|-)', re.I)
+
+# Match patterns with one or two directory paths in front
+PATH1_REGEX = re.compile(r'(?:|.*[^-@\w\.])' +
+        r'(\w[A-Z0-9_]+/\w[-A-Z0-9_]+\.[A-Z]\w{0,3})(?!\w|\.|-)', re.I)
+PATH2_REGEX = re.compile(r'(?:|.*[^-@\w\.])' +
+        r'(\w[A-Z0-9_]+/\w[A-Z0-9_]+/\w[-A-Z0-9_]+\.[A-Z]\w{0,3})(?!\w|\.|-)',
+        re.I)
 
 EXTS_WO_LABELS = set(['.LBL', '.CAT', '.TXT', '.FMT', '.SFD'])
 
@@ -446,7 +541,7 @@ class LinkInfo(object):
     """
 
     def __init__(self, recno, linkname, is_target):
-    
+
         self.recno = recno          # record number
         self.linktext = linkname    # substring within this record that looks
                                     # like a link.
@@ -456,6 +551,13 @@ class LinkInfo(object):
                                     # might be a target of a label file
         self.target = ''            # abspath to target of link, if any.
                                     # If not blank, this file must exist.
+
+    def remove_path(self):
+        """Remove any leading directory path from this LinkInfo object."""
+
+        if '/' in self.linktext:
+            self.linktext = self.linktext.rpartition('/')[2]
+            self.linkname = self.linktext
 
     def __str__(self):
         return ('%d %s %s %s' % (self.recno, self.linktext, str(self.is_target),
@@ -534,7 +636,7 @@ def generate_links(dirpath, limits={'info':-1, 'debug':500, 'ds_store':10},
 
             # Get list of info for all possible linked filenames
             abspath = os.path.join(root, basename)
-            logger.debug('REVIEWING', abspath)
+            logger.debug('*** REVIEWING', abspath)
 
             linkinfo_list = read_links(abspath, logger=logger)
 
@@ -543,7 +645,15 @@ def generate_links(dirpath, limits={'info':-1, 'debug':500, 'ds_store':10},
             for info in linkinfo_list:
                 for repair in repairs:
                     linkname = repair.first(info.linktext)
-                    if linkname is None: continue   # no repair found
+                    if linkname is None:
+
+                        # Attempt repair with leading directory path removed
+                        if '/' in info.linktext:
+                            info.remove_path()
+                            linkname = repair.first(info.linktext)
+
+                        if linkname is None:
+                            continue            # no repair found
 
                     info.linkname = linkname
                     if linkname == '':
@@ -774,13 +884,19 @@ def read_links(abspath, logger=None):
     for recno in range(len(recs)):
         rec = recs[recno]
         while True:
+
+            # Search for the target of a link
             is_target = True
             matchobj = TARGET_REGEX1.match(rec) or TARGET_REGEX2.match(rec)
 
+            # If not found, search for any other referenced file name or path
             if matchobj is None:
                 is_target = False
-                matchobj = LINK_REGEX.match(rec)
-                if matchobj is None: break
+                matchobj = (PATH2_REGEX.match(rec) or
+                            PATH1_REGEX.match(rec) or
+                            LINK_REGEX.match(rec))
+                if matchobj is None:
+                    break
 
             linktext = matchobj.group(1)
             links.append(LinkInfo(recno, linktext, is_target))

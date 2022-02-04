@@ -55,11 +55,21 @@ TESTS = translator.TranslatorByRegex([
     ('.*/COVIMS_8xxx/.*',           0, ['covims_8xxx']),
     ('.*/EBROCC_xxx/.*',            0, ['ebrocc_xxxx', 'metadata',
                                         'supplemental', 'profile']),
-    ('.*/GO_0xxx/.*',               0, ['go', 'metadata', 'cumindex999']),
-    ('.*/GO_0xxx_v1/.*',            0, ['go', 'metadata', 'cumindex999']),
+    ('.*/GO_0xxx/GO_000[2-9].*',    0, ['metadata', 'cumindex999',
+                                        'go_previews2', 'go_previews3',
+                                        'go_previews4', 'go_previews5']),
+    ('.*/GO_0xxx/GO_00[12].*',      0, ['metadata', 'cumindex999',
+                                        'go_previews2', 'go_previews3',
+                                        'go_previews4', 'go_previews5']),
+    ('.*/GO_0xxx_v1/GO_000[2-9].*', 0, ['go_previews2', 'go_previews3',
+                                        'go_previews4', 'go_previews5']),
+    ('.*/GO_0xxx_v1/GO_00[12]..*',  0, ['go_previews2', 'go_previews3',
+                                        'go_previews4', 'go_previews5']),
+    ('.*/JNCJIR_[12]xxx/.*',        0, ['metadata', 'cumindex999']),
+    ('.*/JNCJNC_0xxx/.*',           0, ['metadata', 'cumindex999']),
     ('.*/HST.x_xxxx/.*',            0, ['hst', 'metadata', 'cumindex9_9999']),
     ('.*/NH..(LO|MV)_xxxx/.*',      0, ['nh', 'metadata', 'supplemental']),
-    ('.*/NH..LO_xxxx/.*',           0, ['inventory', 'rings', 'moons']),
+    ('.*/NH..LO_xxxx/NH[^K].*',     0, ['inventory', 'rings', 'moons']),
     ('.*/NH(JU|LA)MV_xxxx/.*',      0, ['nhbrowse_vx', 'jupiter']),
     ('.*/NH(PC|PE)MV_xxxx/.*',      0, ['nhbrowse', 'pluto']),
     ('.*/RPX_xxxx/.*',              0, ['metadata']),
@@ -684,25 +694,47 @@ _ = PdsDependency(
 
 # For GO_xxxx
 _ = PdsDependency(
-    'Previews of every GO image file',
-    'volumes/$/$/*/*/*.IMG',
-    r'volumes/(.*)\.IMG',
-    [r'previews/\1_thumb.jpg',
-     r'previews/\1_small.jpg',
-     r'previews/\1_med.jpg',
-     r'previews/\1_full.jpg'],
-    suite='go', newer=True,
-)
-
-_ = PdsDependency(
-    'Previews of every GO image file',
+    'Previews of every GO image file, depth 2',
     'volumes/$/$/*/*.IMG',
     r'volumes/(.*)\.IMG',
     [r'previews/\1_thumb.jpg',
      r'previews/\1_small.jpg',
      r'previews/\1_med.jpg',
      r'previews/\1_full.jpg'],
-    suite='go', newer=True,
+    suite='go_previews2', newer=True,
+)
+
+_ = PdsDependency(
+    'Previews of every GO image file, depth 3',
+    'volumes/$/$/*/*.IMG',
+    r'volumes/(.*)\.IMG',
+    [r'previews/\1_thumb.jpg',
+     r'previews/\1_small.jpg',
+     r'previews/\1_med.jpg',
+     r'previews/\1_full.jpg'],
+    suite='go_previews3', newer=True,
+)
+
+_ = PdsDependency(
+    'Previews of every GO image file, depth 4',
+    'volumes/$/$/*/*/*.IMG',
+    r'volumes/(.*)\.IMG',
+    [r'previews/\1_thumb.jpg',
+     r'previews/\1_small.jpg',
+     r'previews/\1_med.jpg',
+     r'previews/\1_full.jpg'],
+    suite='go_previews4', newer=True,
+)
+
+_ = PdsDependency(
+    'Previews of every GO image file, depth 5',
+    'volumes/$/$/*/*/*/*.IMG',
+    r'volumes/(.*)\.IMG',
+    [r'previews/\1_thumb.jpg',
+     r'previews/\1_small.jpg',
+     r'previews/\1_med.jpg',
+     r'previews/\1_full.jpg'],
+    suite='go_previews5', newer=True,
 )
 
 # For HST*x_xxxx
