@@ -704,5 +704,7 @@ else:
             send_email(args.error_email, ERROR_REPORT_SUBJ,
                                               '\n'.join(full_message))
 
-    sys.exit(status)
+#     sys.exit(status)
+    sys.exit(0)         # In batch mode, don't cancel the launchdaemon.
+                        # Does this help??
 
