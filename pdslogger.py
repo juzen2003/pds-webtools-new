@@ -530,7 +530,8 @@ class PdsLogger(object):
         # Log message if necessary
         if depth > 0:
             limit = self.limits_by_name[-1][name]
-            if limit < 0: force = True
+            if limit < 0:
+                force = True
         else:
             force = True
 
@@ -720,11 +721,12 @@ class PdsLogger(object):
         """Log an Exception or KeyboardInterrupt."""
 
         if type(e) == KeyboardInterrupt:
-            self.logger.fatal('Interrupted by user')
+            self.fatal('**** Interrupted by user')
             raise e
 
         (etype, value, tb) = sys.exc_info()
-        if etype is None: return        # Exception was already handled
+        if etype is None:
+            return                      # Exception was already handled
 
         self.log('exception', '**** ' + etype.__name__ + ' ' + str(value),
                               abspath, force=True)
