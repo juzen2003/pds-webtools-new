@@ -143,7 +143,7 @@ REPAIRS = translator.TranslatorByRegex([
          'theoretical_basis.pdf': '../../COISS_0xxx/COISS_0011/document/theoretical_basis.pdf',
          'theoretical_basis.lbl': '../../COISS_0xxx/COISS_0011/document/theoretical_basis.lbl',
          'theoretical_basis.ps' : '../../COISS_0xxx/COISS_0011/document/theoretical_basis.pdf',
-         'cisscal.tar.gz'       : '../../COISS_0xxx/COISS_0011/extras/cisscal.tar.gz.'})),
+         'cisscal.tar.gz'       : '../../COISS_0xxx/COISS_0011/extras/cisscal.tar.gz'})),
     ('.*/COISS_[012].*/archsis\.txt', 0,
       translator.TranslatorByDict(
         {'Calds.CAT'            : '../../../COISS_0xxx/COISS_0001/catalog/calds.cat',
@@ -169,6 +169,12 @@ REPAIRS = translator.TranslatorByRegex([
       translator.TranslatorByDict(
         {'SPECDS.CAT'           : 'SSPECDS.CAT',
          'CUBEDS.CAT'           : 'SCUBEDS.CAT'})),
+    ('.*/COUVIS_0.*/SOFTWARE/READERS/READERS_README.TXT', 0,
+      translator.TranslatorByDict(
+        {'CATALOG/CUBEDS.CAT'   : '../../CATALOG/SCUBEDS.CAT'})),
+    ('.*/COUVIS_0.*/SOFTWARE/READERS/OLD.*/READERS_README.TXT', 0,
+      translator.TranslatorByDict(
+        {'CATALOG/CUBEDS.CAT'   : '../../../CATALOG/SCUBEDS.CAT'})),
     ('.*/COUVIS_8xxx_v2.*/voldesc\.cat', 0,
       translator.TranslatorByDict(
         {'UVISINST.CAT'         : 'catalog/inst.cat',
@@ -311,6 +317,18 @@ REPAIRS = translator.TranslatorByRegex([
         {'personel.cat'         : 'CATALOG/PERSONNEL.CAT',
          'spiceds.cat'          : 'CATALOG/SPICE_INST.CAT'})),
 
+    # NHxxMV/NHxxLO
+    ('.*/NHxx.._xxxx_v1/NH(JU|LA).*/aareadme\.txt', 0,
+      translator.TranslatorByDict(
+        {'PAYLOAD_SSR.LBL'      : 'document/payload_ssr/payload_ssr.lbl',
+         'RALPH_SSR.LBL'        : 'document/ralph_ssr/ralph_ssr.lbl',
+         'SOC_INST_ICD.LBL'     : 'document/soc_inst_icd/soc_inst_icd.lbl'})),
+    ('.*/NHxx.._xxxx_v1/NH(JU|LA).*/AAREADME\.TXT', 0,
+      translator.TranslatorByDict(
+        {'PAYLOAD_SSR.LBL'      : 'DOCUMENT/PAYLOAD_SSR/PAYLOAD_SSR.LBL',
+         'RALPH_SSR.LBL'        : 'DOCUMENT/RALPH_SSR/RALPH_SSR.LBL',
+         'SOC_INST_ICD.LBL'     : 'DOCUMENT/SOC_INST_ICD/SOC_INST_ICD.LBL'})),
+
     # RPX
     ('.*/RPX_0101.*/R_HARRIS\.LBL', 0,
       translator.TranslatorByDict(
@@ -370,7 +388,6 @@ REPAIRS = translator.TranslatorByRegex([
     ('.*/VG_2803.*/RS.R1BFV\.LBL', 0,
       translator.TranslatorByDict(
         {'RS_R1BFT.FMT'         : 'RS_R1BFV.FMT'})),
-
 
     # VGn_9xxx (RSS)
     ('.*/VG[12]_9.*/CHECKSUMS.TXT', 0,  # any file referenced in CHECKSUMS.TXT
@@ -512,7 +529,7 @@ KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
 ])
 
 # Match pattern for any file name, but possibly things that are not file names
-PATTERN = r'\'?\"?(\w[-A-Z0-9_]*\.[-A-Z0-9_.]+)\'?\"?'
+PATTERN = r'\'?\"?([A-Z0-9][-\w]*\.[A-Z0-9][-\w\.]*)\'?\"?'
 
 # Match pattern for the file name in anything of the form "keyword = filename"
 TARGET_REGEX1 = re.compile(r'^ *\^?\w+ *= *\(?\{? *' + PATTERN, re.I)
@@ -520,17 +537,14 @@ TARGET_REGEX1 = re.compile(r'^ *\^?\w+ *= *\(?\{? *' + PATTERN, re.I)
 # Match pattern for a file name on a line by itself
 TARGET_REGEX2 = re.compile(r'^ *,? *' + PATTERN, re.I)
 
-# Match pattern for a file name embedded in a text file. It must have a period
-# and 1-4 suffix characters, the first of which is a letter.
-LINK_REGEX = re.compile(r'(?:|.*[^-@\w\.])' +
-        r'(\w[-A-Z0-9_]+\.[A-Z]\w{0,3})(?!\w|\.|-)', re.I)
+# Match pattern for one or more file names embedded in a row of a text file.
+# A file name begins with a letter, followed by any number of letters, digits,
+# underscore or dash. Unless the name is "Makefile", it must have one or more
+# extensions, each containing one or more characters. It can also have any
+# number of directory prefixes separate by slashes.
 
-# Match patterns with one or two directory paths in front
-PATH1_REGEX = re.compile(r'(?:|.*[^-@\w\.])' +
-        r'(\w[A-Z0-9_]+/\w[-A-Z0-9_]+\.[A-Z]\w{0,3})(?!\w|\.|-)', re.I)
-PATH2_REGEX = re.compile(r'(?:|.*[^-@\w\.])' +
-        r'(\w[A-Z0-9_]+/\w[A-Z0-9_]+/\w[-A-Z0-9_]+\.[A-Z]\w{0,3})(?!\w|\.|-)',
-        re.I)
+LINK_REGEX = re.compile(r'(?:|.*?[^-/@\w\.])/?(([A-Z0-9][-\w]+/)*' +
+                        r'(makefile\.?|[A-Z0-9][\w-]*(\.[\w-]+)+))', re.I)
 
 EXTS_WO_LABELS = set(['.LBL', '.CAT', '.TXT', '.FMT', '.SFD'])
 
@@ -725,7 +739,14 @@ def generate_links(dirpath, limits={'info':-1, 'debug':500, 'ds_store':10},
                         pass
 
                     # Search non-locally
-                    nonlocal_target = locate_nonlocal_link(abspath, info.linkname)
+                    if '/' in info.linkname:
+                        nonlocal_target = locate_link_with_path(abspath,
+                                                                info.linkname)
+                    else:
+                        nonlocal_target = locate_nonlocal_link(abspath,
+                                                               info.linkname)
+
+                    # Report the outcome
                     if nonlocal_target:
                         logger.debug('Located "%s"' % info.linkname,
                                      nonlocal_target)
@@ -878,25 +899,37 @@ def read_links(abspath, logger=None):
     with open(abspath, 'r', encoding='latin-1') as f:
         recs = f.readlines()
 
-    basename_uc = os.path.basename(abspath).upper()
-
     links = []
-    for recno in range(len(recs)):
-        rec = recs[recno]
+    multiple_targets = False
+    for recno,rec in enumerate(recs):
+
         while True:
 
             # Search for the target of a link
             is_target = True
-            matchobj = TARGET_REGEX1.match(rec) or TARGET_REGEX2.match(rec)
+            matchobj = TARGET_REGEX1.match(rec)
+            if matchobj:
+                subrec = rec[:matchobj.end()]
+                if '(' in subrec or '{' in subrec:
+                    multiple_targets = True
+
+            # ... on the same line or the next line
+            elif multiple_targets:
+                matchobj = TARGET_REGEX2.match(rec)
 
             # If not found, search for any other referenced file name or path
-            if matchobj is None:
+            if not matchobj:
+                if ')' in rec or '}' in rec:
+                    multiple_targets = False
+
                 is_target = False
-                matchobj = (PATH2_REGEX.match(rec) or
-                            PATH1_REGEX.match(rec) or
-                            LINK_REGEX.match(rec))
-                if matchobj is None:
-                    break
+                matchobj = LINK_REGEX.match(rec)
+                if matchobj:
+                    multiple_targets = False
+
+            # No more matches in this record
+            if not matchobj:
+                break
 
             linktext = matchobj.group(1)
             links.append(LinkInfo(recno, linktext, is_target))
@@ -944,6 +977,31 @@ def locate_nonlocal_link(abspath, filename):
         parts = parts[:-1]
 
     return ''
+
+def locate_link_with_path(abspath, filename):
+    """Return the absolute path associated with a link that contains a leading
+    directory path.
+    """
+
+    parts = filename.split('/')
+    link_path = locate_nonlocal_link(abspath, parts[0])
+    if not link_path:
+        return ''
+
+    for part in parts[1:]:
+        basenames = os.listdir(link_path)
+        if part in basenames:
+            link_path += '/' + part
+        else:
+            basenames_uc = [b.upper() for b in basenames]
+            part_uc = part.upper()
+            if part_uc in basenames_uc:
+                k = basenames_uc.index(part_uc)
+                link_path += '/' + basenames[k]
+            else:
+                return ''
+
+    return link_path
 
 ################################################################################
 
