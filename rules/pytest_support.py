@@ -114,3 +114,19 @@ def opus_products_test(input_path, expected):
             assert path in expected[key], f'Extra file under key {key}: {path}'
         for path in expected[key]:
             assert path in result_paths, f'Missing file under key {key}: {path}'
+
+def versions_test(input_path, expected):
+    target_pdsfile = instantiate_target_pdsfile(input_path)
+    res = target_pdsfile.all_versions()
+    keys = list(res.keys())
+    keys.sort()
+    keys.reverse()
+    for key in keys:
+        assert key in expected, f'"{key}" not expected'
+        assert res[key].logical_path == expected[key], f'value mismatch at "{key}": {expected[key]}'
+    keys = list(expected.keys())
+    keys.sort()
+    keys.reverse()
+    for key in keys:
+        assert key in res, f'"{key}" missing'
+

@@ -83,20 +83,37 @@ associations_to_metadata = translator.TranslatorByRegex([
 # _v1 had upper case file names and used "DATA/EASYDATA" in place of "data"
 # _v1 data files had an underscore after "TAU".
 # Case conversions are inconsistent, sometimes mixed case file names are unchanged
+
 versions = translator.TranslatorByRegex([
-    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(.*_TAU)_?(.*)', 0,
-            [r'volumes/COUVIS_8xxx*/\2/data/\4\5',
-             r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA/\4_\5',
+
+    # Associate erroneous file names found in early versions
+    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/COUVIS_8001/data/UVIS_HSP_(2005_139|2009_062)_THEHYA_E_TAU(.*)', 0,
+            [r'volumes/COUVIS_8xxx*/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_TAU\3',
+             r'volumes/COUVIS_8xxx*/COUVIS_8001/data/UVIS_HSP_2005_139_THEHYA_E_TAU\3',
             ]),
-    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)', 0,
-            [r'volumes/COUVIS_8xxx*/\2/data',
-             r'volumes/COUVIS_8xxx_v1/\2/DATA/EASYDATA',
+    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/COUVIS_8001/data/UVIS_HSP_(2007_038|2008_026)_SAO205839_I_TAU(.*)', 0,
+            [r'volumes/COUVIS_8xxx*/COUVIS_8001/data/UVIS_HSP_2008_026_SAO205839_I_TAU\3',
+             r'volumes/COUVIS_8xxx*/COUVIS_8001/data/UVIS_HSP_2007_038_SAO205839_I_TAU\3',
             ]),
-    (r'volumes/COVIMS_8xxx(|_v[0-9\.]+)/(COVIMS_8...)/(\w+[^aA])(|/.*)', 0,   # don't match "data" directory
-            [r'volumes/COUVIS_8xxx*/\2/#LOWER#\3\4',
-             r'volumes/COUVIS_8xxx*/\2/#LOWER#\3#MIXED#\4',
-             r'volumes/COUVIS_8xxx_v1/\2/#UPPER#\3\4',
-             r'volumes/COUVIS_8xxx_v1/\2/#UPPER#\3#MIXED#\4',
+    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/COUVIS_8001/data/UVIS_HSP_2010_14[89]_LAMAQL_E_TAU(.*)', 0,
+            [r'volumes/COUVIS_8xxx*/COUVIS_8001/data/UVIS_HSP_2010_148_LAMAQL_E_TAU\2',
+             r'volumes/COUVIS_8xxx*/COUVIS_8001/data/UVIS_HSP_2010_149_LAMAQL_E_TAU\2',
+            ]),
+
+    # General corrections...
+    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/COUVIS_8001/(data|DATA/EASYDATA)/(.*_TAU)_?(.*)', 0,
+            [r'volumes/COUVIS_8xxx*/COUVIS_8001/data/\3\4',
+             r'volumes/COUVIS_8xxx_v1/COUVIS_8001/DATA/EASYDATA/\3_\4',
+            ]),
+    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/COUVIS_8001/(data|DATA/EASYDATA)', 0,
+            [r'volumes/COUVIS_8xxx*/COUVIS_8001/data',
+             r'volumes/COUVIS_8xxx_v1/COUVIS_8001/DATA/EASYDATA',
+            ]),
+    (r'volumes/COVIMS_8xxx(|_v[0-9\.]+)/COUVIS_8001/(\w+[^aA])(|/.*)', 0,   # don't match "data" directory
+            [r'volumes/COUVIS_8xxx*/COUVIS_8001/#LOWER#\2\3',
+             r'volumes/COUVIS_8xxx*/COUVIS_8001/#LOWER#\2#MIXED#\3',
+             r'volumes/COUVIS_8xxx_v1/COUVIS_8001/#UPPER#\2\3',
+             r'volumes/COUVIS_8xxx_v1/COUVIS_8001/#UPPER#\2#MIXED#\3',
             ]),
 ])
 
@@ -115,6 +132,9 @@ view_options = translator.TranslatorByRegex([
 
 split_rules = translator.TranslatorByRegex([
     (r'(UVIS_HSP_...._..._\w+_[IE])_(\w+)\.(.*)', 0, (r'\1', r'_\2', r'.\3')),
+
+    # Group atlas files and their label
+    (r'(.*atlas.*)\.(pdf|lbl)', re.I, ('atlas', r'\1', r'.\2')),
 ])
 
 ####################################################################################################################################
@@ -358,5 +378,39 @@ def test_opus_id_to_primary_logical_path():
                 for abspath in pdsf.associated_abspaths(category):
                     if '.' not in os.path.basename(abspath): continue   # skip dirs
                     assert abspath in opus_id_abspaths
+
+@pytest.mark.parametrize(
+    'input_path,expected',
+    [
+        ('volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_TAU10KM.LBL',
+            {999999: 'volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_TAU10KM.LBL',
+              20100: 'volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_139_THEHYA_E_TAU10KM.LBL',
+              20000: 'volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_139_THEHYA_E_TAU10KM.LBL'
+            }),
+        ('volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2007_038_SAO205839_I_TAU10KM.TAB',
+            {999999: 'volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2008_026_SAO205839_I_TAU10KM.TAB',
+              20100: 'volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2007_038_SAO205839_I_TAU10KM.TAB',
+              20000: 'volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2007_038_SAO205839_I_TAU10KM.TAB',
+            }),
+        ('volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2010_149_LAMAQL_E_TAU01KM.TAB',
+            {999999: 'volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2010_149_LAMAQL_E_TAU01KM.TAB',
+              20100: 'volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2010_148_LAMAQL_E_TAU01KM.TAB',
+              20000: 'volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2010_148_LAMAQL_E_TAU01KM.TAB',
+            }),
+        ('volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_141_ALPVIR_E_TAU01KM.LBL',
+            {999999: 'volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_141_ALPVIR_E_TAU01KM.LBL',
+              20100: 'volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_141_ALPVIR_E_TAU01KM.LBL',
+              20000: 'volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_141_ALPVIR_E_TAU01KM.LBL',
+              10000: 'volumes/COUVIS_8xxx_v1/COUVIS_8001/DATA/EASYDATA/UVIS_HSP_2005_141_ALPVIR_E_TAU_01KM.LBL',
+            }),
+        ('volumes/COUVIS_8xxx_v1/COUVIS_8001/DATA/EASYDATA/UVIS_HSP_2005_141_ALPVIR_E_TAU_01KM.LBL',
+            {999999: 'volumes/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2005_141_ALPVIR_E_TAU01KM.LBL',
+              20100: 'volumes/COUVIS_8xxx_v2.1/COUVIS_8001/data/UVIS_HSP_2005_141_ALPVIR_E_TAU01KM.LBL',
+              20000: 'volumes/COUVIS_8xxx_v2.0/COUVIS_8001/data/UVIS_HSP_2005_141_ALPVIR_E_TAU01KM.LBL',
+              10000: 'volumes/COUVIS_8xxx_v1/COUVIS_8001/DATA/EASYDATA/UVIS_HSP_2005_141_ALPVIR_E_TAU_01KM.LBL',
+            }),
+    ])
+def test_versions(input_path, expected):
+    versions_test(input_path, expected)
 
 ####################################################################################################################################
