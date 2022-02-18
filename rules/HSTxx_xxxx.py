@@ -325,10 +325,6 @@ def test_opus_products(input_path, expected):
          [
          'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab/U2NO0403T',
          'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_hstfiles.tab/U2NO0403T',
-         'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
-         'metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_hstfiles.tab',
-         'metadata/HSTUx_xxxx/HSTU0_5167/',
-         'metadata/HSTUx_xxxx/HSTU0_5167',
          ]),
     ]
 )
@@ -341,6 +337,8 @@ def test_associated_abspaths(input_path, category, selection, flag, expected):
     result_paths += pdsfile.PdsFile.logicals_for_abspaths(res)
     for path in result_paths:
         assert path in expected
+    for path in expected:
+        assert path in result_paths
 
 
 def test_opus_id_to_primary_logical_path():

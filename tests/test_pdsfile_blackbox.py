@@ -11,8 +11,13 @@ import sys
 
 from tests.helper import *
 
-PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+try:
+    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+except KeyError:
+    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+
 PDS_PDSDATA_PATH = PDS_HOLDINGS_DIR[:PDS_HOLDINGS_DIR.index('holdings')]
+
 ################################################################################
 # Blackbox test for functions & properties in PdsFile class
 ################################################################################
@@ -37,6 +42,8 @@ class TestPdsFileBlackBox:
                 'EBROCC_xxxx': rules.EBROCC_xxxx.EBROCC_xxxx,
                 'GO_0xxx': rules.GO_0xxx.GO_0xxx,
                 'HSTxx_xxxx': rules.HSTxx_xxxx.HSTxx_xxxx,
+                'JNOJIR_xxxx': rules.JNOJIR_xxxx.JNOJIR_xxxx,
+                'JNOJNC_xxxx': rules.JNOJNC_xxxx.JNOJNC_xxxx,
                 'NHSP_xxxx': rules.NHSP_xxxx.NHSP_xxxx,
                 'NHxxxx_xxxx': rules.NHxxxx_xxxx.NHxxxx_xxxx,
                 'RES_xxxx': rules.RES_xxxx.RES_xxxx,
@@ -359,7 +366,7 @@ class TestPdsFileBlackBox:
         [
             ('volumes/HSTIx_xxxx/HSTI1_1556/DATA/VISIT_01/IB4W01I5Q.lbl',
              [
-                'HST WFC3 images of the Pluto system    2010-04-24 to 2010-09-06',
+                'HST WFC3 images of the Pluto system 2010-04-24 to 2010-09-06',
                 None
              ]),
             ('previews/GO_0xxx/GO_0017/J0/OPNAV/C0346405900R_med.jpg',
@@ -376,7 +383,8 @@ class TestPdsFileBlackBox:
     )
     def test__volume_info(self, input_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        assert target_pdsfile._volume_info[0] == expected[0]
+        # remove duplicated blanks before this comparison
+        assert ' '.join(target_pdsfile._volume_info[0].split()) == expected[0]
         assert target_pdsfile._volume_info[1] == expected[1]
 
     @pytest.mark.parametrize(

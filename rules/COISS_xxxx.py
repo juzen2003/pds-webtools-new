@@ -33,9 +33,6 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'volumes/COISS_0xxx.*/COISS_0011/extras',                  0, ('CISSCAL calibration software',   'CODE')),
     (r'volumes/COISS_0xxx.*/COISS_0011/extras/cisscal',          0, ('CISSCAL source code (IDL)',      'CODE')),
     (r'volumes/COISS_0xxx.*/COISS_0011/extras/cisscal\.tar\.gz', 0, ('CISSCAL source code (download)', 'TARBALL')),
-    (r'documents/COISS_xxxx/CISSCAL-Users-Guide.pdf',            0, ("CISSCAL User's Guide",           'INFO')),
-    (r'documents/COISS_xxxx/VICAR-File-Format.pdf',              0, ('VICAR file format description',  'INFO')),
-    (r'documents/COISS_xxxx/VICAR-Home-Page-at-JPL.link',        0, ('External website link',          'LINK')),
 ])
 
 ####################################################################################################################################
@@ -87,7 +84,7 @@ associations_to_volumes = translator.TranslatorByRegex([
             r'volumes/\1/data'),
     (r'.*/(COISS_[12])999.*', 0,
             r'volumes/\1xxx'),
-    (r'documents/COISS_xxxx.*', 0,
+    (r'documents/COISS_0xxx.*', 0,
             [r'volumes/COISS_0xxx',
              r'volumes/COISS_1xxx',
              r'volumes/COISS_2xxx',
@@ -187,14 +184,10 @@ associations_to_metadata = translator.TranslatorByRegex([
 ])
 
 associations_to_documents = translator.TranslatorByRegex([
-    (r'(volumes|calibrated)/COISS_[012]xxx/COISS_.....*', 0,
-            [r'volumes/COISS_0xxx/COISS_0011/document/report',
-             r'volumes/COISS_0xxx/COISS_0011/document/iss_data_user_guide*.pdf',
-             r'volumes/COISS_0xxx/COISS_0011/extras',
-             r'documents/COISS_xxxx/*',
-            ]),
-    (r'volumes/COISS_[012]xxx.*', 0,
-            r'documents/COISS_xxxx/*'),
+    (r'(volumes|calibrated)/COISS_[0-3]xxx(|_[\w\.]+)(|/COISS_[0-3]\d\d\d)', 0,
+            r'documents/COISS_0xxx/*'),
+    (r'(volumes|calibrated)/COISS_[0-3]xxx.*/COISS_[0-3]\d\d\d/.+', 0,
+            r'documents/COISS_0xxx'),
 ])
 
 ####################################################################################################################################

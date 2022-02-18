@@ -177,6 +177,7 @@ class PdsGroupTable(object):
 
     def sort_in_groups(self, labels_after=None, dirs_first=None, dirs_last=None,
                              info_first=None):
+        """Within each row of the table, sort the PdsFiles in the PdsGroup."""
 
         for group in self.groups:
             group.sort(labels_after=labels_after,
@@ -186,6 +187,7 @@ class PdsGroupTable(object):
 
     def sort_groups(self, labels_after=None, dirs_first=None, dirs_last=None,
                           info_first=None):
+        """Within each row of the table, sort the PdsFiles in the PdsGroup."""
 
         first_basenames = []
         group_dict = {}

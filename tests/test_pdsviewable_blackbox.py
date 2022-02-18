@@ -5,7 +5,10 @@ import pytest
 
 from tests.helper import instantiate_target_pdsfile
 
-PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+try:
+    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+except KeyError:
+    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 ################################################################################
 # Blackbox test for functions & properties in PdsViewSet class

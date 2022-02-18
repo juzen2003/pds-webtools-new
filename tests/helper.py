@@ -3,7 +3,10 @@ import pdsfile
 import pdsgroup
 import pdsgrouptable
 
-PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+try:
+    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+except KeyError:
+    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 def instantiate_target_pdsfile(path, is_abspath=True):
     if is_abspath:
@@ -60,5 +63,6 @@ def opus_products_test(input_path, expected):
             msg = f'{pdsf.logical_path} does not exist under {key}'
             assert pdsf.abspath in expected[key], msg
             all_files_abspath.append(pdsf.abspath)
-        msg = f'Files does not match under {key}'
+        msg = f'File does not match under {key}'
         assert all_files_abspath.sort() == expected[key].sort(), msg
+

@@ -6,8 +6,13 @@ import re
 
 from tests.helper import *
 
-PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+try:
+    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+except KeyError:
+    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+
 PDS_PDSDATA_PATH = PDS_HOLDINGS_DIR[:PDS_HOLDINGS_DIR.index('holdings')]
+
 ################################################################################
 # Whitebox test for functions & properties in PdsFile class
 ################################################################################
@@ -226,9 +231,9 @@ class TestPdsFileWhiteBox:
         'input_path,expected',
         [
             ('diagrams/COCIRS_6xxx/COCIRS_6004',
-             'Diagrams for Cassini CIRS data, reformatted, 2010-04-01 to 2010-04-30 (SC clock 1648773882-1651332653)'),
+             'Diagrams for Cassini CIRS data, re-formatted, 2010-04-01 to 2010-04-30 (SC clock 1648773882-1651332653)'),
             ('calibrated/COISS_1xxx/COISS_1001',
-             'Cassini ISS Jupiter calibrated images 1999-01-09 to 2000-10-31 (SC clock 1294562621-1351672562)')
+             'RMS-curated ISS Jupiter calibrated images 1999-01-09 to 2000-10-31 (SC clock 1294562621-1351672562)')
         ]
     )
     def test_description1(self, input_path, expected):

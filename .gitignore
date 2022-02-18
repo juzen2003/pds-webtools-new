@@ -5,6 +5,6 @@ env
 p3venv*
 .DS_Store
 
-.coverage
+.coverage*
 htmlcov
 opus_products_from_opus_id.py

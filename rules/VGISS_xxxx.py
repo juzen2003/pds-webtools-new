@@ -100,7 +100,7 @@ associations_to_volumes = translator.TranslatorByRegex([
              r'volumes/\1/BROWSE'
             ]),
     (r'.*/(VGISS_.)999.*', 0, r'volumes/\1xxx'),
-    (r'documents/VGISS_xxxx.*', 0,
+    (r'documents/VGISS_.xxx.*', 0,
             [r'volumes/VGISS_5xxx',
              r'volumes/VGISS_6xxx',
              r'volumes/VGISS_7xxx',
@@ -326,7 +326,7 @@ associations_to_metadata = translator.TranslatorByRegex([
 
 associations_to_documents = translator.TranslatorByRegex([
     (r'volumes/VGISS_.xxx.*', 0,
-            r'documents/VGISS_xxxx/*'),
+            r'documents/VGISS_5xxx/*'),
     (r'(volumes/VGISS_.xxx/VGISS_....).*', 0,
             [r'\1/DOCUMENT/TUTORIAL.TXT',
              r'\1/DOCUMENT/PROCESSING.TXT',

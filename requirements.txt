@@ -7,3 +7,5 @@ numpy
 pylibmc
 app
 pytest
+psutil
+ipython

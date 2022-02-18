@@ -8,9 +8,6 @@ import fnmatch
 import pdsfile
 import pdslogger
 
-# Python 2 and 3 compatible, byte strings and unicode
-def _isstr(x): return isinstance(x, ("".__class__, u"".__class__))
-
 # Useful filters
 def dirs_only(parent_pdsfile, basename):
     if parent_pdsfile is None: return True
@@ -45,7 +42,7 @@ class PdsDirIterator(object):
             self.sign = 1
 
         fnmatch_patterns = pdsf.NEIGHBORS.first(pdsf.logical_path)
-        if _isstr(fnmatch_patterns):
+        if isinstance(fnmatch_patterns, str):
             fnmatch_patterns = (fnmatch_patterns,)
 
         if fnmatch_patterns:
@@ -121,8 +118,9 @@ class PdsDirIterator(object):
 
         # Try to return the next neighbor
         self.neighbor_index += self.sign
-        if self.neighbor_index < 0: raise StopIteration
-        if self.neighbor_index >= len(self.neighbors): raise StopIteration
+        if (self.neighbor_index < 0 or
+            self.neighbor_index >= len(self.neighbors)):
+                raise StopIteration
 
         # If we get this far, figure out what to return
 
@@ -157,8 +155,8 @@ class PdsFileIterator(object):
     def __init__(self, pdsf, sign=1, pattern=None, exclude=None, filter=None,
                        logger=None):
 
-        parent = pdsf.parent()
-        self.dir_iterator = PdsDirIterator(parent, sign)
+        self.parent = pdsf.parent()
+        self.dir_iterator = PdsDirIterator(self.parent, sign, logger=logger)
 
         self.pattern = pattern
         self.exclude = exclude
@@ -166,15 +164,17 @@ class PdsFileIterator(object):
         self.sign = self.dir_iterator.sign
         self.current_logical_path = pdsf.logical_path
 
-        basenames = self._filter_names(parent, parent.childnames)
+        # the pattern applies to the basenam
+        basenames = self.parent.sort_basenames(self.parent.childnames)
+        basenames = self._filter_names(basenames)
         basenames_lc = [n.lower() for n in basenames]
 
         # If this object is missing, insert it into the list of siblings
         if pdsf.basename.lower() not in basenames_lc:
             basenames.append(pdsf.basename)
-            basenames = parent.sort_basenames(basenames)
+            basenames = self.parent.sort_basenames(basenames)
 
-        self.sibnames = parent.logicals_for_basenames(basenames)
+        self.sibnames = self.parent.logicals_for_basenames(basenames)
         self.sibnames_lc = [n.lower() for n in self.sibnames]
         self.logger = logger
 
@@ -197,7 +197,8 @@ class PdsFileIterator(object):
 
         return this
 
-    def _filter_names(self, parent, basenames):
+    def _filter_names(self, basenames):
+
         if self.pattern:
             basenames = [s for s in basenames
                          if fnmatch.fnmatch(s, self.pattern)]
@@ -205,7 +206,7 @@ class PdsFileIterator(object):
             basenames = [s for s in basenames
                          if not fnmatch.fnmatch(s, self.exclude)]
         if self.filter:
-            basenames = [s for s in basenames if self.filter(parent, s)]
+            basenames = [s for s in basenames if self.filter(self.parent, s)]
 
         return basenames
 
@@ -232,7 +233,8 @@ class PdsFileIterator(object):
         # Try to return the next sibling
         try:
             self.sibling_index += self.sign
-            if self.sibling_index < 0: raise IndexError()
+            if self.sibling_index < 0:
+                raise IndexError()
 
             sibname = self.sibnames[self.sibling_index]
 
@@ -252,11 +254,12 @@ class PdsFileIterator(object):
 
         # Go to the next parent
         (parent_logical_path, parent_display_path, _) = self.dir_iterator.next()
-        parent = pdsfile.PdsFile.from_logical_path(parent_logical_path)
+        self.parent = pdsfile.PdsFile.from_logical_path(parent_logical_path)
 
         # Load the next set of siblings
-        basenames = self._filter_names(parent, parent.childnames)
-        self.sibnames = parent.logicals_for_basenames(basenames)
+        basenames = self.parent.sort_basenames(self.parent.childnames)
+        basenames = self._filter_names(basenames)
+        self.sibnames = self.parent.logicals_for_basenames(basenames)
 
         # Return the first new sibling
         if self.sign > 0:
@@ -328,8 +331,8 @@ class PdsRowIterator(object):
         """
 
         self.sibling_index += self.sign
-        if self.sibling_index < 0: raise StopIteration
-        if self.sibling_index >= len(self.sibnames): raise StopIteration
+        if self.sibling_index < 0 or self.sibling_index >= len(self.sibnames):
+            raise StopIteration
 
         sibname = self.sibnames[self.sibling_index]
         return (self.parent_logical_path_ + sibname, sibname, 0)

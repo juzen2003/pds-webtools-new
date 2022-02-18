@@ -3,7 +3,11 @@ import pdsfile
 import pdslogger
 import pytest
 
-PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+try:
+    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+except KeyError:
+    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+
 ################################################################################
 # Setup before all tests
 ################################################################################

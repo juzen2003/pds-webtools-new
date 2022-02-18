@@ -17,6 +17,8 @@ __all__ = [
     "EBROCC_xxxx",
     "GO_0xxx"    ,
     "HSTxx_xxxx" ,
+    "JNOJIR_xxxx",
+    "JNOJNC_xxxx",
     "NHSP_xxxx"  ,
     "NHxxxx_xxxx",
     "RES_xxxx"   ,

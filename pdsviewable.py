@@ -155,7 +155,8 @@ class PdsViewSet(object):
         unless "full" is requested explicitly.
         """
 
-        if viewable in self.viewables: return
+        if viewable in self.viewables:
+            return
 
         # Allow a recursive call
         if isinstance(viewable, PdsViewSet):
@@ -168,7 +169,8 @@ class PdsViewSet(object):
         # Update the dictionary by name if it has a name
         if viewable.name:
             self.by_name[viewable.name] = viewable
-            if not include_named_in_sizes: return
+            if not include_named_in_sizes:
+                return
 
         # Update the dictionary by width
         # Unnamed viewables take precedence; named ones are overridden
@@ -218,19 +220,27 @@ class PdsViewSet(object):
 
     @property
     def thumbnail(self):
-        thumb = self.by_match('_thumb')
-        if not thumb:
-            thumb = self.by_height[self.heights[0]]
+        viewable = self.by_match('_thumb')
+        if not viewable:
+            viewable = self.by_height[self.heights[0]]
 
-        return thumb
+        return viewable
 
     @property
     def small(self):
-        return self.by_match('_small')
+        viewable = self.by_match('_small')
+        if not viewable:
+            viewable = viewable.for_frame(200,200)
+
+        return viewable
 
     @property
     def medium(self):
-        return self.by_match('_med')
+        viewable = self.by_match('_med')
+        if not viewable:
+            viewable = viewable.for_frame(400,400)
+
+        return viewable
 
     @property
     def full_size(self):
@@ -340,118 +350,194 @@ class PdsViewSet(object):
 # ICON definitions
 ################################################################################
 
-# This is a dictionary keyed by the icon_type. It returns (priority, filename).
-# Priority is just a rough number to indicate that, when several files share an
-# icon, the icon with the higher priority will be used. Primarily, this ensures
+# This is a dictionary keyed by icon file basename, which returns the icon_type
+# and priority. # Priority is just a rough number to ensure that, when several
+# files are grouped and represented by a single icon, the icon with the "best"
+# icon (the one with highest priority number) is used. Primarily, this ensures
 # that we do not use the label icon when a more specific icon is available.
 #
-# Some files contain the string formatting pattern '%s', which allows for a more
-# specific version of an icon type to be used. Right now, this is just used with
-# folders, where the "-open" suffix shows the folder to be open rather than
-# closed.
+# For proper layout, full-size folder icons are 500x365 (w x h); other icons
+# are square.
+#
+# The boundary area of all icons is transparent.
+#
+# Standard sizes are 50, 100, and 200 pixels wide. Size 30 is also useful but
+# not required. This refers to the widths of folder icons.
 
-ICON_FILENAME_VS_TYPE = {       # (priority, icon URL)
-    'UNKNOWN'  : (10, 'document_generic.png'),
-    'LABEL'    : ( 0, 'document_label.png'),
-    'DATA'     : (20, 'document_binary.png'),
-    'DIAGRAM'  : (20, 'document_diagram.png'),
-    'TABLE'    : (30, 'document_table.png'),
-    'IMAGE'    : (40, 'document_image.png'),
-    'BROWSE'   : (50, 'document_preview.png'),
-    'GEOM'     : (60, 'document_geometry.png'),
-    'CUBE'     : (70, 'document_cube.png'),
-    'VOLUME'   : (80, 'document_volume%s.png'),
-    'TOPFILE'  : (85, 'document_viewmaster.png'),
-    'SERIES'   : (90, 'document_series.png'),
+REQUIRED_ICONS = {      # basename: (icon name, priority)
 
-    'INFO'     : (21, 'document_info.png'),
-    'INDEX'    : (31, 'document_index.png'),
-    'CODE'     : (41, 'document_software.png'),
-    'LINK'     : (51, 'document_link.png'),
+    # Lowest-priority, least descriptive icons
+    'document_label'     : ('LABEL'    ,  0),   # < UNKNOWN
+    'document_generic'   : ('UNKNOWN'  ,  1),
+    'folder_generic'     : ('FOLDER'   ,  2),   # < any specific folder
 
-    'FOLDER'   : ( 4, 'folder_generic%s.png' ),
-    'INFODIR'  : (24, 'folder_info%s.png'),
-    'INDEXDIR' : (34, 'folder_index%s.png'),
-    'CODEDIR'  : (44, 'folder_software%s.png'),
-    'EXTRADIR' : (46, 'folder_extras%s.png'),
-    'LABELDIR' : (55, 'folder_labels%s.png'),
-    'CHECKDIR' : (65, 'folder_checksums%s.png'),
-    'VOLDIR'   : (75, 'folder_volumes%s.png'),
-    'IMAGEDIR' : (85, 'folder_images%s.png'),
-    'TARDIR'   : (95, 'folder_archives%s.png'),
-    'CUBEDIR'  : (96, 'folder_cubes%s.png'),
-    'SERIESDIR': (97, 'folder_series%s.png'),
+    # Folders are never grouped, so they can all have the same priority
+    'folder_previews'    : ('BROWDIR'  , 15),
+    'folder_checksums'   : ('CHECKDIR' , 15),
+    'folder_software'    : ('CODEDIR'  , 15),
+    'folder_cubes'       : ('CUBEDIR'  , 15),
+    'folder_binary'      : ('DATADIR'  , 15),
+    'folder_diagrams'    : ('DIAGDIR'  , 15),
+    'folder_extras'      : ('EXTRADIR' , 15),
+    'folder_geometry'    : ('GEOMDIR'  , 15),
+    'folder_images'      : ('IMAGEDIR' , 15),
+    'folder_index'       : ('INDEXDIR' , 15),
+    'folder_info'        : ('INFODIR'  , 15),
+    'folder_labels'      : ('LABELDIR' , 15),
+    'folder_series'      : ('SERIESDIR', 15),
+    'folder_archives'    : ('TARDIR'   , 15),
+    'folder_volumes'     : ('VOLDIR'   , 15),
 
-    'DATADIR'  : (22, 'folder_binary%s.png'),
-    'BROWDIR'   :(52, 'folder_previews%s.png'),
-    'GEOMDIR'  : (62, 'folder_geometry%s.png'),
-    'DIAGDIR'  : (53, 'folder_diagrams%s.png'),
+    # These last two "folders" don't look like folders, but they serve the same
+    # function. They are not square; they have folder proportions. They look the
+    # same "open" or "closed".
+    'folder_volume'      : ('VOLUME'   , 15),
+    'folder_viewmaster'  : ('ROOT'     , 15),
 
-    'CHECKSUM' : (90, 'document_checksums.png'),
-    'TARBALL'  : (91, 'document_archive.png'),
-    'TOPDIR'   : (92, 'folder_viewmaster%s.png'),
+    # Documents always take priority over their labels. In cases where multiple
+    # documents are grouped, the more descriptive icon has the higher priority,
+    # so it is the one that will be used.
+    'document_binary'    : ('DATA'     , 20),   # < IMAGE, etc.
+    'document_zipbook'   : ('ZIPFILE'  , 21),   # < LINK
+    'document_checksums' : ('CHECKSUM' , 22),
+    'document_archive'   : ('TARBALL'  , 23),
+    'document_diagram'   : ('DIAGRAM'  , 24),
+    'document_preview'   : ('BROWSE'   , 25),
+    'document_info'      : ('INFO'     , 26),   # < TXTDOC
+
+    'document_link'      : ('LINK'     , 31),
+    'document_table'     : ('TABLE'    , 32),   # < INDEX, SERIES
+    'document_image'     : ('IMAGE'    , 33),   # < CUBE
+    'document_geometry'  : ('GEOM'     , 34),
+    'document_txt'       : ('TXTDOC'   , 35),   # < PDFDOC, CODE
+
+    'document_index'     : ('INDEX'    , 41),
+    'document_series'    : ('SERIES'   , 42),
+    'document_cube'      : ('CUBE'     , 43),
+    'document_software'  : ('CODE'     , 44),
+    'document_pdf'       : ('PDFDOC'   , 45),
+    'document_pdsinfo'   : ('PDSINFO'  , 46),
 }
 
-# Icons are currently defined in specific sizes, as indicated by the name of the
-# icon file's parent directory. ICON_URL_DIR_VS_SIZE, defined above, is a list
-# of tuples (size in pixels, URL path) that indicates where to look for an icon
-# of a particular size. Within each of these directory paths, the file names are
-# identical.
+REQUIRED_SIZES = set([50, 100, 200])
 
-ICON_DIR_VS_SIZE = [( 30, 'png-30/'),
-                    ( 50, 'png-50/'),
-                    (100, 'png-100/'),
-                    (200, 'png-200/')]
-
-# Create a dictionary of PdsViewSets keyed by [icon_type, open_state]:
+# Create a dictionary of PdsViewSets keyed by:
+#   [icon_type]
+#   [icon_type, open_state]
+#   [icon_type, open_state, color]
 
 ICON_SET_BY_TYPE = {}
 
 def load_icons(path, url, color='blue', logger=None):
-    """Loads icons for use by PdsViewable.iconset_for()."""
+    """Loads icons for use by PdsViewable.iconset_for().
 
-    for (icon_type, icon_info) in ICON_FILENAME_VS_TYPE.items():
-        (priority, template) = icon_info
+    This can be called multiple times on different directories. The icons
+    loaded last take precedence, but earlier icons are not removed, although
+    they may be updated/replaced.
 
-        icon_path_ = path.rstrip('/') + '/'
-        icon_url_  = url.rstrip('/') + '/'
+    Icons found directory tree that do not correspond to one of the "required"
+    names are saved under the name embedded within the file, following
+    "document_" or "folder_", and with an optional, trailing, "_open".
 
-        for is_open in (True, False):
-            pdsviews = []
+    If a color is specified, the subdirectory of that name is searched and the
+    icons are also keyed under their color in the ICON_SET_BY_TYPE dictionary.
+    In this way, it would be possible to work with icons with different colors
+    at the same time within OPUS, although this capability is unused.
+    """
 
-            if '%s' in template:
-                if is_open:
-                    basename = template % '_open'
-                else:
-                    basename = template % ''
+    icon_path_ = path.rstrip('/') + '/'
+    icon_url_  = url.rstrip('/') + '/'
+
+    if color:
+        icon_path_ += color + '/'
+        icon_url_  += color + '/'
+
+    # Read all image files in this directory tree; organize by basename and size
+    viewables = {}
+    for root, dirs, basenames in os.walk(icon_path_):
+
+        # Guess the nominal size from the directory path, if possible
+        parts = root.rpartition('/png-')
+        if not parts[2]:
+            parts = root.rpartition('/jpg-')
+        if parts[2]:
+            parts = parts[2].partition('/')
+            try:
+                nominal_size = int(parts[0])
+            except ValueError:
+                nominal_size = 0
+        else:
+            nominal_size = 0
+
+        # For each image file...
+        for basename in basenames:
+            if basename[0] == '.':
+                continue
+
+            (key,ext) = os.path.splitext(basename)
+            if ext.lower() not in ('.png', 'jpg'):
+                continue
+
+            # Create the PdsViewable
+            abspath = os.path.join(root, basename)
+            url = icon_url_ + abspath[len(icon_path_):]
+            try:
+                im = Image.open(abspath)
+            except Image.UnidentifiedImageError:
+                if logger:
+                    logger.error('Invalid icon file', abspath)
+                    continue
+
+            (width, height) = im.size
+            size = nominal_size or max(im.size)
+            im.close()
+            bytecount = os.stat(abspath).st_size
+            pdsview = PdsViewable(abspath, url, width, height, bytecount)
+
+            # Save the PdsViewable by basename and size
+            if key in viewables:
+                viewables[key][size] = pdsview
             else:
-                basename = template
+                viewables[key] = {size: pdsview}
 
-            for (size, icon_dir_) in ICON_DIR_VS_SIZE:
-                relpath = color + '/' + icon_dir_ + basename
-                abspath = icon_path_ + relpath
+    # Save PdsViewsets into the master dictionary
+    for key, size_dict in viewables.items():
 
-                try:
-                    im = Image.open(abspath)
-                except FileNotFoundError:
-                    (width, height) = (size, size)
-                    bytecount = 0
-                    if logger:
-                        logger.error('Missing icon file', abspath)
-                else:
-                    (width, height) = im.size
-                    im.close()
-                    bytecount = os.stat(abspath).st_size
+        # Define icon name, open status, and priority
+        is_open = key.endswith('_open')
+        key_base = key[:-5] if is_open else key
 
-                pdsview = PdsViewable(icon_path_ + relpath, icon_url_ + relpath,
-                                      width, height, icon_type + ' icon',
-                                      bytecount)
-                pdsviews.append(pdsview)
+        if key_base in REQUIRED_ICONS:
+            (icon_name, priority) = REQUIRED_ICONS[key_base]
+        else:
+            icon_name = key_base.replace('document_', '')
+            icon_name = icon_name.replace('folder_', '')
+            icon_name = icon_name.upper()
+            priority = 99999
 
-            ICON_SET_BY_TYPE[icon_type,
-                             is_open] = PdsViewSet(pdsviews, priority)
+        # Warn if any sizes are missing
+        sizes = set(size_dict)
+        missing = REQUIRED_SIZES - sizes
+        if missing and logger:
+            missing = list(missing)
+            missing.sort()
+            logger.warn(f'Missing sizes for icon {icon_name} ({key})',
+                        str(missing)[1:-1])
 
-        ICON_SET_BY_TYPE[icon_type] = ICON_SET_BY_TYPE[icon_type, False]
+        # Create the PdsViewSet
+        viewset = PdsViewSet(size_dict.values(), priority)
+
+        # Save into dictionary under multiple keys
+        ICON_SET_BY_TYPE[icon_name, is_open] = viewset
+        if not is_open:
+            ICON_SET_BY_TYPE[icon_name] = viewset
+
+            # Also save under open=True if there is no file ending in "_open"
+            if (icon_name, True) not in ICON_SET_BY_TYPE:
+                ICON_SET_BY_TYPE[icon_name, True] = viewset
+
+        if color:
+            ICON_SET_BY_TYPE[icon_name, is_open, color] = viewset
 
 ################################################################################
 # Method to select among multiple icons

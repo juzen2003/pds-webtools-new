@@ -200,7 +200,12 @@ associations_to_volumes = translator.TranslatorByRegex([
     (r'\w+/(COCIRS_[56]xxx/COCIRS_[56]...)/BROWSE(|/\w+)', 0,
             r'volumes/\1/DATA'),
 
-    (r'documents/COCIRS_xxxx.*', 0,
+    (r'documents/COCIRS_0xxx.*', 0,
+            [r'volumes/COCIRS_0xxx',
+             r'volumes/COCIRS_1xxx',
+            ]),
+
+    (r'documents/COCIRS_5xxx.*', 0,
             [r'volumes/COCIRS_5xxx',
              r'volumes/COCIRS_6xxx',
             ]),
@@ -383,21 +388,24 @@ associations_to_diagrams = translator.TranslatorByRegex([
             r'diagrams/\1/BROWSE/S_RINGS'),
 ])
 
-associations_to_documents = translator.TranslatorByRegex([
-    (r'(volumes/COCIRS_[01]xxx.*/COCIRS_[01]...).*', 0,
-            r'\1/DOCUMENT/CIRS-USER-GUIDE.PDF'),
-    (r'volumes/COCIRS_[01]xxx[^/]*', 0,
-            r'volumes/COCIRS_1xxx/COCIRS_1709/DOCUMENT/CIRS-USER-GUIDE.PDF'),
-    (r'(volumes|diagrams)/COCIRS_[56]xxx.*', 0,
-            r'documents/COCIRS_xxxx/CIRS-Diagram-Interpretation-Guide.txt'),
-])
-
 # For COCIRS_0xxx and COCIRS_1xxx CUBE
 associations_to_metadata = translator.TranslatorByRegex([
     (r'volumes/(COCIRS_[01]xxx).*/(COCIRS_[01]...)/(:?DATA/CUBE|EXTRAS/CUBE_OVERVIEW)/(EQUI|POINT|RING)\w+/(.*)\.(tar.gz|LBL|JPG)', 0,
             [r'metadata/\1/\2/\2_cube_#LOWER#\3_index.tab/\4',
              r'metadata/\1/\2/\2_cube_#LOWER#\3_supplemental_index.tab/\4',
             ]),
+])
+
+associations_to_documents = translator.TranslatorByRegex([
+    (r'volumes/COCIRS_[01]xxx(|_[\w\.]+)(|/COCIRS_[01]\d\d\d)', 0,
+            r'documents/COCIRS_0xxx/*'),
+    (r'volumes/COCIRS_[01]xxx.*/COCIRS_[01]\d\d\d/.+', 0,
+            r'documents/COCIRS_0xxx'),
+
+    (r'volumes/COCIRS_[56]xxx(|_[\w\.]+)(|/COCIRS_[56]\d\d\d)', 0,
+            r'documents/COCIRS_5xxx/*'),
+    (r'volumes/COCIRS_[56]xxx.*/COCIRS_[56]\d\d\d/.+', 0,
+            r'documents/COCIRS_5xxx'),
 ])
 
 ####################################################################################################################################
@@ -419,7 +427,7 @@ versions = translator.TranslatorByRegex([
 default_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl',  re.I, ''),
 
-    (r'volumes/(COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)\..*',        0,
+    (r'volumes/(COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)\.tar\.gz', 0,
             [r'previews/\1/DATA/CUBE/\2_full.jpg',
              r'previews/\1/DATA/CUBE/\2_med.jpg',
              r'previews/\1/DATA/CUBE/\2_small.jpg',
