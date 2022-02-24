@@ -427,7 +427,7 @@ versions = translator.TranslatorByRegex([
 default_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl',  re.I, ''),
 
-    (r'volumes/(COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)\.tar\.gz', 0,
+    (r'volumes/(COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)\..*', 0,
             [r'previews/\1/DATA/CUBE/\2_full.jpg',
              r'previews/\1/DATA/CUBE/\2_med.jpg',
              r'previews/\1/DATA/CUBE/\2_small.jpg',
