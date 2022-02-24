@@ -927,6 +927,9 @@ if __name__ == '__main__':
                 local_handlers += [warning_handler, error_handler]
 
             # Open the next level of the log
+            if len(paths) > 1:
+                logger.blankline()
+ 
             logger.open('Dependency tests', path, handler=local_handlers)
 
             try:

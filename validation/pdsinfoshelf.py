@@ -4,17 +4,17 @@
 #
 # Syntax:
 #   pdsinfoshelf.py --task path [path ...]
-# 
+#
 # Enter the --help option to see more information.
 ################################################################################
 
-import sys
+import argparse
+import datetime
+import glob
 import os
 import pickle
 import shutil
-import glob
-import datetime
-import argparse
+import sys
 from PIL import Image
 
 import pdslogger
@@ -33,9 +33,9 @@ PREVIEW_EXTS = set(['.jpg', '.png', '.gif', '.tif', '.tiff',
 ################################################################################
 
 def generate_infodict(pdsdir, selection, old_infodict={},
-                               limits={'normal':-1}, logger=None):
+                              limits={'normal':-1}, logger=None):
     """Generate a dictionary keyed by absolute file path for each file in the
-    directory tree. Value returned is a tuple (bytes, child_count, modtime,
+    directory tree. Value returned is a tuple (nbytes, child_count, modtime,
     checksum, preview size).
 
     If a selection is specified, it is interpreted as the basename of a file,
@@ -44,17 +44,48 @@ def generate_infodict(pdsdir, selection, old_infodict={},
     The optional old_infodict overrides information found in the directory.
     This dictionary is merged with the new information assembled. However, if
     a selection is specified, information about the selection is always updated.
+
+    Also return the latest modification date among all the files checked.
     """
 
-    def get_info(abspath, infodict, checkdict):
+    NULL_CHECKSUM = '-------------------------------'
+
+    ### Internal function
+
+    def get_info_for_file(abspath, latest_mtime):
+
+        nbytes = os.path.getsize(abspath)
+        children = 0
+        mtime = os.path.getmtime(abspath)
+        latest_mtime = max(latest_mtime, mtime)
+
+        dt = datetime.datetime.fromtimestamp(mtime)
+        modtime = dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+        try:
+            checksum = checkdict[abspath]
+        except KeyError:
+            logger.error('Missing entry in checksum file', abspath)
+            checksum = NULL_CHECKSUM
+
+        size = (0,0)
+        ext = os.path.splitext(abspath)[1]
+        if ext.lower() in PREVIEW_EXTS:
+            try:
+                im = Image.open(abspath)
+                size = im.size
+                im.close()
+            except Exception:
+                logger.error('Preview size not found', abspath)
+
+        return (nbytes, children, modtime, checksum, size)
+
+    def get_info(abspath, infodict, old_infodict, checkdict, latest_mtime):
         """Info about the given abspath."""
 
         if os.path.isdir(abspath):
-            bytes = 0
+            nbytes = 0
             children = 0
             modtime = ''
-            checksum = ''
-            size = (0,0)
 
             files = os.listdir(abspath)
             for file in files:
@@ -71,34 +102,25 @@ def generate_infodict(pdsdir, selection, old_infodict={},
                 if '/.' in abspath:             # flag invisible files
                     logger.invisible('Invisible file', absfile)
 
-                info = get_info(absfile, infodict, checkdict)
-                bytes += info[0]
+                info = get_info(absfile, infodict, old_infodict, checkdict,
+                                         latest_mtime)
+                nbytes += info[0]
                 children += 1
                 modtime = max(modtime, info[2])
 
+            info = (nbytes, children, modtime, NULL_CHECKSUM, (0,0))
+
+        elif abspath in old_infodict:
+            info = old_infodict[abspath]
+            iso = 'T'.join(info[2].split())
+            dt = datetime.datetime.fromisoformat(iso)
+            mtime = datetime.datetime.timestamp(dt)
+            latest_mtime = max(latest_mtime, mtime)
+
         else:
-            bytes = os.path.getsize(abspath)
-            children = 0
-            dt = datetime.datetime.fromtimestamp(os.path.getmtime(abspath))
-            modtime = dt.strftime('%Y-%m-%d %H:%M:%S.%f')
-            try:
-                checksum = checkdict[abspath]
-            except KeyError:
-                logger.error('Missing entry in checksum file', abspath)
-                checksum = '-------------------------------'
+            info = get_info_for_file(abspath, latest_mtime)
+            logger.normal('File info generated', abspath)
 
-            size = (0,0)
-            ext = os.path.splitext(abspath)[1]
-            if ext.lower() in PREVIEW_EXTS:
-                try:
-                    im = Image.open(abspath)
-                    size = im.size
-                    im.close()
-                except Exception:
-                    logger.error('Preview size not found', abspath)
-
-        logger.normal('File info generated', abspath)
-        info = (bytes, children, modtime, checksum, size)
         infodict[abspath] = info
 
         return info
@@ -109,9 +131,7 @@ def generate_infodict(pdsdir, selection, old_infodict={},
 
     dirpath = pdsdir.abspath
 
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+    logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
     logger.replace_root(pdsdir.root_)
 
     if selection:
@@ -120,10 +140,13 @@ def generate_infodict(pdsdir, selection, old_infodict={},
     else:
         logger.open('Generating file info', dirpath, limits)
 
+    latest_mtime = 0.
     found = False
     try:
         # Load checksum dictionary
         checkdict = pdschecksums.checksum_dict(dirpath, logger=logger)
+        if not checkdict:
+            return ({}, 0.)
 
         # Generate info recursively
         infodict = {}
@@ -132,7 +155,7 @@ def generate_infodict(pdsdir, selection, old_infodict={},
         else:
             root = pdsdir.abspath
 
-        _ = get_info(root, infodict, checkdict)
+        _ = get_info(root, infodict, old_infodict, checkdict, latest_mtime)
 
         # Merge dictionaries
         merged = old_infodict.copy()
@@ -145,7 +168,9 @@ def generate_infodict(pdsdir, selection, old_infodict={},
                 if key not in merged:
                     merged[key] = infodict[key]
 
-        return merged
+        dt = datetime.datetime.fromtimestamp(latest_mtime)
+        logger.info('Latest holdings file modification date',
+                    dt.strftime('%Y-%m-%dT%H-%M-%S'), force=True)
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
@@ -154,76 +179,7 @@ def generate_infodict(pdsdir, selection, old_infodict={},
     finally:
         _ = logger.close()
 
-################################################################################
-
-def shelve_infodict(pdsdir, infodict, limits={}, logger=None):
-    """Write a new info shelf file for a directory tree."""
-
-    # Initialize
-    dirpath = pdsdir.abspath
-
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
-    logger.replace_root(pdsdir.root_)
-    logger.open('Shelving file info for', dirpath, limits=limits)
-
-    try:
-        (shelf_path, lskip) = pdsdir.shelf_path_and_lskip(id='info')
-        logger.info('Shelf file', shelf_path)
-
-        # Write the pickle file
-        pickle_dict = {}
-        for (key, values) in infodict.items():
-            short_key = key[lskip:]
-            pickle_dict[short_key] = values
-
-        with open(shelf_path, 'wb') as f:
-            pickle.dump(pickle_dict, f)
-
-    except (Exception, KeyboardInterrupt) as e:
-        logger.exception(e)
-        raise
-
-    finally:
-        _ = logger.close()
-
-    logger.open('Writing Python dictionary', dirpath, limits=limits)
-    try:
-        # Determine the maximum length of the file path
-        len_path = 0
-        for (abspath, values) in infodict.items():
-            len_path = max(len_path, len(abspath))
-
-        len_path -= lskip
-
-        # Write the python dictionary version
-        python_path = shelf_path.rpartition('.')[0] + '.py'
-        name = os.path.basename(python_path)
-        parts = name.split('_')
-        name = '_'.join(parts[:2]) + '_info'
-        abspaths = list(infodict.keys())
-        abspaths.sort()
-
-        with open(python_path, 'w', encoding='latin-1') as f:
-            f.write(name + ' = {\n')
-            for abspath in abspaths:
-                path = abspath[lskip:]
-                (bytes, children, modtime, checksum, size) = infodict[abspath]
-                f.write('    "%s: ' % (path + '"' + (len_path-len(path)) * ' '))
-                f.write('(%11d, %3d, ' % (bytes, children))
-                f.write('"%s", ' % modtime)
-                f.write('"%-33s, ' % (checksum + '"'))
-                f.write('(%4d,%4d)),\n' % size)
-
-            f.write('}\n\n')
-
-    except (Exception, KeyboardInterrupt) as e:
-        logger.exception(e)
-        raise
-
-    finally:
-        _ = logger.close()
+    return (merged, latest_mtime)
 
 ################################################################################
 
@@ -232,21 +188,20 @@ def load_infodict(pdsdir, logger=None):
     dirpath = pdsdir.abspath
     dirpath_ = dirpath.rstrip('/') + '/'
 
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+    logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
     logger.replace_root(pdsdir.root_)
-    logger.open('Reading info file for', dirpath_[:-1])
+    logger.open('Reading info shelf file for', dirpath_[:-1])
 
     try:
-        (shelf_path, lskip) = pdsdir.shelf_path_and_lskip(id='info')
-        logger.info('Shelf file', shelf_path)
+        (info_path, lskip) = pdsdir.shelf_path_and_lskip(id='info')
+        logger.info('Info shelf file', info_path)
 
-        if not os.path.exists(shelf_path):
-            raise IOError('File not found: ' + shelf_path)
+        if not os.path.exists(info_path):
+            logger.error('Info shelf file not found', info_path)
+            return {}
 
         # Read the shelf file and convert to a dictionary
-        with open(shelf_path, 'rb') as f:
+        with open(info_path, 'rb') as f:
             shelf = pickle.load(f)
 
         infodict = {}
@@ -267,12 +222,85 @@ def load_infodict(pdsdir, logger=None):
 
 ################################################################################
 
+def write_infodict(pdsdir, infodict, limits={}, logger=None):
+    """Write a new info shelf file for a directory tree."""
+
+    # Initialize
+    dirpath = pdsdir.abspath
+
+    logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
+    logger.replace_root(pdsdir.root_)
+    logger.open('Writing info file info for', dirpath, limits=limits)
+
+    try:
+        (info_path, lskip) = pdsdir.shelf_path_and_lskip(id='info')
+        logger.info('Info shelf file', info_path)
+
+        # Create parent directory if necessary
+        parent = os.path.split(info_path)[0]
+        if not os.path.exists(parent):
+            logger.info('Creating parent directory', parent)
+            os.makedirs(parent)
+
+        # Write the pickle file
+        pickle_dict = {}
+        for (key, values) in infodict.items():
+            short_key = key[lskip:]
+            pickle_dict[short_key] = values
+
+        with open(info_path, 'wb') as f:
+            pickle.dump(pickle_dict, f)
+
+    except (Exception, KeyboardInterrupt) as e:
+        logger.exception(e)
+        raise
+
+    finally:
+        _ = logger.close()
+
+    logger.open('Writing Python dictionary', dirpath, limits=limits)
+    try:
+        # Determine the maximum length of the file path
+        len_path = 0
+        for (abspath, values) in infodict.items():
+            len_path = max(len_path, len(abspath))
+
+        len_path -= lskip
+
+        # Write the python dictionary version
+        python_path = info_path.rpartition('.')[0] + '.py'
+        name = os.path.basename(python_path)
+        parts = name.split('_')
+        name = '_'.join(parts[:2]) + '_info'
+        abspaths = list(infodict.keys())
+        abspaths.sort()
+
+        with open(python_path, 'w', encoding='latin-1') as f:
+            f.write(name + ' = {\n')
+            for abspath in abspaths:
+                path = abspath[lskip:]
+                (nbytes, children, modtime, checksum, size) = infodict[abspath]
+                f.write('    "%s: ' % (path + '"' + (len_path-len(path)) * ' '))
+                f.write('(%11d, %3d, ' % (nbytes, children))
+                f.write('"%s", ' % modtime)
+                f.write('"%-33s, ' % (checksum + '"'))
+                f.write('(%4d,%4d)),\n' % size)
+
+            f.write('}\n\n')
+
+    except (Exception, KeyboardInterrupt) as e:
+        logger.exception(e)
+        raise
+
+    finally:
+        _ = logger.close()
+
+################################################################################
+
 def validate_infodict(pdsdir, dirdict, shelfdict, selection,
                       limits={'normal': 0}, logger=None):
 
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+    logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
     logger.replace_root(pdsdir.root_)
 
     if selection:
@@ -360,8 +388,7 @@ def move_old_info(shelf_file, logger=None):
     shelf_basename = os.path.basename(shelf_file)
     (shelf_prefix, shelf_ext) = os.path.splitext(shelf_basename)
 
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
+    logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
 
     from_logged = False
     for log_dir in LOGDIRS:
@@ -394,51 +421,68 @@ def move_old_info(shelf_file, logger=None):
 
 def initialize(pdsdir, selection=None, logger=None):
 
-    infofile = pdsdir.shelf_path_and_lskip(id='info')[0]
+    info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
+
+    # Make sure file does not exist
+    if os.path.exists(info_path):
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
+        logger.error('Info shelf file already exists', info_path)
+        return
 
     # Check selection
     if selection:
-        raise ValueError('File selection is disallowed for task ' +
-                         '"initialize": ' + selection)
-
-    # Check destination
-    if os.path.exists(infofile):
-        raise IOError('Info file already exists: ' + infofile)
-
-    # Create parent directory if necessary
-    parent = os.path.split(infofile)[0]
-    if not os.path.exists(parent):
-        os.makedirs(parent)
+        logger.error('File selection is disallowed for task "initialize"',
+                     selection)
+        return
 
     # Generate info
-    infodict = generate_infodict(pdsdir, selection, logger=logger)
+    (infodict, _) = generate_infodict(pdsdir, selection, logger=logger)
 
     # Save info file
-    shelve_infodict(pdsdir, infodict, logger=logger)
+    write_infodict(pdsdir, infodict, logger=logger)
 
 def reinitialize(pdsdir, selection=None, logger=None):
 
-    infofile = pdsdir.shelf_path_and_lskip(id='info')[0]
+    info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
 
-    # Create parent directory if necessary
-    parent = os.path.split(infofile)[0]
-    if not os.path.exists(parent):
-        os.makedirs(parent)
+    # Warn if shelf file does not exist
+    if not os.path.exists(info_path):
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
+        if selection:
+            logger.error('Info shelf file does not exist', info_path)
+        else:
+            logger.warn('Info shelf file does not exist; initializing',
+                        info_path)
+            initialize(pdsdir, selection=selection, logger=logger)
+        return
 
     # Generate info
-    infodict = generate_infodict(pdsdir, selection, logger=logger)
+    (infodict, _) = generate_infodict(pdsdir, selection, logger=logger)
+    if not infodict:
+        return
 
     # Move old file if necessary
-    if os.path.exists(infofile):
-        move_old_info(infofile, logger=logger)
+    if os.path.exists(info_path):
+        move_old_info(info_path, logger=logger)
 
     # Save info file
-    shelve_infodict(pdsdir, infodict, logger=logger)
+    write_infodict(pdsdir, infodict, logger=logger)
 
 def validate(pdsdir, selection=None, logger=None):
 
+    info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
+
+    # Make sure file exists
+    if not os.path.exists(info_path):
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
+        logger.error('Info shelf file does not exist', info_path)
+        return
+
+    # Read info shelf file
     shelf_infodict = load_infodict(pdsdir, logger=logger)
-    dir_infodict = generate_infodict(pdsdir, selection, logger=logger)
+
+    # Generate info
+    (dir_infodict, _) = generate_infodict(pdsdir, selection, logger=logger)
 
     # Validate
     validate_infodict(pdsdir, dir_infodict, shelf_infodict, selection=selection,
@@ -446,10 +490,24 @@ def validate(pdsdir, selection=None, logger=None):
 
 def repair(pdsdir, selection=None, logger=None):
 
-    infofile = pdsdir.shelf_path_and_lskip(id='info')[0]
+    info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
 
+    # Make sure file exists
+    if not os.path.exists(info_path):
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
+        if selection:
+            logger.error('Info shelf file does not exist', info_path)
+        else:
+            logger.warn('Info shelf file does not exist; initializing', info_path)
+            initialize(pdsdir, selection=selection, logger=logger)
+        return
+
+    # Read info shelf file
     shelf_infodict = load_infodict(pdsdir, logger=logger)
-    dir_infodict = generate_infodict(pdsdir, selection, logger=logger)
+
+    # Generate info
+    (dir_infodict, latest_mtime) = generate_infodict(pdsdir, selection,
+                                                     logger=logger)
 
     # For a single selection, use the old information
     if selection:
@@ -461,36 +519,79 @@ def repair(pdsdir, selection=None, logger=None):
     # Compare
     canceled = (dir_infodict == shelf_infodict)
     if canceled:
-        if logger is None:
-            logger = pdslogger.PdsLogger.get_logger(LOGNAME)
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
 
-        logger.info('Info is up to date; repair canceled', infofile)
+        info_pypath = info_path.replace('.pickle', '.py')
+        info_mtime = min(os.path.getmtime(info_path),
+                         os.path.getmtime(info_pypath))
+        if latest_mtime > info_mtime:
+            logger.info('!!! Info shelf file content is up to date',
+                        info_path, force=True)
+
+            dt = datetime.datetime.fromtimestamp(latest_mtime)
+            logger.info('!!! Latest holdings file modification date',
+                        dt.strftime('%Y-%m-%dT%H-%M-%S'), force=True)
+
+            dt = datetime.datetime.fromtimestamp(info_mtime)
+            logger.info('!!! Info shelf file modification date',
+                        dt.strftime('%Y-%m-%dT%H-%M-%S'), force=True)
+
+            delta = latest_mtime - info_mtime
+            if delta >= 86400/10:
+                logger.info('!!! Info shelf file is out of date %.1f days' %
+                            (delta / 86400.), force=True)
+            else:
+                logger.info('!!! Info shelf file is out of date %.1f minutes' %
+                            (delta / 60.), force=True)
+
+            dt = datetime.datetime.now()
+            os.utime(info_path)
+            os.utime(info_pypath)
+            logger.info('!!! Time tag on info shelf files set to',
+                        dt.strftime('%Y-%m-%dT%H-%M-%S'), force=True)
+        else:
+            logger.info(f'!!! Info shelf file is up to date; repair canceled',
+                        info_path, force=True)
         return
 
     # Move files and write new info
-    move_old_info(infofile, logger=logger)
-    shelve_infodict(pdsdir, dir_infodict, logger=logger)
+    move_old_info(info_path, logger=logger)
+    write_infodict(pdsdir, dir_infodict, logger=logger)
 
 def update(pdsdir, selection=None, logger=None):
 
-    infofile = pdsdir.shelf_path_and_lskip(id='info')[0]
+    info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
 
+    # Make sure info shelf file exists
+    if not os.path.exists(info_path):
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
+        if selection:
+            logger.error('Info shelf file does not exist', info_path)
+        else:
+            logger.warn('Info shelf file does not exist; initializing',
+                        info_path)
+            initialize(pdsdir, selection=selection, logger=logger)
+        return
+
+    # Read info shelf file
     shelf_infodict = load_infodict(pdsdir, logger=logger)
-    dir_infodict = generate_infodict(pdsdir, selection, shelf_infodict,
-                                             logger=logger)
+
+    # Generate info
+    (dir_infodict,
+     latest_mtime) = generate_infodict(pdsdir, selection, shelf_infodict,
+                                       logger=logger)
 
     # Compare
     canceled = (dir_infodict == shelf_infodict)
     if canceled:
-        if logger is None:
-            logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
-        logger.info('Info is up to date; update canceled', infofile)
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
+        logger.info('!!! Info shelf file content is complete; update canceled',
+                    info_path, force=True)
         return
 
     # Write checksum file
-    move_old_info(infofile, logger=logger)
-    shelve_infodict(pdsdir, dir_infodict, logger=logger)
+    move_old_info(info_path, logger=logger)
+    write_infodict(pdsdir, dir_infodict, logger=logger)
 
 ################################################################################
 ################################################################################
@@ -502,12 +603,12 @@ if __name__ == '__main__':
         description='pdsinfoshelf: Create, maintain and validate shelf files ' +
                     'containing basic information about each file.')
 
-    parser.add_argument('--initialize', const='initialize',
+    parser.add_argument('--initialize', '--init', const='initialize',
                         default='', action='store_const', dest='task',
                         help='Create an infoshelf file for a volume. Abort '   +
                              'if the file already exists.')
 
-    parser.add_argument('--reinitialize', const='reinitialize',
+    parser.add_argument('--reinitialize', '--reinit', const='reinitialize',
                         default='', action='store_const', dest='task',
                         help='Create an infoshelf file for a volume. Replace ' +
                              'the file if it already exists. If a single '     +
@@ -530,14 +631,19 @@ if __name__ == '__main__':
                              'has changed, the infoshelf file is replaced. '   +
                              'If a single file is specified, such as an '      +
                              'archive file in a volume set, then only '        +
-                             'information about that file is repaired.')
+                             'information about that file is repaired. If any '+
+                             'of the files checked are newer than the shelf '  +
+                             'file, update the shelf file\'s modification '    +
+                             'date.')
 
     parser.add_argument('--update', const='update',
                         default='', action='store_const', dest='task',
                         help='Search a directory for any new files and add '   +
                              'their information to the infoshelf file. '       +
                              'Information about pre-existing files is not '    +
-                             'updated.')
+                             'updated. If any of the files checked are newer ' +
+                             'than the shelf file, update the shelf file\'s '  +
+                             'modification date.')
 
     parser.add_argument('volume', nargs='+', type=str,
                         help='The path to the root of the volume or volume '   +
@@ -594,11 +700,11 @@ if __name__ == '__main__':
     info = []
     for path in args.volume:
 
+        path = os.path.abspath(path)
         if not os.path.exists(path):
             print('No such file or directory: ' + path)
             sys.exit(1)
 
-        path = os.path.abspath(path)
         pdsf = pdsfile.PdsFile.from_abspath(path)
         if pdsf.checksums_:
             print('No infoshelves for checksum files: ' + path)
@@ -640,7 +746,7 @@ if __name__ == '__main__':
     try:
         for (pdsdir, selection) in info:
 
-            infofile = pdsdir.shelf_path_and_lskip(id='info')[0]
+            info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
 
             if selection:
                 pdsf = pdsdir.child(os.path.basename(selection))
@@ -679,11 +785,14 @@ if __name__ == '__main__':
                 local_handlers += [warning_handler, error_handler]
 
             # Open the next level of the log
+            if len(info) > 1:
+                logger.blankline()
+ 
             if selection:
                 logger.open('Task "' + args.task + '" for selection ' +
                             selection, pdsdir.abspath, handler=local_handlers)
             else:
-                logger.open('Task "' + args.task + '" for', path,
+                logger.open('Task "' + args.task + '" for', pdsdir.abspath,
                             handler=local_handlers)
 
             try:

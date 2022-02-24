@@ -31,9 +31,7 @@ def load_directory_info(pdsdir, limits={'normal':100}, logger=None):
 
     dirpath = pdsdir.abspath
 
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+    logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
     logger.replace_root(pdsdir.root_)
     logger.open('Generating file info', dirpath, limits)
 
@@ -97,9 +95,7 @@ def read_archive_info(tarpath, limits={'normal':100}, logger=None):
     tarpath = os.path.abspath(tarpath)
     pdstar = pdsfile.PdsFile.from_abspath(tarpath)
 
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+    logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
     logger.replace_root(pdstar.root_)
     logger.open('Reading archive file', tarpath, limits=limits)
 
@@ -177,9 +173,7 @@ def write_archive(pdsdir, clobber=True, archive_invisibles=True,
 
     dirpath = pdsdir.abspath
 
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+    logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
     logger.replace_root(pdsdir.root_)
     logger.open('Writing .tar.gz file for', dirpath, limits=limits)
 
@@ -215,11 +209,10 @@ def validate_tuples(dir_tuples, tar_tuples, limits={'normal':100}, logger=None):
     """Validate the directory list of tuples against the list from the tarfile.
     """
 
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+    logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
     logger.open('Validating file information', limits=limits)
 
+    valid = True
     try:
         tardict = {}
         for (abspath, dirpath, nbytes, modtime) in tar_tuples:
@@ -228,6 +221,7 @@ def validate_tuples(dir_tuples, tar_tuples, limits={'normal':100}, logger=None):
         for (abspath, dirpath, nbytes, modtime) in dir_tuples:
             if abspath not in tardict:
                 logger.error('Missing from tar file', abspath)
+                valid = False
 
             elif (dirpath, nbytes, modtime) != tardict[abspath]:
 
@@ -235,11 +229,13 @@ def validate_tuples(dir_tuples, tar_tuples, limits={'normal':100}, logger=None):
                     logger.error('Byte count mismatch: ' +
                                  '%d (filesystem) vs. %d (tarfile)' %
                                  (nbytes, tardict[abspath][1]), abspath)
+                    valid = False
 
                 if abs(modtime - tardict[abspath][2]) > 1:
                     logger.error('Modification time mismatch: ' +
                                  '%s (filesystem) vs. %s (tarfile)' %
                                  (modtime, tardict[abspath][2]), abspath)
+                    valid = False
 
                 del tardict[abspath]
 
@@ -251,13 +247,14 @@ def validate_tuples(dir_tuples, tar_tuples, limits={'normal':100}, logger=None):
         keys.sort()
         for abspath in keys:
             logger.error('Missing from directory', abspath)
+            valid = False
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
         raise
 
     finally:
-        return logger.close()
+        logger.close()
 
 ################################################################################
 # Simplified functions to perform tasks
@@ -265,9 +262,11 @@ def validate_tuples(dir_tuples, tar_tuples, limits={'normal':100}, logger=None):
 
 def initialize(pdsdir, logger=None):
     write_archive(pdsdir, clobber=False, logger=logger)
+    return True
 
 def reinitialize(pdsdir, logger=None):
     write_archive(pdsdir, clobber=True, logger=logger)
+    return True
 
 def validate(pdsdir, logger=None):
 
@@ -276,32 +275,47 @@ def validate(pdsdir, logger=None):
     tarpath = pdsdir.archive_path_and_lskip()[0]
     tar_tuples = read_archive_info(tarpath, logger=logger)
 
-    validate_tuples(dir_tuples, tar_tuples, logger=logger)
+    return validate_tuples(dir_tuples, tar_tuples, logger=logger)
 
 def repair(pdsdir, logger=None):
 
-    dir_tuples = load_directory_info(pdsdir, logger=logger)
-
     tarpath = pdsdir.archive_path_and_lskip()[0]
+    if not os.path.exists(tarpath):
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
+        logger.warn('Archive file does not exist; initializing', tarpath)
+        initialize(pdsdir, logger=logger)
+        return True
+
     tar_tuples = read_archive_info(tarpath, logger=logger)
+    dir_tuples = load_directory_info(pdsdir, logger=logger)
 
     # Compare
     dir_tuples.sort()
     tar_tuples.sort()
     canceled = (dir_tuples == tar_tuples)
     if canceled:
-        if logger is None:
-            logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
         logger.info('!!! Files match; repair canceled', tarpath)
-        return
+        return False
 
     # Overwrite tar file if necessary
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+    logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
     logger.info('Discrepancies found; writing new file', tarpath)
     write_archive(pdsdir, clobber=True, logger=logger)
+    return True
+
+def update(pdsdir, logger=None):
+
+    tarpath = pdsdir.archive_path_and_lskip()[0]
+
+    if os.path.exists(tarpath):
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
+        logger.info('Archive file exists; skipping', tarpath)
+        return False
+
+    # Write tar file if necessary
+    write_archive(pdsdir, clobber=True, logger=logger)
+    return True
 
 ################################################################################
 # Executable program
@@ -314,12 +328,12 @@ if __name__ == '__main__':
         description='pdsarchives: Create, maintain and validate .tar.gz '      +
                     'archives of PDS volume directory trees.')
 
-    parser.add_argument('--initialize', const='initialize',
+    parser.add_argument('--initialize', '--init', const='initialize',
                         default='', action='store_const', dest='task',
                         help='Create a .tar.gz archive for a volume. Abort '   +
                              'if the archive already exists.')
 
-    parser.add_argument('--reinitialize', const='reinitialize',
+    parser.add_argument('--reinitialize', '--reinit', const='reinitialize',
                         default='', action='store_const', dest='task',
                         help='Create a .tar.gz archive for a volume. Replace ' +
                              'the archive if it already exists.')
@@ -337,6 +351,13 @@ if __name__ == '__main__':
                         help='Validate every file in a volume against the '    +
                              'contents of its .tar.gz archive. If any file '   +
                              'has changed, write a new archive.')
+
+    parser.add_argument('--update', const='update',
+                        default='', action='store_const', dest='task',
+                        help='Search a volume set directory for any new '      +
+                             'volumes and create a new archive file for each ' +
+                             'of them; do not update any pre-existing archive '+
+                             'files.')
 
     parser.add_argument('volume', nargs='+', type=str,
                         help='The path to the root of the volume or volume '   +
@@ -388,16 +409,15 @@ if __name__ == '__main__':
         error_handler = pdslogger.error_handler(path)
         logger.add_handler(error_handler)
 
-
     # Generate a list of pdsfiles for volume directories
     pdsdirs = []
     for path in args.volume:
 
+        path = os.path.abspath(path)
         if not os.path.exists(path):
             print('No such file or directory: ' + path)
             sys.exit(1)
 
-        path = os.path.abspath(path)
         pdsf = pdsfile.PdsFile.from_abspath(path)
         if pdsf.checksums_:
             print('No archives for checksum files: ' + path)
@@ -442,6 +462,9 @@ if __name__ == '__main__':
                 local_handlers += [warning_handler, error_handler]
 
             # Open the next level of the log
+            if len(pdsdirs) > 1:
+                logger.blankline()
+ 
             logger.open('Task %s for' % args.task, pdsdir.abspath,
                                                    handler=local_handlers)
 
@@ -450,16 +473,19 @@ if __name__ == '__main__':
                     logger.info('Log file', logfile)
 
                 if args.task == 'initialize':
-                    initialize(pdsdir)
+                    proceed = initialize(pdsdir)
 
                 elif args.task == 'reinitialize':
-                    reinitialize(pdsdir)
+                    proceed = reinitialize(pdsdir)
 
                 elif args.task == 'validate':
-                    validate(pdsdir)
+                    proceed = validate(pdsdir)
 
-                else:
-                    repair(pdsdir)
+                elif args.task == 'repair':
+                    proceed = repair(pdsdir)
+
+                else:       # update
+                    proceed = update(pdsdir)
 
             except (Exception, KeyboardInterrupt) as e:
                 logger.exception(e)
@@ -471,10 +497,12 @@ if __name__ == '__main__':
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
         status = 1
+        proceed = False
         raise
 
     finally:
         (fatal, errors, warnings, tests) = logger.close()
-        if fatal or errors: status = 1
+        if fatal or errors:
+            status = 1
 
     sys.exit(status)
