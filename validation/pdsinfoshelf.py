@@ -664,6 +664,10 @@ if __name__ == '__main__':
     parser.add_argument('--quiet', '-q', action='store_true',
                         help='Do not also log to the terminal.')
 
+    parser.add_argument('--archives', '-a', default=False, action='store_true', 
+                        help='Instead of referring to a volume, refer to the ' +
+                             'the archive file for that volume.')
+
 
     # Parse and validate the command line
     args = parser.parse_args()
@@ -701,6 +705,19 @@ if __name__ == '__main__':
     for path in args.volume:
 
         path = os.path.abspath(path)
+        if '/archives-' in path or args.archives:
+            test_path = path.replace('/archives-', '/')
+            try:
+                test_pdsf = pdsfile.PdsFile.from_abspath(test_path)
+                test_path = test_pdsf.archive_path_and_lskip()[0]
+                if os.path.exists(test_path):
+                    pdsf = pdsfile.PdsFile.from_abspath(path)
+                    logger.warn('File path "%s" replaced' %
+                                pdsf.logical_path, test_path)
+                    path = test_path
+            except Exception:
+                pass
+
         if not os.path.exists(path):
             print('No such file or directory: ' + path)
             sys.exit(1)
