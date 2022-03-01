@@ -360,7 +360,6 @@ neighbors = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl',  re.I, ''),
     (r'volumes/(.*)/(DATA/\w+/.*)_(RAW|CLEANED|CALIB|GEOMED)\..*', 0,
             [r'previews/\1/\2_full.jpg',
              r'previews/\1/\2_med.jpg',

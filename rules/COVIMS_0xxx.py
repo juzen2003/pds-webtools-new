@@ -32,9 +32,7 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl',  re.I, ''),
-
-    (r'volumes/(.*/data/\w+/.*)\.(\w+)', 0,
+    (r'volumes/(.*/data/\w+/.*)\.(qub|lbl)', 0,
             [r'previews/\1_thumb.png',
              r'previews/\1_small.png',
              r'previews/\1_med.png',

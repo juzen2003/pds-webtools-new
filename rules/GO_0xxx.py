@@ -204,9 +204,10 @@ import re
 ####################################################################################################################################
 
 description_and_icon_by_regex = translator.TranslatorByRegex([
-    (r'volumes/\w+/\w+(|/REDO)/[CEGIJ]\d\d?',            0, ('Images grouped by orbit',        'IMAGEDIR')),
-    (r'volumes/\w+/\w+(|/REDO)/[CEGIJ]\d\d?/\w+',        0, ('Images grouped by target',       'IMAGEDIR')),
-    (r'volumes/\w+/(MOON|EARTH|VENUS|IDA|GASPRA|SL9)',   0, ('Images grouped by target',       'IMAGEDIR')),
+    (r'volumes/\w+/\w+(|/REDO)/[CEGIJ]\d\d?',            0, ('Images grouped by orbit',  'IMAGEDIR')),
+    (r'volumes/\w+/\w+(|/REDO)/[CEGIJ]\d\d?/\w+',        0, ('Images grouped by target', 'IMAGEDIR')),
+    (r'volumes/\w+/(MOON|EARTH|VENUS|IDA|GASPRA|SL9)',   0, ('Images grouped by target', 'IMAGEDIR')),
+    (r'volumes/\w+/RAW_CAL',                             0, ('Calibration images',       'IMAGEDIR')),
     (r'volumes/\w+/EMCONJ',                              0, ('Images targeted at the Earth-Moon conjunction', 'IMAGEDIR')),
     (r'volumes/\w+/GOPEX',                               0, ('Images for the Galileo Optical Experiment',     'IMAGEDIR')),
     (r'volumes/\w+/\w+(|/REDO)/[CEGIJ]\d\d?/\w+/C\d{6}', 0, ('Images grouped by SC clock',           'IMAGEDIR')),
@@ -217,6 +218,8 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
     (r'volumes/.*S\.IMG',         0, ('Repaired raw image, VICAR'             , 'IMAGE')),
     (r'volumes/.*R\.IMG',         0, ('Raw image, VICAR'                      , 'IMAGE')),
     (r'volumes/.*G\.IMG',         0, ('Image with SL9 graphics overlay, VICAR', 'IMAGE')),
+
+    (r'metadata/GO_0xxx/GO_0016/GO_0016_sl9_index.tab', 0, ('Index for SL9 multiple exposures', 'INDEX')),
 ])
 
 ####################################################################################################################################
@@ -224,7 +227,6 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl',  re.I, ''),
     (r'volumes/(.*/C\d{10}[A-Z])\.(IMG|LBL)', 0,
             [r'previews/\1_full.jpg',
              r'previews/\1_med.jpg',
@@ -254,85 +256,96 @@ associations_to_volumes = translator.TranslatorByRegex([
              r'volumes/GO_0xxx/\1\2.IMG',
              r'volumes/GO_0xxx/\1\2.LBL'
             ]),
-    (r'.*/previews/(GO_0..._v1/.*)_[a-z]+\.jpg', 0,
+    (r'previews/(GO_0..._v1/.*)_[a-z]+\.jpg', 0,
             [r'volumes/\1.IMG',
              r'volumes/\1.LBL',
             ]),
-    (r'.*/metadata/GO_0xxx/GO_0999.*', 0,
+    (r'metadata/GO_0xxx/GO_0999.*', 0,
             r'volumes/GO_0xxx'),
-    (r'.*/metadata/GO_0xxx_v1/GO_0999.*', 0,
+    (r'metadata/GO_0xxx_v1/GO_0999.*', 0,
             r'volumes/GO_0xxx_v1'),
 
+    # SL9 "graphics" file associations
+    (r'volumes/GO_0xxx/GO_0016/SL9/(C\d{10})R\.(IMG|LBL)', 0,
+            [r'volumes/GO_0xxx/GO_0016/SL9/\1G.IMG',
+             r'volumes/GO_0xxx/GO_0016/SL9/\1G.LBL',
+            ]),
+
+    (r'volumes/GO_0xxx/GO_0016/SL9/(C\d{10})G\.(IMG|LBL)', 0,
+            [r'volumes/GO_0xxx/GO_0016/SL9/\1R.IMG',
+             r'volumes/GO_0xxx/GO_0016/SL9/\1R.LBL',
+            ]),
+
     # Known duplicates...
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0018062639R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0002/VENUS/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0018241745R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0002/VENUS/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0018353518R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0002/VENUS/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0018518445R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0002/VENUS/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0059469700R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0002/RAW_CAL/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0059471700R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0002/RAW_CAL/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0060964000R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0003/MOON/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061078900R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0004/EARTH/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061116.00R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0004/MOON/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061424500R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0004/EARTH/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061441500R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0004/EARTH/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061469100R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0005/EARTH/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C006150..00R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0005/EARTH/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C006151..00R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0005/EARTH/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C006152..00R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0005/EARTH/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C006153..00R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0006/EARTH/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061542500R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0006/EARTH/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0015/REDO/(C0165242700R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0012/EARTH/\1.\2'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0018062639R).*'   , 0, r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0018241745R).*'   , 0, r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0018353518R).*'   , 0, r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0018518445R).*'   , 0, r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0059469700R).*'   , 0, r'volumes/GO_0xxx/GO_0002/RAW_CAL/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0059471700R).*'   , 0, r'volumes/GO_0xxx/GO_0002/RAW_CAL/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0060964000R).*'   , 0, r'volumes/GO_0xxx/GO_0003/MOON/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061078900R).*'   , 0, r'volumes/GO_0xxx/GO_0004/EARTH/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061116.00R).*'   , 0, r'volumes/GO_0xxx/GO_0004/MOON/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061424500R).*'   , 0, r'volumes/GO_0xxx/GO_0004/EARTH/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061441500R).*'   , 0, r'volumes/GO_0xxx/GO_0004/EARTH/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061469100R).*'   , 0, r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C006150..00R).*'   , 0, r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C006151..00R).*'   , 0, r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C006152..00R).*'   , 0, r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C006153..00R).*'   , 0, r'volumes/GO_0xxx/GO_0006/EARTH/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/REDO/(C0061542500R).*'   , 0, r'volumes/GO_0xxx/GO_0006/EARTH/\1.*'),
+    (r'volumes/GO_0xxx/GO_0015/REDO/(C0165242700R).*'   , 0, r'volumes/GO_0xxx/GO_0012/EARTH/\1.*'),
 
-    (r'volumes/GO_0xxx/GO_0002/VENUS/(C0018062639R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0002/VENUS/(C0018241745R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0002/VENUS/(C0018353518R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0002/VENUS/(C0018518445R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0002/RAW_CAL/(C0059469700R)\.(.*)', 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0002/RAW_CAL/(C0059471700R)\.(.*)', 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0003/MOON/(C0060964000R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0004/EARTH/(C0061078900R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0004/MOON/(C0061116.00R)\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0004/EARTH/(C0061424500R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0004/EARTH/(C0061441500R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0005/EARTH/(C0061469100R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0005/EARTH/(C006150..00R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0005/EARTH/(C006151..00R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0005/EARTH/(C006152..00R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0005/EARTH/(C006153..00R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0006/EARTH/(C0061542500R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0012/EARTH/(C0165242700R)\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0015/REDO/\1.\2'),
+    (r'volumes/GO_0xxx/GO_0002/VENUS/(C0018062639R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0002/VENUS/(C0018241745R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0002/VENUS/(C0018353518R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0002/VENUS/(C0018518445R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0002/RAW_CAL/(C0059469700R).*', 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0002/RAW_CAL/(C0059471700R).*', 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0003/MOON/(C0060964000R).*'   , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0004/EARTH/(C0061078900R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0004/MOON/(C0061116.00R).*'   , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0004/EARTH/(C0061424500R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0004/EARTH/(C0061441500R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0005/EARTH/(C0061469100R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0005/EARTH/(C006150..00R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0005/EARTH/(C006151..00R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0005/EARTH/(C006152..00R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0005/EARTH/(C006153..00R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0006/EARTH/(C0061542500R).*'  , 0, r'volumes/GO_0xxx/GO_0006/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0012/EARTH/(C0165242700R).*'  , 0, r'volumes/GO_0xxx/GO_0015/REDO/\1.*'),
 
-    (r'volumes/GO_0xxx/GO_0018/REDO/(C3/JUPITER/C036897..00R)\.(.*)', 0, r'volumes/GO_0xxx/GO_0017/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0018/REDO/(C3/JUPITER/C036898..00R)\.(.*)', 0, r'volumes/GO_0xxx/GO_0017/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0018/REDO/(C3/JUPITER/C036899..00R)\.(.*)', 0, r'volumes/GO_0xxx/GO_0017/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0019/REDO/(C3/EUROPA/C0368976...R)\.(.*)' , 0, r'volumes/GO_0xxx/GO_0017/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0019/REDO/(C3/JUPITER/C0368369268R)\.(.*)', 0, r'volumes/GO_0xxx/GO_0017/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0019/REDO/(C3/JUPITER/C0368441600R)\.(.*)', 0, r'volumes/GO_0xxx/GO_0017/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0019/REDO/(E4/EUROPA/C0374667300R)\.(.*)' , 0, r'volumes/GO_0xxx/GO_0018/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0019/REDO/(E6/IO/C0383655111R)\.(.*)'     , 0, r'volumes/GO_0xxx/GO_0018/\1.\2'),
+    (r'volumes/GO_0xxx/GO_0018/REDO/(C3/JUPITER/C036897..00R).*', 0, r'volumes/GO_0xxx/GO_0017/\1.*'),
+    (r'volumes/GO_0xxx/GO_0018/REDO/(C3/JUPITER/C036898..00R).*', 0, r'volumes/GO_0xxx/GO_0017/\1.*'),
+    (r'volumes/GO_0xxx/GO_0018/REDO/(C3/JUPITER/C036899..00R).*', 0, r'volumes/GO_0xxx/GO_0017/\1.*'),
+    (r'volumes/GO_0xxx/GO_0019/REDO/(C3/EUROPA/C0368976...R).*' , 0, r'volumes/GO_0xxx/GO_0017/\1.*'),
+    (r'volumes/GO_0xxx/GO_0019/REDO/(C3/JUPITER/C0368369268R).*', 0, r'volumes/GO_0xxx/GO_0017/\1.*'),
+    (r'volumes/GO_0xxx/GO_0019/REDO/(C3/JUPITER/C0368441600R).*', 0, r'volumes/GO_0xxx/GO_0017/\1.*'),
+    (r'volumes/GO_0xxx/GO_0019/REDO/(E4/EUROPA/C0374667300R).*' , 0, r'volumes/GO_0xxx/GO_0018/\1.*'),
+    (r'volumes/GO_0xxx/GO_0019/REDO/(E6/IO/C0383655111R).*'     , 0, r'volumes/GO_0xxx/GO_0018/\1.*'),
 
-    (r'volumes/GO_0xxx/GO_0017/(C3/JUPITER/C036897..00R)\.(.*)'     , 0, r'volumes/GO_0xxx/GO_0018/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0017/(C3/JUPITER/C036898..00R)\.(.*)'     , 0, r'volumes/GO_0xxx/GO_0018/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0017/(C3/JUPITER/C036899..00R)\.(.*)'     , 0, r'volumes/GO_0xxx/GO_0018/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0017/(C3/EUROPA/C0368976...R)\.(.*)'      , 0, r'volumes/GO_0xxx/GO_0019/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0017/(C3/JUPITER/C0368369268R)\.(.*)'     , 0, r'volumes/GO_0xxx/GO_0019/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0017/(C3/JUPITER/C0368441600R)\.(.*)'     , 0, r'volumes/GO_0xxx/GO_0019/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0018/(E4/EUROPA/C0374667300R)\.(.*)'      , 0, r'volumes/GO_0xxx/GO_0019/REDO/\1.\2'),
-    (r'volumes/GO_0xxx/GO_0018/(E6/IO/C0383655111R)\.(.*)'          , 0, r'volumes/GO_0xxx/GO_0019/REDO/\1.\2'),
+    (r'volumes/GO_0xxx/GO_0017/(C3/JUPITER/C036897..00R).*'     , 0, r'volumes/GO_0xxx/GO_0018/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0017/(C3/JUPITER/C036898..00R).*'     , 0, r'volumes/GO_0xxx/GO_0018/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0017/(C3/JUPITER/C036899..00R).*'     , 0, r'volumes/GO_0xxx/GO_0018/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0017/(C3/EUROPA/C0368976...R).*'      , 0, r'volumes/GO_0xxx/GO_0019/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0017/(C3/JUPITER/C0368369268R).*'     , 0, r'volumes/GO_0xxx/GO_0019/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0017/(C3/JUPITER/C0368441600R).*'     , 0, r'volumes/GO_0xxx/GO_0019/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0018/(E4/EUROPA/C0374667300R).*'      , 0, r'volumes/GO_0xxx/GO_0019/REDO/\1.*'),
+    (r'volumes/GO_0xxx/GO_0018/(E6/IO/C0383655111R).*'          , 0, r'volumes/GO_0xxx/GO_0019/REDO/\1.*'),
 
-    (r'volumes/GO_0xxx/GO_0020/E12/TIRETRACK/(C04262728..)S\.(.*)'  , 0, r'volumes/GO_0xxx/GO_0020/E12/EUROPA/\1R.\2'),
-    (r'volumes/GO_0xxx/GO_0022/I24/IO/REPAIRED/(C052079....)S\.(.*)', 0, r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/\1R.\2'),
-    (r'volumes/GO_0xxx/GO_0022/I24/IO/REPAIRED/(C052080630.)S\.(.*)', 0, r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/\1R.\2'),
-    (r'volumes/GO_0xxx/GO_0023/G28/REPAIRED/(C0552447569)S\.(.*)'   , 0, r'volumes/GO_0xxx/GO_0023/G28/GARBLED/\1R.\2'),
-    (r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/(C060049.*)S\.(.*)'     , 0, r'volumes/GO_0xxx/GO_0023/G29/GARBLED/\1R.\2'),
-    (r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/(C060066.*)S\.(.*)'     , 0, r'volumes/GO_0xxx/GO_0023/G29/GARBLED/\1R.\2'),
+    (r'volumes/GO_0xxx/GO_0020/E12/TIRETRACK/(C04262728..)S.*'  , 0, r'volumes/GO_0xxx/GO_0020/E12/EUROPA/\1R.*'),
+    (r'volumes/GO_0xxx/GO_0022/I24/IO/REPAIRED/(C052079....)S.*', 0, r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/\1R.*'),
+    (r'volumes/GO_0xxx/GO_0022/I24/IO/REPAIRED/(C052080630.)S.*', 0, r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/\1R.*'),
+    (r'volumes/GO_0xxx/GO_0023/G28/REPAIRED/(C0552447569)S.*'   , 0, r'volumes/GO_0xxx/GO_0023/G28/GARBLED/\1R.*'),
+    (r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/(C060049.*)S.*'     , 0, r'volumes/GO_0xxx/GO_0023/G29/GARBLED/\1R.*'),
+    (r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/(C060066.*)S.*'     , 0, r'volumes/GO_0xxx/GO_0023/G29/GARBLED/\1R.*'),
 
-    (r'volumes/GO_0xxx/GO_0020/E12/EUROPA/(C04262728..)R\.(.*)'     , 0, r'volumes/GO_0xxx/GO_0020/E12/TIRETRACK/\1S.\2'),
-    (r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/(C052079....)R\.(.*)' , 0, r'volumes/GO_0022/I24/IO/REPAIRED/\1S.\2'),
-    (r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/(C052080630.)R\.(.*)' , 0, r'volumes/GO_0022/I24/IO/REPAIRED/\1S.\2'),
-    (r'volumes/GO_0xxx/GO_0023/G28/GARBLED/(C0552447569)R\.(.*)'    , 0, r'volumes/GO_0xxx/GO_0023/G28/REPAIRED/\1S.\2'),
-    (r'volumes/GO_0xxx/GO_0023/G29/GARBLED/(C060049.*)R\.(.*)'      , 0, r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/\1S.\2'),
-    (r'volumes/GO_0xxx/GO_0023/G29/GARBLED/(C060066.*)R\.(.*)'      , 0, r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/\1S.\2'),
+    (r'volumes/GO_0xxx/GO_0020/E12/EUROPA/(C04262728..)R.*'     , 0, r'volumes/GO_0xxx/GO_0020/E12/TIRETRACK/\1S.*'),
+    (r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/(C052079....)R.*' , 0, r'volumes/GO_0xxx/GO_0022/I24/IO/REPAIRED/\1S.*'),
+    (r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/(C052080630.)R.*' , 0, r'volumes/GO_0xxx/GO_0022/I24/IO/REPAIRED/\1S.*'),
+    (r'volumes/GO_0xxx/GO_0023/G28/GARBLED/(C0552447569)R.*'    , 0, r'volumes/GO_0xxx/GO_0023/G28/REPAIRED/\1S.*'),
+    (r'volumes/GO_0xxx/GO_0023/G29/GARBLED/(C060049.*)R.*'      , 0, r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/\1S.*'),
+    (r'volumes/GO_0xxx/GO_0023/G29/GARBLED/(C060066.*)R.*'      , 0, r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/\1S.*'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
@@ -388,9 +401,9 @@ versions = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 view_options = translator.TranslatorByRegex([
-    (r'(volumes|previews)/GO_0xxx/GO_....(|/BROWSE)/([CEGIJ]\d{1,2}|REDO)/.*',            0, (True, True, True)),
-    (r'(volumes|previews)/GO_0xxx_v1/GO_....(|/BROWSE)/([CEGIJ]\d{1,2}|REDO)/.*/C\d{6}',  0, (True, True, False)),
-    (r'(volumes|previews)/GO_0xxx_v1/GO_....(|/BROWSE)/([CEGIJ]\d{1,2}|REDO)/.*',         0, (True, True, True)),
+    (r'(volumes|previews)/GO_0xxx/GO_....(|/BROWSE)/([CEGIJ]\d\d?|REDO)/.*',            0, (True, True, True)),
+    (r'(volumes|previews)/GO_0xxx_v1/GO_....(|/BROWSE)/([CEGIJ]\d\d?|REDO)/.*/C\d{6}',  0, (True, True, False)),
+    (r'(volumes|previews)/GO_0xxx_v1/GO_....(|/BROWSE)/([CEGIJ]\d\d?|REDO)/.*',         0, (True, True, True)),
 ])
 
 ####################################################################################################################################
@@ -398,15 +411,19 @@ view_options = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 neighbors = translator.TranslatorByRegex([
-    (r'(volumes|previews)/GO_0xxx(|_v[1-9])/\w+(|/REDO)/([CEGIJ]\d{1,2})', 0,
+    (r'(volumes|previews)/GO_0xxx(|_v[\d\.]+)/GO_00../(MOON|EARTH|VENUS|IDA|GASPRA|SL9|GOPEX|EMCONJ|RAW_CAL)', 0, r'\1/GO_0xxx\2/GO_00??/\3'),
+    (r'(volumes|previews)/GO_0xxx/GO_0016/SL9/(C\d{10})([RG])(.*)', 0, r'\1/GO_0xxx/GO_0016/SL9/C*\3\4'),
+    (r'(volumes|previews)/GO_0xxx(_v[\d\.]+)/GO_0016/SL9/(C\d{6})/(\d{4})([RG])(.*)', 0, r'\1/GO_0xxx\2/GO_0016/SL9/C*/*\5\6'),
+
+    (r'(volumes|previews)/GO_0xxx(|_v[\d\.]+)/\w+(|/REDO)/([CEGIJ]\d\d?)', 0,
             [r'\1/GO_0xxx\2/*/\4',
              r'\1/GO_0xxx\2/*/REDO/\4'
             ]),
-    (r'(volumes|previews)/GO_0xxx(|_v[1-9])/\w+(|/REDO)/[CEGIJ]\d{1,2}/(\w+)', 0,
+    (r'(volumes|previews)/GO_0xxx(|_v[\d\.]+)/\w+(|/REDO)/[CEGIJ]\d\d?/(\w+)', 0,
             [r'\1/GO_0xxx\2/*/*/\4',
              r'\1/GO_0xxx\2/*/REDO/*/\4',
             ]),
-    (r'(volumes|previews)/GO_0xxx(|_v[1-9])/\w+(|/REDO)/[CEGIJ]\d{1,2}/(\w+)/C\d{6}', 0,
+    (r'(volumes|previews)/GO_0xxx(|_v[\d\.]+)/\w+(|/REDO)/[CEGIJ]\d\d?/(\w+)/C\d{6}', 0,
             [r'\1/GO_0xxx\2/*/*/\4/*',
              r'\1/GO_0xxx\2/*/REDO/*/\4/*',
             ]),
@@ -429,6 +446,14 @@ sort_key = translator.TranslatorByRegex([
     (r'(LABEL)',         0, r'\1'),
     (r'(REDO)',          0, r'\1'),
     (r'(VOLDESC.CAT)',   0, r'\1'),
+])
+
+####################################################################################################################################
+# SPLIT_RULES
+####################################################################################################################################
+
+split_rules = translator.TranslatorByRegex([
+    (r'(C\d{10})([A-Z])\.(.*)', 0, (r'\1', r'\2', r'.\3')),
 ])
 
 ####################################################################################################################################
@@ -662,6 +687,7 @@ class GO_0xxx(pdsfile.PdsFile):
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
     SORT_KEY = sort_key + pdsfile.PdsFile.SORT_KEY
+    SPLIT_RULES = split_rules + pdsfile.PdsFile.SPLIT_RULES
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT

@@ -20,14 +20,13 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl', re.I, ''),
-    (r'volumes/COVIMS_8xxx(|_v[0-9\.]+)/(COVIMS_8...)/(data|EASYDATA)/(\w+)_TAU_\d+KM\.TAB', 0,
+    (r'volumes/COVIMS_8xxx(|_v[0-9\.]+)/(COVIMS_8...)/(data|EASYDATA)/(\w+)_TAU_\d+KM\.(TAB|LBL)', 0,
             [r'previews/COVIMS_8xxx/\2/data/\4_TAU_full.jpg',
              r'previews/COVIMS_8xxx/\2/data/\4_TAU_med.jpg',
              r'previews/COVIMS_8xxx/\2/data/\4_TAU_small.jpg',
              r'previews/COVIMS_8xxx/\2/data/\4_TAU_thumb.jpg',
             ]),
-    (r'volumes/COVIMS_8xxx(|_v[0-9\.]+)/(COVIMS_8.../browse/.\w_+)\.PDF', 0,
+    (r'volumes/COVIMS_8xxx(|_v[0-9\.]+)/(COVIMS_8.../browse/.\w_+)\.(PDF|LBL)', 0,
             [r'previews/COVIMS_8xxx/\2_full.jpg',
              r'previews/COVIMS_8xxx/\2_med.jpg',
              r'previews/COVIMS_8xxx/\2_small.jpg',
@@ -36,8 +35,7 @@ default_viewables = translator.TranslatorByRegex([
 ])
 
 diagrams_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl', re.I, ''),
-    (r'volumes/COVIMS_8xxx(|_v[0-9\.]+)/(COVIMS_8...)/(data|EASYDATA)/(\w+)_TAU_\d+KM\.TAB', 0,
+    (r'volumes/COVIMS_8xxx(|_v[0-9\.]+)/(COVIMS_8...)/(data|EASYDATA)/(\w+)_TAU_\d+KM\.(TAB|LBL)', 0,
             [r'diagrams/COVIMS_8xxx/\2/data/\4_full.jpg',
              r'diagrams/COVIMS_8xxx/\2/data/\4_med.jpg',
              r'diagrams/COVIMS_8xxx/\2/data/\4_small.jpg',

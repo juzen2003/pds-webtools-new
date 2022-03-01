@@ -367,8 +367,8 @@ class PdsViewSet(object):
 REQUIRED_ICONS = {      # basename: (icon name, priority)
 
     # Lowest-priority, least descriptive icons
-    'document_label'     : ('LABEL'    ,  0),   # < UNKNOWN
-    'document_generic'   : ('UNKNOWN'  ,  1),
+    'document_generic'   : ('UNKNOWN'  ,  0),   # < LABEL
+    'document_label'     : ('LABEL'    ,  1),
     'folder_generic'     : ('FOLDER'   ,  2),   # < any specific folder
 
     # Folders are never grouped, so they can all have the same priority

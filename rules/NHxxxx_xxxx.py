@@ -107,7 +107,6 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl',  re.I, ''),
     (r'volumes/(NHxx.._xxxx)(|_[0-9]\.]+)/(NH...._....)/data/(\w+/\w{3}_[0-9]{10}_0x...)_(eng.*|sci.*)\..*', 0,
             [r'previews/\1/\3/data/#LOWER#\4_\5_full.jpg',
              r'previews/\1/\3/data/#LOWER#\4_\5_med.jpg',
@@ -117,7 +116,6 @@ default_viewables = translator.TranslatorByRegex([
 ])
 
 raw_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl',  re.I, ''),
     (r'volumes/(NHxx.._xxxx)(|_[0-9]\.]+)/(NH....)_1(...)/data/(\w+/\w{3}_[0-9]{10}_0x...)_(eng.*)\..*', 0,
            [r'previews/\1/\3_1\4/data/#LOWER#\5_\6_full.jpg',
             r'previews/\1/\3_1\4/data/#LOWER#\5_\6_med.jpg',
@@ -127,7 +125,6 @@ raw_viewables = translator.TranslatorByRegex([
 ])
 
 calibrated_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl',  re.I, ''),
     (r'volumes/(NHxx.._xxxx)(|_[0-9]\.]+)/(NH....)_1(...)/data/(\w+/\w{3}_[0-9]{10}_0x...)_(sci.*)\..*', 0,
            [r'previews/\1/\3_2\4/data/#LOWER#\5_\6_full.jpg',
             r'previews/\1/\3_2\4/data/#LOWER#\5_\6_med.jpg',

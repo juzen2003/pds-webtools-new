@@ -23,7 +23,7 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 
 default_viewables = translator.TranslatorByRegex([
     (r'.*\.lbl', re.I, ''),
-    (r'volumes/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE)/(\w+/\w+)\.TAB', 0,
+    (r'volumes/EBROCC_xxxx(|_v[0-9\.]+)/(EBROCC_....)/(DATA|BROWSE)/(\w+/\w+)\.(TAB|LBL)', 0,
             [r'previews/EBROCC_xxxx/\2/\3/\4_full.jpg',
              r'previews/EBROCC_xxxx/\2/\3/\4_med.jpg',
              r'previews/EBROCC_xxxx/\2/\3/\4_small.jpg',

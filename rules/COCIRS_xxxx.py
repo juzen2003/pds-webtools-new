@@ -425,9 +425,7 @@ versions = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl',  re.I, ''),
-
-    (r'volumes/(COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)\.tar\.gz', 0,
+    (r'volumes/(COCIRS_[01].*)/DATA/CUBE/(\w+/\w+)\.(tar\.gz|LBL)', 0,
             [r'previews/\1/DATA/CUBE/\2_full.jpg',
              r'previews/\1/DATA/CUBE/\2_med.jpg',
              r'previews/\1/DATA/CUBE/\2_small.jpg',
@@ -446,17 +444,17 @@ default_viewables = translator.TranslatorByRegex([
              r'diagrams/\1/BROWSE/\2_small.jpg',
              r'diagrams/\1/BROWSE/\2_thumb.jpg',
             ]),
-    (r'volumes/(COCIRS_[56].*)/DATA/RINDATA/RIN(\w+)\.TAB', 0,
+    (r'volumes/(COCIRS_[56].*)/DATA/RINDATA/RIN(\w+)\.(TAB|LBL)', 0,
             [r'diagrams/\1/BROWSE/S_RINGS/RIN\2_full.jpg',
              r'diagrams/\1/BROWSE/S_RINGS/RIN\2_med.jpg',
              r'diagrams/\1/BROWSE/S_RINGS/RIN\2_small.jpg',
              r'diagrams/\1/BROWSE/S_RINGS/RIN\2_thumb.jpg',
             ]),
-    (r'volumes/(COCIRS_[56].*)/DATA/GEODATA/GEO(\d{10})_(6[0-8].)\.TAB', 0,
+    (r'volumes/(COCIRS_[56].*)/DATA/GEODATA/GEO(\d{10})_(6[0-8].)\.(TAB|LBL)', 0,
             r'diagrams/\1/BROWSE/*/POI\2_FP?_\3_*.jpg'),
     (r'volumes/(COCIRS_[56].*)/DATA/GEODATA/GEO(\d{10})_699\.TAB', 0,
             r'diagrams/\1/BROWSE/SATURN/POI\2_FP?_*.jpg'),
-    (r'volumes/(COCIRS_[56].*)/DATA/\w+/(POI|SPEC|ISPM|TAR)(\w+)\.(TAB|DAT)', 0,
+    (r'volumes/(COCIRS_[56].*)/DATA/\w+/(POI|SPEC|ISPM|TAR)(\w+)\.(TAB|DAT|LBL)', 0,
             [r'diagrams/\1/BROWSE/TARGETS/IMG\3_full.jpg',
              r'diagrams/\1/BROWSE/TARGETS/IMG\3_med.jpg',
              r'diagrams/\1/BROWSE/TARGETS/IMG\3_small.jpg',
@@ -465,7 +463,7 @@ default_viewables = translator.TranslatorByRegex([
 ])
 
 s_rings_viewables = translator.TranslatorByRegex([
-    (r'volumes/(COCIRS_[56].*)/DATA/\w+/(ISPM|SPEC|TAR|RIN)(\d{10}_FP\d)\.(TAB|DAT)', 0,
+    (r'volumes/(COCIRS_[56].*)/DATA/\w+/(ISPM|SPEC|TAR|RIN)(\d{10}_FP\d)\.(TAB|DAT|LBL)', 0,
             [r'diagrams/\1/BROWSE/S_RINGS/RIN\3_full.jpg',
              r'diagrams/\1/BROWSE/S_RINGS/RIN\3_med.jpg',
              r'diagrams/\1/BROWSE/S_RINGS/RIN\3_small.jpg',
@@ -476,13 +474,13 @@ s_rings_viewables = translator.TranslatorByRegex([
 ])
 
 saturn_viewables = translator.TranslatorByRegex([
-    (r'volumes/(COCIRS_[56].*)/DATA/\w+/(SPEC|ISPM|TAR|POI)(\d{10}_FP\d)\.(TAB|DAT)', 0,
+    (r'volumes/(COCIRS_[56].*)/DATA/\w+/(SPEC|ISPM|TAR|POI)(\d{10}_FP\d)\.(TAB|DAT|LBL)', 0,
             [r'diagrams/\1/BROWSE/SATURN/POI\3_full.jpg',
              r'diagrams/\1/BROWSE/SATURN/POI\3_med.jpg',
              r'diagrams/\1/BROWSE/SATURN/POI\3_small.jpg',
              r'diagrams/\1/BROWSE/SATURN/POI\3_thumb.jpg',
             ]),
-    (r'volumes/(COCIRS_[56].*)/DATA/\w+/GEO(\w+)_699\.TAB', 0,
+    (r'volumes/(COCIRS_[56].*)/DATA/\w+/GEO(\w+)_699\.(TAB|LBL)', 0,
             r'diagrams/\1/BROWSE/SATURN/POI\2_FP*'),
 ])
 
@@ -514,7 +512,7 @@ viewables['rings']   = s_rings_viewables
 
 for (naif_id, name) in spice_lookup.items():
     viewables[name] = translator.TranslatorByRegex([
-        (r'volumes/(COCIRS_[56].*)/DATA/\w+/(SPEC|ISPM|TAR|POI)(\d{10}_FP\d)\.(TAB|DAT)', 0,
+        (r'volumes/(COCIRS_[56].*)/DATA/\w+/(SPEC|ISPM|TAR|POI)(\d{10}_FP\d)\.(TAB|DAT|LBL)', 0,
                 r'diagrams/\1/BROWSE/*/POI\3_%3d_*.jpg' % naif_id),
         (r'volumes/(COCIRS_[56].*)/DATA/\w+/GEO(\w+)_%3d\.TAB' % naif_id, 0,
                 r'diagrams/\1/BROWSE/*/POI\2_%3d_*.jpg' % naif_id),

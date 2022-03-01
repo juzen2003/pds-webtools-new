@@ -40,8 +40,7 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl', re.I, ''),
-    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/(browse|data)/(.*)\.pdf', 0,
+    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/(browse|data)/(.*)\.(pdf|LBL)', 0,
             [r'previews/CORSS_8xxx/\2/\3/\4_full.jpg',
              r'previews/CORSS_8xxx/\2/\3/\4_med.jpg',
              r'previews/CORSS_8xxx/\2/\3/\4_small.jpg',
@@ -65,19 +64,19 @@ default_viewables = translator.TranslatorByRegex([
              r'previews/CORSS_8xxx/\2/\3/\4_\5/\5_GEO_small.jpg',
              r'previews/CORSS_8xxx/\2/\3/\4_\5/\5_GEO_thumb.jpg',
             ]),
-    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/(data/.*)_(TAU|GEO).*\.TAB', 0,
+    (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/(data/.*)_(TAU|GEO).*\.(TAB|LBL)', 0,
             [r'previews/CORSS_8xxx/\2/\3_\4_full.jpg',
              r'previews/CORSS_8xxx/\2/\3_\4_med.jpg',
              r'previews/CORSS_8xxx/\2/\3_\4_small.jpg',
              r'previews/CORSS_8xxx/\2/\3_\4_thumb.jpg',
             ]),
-    (r'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev(..)(C?[IE])_RSS_(\w+)/(\w+)_(GEO|TAU)(\.TAB|_.*M\.TAB)', 0,
+    (r'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev(..)(C?[IE])_RSS_(\w+)/(\w+)_(GEO|TAU)(\.\w+|_.*M\.\w+)', 0,
             [r'previews/CORSS_8xxx/CORSS_8001/data/Rev0\1/Rev0\1\2/Rev0\1\2_RSS_\3/\4_\5_full.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev0\1/Rev0\1\2/Rev0\1\2_RSS_\3/\4_\5_med.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev0\1/Rev0\1\2/Rev0\1\2_RSS_\3/\4_\5_small.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev0\1/Rev0\1\2/Rev0\1\2_RSS_\3/\4_\5_thumb.jpg',
             ]),
-    (r'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev(..)(C?[IE])_RSS_(\w+)/Rev..[IE]_(RSS.*Summary).pdf', 0,
+    (r'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev(..)(C?[IE])_RSS_(\w+)/Rev..[IE]_(RSS.*Summary).(pdf|LBL)', 0,
             [r'previews/CORSS_8xxx/CORSS_8001/data/Rev0\1/Rev0\1\2/Rev0\1\2_RSS_\3/Rev0\1\2_\4_full.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev0\1/Rev0\1\2/Rev0\1\2_RSS_\3/Rev0\1\2_\4_med.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev0\1/Rev0\1\2/Rev0\1\2_RSS_\3/Rev0\1\2_\4_small.jpg',
@@ -92,7 +91,6 @@ default_viewables = translator.TranslatorByRegex([
 ])
 
 diagram_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl', re.I, ''),
     (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/.*/(Rev...)(C?[IE]_RSS_2..._..._..._[IE])(|/.*GEO.*|/.*TAU.*)', 0,
             [r'diagrams/CORSS_8xxx/\2/data/\3/\3\4_full.jpg',
              r'diagrams/CORSS_8xxx/\2/data/\3/\3\4_med.jpg',
@@ -108,7 +106,6 @@ diagram_viewables = translator.TranslatorByRegex([
 ])
 
 profile_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl', re.I, ''),
     (r'volumes/CORSS_8xxx(|_v[0-9\.]+)/(CORSS_8...)/.*/(Rev\d\d\d)(C?[IE])_(RSS_2..._..._..._[IE])(|/.*TAU.*)', 0,
             [r'previews/CORSS_8xxx/\2/data/\3/\3\4/\3\4_\5/\5_TAU_full.jpg',
              r'previews/CORSS_8xxx/\2/data/\3/\3\4/\3\4_\5/\5_TAU_med.jpg',
@@ -124,8 +121,7 @@ profile_viewables = translator.TranslatorByRegex([
 ])
 
 skyview_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl', re.I, ''),
-    (r'volumes/.*/Rev(\d\d\d)([^\.]*|.*OccTrack_Geometry.pdf)', 0,
+    (r'volumes/.*/Rev(\d\d\d)([^\.]*|.*OccTrack_Geometry.\w+)', 0,
             [r'previews/CORSS_8xxx/CORSS_8001/browse/Rev\1_OccTrack_Geometry_full.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/browse/Rev\1_OccTrack_Geometry_med.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/browse/Rev\1_OccTrack_Geometry_small.jpg',
@@ -140,8 +136,7 @@ skyview_viewables = translator.TranslatorByRegex([
 ])
 
 dsntrack_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl', re.I, ''),
-    (r'volumes/.*/Rev(\d\d\d)([^\.]*|.*DSN_Elevation.pdf)', 0,
+    (r'volumes/.*/Rev(\d\d\d)([^\.]*|.*DSN_Elevation.\w+)', 0,
             [r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_DSN_Elevation_full.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_DSN_Elevation_med.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_DSN_Elevation_small.jpg',
@@ -156,8 +151,7 @@ dsntrack_viewables = translator.TranslatorByRegex([
 ])
 
 timeline_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl', re.I, ''),
-    (r'volumes/.*/Rev(\d\d\d)([^\.]*|.*TimeLine_Figure.pdf)', 0,
+    (r'volumes/.*/Rev(\d\d\d)([^\.]*|.*TimeLine_Figure.\w+)', 0,
             [r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_TimeLine_Figure_full.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_TimeLine_Figure_med.jpg',
              r'previews/CORSS_8xxx/CORSS_8001/data/Rev\1/Rev\1_TimeLine_Figure_small.jpg',
@@ -513,7 +507,7 @@ from .pytest_support import *
 def test_default_viewables():
     # ((number of default viewables, diagrams, profiles, skyviews, dsntracks, timelines), logical_path)
     TESTS = [
-        ((0, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.LBL'),
+        ((4, 0, 0, 0, 4, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.LBL'),
         ((4, 0, 0, 0, 4, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_DSN_Elevation.pdf'),
         ((4, 0, 0, 0, 0, 4), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_TimeLine_Figure.pdf'),
         ((4, 0, 0, 0, 0, 0), 'volumes/CORSS_8xxx/CORSS_8001/data/Rev007/Rev007_TimeLine_Table.pdf'),

@@ -29,8 +29,7 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl', re.I, ''),
-    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+/\w+).*', 0,
+    (r'volumes/COUVIS_0xxx(|_v[0-9\.]+)/(COUVIS_0.../DATA/\w+/\w+)\.(DAT|LBL)', 0,
             [r'previews/COUVIS_0xxx/\2_full.png',
              r'previews/COUVIS_0xxx/\2_med.png',
              r'previews/COUVIS_0xxx/\2_small.png',

@@ -20,7 +20,7 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_TAU_?\d+KM\.TAB', 0,
+    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_TAU_?\d+KM\.(TAB|LBL)', 0,
             [r'previews/COUVIS_8xxx/\2/data/\4_full.jpg',
              r'previews/COUVIS_8xxx/\2/data/\4_med.jpg',
              r'previews/COUVIS_8xxx/\2/data/\4_small.jpg',
@@ -29,7 +29,7 @@ default_viewables = translator.TranslatorByRegex([
 ])
 
 diagrams_viewables = translator.TranslatorByRegex([
-    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_TAU_?\d+KM\.TAB', 0,
+    (r'volumes/COUVIS_8xxx(|_v[0-9\.]+)/(COUVIS_8...)/(data|DATA/EASYDATA)/(UVIS_HSP.*)_TAU_?\d+KM\.(TAB|LBL)', 0,
             [r'diagrams/COUVIS_8xxx/\2/data/\4_full.jpg',
              r'diagrams/COUVIS_8xxx/\2/data/\4_med.jpg',
              r'diagrams/COUVIS_8xxx/\2/data/\4_small.jpg',

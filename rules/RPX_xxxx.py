@@ -52,16 +52,15 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'.*\.lbl',  re.I, ''),
-    (r'volumes/(RPX_xxxx/RPX_000./199...XX/U...XXXX)/(BROWSE|.*IMAGE)/(U[^_]+)(|_\w\w\w)\.(FITS|IMG|DAT|ZIP)', 0,
+    (r'volumes/(RPX_xxxx/RPX_000./199...XX/U...XXXX)/(BROWSE|.*IMAGE)/(U[^_]+)(|_\w\w\w)\.(FITS|IMG|DAT|ZIP|LBL)', 0,
             [r'previews/\1/\3_full.jpg',
              r'previews/\1/\3_med.jpg',
              r'previews/\1/\3_small.jpg',
              r'previews/\1/\3_thumb.jpg',
             ]),
-    (r'volumes/RPX_xxxx_v1/(RPX_000./199...XX)/(U...)XXXX/(BROWSE|.*IMAGE)/([^_]+)(|_\w\w\w)\.(FITS|IMG|DAT|ZIP)', 0,
+    (r'volumes/RPX_xxxx_v1/(RPX_000./199...XX)/(U...)XXXX/(BROWSE|.*IMAGE)/([^_]+)(|_\w\w\w)\.(FITS|IMG|DAT|ZIP|LBL)', 0,
             r'previews/RPX_xxxx/\1/\2XXXX/\2\4?_*.jpg'),
-    (r'volumes/(RPX_xxxx/.*)\.(GIF|IMG)', 0,
+    (r'volumes/(RPX_xxxx/.*)\.(GIF|IMG|LBL)', 0,
             [r'previews/\1_full.jpg',
              r'previews/\1_med.jpg',
              r'previews/\1_small.jpg',
