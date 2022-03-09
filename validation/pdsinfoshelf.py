@@ -145,8 +145,9 @@ def generate_infodict(pdsdir, selection, old_infodict={},
     try:
         # Load checksum dictionary
         checkdict = pdschecksums.checksum_dict(dirpath, logger=logger)
-        if not checkdict:
-            return ({}, 0.)
+#         Removed... because we can't ignore empty directories
+#         if not checkdict:
+#             return ({}, 0.)
 
         # Generate info recursively
         infodict = {}
@@ -168,9 +169,12 @@ def generate_infodict(pdsdir, selection, old_infodict={},
                 if key not in merged:
                     merged[key] = infodict[key]
 
-        dt = datetime.datetime.fromtimestamp(latest_mtime)
-        logger.info('Latest holdings file modification date',
-                    dt.strftime('%Y-%m-%dT%H-%M-%S'), force=True)
+        if latest_mtime == 0.:
+            logger.info('No files found')
+        else:
+            dt = datetime.datetime.fromtimestamp(latest_mtime)
+            logger.info('Latest holdings file modification date',
+                        dt.strftime('%Y-%m-%dT%H-%M-%S'), force=True)
 
     except (Exception, KeyboardInterrupt) as e:
         logger.exception(e)
@@ -498,7 +502,8 @@ def repair(pdsdir, selection=None, logger=None):
         if selection:
             logger.error('Info shelf file does not exist', info_path)
         else:
-            logger.warn('Info shelf file does not exist; initializing', info_path)
+            logger.warn('Info shelf file does not exist; initializing',
+                        info_path)
             initialize(pdsdir, selection=selection, logger=logger)
         return
 
@@ -577,9 +582,8 @@ def update(pdsdir, selection=None, logger=None):
     shelf_infodict = load_infodict(pdsdir, logger=logger)
 
     # Generate info
-    (dir_infodict,
-     latest_mtime) = generate_infodict(pdsdir, selection, shelf_infodict,
-                                       logger=logger)
+    (dir_infodict, _) = generate_infodict(pdsdir, selection, shelf_infodict,
+                                          logger=logger)
 
     # Compare
     canceled = (dir_infodict == shelf_infodict)
