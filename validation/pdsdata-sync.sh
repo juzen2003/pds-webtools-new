@@ -14,13 +14,9 @@
 # pdsdata-admin to the drive pdsdata-raid45.
 ################################################################################
 
-for voltype in volumes metadata previews calibrated diagrams
+for voltype in metadata previews calibrated diagrams volumes
 do
   if [ -d /Volumes/pdsdata-$1/holdings/$voltype/$3 ]; then
-    echo "\n\n**** holdings/$voltype/$3 ****"
-    rsync -av /Volumes/pdsdata-$1/holdings/$voltype/$3/ \
-              /Volumes/pdsdata-$2/holdings/$voltype/$3/ $4
-
     echo "\n\n**** holdings/archives-$voltype/$3 ****"
     rsync -av /Volumes/pdsdata-$1/holdings/archives-$voltype/$3/ \
               /Volumes/pdsdata-$2/holdings/archives-$voltype/$3/ $4
@@ -56,6 +52,10 @@ do
       rsync -av /Volumes/pdsdata-$1/shelves/index/$voltype/$3/ \
                 /Volumes/pdsdata-$2/shelves/index/$voltype/$3/ $4
     fi
+
+    echo "\n\n**** holdings/$voltype/$3 ****"
+    rsync -av /Volumes/pdsdata-$1/holdings/$voltype/$3/ \
+              /Volumes/pdsdata-$2/holdings/$voltype/$3/ $4
   fi
 done
 
