@@ -353,10 +353,16 @@ REPAIRS = translator.TranslatorByRegex([
     # Each links a SOURCE_PRODUCT_ID on JNOJIR_2xxx to the associated EDR in
     # the parallel directory on JNOJIR_1xxx. Set up through volume _2049.
     ] + [
-        (f'.*/JNOJIR_20{nn:02d}/DATA/JIR_\w+.LBL', 0,
+        (f'.*/JNOJIR_2xxx/JNOJIR_20{nn:02d}/DATA/JIR_\w+.LBL', 0,
           translator.TranslatorByRegex(
             [(r'(JIR_\w+_EDR_20\w+)\.(DAT|IMG)', 0,
                 f'../../../JNOJIR_1xxx/JNOJIR_10{nn:02d}/DATA/' + r'\1.\2')]))
+        for nn in range(0,50)] + [
+    ] + [
+        (f'.*/JNOJIR_xxxx/JNOJIR_20{nn:02d}/DATA/JIR_\w+.LBL', 0,
+          translator.TranslatorByRegex(
+            [(r'(JIR_\w+_EDR_20\w+)\.(DAT|IMG)', 0,
+                f'../../JNOJIR_10{nn:02d}/DATA/' + r'\1.\2')]))
         for nn in range(0,50)] + [
 
     # JNOJNC
