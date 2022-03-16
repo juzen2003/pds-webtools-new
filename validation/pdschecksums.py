@@ -678,25 +678,22 @@ if __name__ == '__main__':
     abspaths = []
     for path in args.volume:
 
+        # Make sure path makes sense
         path = os.path.abspath(path)
-        if '/archives-' in path or args.archives:
-            test_path = path.replace('/archives-', '/')
-            try:
-                test_pdsf = pdsfile.PdsFile.from_abspath(test_path)
-                test_path = test_pdsf.archive_path_and_lskip()[0]
-                if os.path.exists(test_path):
-                    pdsf = pdsfile.PdsFile.from_abspath(path)
-                    logger.warn('File path "%s" replaced' %
-                                pdsf.logical_path, test_path)
-                    path = test_path
-            except Exception:
-                pass
-
-        if not os.path.exists(path):
-            print('No such file or directory: ' + path)
+        parts = path.partition('/holdings/')
+        if not parts[1]:
+            print('Not a holdings subdirectory: ' + path)
             sys.exit(1)
 
-        # Convert to a list of absolute paths that exist
+        if parts[2].startswith('checksums-'):
+            print('No checksums for checksum files: ' + path)
+            sys.exit(1)
+
+        # Convert to an archives path if necessary
+        if args.archives and not parts[2].startswith('archives-'):
+            path = parts[0] + '/holdings/archives-' + parts[2]
+
+        # Convert to a list of absolute paths that exist (volsets or volumes)
         try:
             pdsf = pdsfile.PdsFile.from_abspath(path, must_exist=True)
             abspaths.append(pdsf.abspath)
@@ -723,16 +720,13 @@ if __name__ == '__main__':
     # Generate a list of tuples (pdsfile, selection)
     info = []
     for path in abspaths:
-
         pdsf = pdsfile.PdsFile.from_abspath(path)
-        if pdsf.checksums_:
-            print('No checksums for checksum files: ' + path)
-            sys.exit(1)
 
         if pdsf.is_volset_dir:
             # Archive directories are checksumed by volset
             if pdsf.archives_:
                 info.append((pdsf, None))
+
             # Others are checksumed by volume
             else:
                 children = [pdsf.child(c) for c in pdsf.childnames]
@@ -857,10 +851,8 @@ if __name__ == '__main__':
     # If everything went well, execute pdsinfoshelf too
     if proceed and args.infoshelf:
         new_list = [a.replace('pdschecksums', 'pdsinfoshelf') for a in sys.argv]
-        new_cmd = ' '.join(new_list)
-        new_cmd = new_cmd.replace('--infoshelf','').replace('-i','')
-        new_cmd = new_cmd.replace('--archives','').replace('-a','')
-        status = os.system(new_cmd)
+        new_list = [a for a in new_list if a not in ('--infoshelf', '-i')]
+        status = os.system(' '.join(new_list))
         sys.exit(status)
 
     else:

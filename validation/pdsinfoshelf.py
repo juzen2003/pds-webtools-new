@@ -704,32 +704,53 @@ if __name__ == '__main__':
         error_handler = pdslogger.error_handler(path)
         logger.add_handler(error_handler)
 
-    # Generate a list of tuples (pdsfile, selection) before logging
-    info = []
+    # Prepare the list of paths
+    abspaths = []
     for path in args.volume:
 
+        # Make sure path makes sense
         path = os.path.abspath(path)
-        if '/archives-' in path or args.archives:
-            test_path = path.replace('/archives-', '/')
-            try:
-                test_pdsf = pdsfile.PdsFile.from_abspath(test_path)
-                test_path = test_pdsf.archive_path_and_lskip()[0]
-                if os.path.exists(test_path):
-                    pdsf = pdsfile.PdsFile.from_abspath(path)
-                    logger.warn('File path "%s" replaced' %
-                                pdsf.logical_path, test_path)
-                    path = test_path
-            except Exception:
-                pass
-
-        if not os.path.exists(path):
-            print('No such file or directory: ' + path)
+        parts = path.partition('/holdings/')
+        if not parts[1]:
+            print('Not a holdings subdirectory: ' + path)
             sys.exit(1)
 
-        pdsf = pdsfile.PdsFile.from_abspath(path)
-        if pdsf.checksums_:
+        if parts[2].startswith('checksums-'):
             print('No infoshelves for checksum files: ' + path)
             sys.exit(1)
+
+        # Convert to an archives path if necessary
+        if args.archives and not parts[2].startswith('archives-'):
+            path = parts[0] + '/holdings/archives-' + parts[2]
+
+        # Convert to a list of absolute paths that exist (volsets or volumes)
+        try:
+            pdsf = pdsfile.PdsFile.from_abspath(path, must_exist=True)
+            abspaths.append(pdsf.abspath)
+
+        except (ValueError, IOError):
+            # Allow a volume name to stand in for a .tar.gz archive
+            (dir, basename) = os.path.split(path)
+            pdsdir = pdsfile.PdsFile.from_abspath(dir)
+            if pdsdir.archives_ and '.' not in basename:
+                if pdsdir.voltype_ == 'volumes/':
+                    basename += '.tar.gz'
+                else:
+                    basename += '_%s.tar.gz' % pdsdir.voltype_[:-1]
+
+                newpaths = glob.glob(os.path.join(dir, basename))
+                if len(newpaths) == 0:
+                    raise
+
+                abspaths += newpaths
+                continue
+            else:
+                raise
+
+    # Generate a list of tuples (pdsfile, selection)
+    info = []
+    for path in abspaths:
+        pdsf = pdsfile.PdsFile.from_abspath(path)
 
         if pdsf.is_volset_dir:
             # Info about archive directories is stored by volset
@@ -853,6 +874,7 @@ if __name__ == '__main__':
 
     finally:
         (fatal, errors, warnings, tests) = logger.close()
-        if fatal or errors: status = 1
+        if fatal or errors:
+            status = 1
 
     sys.exit(status)
