@@ -19,14 +19,6 @@ try:
 except ValueError:
     PDS_TESTING_ROOT = '/Library/WebServer/Documents/'
 
-ICON_ROOT_ = PDS_TESTING_ROOT + 'icons-local/'
-
-if not os.path.exists(ICON_ROOT_):
-    ICON_ROOT_ = '/Library/WebServer/Documents/icons-local/'
-
-ICON_URL_  = 'icons-local/'
-ICON_COLOR = 'blue'
-
 ################################################################################
 # Blackbox test for internal cached in PdsFile class
 ################################################################################
@@ -492,19 +484,17 @@ class TestPdsFileBlackBox:
         [
             ('previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007',
              [
-                'icons-local/blue/png-200/folder_previews.png',
-                'icons-local/blue/png-500/folder_previews.png',
-                'icons-local/blue/png-30/folder_previews.png',
-                'icons-local/blue/png-100/folder_previews.png',
-                'icons-local/blue/png-50/folder_previews.png',
+                '/holdings/_icons/blue/png-200/folder_previews.png',
+                '/holdings/_icons/blue/png-500/folder_previews.png',
+                '/holdings/_icons/blue/png-30/folder_previews.png',
+                '/holdings/_icons/blue/png-100/folder_previews.png',
+                '/holdings/_icons/blue/png-50/folder_previews.png',
              ]
             )
         ]
     )
     def test__iconset(self, input_path, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
-                               color=ICON_COLOR)
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res1 = target_pdsfile._iconset
         res2 = target_pdsfile._iconset
@@ -520,11 +510,11 @@ class TestPdsFileBlackBox:
         [
             ('previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007',
              [
-                'icons-local/blue/png-200/folder_previews_open.png',
-                'icons-local/blue/png-500/folder_previews_open.png',
-                'icons-local/blue/png-30/folder_previews_open.png',
-                'icons-local/blue/png-100/folder_previews_open.png',
-                'icons-local/blue/png-50/folder_previews_open.png',
+                '/holdings/_icons/blue/png-200/folder_previews_open.png',
+                '/holdings/_icons/blue/png-500/folder_previews_open.png',
+                '/holdings/_icons/blue/png-30/folder_previews_open.png',
+                '/holdings/_icons/blue/png-100/folder_previews_open.png',
+                '/holdings/_icons/blue/png-50/folder_previews_open.png',
              ]
             )
         ]
@@ -532,8 +522,6 @@ class TestPdsFileBlackBox:
 
     def test_iconset_open(self, input_path, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
-                               color=ICON_COLOR)
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res1 = target_pdsfile.iconset_open
         res2 = target_pdsfile.iconset_open
@@ -548,11 +536,11 @@ class TestPdsFileBlackBox:
         [
             ('previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007',
              [
-                'icons-local/blue/png-200/folder_previews.png',
-                'icons-local/blue/png-500/folder_previews.png',
-                'icons-local/blue/png-30/folder_previews.png',
-                'icons-local/blue/png-100/folder_previews.png',
-                'icons-local/blue/png-50/folder_previews.png',
+                '/holdings/_icons/blue/png-200/folder_previews.png',
+                '/holdings/_icons/blue/png-500/folder_previews.png',
+                '/holdings/_icons/blue/png-30/folder_previews.png',
+                '/holdings/_icons/blue/png-100/folder_previews.png',
+                '/holdings/_icons/blue/png-50/folder_previews.png',
              ]
             )
         ]
@@ -560,8 +548,6 @@ class TestPdsFileBlackBox:
 
     def test_iconset_closed(self, input_path, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
-                                   color=ICON_COLOR)
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res1 = target_pdsfile.iconset_closed
         res2 = target_pdsfile.iconset_closed
@@ -743,28 +729,26 @@ class TestPdsGroupBlackBox:
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL'
              ],
              [
-                'icons-local/blue/png-100/document_geometry.png',
-                'icons-local/blue/png-500/document_geometry.png',
-                'icons-local/blue/png-30/document_geometry.png',
-                'icons-local/blue/png-200/document_geometry.png',
-                'icons-local/blue/png-50/document_geometry.png',
+                '/holdings/_icons/blue/png-100/document_geometry.png',
+                '/holdings/_icons/blue/png-500/document_geometry.png',
+                '/holdings/_icons/blue/png-30/document_geometry.png',
+                '/holdings/_icons/blue/png-200/document_geometry.png',
+                '/holdings/_icons/blue/png-50/document_geometry.png',
              ]
             ),
             (['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007'],
              [
-                'icons-local/blue/png-500/folder_previews.png',
-                'icons-local/blue/png-200/folder_previews.png',
-                'icons-local/blue/png-30/folder_previews.png',
-                'icons-local/blue/png-100/folder_previews.png',
-                'icons-local/blue/png-50/folder_previews.png',
+                '/holdings/_icons/blue/png-500/folder_previews.png',
+                '/holdings/_icons/blue/png-200/folder_previews.png',
+                '/holdings/_icons/blue/png-30/folder_previews.png',
+                '/holdings/_icons/blue/png-100/folder_previews.png',
+                '/holdings/_icons/blue/png-50/folder_previews.png',
              ]
             )
         ]
     )
     def test__iconset(self, input_paths, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
-                               color=ICON_COLOR)
         target_pdsfile = get_pdsfiles(input_paths)
         target_pdsgroup = pdsgroup.PdsGroup(pdsfiles=target_pdsfile)
         res1 = target_pdsgroup._iconset
@@ -783,28 +767,26 @@ class TestPdsGroupBlackBox:
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL'
              ],
              [
-                'icons-local/blue/png-100/document_geometry.png',
-                'icons-local/blue/png-500/document_geometry.png',
-                'icons-local/blue/png-30/document_geometry.png',
-                'icons-local/blue/png-200/document_geometry.png',
-                'icons-local/blue/png-50/document_geometry.png',
+                '/holdings/_icons/blue/png-100/document_geometry.png',
+                '/holdings/_icons/blue/png-500/document_geometry.png',
+                '/holdings/_icons/blue/png-30/document_geometry.png',
+                '/holdings/_icons/blue/png-200/document_geometry.png',
+                '/holdings/_icons/blue/png-50/document_geometry.png',
              ]
             ),
             (['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007'],
              [
-                'icons-local/blue/png-200/folder_previews_open.png',
-                'icons-local/blue/png-500/folder_previews_open.png',
-                'icons-local/blue/png-30/folder_previews_open.png',
-                'icons-local/blue/png-100/folder_previews_open.png',
-                'icons-local/blue/png-50/folder_previews_open.png',
+                '/holdings/_icons/blue/png-200/folder_previews_open.png',
+                '/holdings/_icons/blue/png-500/folder_previews_open.png',
+                '/holdings/_icons/blue/png-30/folder_previews_open.png',
+                '/holdings/_icons/blue/png-100/folder_previews_open.png',
+                '/holdings/_icons/blue/png-50/folder_previews_open.png',
              ]
             )
         ]
     )
     def test_iconset_open(self, input_paths, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
-                               color=ICON_COLOR)
         target_pdsfile = get_pdsfiles(input_paths)
         target_pdsgroup = pdsgroup.PdsGroup(pdsfiles=target_pdsfile)
         res1 = target_pdsgroup.iconset_open
@@ -823,28 +805,26 @@ class TestPdsGroupBlackBox:
                 'volumes/COCIRS_0xxx/COCIRS_0012/DATA/NAV_DATA/GEO00120100.LBL'
              ],
              [
-                'icons-local/blue/png-100/document_geometry.png',
-                'icons-local/blue/png-500/document_geometry.png',
-                'icons-local/blue/png-30/document_geometry.png',
-                'icons-local/blue/png-200/document_geometry.png',
-                'icons-local/blue/png-50/document_geometry.png',
+                '/holdings/_icons/blue/png-100/document_geometry.png',
+                '/holdings/_icons/blue/png-500/document_geometry.png',
+                '/holdings/_icons/blue/png-30/document_geometry.png',
+                '/holdings/_icons/blue/png-200/document_geometry.png',
+                '/holdings/_icons/blue/png-50/document_geometry.png',
              ]
             ),
             (['previews/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007'],
              [
-                'icons-local/blue/png-200/folder_previews.png',
-                'icons-local/blue/png-500/folder_previews.png',
-                'icons-local/blue/png-30/folder_previews.png',
-                'icons-local/blue/png-100/folder_previews.png',
-                'icons-local/blue/png-50/folder_previews.png',
+                '/holdings/_icons/blue/png-200/folder_previews.png',
+                '/holdings/_icons/blue/png-500/folder_previews.png',
+                '/holdings/_icons/blue/png-30/folder_previews.png',
+                '/holdings/_icons/blue/png-100/folder_previews.png',
+                '/holdings/_icons/blue/png-50/folder_previews.png',
              ]
             )
         ]
     )
     def test_iconset_closed(self, input_paths, expected):
         """filename_keylen: return self._iconset_filled[0]"""
-        pdsviewable.load_icons(path=ICON_ROOT_, url=ICON_URL_,
-                               color=ICON_COLOR)
         target_pdsfile = get_pdsfiles(input_paths)
         target_pdsgroup = pdsgroup.PdsGroup(pdsfiles=target_pdsfile)
         res1 = target_pdsgroup.iconset_closed

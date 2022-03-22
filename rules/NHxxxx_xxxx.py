@@ -243,6 +243,15 @@ sort_key = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# SPLIT_RULES
+####################################################################################################################################
+
+split_rules = translator.TranslatorByRegex([
+    # Group volumes with the same leading six characters, e.g., NHJULO_1001 and NHJULO_2001
+    (r'(NH....)_([12])(\d\d\d)(|_[a-z]+)(|_md5\.txt|\.tar\.gz)', 0, (r'\1_x\3', r'_\2xxx\4', r'\5')),
+])
+
+####################################################################################################################################
 # OPUS_TYPE
 ####################################################################################################################################
 
@@ -455,6 +464,7 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
     VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
     SORT_KEY = sort_key + pdsfile.PdsFile.SORT_KEY
+    SPLIT_RULES = split_rules + pdsfile.PdsFile.SPLIT_RULES
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_PRODUCTS = opus_products
@@ -483,50 +493,57 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
 
     FILENAME_KEYLEN = 14    # trim off suffixes
 
-    def opus_prioritizer(self, pdsfiles):
-        """Prioritizes items that have been downlinked in multiple ways."""
+    def opus_prioritizer(self, pdsfile_dict):
+        """Prioritize items that have been downlinked in multiple ways."""
 
-        for header in list(pdsfiles.keys()): # We change pdsfiles in the loop!
-            sublists = pdsfiles[header]
-            if len(sublists) == 1: continue
-            if header == '' or not header[0].startswith('New Horizons'):
-                continue
-            if 'browse' in header[2]:
+        headers = list(pdsfile_dict.keys())     # Save keys so we can alter dict
+        for header in headers:
+            sublists = pdsfile_dict[header]
+            if len(sublists) == 1:
                 continue
 
-            # Sort items in each sublist by priority
-            priority = []       # (negative version rank, negative priority from hex code,
-                                #  hex code, sublist)
+            # Only prioritize data products
+            if sublists[0][0].voltype_ != 'volumes/':
+                continue
+
+            # Split up the sublists by version rank
+            rank_dict = {}
             for sublist in sublists:
-                code = (sublist[0].basename.replace('X','x')
-                        .partition('_0x')[2][:3]).upper()
                 rank = sublist[0].version_rank
-                priority.append((-rank, FILE_CODE_PRIORITY[code], code, sublist))
+                if rank not in rank_dict:
+                    rank_dict[rank] = []
+                rank_dict[rank].append(sublist)
 
-            priority.sort()
+            # Sort the version ranks
+            ranks = list(rank_dict.keys())
+            ranks.sort()
+            ranks.reverse()
 
-            # Select the best product
-            code0 = priority[0][2]
-            list0 = [priority[0][3]]
-            for (_, prio, code, sublist) in priority[1:]:
-                if code == code0:
-                    list0.append(sublist)
-                    continue
+            # Define the alternative header
+            alt_header = (header[0], header[1] + 50,
+                                     header[2] + '_alternate',
+                                     header[3] + ' Alternate Downlink',
+                                     True)
+            pdsfile_dict[alt_header] = []
+            pdsfile_dict[header] = []
 
-                new_header = (header[0],
-                              header[1] + 50,
-                              header[2] + '_alternate',
-                              header[3] + ' Alternate Downlink',
-                              True)
+            # Sort items by priority among each available version
+            for rank in ranks:
+                prioritizer = []    # (priority from hex code, hex code,
+                                    # sublist)
+                for sublist in rank_dict[rank]:
+                    code = (sublist[0].basename.replace('X','x')
+                            .partition('_0x')[2][:3]).upper()
+                    prioritizer.append((FILE_CODE_PRIORITY[code], code,
+                                        sublist))
 
-                if new_header not in pdsfiles:
-                    pdsfiles[new_header] = []
+                prioritizer.sort()
 
-                pdsfiles[new_header].append(sublist)
+                # Update the dictionary for each rank
+                pdsfile_dict[header].append(prioritizer[0][-1])
+                pdsfile_dict[alt_header] += [p[-1] for p in prioritizer[1:]]
 
-            pdsfiles[header] = list0
-
-        return pdsfiles
+        return pdsfile_dict
 
 # Global attribute shared by all subclasses
 pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'nh-.*', 0, NHxxxx_xxxx)]) + \

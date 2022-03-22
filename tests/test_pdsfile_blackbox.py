@@ -44,6 +44,7 @@ class TestPdsFileBlackBox:
                 'HSTxx_xxxx': rules.HSTxx_xxxx.HSTxx_xxxx,
                 'JNOJIR_xxxx': rules.JNOJIR_xxxx.JNOJIR_xxxx,
                 'JNOJNC_xxxx': rules.JNOJNC_xxxx.JNOJNC_xxxx,
+                'JNOSP_xxxx': rules.JNOSP_xxxx.JNOSP_xxxx,
                 'NHSP_xxxx': rules.NHSP_xxxx.NHSP_xxxx,
                 'NHxxxx_xxxx': rules.NHxxxx_xxxx.NHxxxx_xxxx,
                 'RES_xxxx': rules.RES_xxxx.RES_xxxx,
@@ -461,7 +462,7 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('volumes/HSTUx_xxxx/HSTU0_5167/DATA/VISIT_04', True),
-            ('volumes/NHSP_xxxx/NHSP_1000/DATA/CK/MERGED_NHPC_2006_V011.LBL',
+            ('volumes/EBROCC_xxxx/EBROCC_0001/CATALOG/ESO22M_DATASET.CAT',
              False)
         ]
     )
@@ -474,7 +475,7 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
-             PDS_PDSDATA_PATH + 'shelves/index/metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.pickle')
+             PDS_PDSDATA_PATH + 'holdings/_indexshelf-metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.pickle')
         ]
     )
     def test_indexshelf_abspath(self, input_path, expected):
@@ -651,7 +652,7 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/HDAC1999_007_16_31.LBL',
-             (PDS_PDSDATA_PATH + 'shelves/info/volumes/COUVIS_0xxx/COUVIS_0001_info.pickle',
+             (PDS_PDSDATA_PATH + 'holdings/_infoshelf-volumes/COUVIS_0xxx/COUVIS_0001_info.pickle',
               'DATA/D1999_007/HDAC1999_007_16_31.LBL'))
         ]
     )
@@ -1130,8 +1131,8 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('volumes/NHSP_xxxx/NHSP_1000/DATA/CK/MERGED_NHPC_2006_V011.LBL',
-             'volumes/NHSP_xxxx'),
+            ('volumes/EBROCC_xxxx/EBROCC_0001/CATALOG/ESO22M_DATASET.CAT',
+             'volumes/EBROCC_xxxx'),
         ]
     )
     def test_volset_pdsfile(self, input_path, expected):
@@ -1376,11 +1377,11 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('volumes/VGISS_5xxx/VGISS_5101/DATA/C13854XX/C1385455_RAW.lbl',
-             PDS_PDSDATA_PATH + 'shelves/info/volumes/VGISS_5xxx/VGISS_5101_info.pickle'),
+             PDS_PDSDATA_PATH + 'holdings/_infoshelf-volumes/VGISS_5xxx/VGISS_5101_info.pickle'),
             ('metadata/NHxxLO_xxxx/NHLALO_1001/NHLALO_1001_inventory.tab',
-             PDS_PDSDATA_PATH + 'shelves/info/metadata/NHxxLO_xxxx/NHLALO_1001_info.pickle'),
+             PDS_PDSDATA_PATH + 'holdings/_infoshelf-metadata/NHxxLO_xxxx/NHLALO_1001_info.pickle'),
             ('archives-volumes/EBROCC_xxxx/EBROCC_0001.tar.gz',
-             PDS_PDSDATA_PATH + 'shelves/info/archives-volumes/EBROCC_xxxx_info.pickle')
+             PDS_PDSDATA_PATH + 'holdings/_infoshelf-archives-volumes/EBROCC_xxxx_info.pickle')
         ]
     )
     def test_shelf_path_and_lskip(self, input_path, expected):
@@ -1398,7 +1399,7 @@ class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            (PDS_PDSDATA_PATH + 'shelves/info/volumes/VGISS_5xxx/VGISS_5101_info.pickle',
+            (PDS_PDSDATA_PATH + 'holdings/_infoshelf-volumes/VGISS_5xxx/VGISS_5101_info.pickle',
              None),
         ]
     )

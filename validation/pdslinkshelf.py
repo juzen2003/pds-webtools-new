@@ -4,7 +4,7 @@
 #
 # Syntax:
 #   pdslinkshelf.py --task path [path ...]
-# 
+#
 # Enter the --help option to see more information.
 ################################################################################
 
@@ -350,14 +350,8 @@ REPAIRS = translator.TranslatorByRegex([
       translator.TranslatorByRegex(
         [(r'(JIR_IMG_\w+_RESPONSIVITY)_V02\.DAT', 0, r'../CALIB/\1_V03.DAT')])),
     # Embedded list comprehension
-    # Each links a SOURCE_PRODUCT_ID on JNOJIR_2xxx to the associated EDR in
-    # the parallel directory on JNOJIR_1xxx. Set up through volume _2049.
-    ] + [
-        (f'.*/JNOJIR_2xxx/JNOJIR_20{nn:02d}/DATA/JIR_\w+.LBL', 0,
-          translator.TranslatorByRegex(
-            [(r'(JIR_\w+_EDR_20\w+)\.(DAT|IMG)', 0,
-                f'../../../JNOJIR_1xxx/JNOJIR_10{nn:02d}/DATA/' + r'\1.\2')]))
-        for nn in range(0,50)] + [
+    # Each links a SOURCE_PRODUCT_ID on JNOJIR_2nnn to the associated EDR in
+    # the parallel directory on JNOJIR_1nnn. Set up through volume _2049.
     ] + [
         (f'.*/JNOJIR_xxxx/JNOJIR_20{nn:02d}/DATA/JIR_\w+.LBL', 0,
           translator.TranslatorByRegex(
@@ -371,10 +365,30 @@ REPAIRS = translator.TranslatorByRegex([
         {'JUNO_REF.CAT'         : 'JUNO_PROJREF.CAT'})),
 
     # NHSP
-    ('.*/NHSP.*/AAREADME\.TXT', 0,
+    ('.*/NHSP_xxxx_v1.*/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'personel.cat'         : 'CATALOG/PERSONNEL.CAT',
          'spiceds.cat'          : 'CATALOG/SPICE_INST.CAT'})),
+    ('.*SP_xxxx.*/aareadme\.txt', 0,
+      translator.TranslatorByDict(
+        {'dataset.cat'          : 'catalog/spiceds.cat',
+         'ckinfo.txt'           : 'data/ck/ckinfo.txt',
+         'ekinfo.txt'           : 'data/ek/ekinfo.txt',
+         'fkinfo.txt'           : 'data/fk/fkinfo.txt',
+         'ikinfo.txt'           : 'data/ik/ikinfo.txt',
+         'lskinfo.txt'          : 'data/lsk/lskinfo.txt',
+         'pckinfo.txt'          : 'data/pck/pckinfo.txt',
+         'sclkinfo.txt'         : 'data/sclk/sclkinfo.txt',
+         'spkinfo.txt'          : 'data/spk/spkinfo.txt',
+         'ckdoc.txt'            : 'document/ck/ckdoc.txt',
+         'ekdoc.txt'            : 'document/ek/ekdoc.txt',
+         'mkinfo.txt'           : 'extras/mk/mkinfo.txt',
+         'orbinfo.txt'          : 'extras/orbnum/orbinfo.txt',
+         'spkxinfo.txt'         : 'extras/spkxtra/spkxinfo.txt',
+         'covinfo.txt'          : 'extras/spkxtra/covtab/covinfo.txt',
+         'ckxtinfo.txt'         : 'extras/ckxtra/ckxtinfo.txt',
+         'navinfo.txt'          : 'extras/ckxtra/cknav/navinfo.txt',
+         'issinfo.txt'          : 'extras/ckxtra/ckiss/issinfo.txt'})),
 
     # NHxxMV/NHxxLO
     ('.*/NHxx.._xxxx_v1/NH(JU|LA).*/aareadme\.txt', 0,
@@ -387,6 +401,14 @@ REPAIRS = translator.TranslatorByRegex([
         {'PAYLOAD_SSR.LBL'      : 'DOCUMENT/PAYLOAD_SSR/PAYLOAD_SSR.LBL',
          'RALPH_SSR.LBL'        : 'DOCUMENT/RALPH_SSR/RALPH_SSR.LBL',
          'SOC_INST_ICD.LBL'     : 'DOCUMENT/SOC_INST_ICD/SOC_INST_ICD.LBL'})),
+    ('.*/NHxxLO_xxxx.*/NH..LO_2001/data/\w+/.*\.lbl', 0,
+      translator.TranslatorByRegex(
+        [(r'(cflat|dead|delta|dsmear|hot|sap)_(\w+\.fit)', 0, r'../../calib/\1_\2')])),
+    ('.*/NHxxMV_xxxx.*/NH..MV_2001/data/\w+/.*\.lbl', 0,
+      translator.TranslatorByRegex(
+        [(r'(mc[0-3])_(flat_\w+\.fit)s', 0, r'../../calib/mcl/\1_\2'),
+         (r'(mp[12])_(flat_\w+\.fit)s',  0, r'../../calib/mp/\1_\2'),
+         (r'(mfr_flat_\w+\.fit)s',       0, r'../../calib/mfr/\1')])),
 
     # RPX
     ('.*/RPX_0101.*/R_HARRIS\.LBL', 0,
@@ -571,7 +593,7 @@ KNOWN_MISSING_LABELS = translator.TranslatorByRegex([
     (r'.*/NH.*/browse/.*\.jpg',                             0,    'missing'),
     (r'.*/NH.*/index/newline',                              0,    'missing'),
     (r'.*/NHxxMV.*/calib/.*\.png',                          0,    'missing'),
-    (r'.*/NHSP_xxxx/.*/DATASET.HTML',                       0,    'missing'),
+    (r'.*/NHSP_xxxx.*/DATASET.HTML',                        0,    'missing'),
     (r'.*/RPX.*/UNZIP532.*',                                0,    'missing'),
     (r'.*/RPX_xxxx/RPX_0201/CALIB/.*/(-180|128)',           0,    'missing'),
     (r'.*/VG.*/VG..NESR\.DAT',                              0,    'missing'),
@@ -1653,7 +1675,7 @@ if __name__ == '__main__':
             # Open the next level of the log
             if len(paths) > 1:
                 logger.blankline()
- 
+
             logger.open('Task "' + args.task + '" for', path,
                         handler=local_handlers)
 

@@ -388,6 +388,7 @@ INFO_FILE_BASENAMES = translator.TranslatorByRegex([
     (r'(voldesc\.(?:cat|sfd))', re.I, r'\1'),
     (r'(\w+INFO\.txt)',         re.I, r'\1'),
     (r'(\w+INF\.txt)',          re.I, r'\1'),
+    (r'(\w+DOC\.txt)',          re.I, r'\1'),
     (r'(AAREADME\.txt)',        re.I, r'\1'),
     (r'(README\.txt)',          re.I, r'\1'),
 ])

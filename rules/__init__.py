@@ -19,6 +19,7 @@ __all__ = [
     "HSTxx_xxxx" ,
     "JNOJIR_xxxx",
     "JNOJNC_xxxx",
+    "JNOSP_xxxx" ,
     "NHSP_xxxx"  ,
     "NHxxxx_xxxx",
     "RES_xxxx"   ,

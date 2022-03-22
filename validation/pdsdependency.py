@@ -98,7 +98,7 @@ class PdsDependency(object):
     MODTIME_DICT = {}
 
     def __init__(self, title, glob_pattern, regex, sublist, suite=None,
-                       newer=True, dir='holdings', exceptions=[]):
+                       newer=True, exceptions=[]):
         """Constructor for a PdsDependency.
 
         Inputs:
@@ -111,7 +111,6 @@ class PdsDependency(object):
                             dependency belongs.
             newer           True if the file file must be newer; False to
                             suppress a check of the modification date.
-            dir             root directory of required file.
             exceptions      a list of zero or more regular expressions. If a
                             file path matches one of these patterns, then it
                             will not trigger a test.
@@ -134,8 +133,6 @@ class PdsDependency(object):
         self.title = title
         self.suite = suite
         self.newer = newer
-
-        self.dir_ = dir.rstrip('/') + '/'
 
         if suite is not None:
             if suite not in PdsDependency.DEPENDENCY_SUITES:
@@ -185,9 +182,7 @@ class PdsDependency(object):
         pdsdir = pdsfile.PdsFile.from_abspath(dirpath)
         lskip_ = len(pdsdir.root_)
 
-        if logger is None:
-            logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
         logger.replace_root([pdsdir.root_, pdsdir.disk_])
 
         # Remove "Newer" at beginning of title if check_newer is False
@@ -229,7 +224,7 @@ class PdsDependency(object):
                         path = abspath[lskip_:]
 
                         (requirement, count) = self.regex.subn(sub, path)
-                        absreq = (pdsdir.disk_ + self.dir_ + requirement)
+                        absreq = (pdsdir.root_ + requirement)
 
                         if count == 0:
                             logger.error('Invalid file path', absreq)
@@ -274,9 +269,7 @@ class PdsDependency(object):
         dirpath = os.path.abspath(dirpath)
         pdsdir = pdsfile.PdsFile.from_abspath(dirpath)
 
-        if logger is None:
-            logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+        logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
         logger.replace_root(pdsdir.root_)
         logger.open('Dependency test suite "%s"' % key, dirpath)
 
@@ -327,18 +320,18 @@ for thing in pdsfile.VOLTYPES:
         'Newer info shelf files for %s'             % thing,
         'checksums-%s/$/$%s_md5.txt'                % (thing, thing_),
         r'checksums-%s/(.*?)/(.*)%s_md5.txt'        % (thing, thing_),
-        [r'%s/\1/\2_info.pickle'                    % thing,
-         r'%s/\1/\2_info.py'                        % thing],
-        suite='general', newer=True, dir='shelves/info'
+        [r'_infoshelf-%s/\1/\2_info.pickle'        % thing,
+         r'_infoshelf-%s/\1/\2_info.py'            % thing],
+        suite='general', newer=True,
     )
 
     _ = PdsDependency(
         'Newer info shelf files for archives-%s'    % thing,
         'checksums-archives-%s/$%s_md5.txt'         % (thing, thing_),
         r'checksums-archives-%s/(.*)%s_md5.txt'     % (thing, thing_),
-        [r'archives-%s/\1_info.pickle'              % thing,
-         r'archives-%s/\1_info.py'                  % thing],
-        suite='general', newer=True, dir='shelves/info'
+        [r'_infoshelf-archives-%s/\1_info.pickle'  % thing,
+         r'_infoshelf-archives-%s/\1_info.py'      % thing],
+        suite='general', newer=True,
     )
 
 for thing in ['volumes', 'metadata', 'calibrated']:
@@ -347,9 +340,9 @@ for thing in ['volumes', 'metadata', 'calibrated']:
         'Newer link shelf files for %s'             % thing,
         '%s/$/$'                                    % thing,
         r'%s/(.*?)/(.*)'                            % thing,
-        [r'%s/\1/\2_links.pickle'                   % thing,
-         r'%s/\1/\2_links.py'                       % thing],
-        suite='general', newer=True, dir='shelves/links',
+        [r'_linkshelf-%s/\1/\2_links.pickle'       % thing,
+         r'_linkshelf-%s/\1/\2_links.py'           % thing],
+        suite='general', newer=True,
     )
 
 ################################################################################
@@ -377,9 +370,9 @@ _ = PdsDependency(
     'Newer index shelf for every metadata table',
     'metadata/$*/$/*.tab',
     r'metadata/(.*)\.tab',
-    [r'metadata/\1.pickle',
-     r'metadata/\1.py'],
-    suite='metadata', newer=True, dir='shelves/index',
+    [r'_infoshelf-metadata/\1.pickle',
+     r'_infoshelf-metadata/\1.py'],
+    suite='metadata', newer=True,
     exceptions=[r'.*_inventory.tab',
                 r'.*GO_0xxx_v1.*']
 )
@@ -446,36 +439,36 @@ for nines in ('99', '999', '9_9999'):
         'Newer info shelf files for cumulative metadata',
         'checksums-metadata/$*/*' + nines + '_metadata_md5.txt',
         r'checksums-metadata/(.*?)/(.*)_metadata_md5.txt',
-        [r'metadata/\1/\2_info.pickle',
-         r'metadata/\1/\2_info.py'],
-        suite=name, newer=True, dir='shelves/info'
+        [r'_infoshelf-metadata/\1/\2_info.pickle',
+         r'_infoshelf-metadata/\1/\2_info.py'],
+        suite=name, newer=True,
     )
 
     _ = PdsDependency(
         'Newer info shelf files for cumulative archives-metadata',
         'checksums-archives-metadata/$*_metadata_md5.txt',
         r'checksums-archives-metadata/(.*)_metadata_md5.txt',
-        [r'archives-metadata/\1_info.pickle',
-         r'archives-metadata/\1_info.py'],
-        suite=name, newer=True, dir='shelves/info'
+        [r'_infoshelf-archives-metadata/\1_info.pickle',
+         r'_infoshelf-archives-metadata/\1_info.py'],
+        suite=name, newer=True,
     )
 
     _ = PdsDependency(
         'Newer link shelf files for cumulative metadata',
         'metadata/$/*' + nines,
         r'metadata/(.*?)/(.*)',
-        [r'metadata/\1/\2_links.pickle',
-         r'metadata/\1/\2_links.py'],
-        suite=name, newer=True, dir='shelves/links'
+        [r'_linkshelf-metadata/\1/\2_links.pickle',
+         r'_linkshelf-metadata/\1/\2_links.py'],
+        suite=name, newer=True,
     )
 
     _ = PdsDependency(
         'Newer index shelf files for cumulative metadata',
         'metadata/$/*' + nines + '/*.tab',
         r'metadata/(.*)\.tab',
-        [r'metadata/\1.pickle',
-         r'metadata/\1.py'],
-        suite=name, newer=True, dir='shelves/index',
+        [r'_indexshelf-metadata/\1.pickle',
+         r'_indexshelf-metadata/\1.py'],
+        suite=name, newer=True,
         exceptions=[r'.*GO_0xxx_v1.*']
     )
 
@@ -797,9 +790,7 @@ _ = PdsDependency(
 ################################################################################
 
 def test(pdsdir, logger=None, check_newer=True):
-    if logger is None:
-        logger = pdslogger.PdsLogger.get_logger(LOGNAME)
-
+    logger = logger or pdslogger.PdsLogger.get_logger(LOGNAME)
     path = pdsdir.abspath
     for suite in TESTS.all(path):
         _ = PdsDependency.test_suite(suite, path, check_newer=check_newer,
@@ -929,7 +920,7 @@ if __name__ == '__main__':
             # Open the next level of the log
             if len(paths) > 1:
                 logger.blankline()
- 
+
             logger.open('Dependency tests', path, handler=local_handlers)
 
             try:

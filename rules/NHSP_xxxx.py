@@ -7,6 +7,15 @@ import translator
 import re
 
 ####################################################################################################################################
+# ASSOCIATIONS
+####################################################################################################################################
+
+associations_to_documents = translator.TranslatorByRegex([
+    (r'volumes/NHSP_xxxx.*', 0,
+        r'documents/NHSP_xxxx/*'),
+])
+
+####################################################################################################################################
 # FILESPEC_TO_VOLSET
 ####################################################################################################################################
 
@@ -15,13 +24,23 @@ filespec_to_volset = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# INFO_FILE_BASENAMES
+####################################################################################################################################
+
+info_file_basenames = translator.TranslatorByRegex([
+    (r'(aareadme\.txt)', re.I, r'\1'),      # this is the best choice, not voldesc.cat
+])
+
+####################################################################################################################################
 # Subclass definition
 ####################################################################################################################################
 
 class NHSP_xxxx(pdsfile.PdsFile):
 
-    pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('NHSP_xxxx', re.I, 'NHSP_xxxx')]) + \
+    pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('NHSP_xxxx.*', re.I, 'NHSP_xxxx')]) + \
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
+
+    INFO_FILE_BASENAMES = info_file_basenames + pdsfile.PdsFile.INFO_FILE_BASENAMES
 
 pdsfile.PdsFile.FILESPEC_TO_VOLSET = filespec_to_volset + pdsfile.PdsFile.FILESPEC_TO_VOLSET
 

@@ -737,12 +737,12 @@ class TestPdsFileWhiteBox:
              None),
             ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
              None),
+            ('volumes/COUVIS_0xxx/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39.DAT',
+             'volumes/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39.DAT')
         ]
     )
     def test_associated_parallel2(self, input_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        # Need index file for this, will have to modify later when
-        # "/shelves/index/" is available.
         res = target_pdsfile.associated_parallel(rank='previous')
         if res:
             assert res.logical_path == expected
@@ -754,12 +754,12 @@ class TestPdsFileWhiteBox:
         [
             ('volumes/COUVIS_0xxx/COUVIS_0001/DATA/D1999_007/FUV1999_007_16_57.DAT',
              None),
+            ('volumes/COUVIS_0xxx_v1/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39.DAT',
+             'volumes/COUVIS_0xxx/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39.DAT')
         ]
     )
     def test_associated_parallel3(self, input_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        # Need index file for this, will have to modify later when
-        # "/shelves/index/" is available.
         res = target_pdsfile.associated_parallel(rank='next')
         if res:
             assert res.logical_path == expected

@@ -432,17 +432,18 @@ def load_icons(path, url, color='blue', logger=None):
     """Loads icons for use by PdsViewable.iconset_for().
 
     This can be called multiple times on different directories. The icons
-    loaded last take precedence, but earlier icons are not removed, although
-    they may be updated/replaced.
+    loaded last take precedence. Icons loaded earlier are not removed, although
+    they may be replaced.
 
-    Icons found directory tree that do not correspond to one of the "required"
-    names are saved under the name embedded within the file, following
-    "document_" or "folder_", and with an optional, trailing, "_open".
+    Icons found in the directory tree that do not correspond to one of the
+    "required" names are saved under the name embedded within the file,
+    following "document_" or "folder_", and with an optional, trailing, "_open".
 
     If a color is specified, the subdirectory of that name is searched and the
     icons are also keyed under their color in the ICON_SET_BY_TYPE dictionary.
     In this way, it would be possible to work with icons with different colors
-    at the same time within OPUS, although this capability is unused.
+    at the same time within OPUS or Viewmaster, although this capability is
+    unused.
     """
 
     icon_path_ = path.rstrip('/') + '/'

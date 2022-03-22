@@ -30,59 +30,59 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 
 associations_to_volumes = translator.TranslatorByRegex([
     # associate raw and calibrated files of the (almost) same name
-    (r'volumes/JNOJIR_[12]xxx/JNOJIR_[12](\d\d\d/DATA/JIR_\w+)_[ER]DR_(.*)\.(IMG|DAT|TAB)', 0,
-            [r'volumes/JNOJIR_1xxx/JNOJIR_1\1_RDR_\2.\3',
-             r'volumes/JNOJIR_2xxx/JNOJIR_2\1_EDR_\2.\3'
+    (r'volumes/JNOJIR_xxxx/JNOJIR_[12](\d\d\d/DATA/JIR_\w+)_[ER]DR_(.*)\.(IMG|DAT|TAB)', 0,
+            [r'volumes/JNOJIR_xxxx/JNOJIR_1\1_RDR_\2.\3',
+             r'volumes/JNOJIR_xxxx/JNOJIR_2\1_EDR_\2.\3'
             ]),
     # associate data files with logs and vice-versa
-    (r'volumes/(JNOJIR_[12]xxx/JNOJIR_[12]\d\d\d/DATA/JIR)_(IMG|SPE)_([ER]DR_.*)\.(IMG|DAT)', 0,
+    (r'volumes/(JNOJIR_xxxx/JNOJIR_[12]\d\d\d/DATA/JIR)_(IMG|SPE)_([ER]DR_.*)\.(IMG|DAT)', 0,
             r'volumes/\1_LOG_\2_\3.TAB'
             ),
     # associate logs with data files
-    (r'volumes/(JNOJIR_[12]xxx/JNOJIR_[12]\d\d\d/DATA/JIR)_LOG_(\w\w\w_[ER]DR_.*)\.TAB', 0,
+    (r'volumes/(JNOJIR_xxxx/JNOJIR_[12]\d\d\d/DATA/JIR)_LOG_(\w\w\w_[ER]DR_.*)\.TAB', 0,
             [r'volumes/\1_\2.IMG',
              r'volumes/\1_\2.DAT',
             ]),
     # associate orbit report with data volume
-    (r'documents/JNOJIR_1xxx/JIRAM-Report-for-JM000([12])-.*',      0, r'volumes/JNOJIR_1xxx/JNOJIR_000\d'),
-    (r'documents/JNOJIR_1xxx/JIRAM-Report-for-JM00([3-9])[12]-.*',  0, r'volumes/JNOJIR_1xxx/JNOJIR_000\d'),
-    (r'documents/JNOJIR_1xxx/JIRAM-Report-for-JM0([1-9]\d)[12]-.*', 0, r'volumes/JNOJIR_1xxx/JNOJIR_00\d'),
+    (r'documents/JNOJIR_xxxx/JIRAM-Report-for-JM000([12])-.*',      0, r'volumes/JNOJIR_xxxx/JNOJIR_000\d'),
+    (r'documents/JNOJIR_xxxx/JIRAM-Report-for-JM00([3-9])[12]-.*',  0, r'volumes/JNOJIR_xxxx/JNOJIR_000\d'),
+    (r'documents/JNOJIR_xxxx/JIRAM-Report-for-JM0([1-9]\d)[12]-.*', 0, r'volumes/JNOJIR_xxxx/JNOJIR_00\d'),
 
     # associate documents with both root directories
-    (r'documents.*', 0, [r'volumes/JNOJIR_1xxx', r'volumes/JNOJIR_2xxx']),
+    (r'documents.*', 0, r'volumes/JNOJIR_xxxx'),
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'volumes/(JNOJIR_[12]xxx)/(JNOJIR_[12]\d\d\d)/DATA/(\w+)\.(IMG|DAT|TAB)', 0,
-            r'metadata/\1/\2/\2_index.tab/\3.\4',
+    (r'volumes/JNOJIR_xxxx/(JNOJIR_[12]\d\d\d)/DATA/(\w+)\.(IMG|DAT|TAB)', 0,
+            r'metadata/JNOJIR_xxxx/\1/\1_index.tab/\2.\3',
             ),
 ])
 
 associations_to_documents = translator.TranslatorByRegex([
     # Note: this is a full replacement of the default rule
 
-    (r'volumes/JNOJIR_[12]xxx', 0, r'documents/JNOJIR_1xxx/*'),
+    (r'volumes/JNOJIR_xxxx', 0, r'documents/JNOJIR_xxxx/*'),
 
     # For a volname, only match the one relevant JIRAM report for that orbit, but match all the other documents
-    (r'volumes/JNOJIR_[12]xxx/JNOJIR_[12]00([12])',          0, r'documents/JNOJIR_1xxx/JIRAM-Report-for-JM000\1-*.pdf'),
-    (r'volumes/JNOJIR_[12]xxx/JNOJIR_[12]0(0[3-9]|[1-9]\d)', 0, r'documents/JNOJIR_1xxx/JIRAM-Report-for-JM0\1*.pdf'),
-    (r'volumes/JNOJIR_[12]xxx/JNOJIR_[12]\d\d\d',            0,
-        [r'documents/JNOJIR_1xxx/[a-zA-IK-Z0-9_-]*',        # match anything but a JIRAM report; note "[^J]" doesn't work in glob
-         r'documents/JNOJIR_1xxx/J[a-zA-HJ-Z0-9_-]*',
-         r'documents/JNOJIR_1xxx/JI[a-zA-QS-Z0-9_-]*',
-         r'documents/JNOJIR_1xxx/JIR[a-zB-Z0-9_-]*',
-         r'documents/JNOJIR_1xxx/JIRA[a-zA-LN-Z0-0_-]*',
-         r'documents/JNOJIR_1xxx/JIRAM[a-zA-Z0-9_]*',
-         r'documents/JNOJIR_1xxx/JIRAM-[a-zA-QS-Z0-9_-]*',
-         r'documents/JNOJIR_1xxx/JIRAM-R[a-df-zA-Z0-9_-]*', # enough already!
+    (r'volumes/JNOJIR_xxxx/JNOJIR_[12]00([12])',          0, r'documents/JNOJIR_xxxx/JIRAM-Report-for-JM000\1-*.pdf'),
+    (r'volumes/JNOJIR_xxxx/JNOJIR_[12]0(0[3-9]|[1-9]\d)', 0, r'documents/JNOJIR_xxxx/JIRAM-Report-for-JM0\1*.pdf'),
+    (r'volumes/JNOJIR_xxxx/JNOJIR_[12]\d\d\d',            0,
+        [r'documents/JNOJIR_xxxx/[a-zA-IK-Z0-9_-]*',        # match anything but a JIRAM report; note "[^J]" doesn't work in glob
+         r'documents/JNOJIR_xxxx/J[a-zA-HJ-Z0-9_-]*',
+         r'documents/JNOJIR_xxxx/JI[a-zA-QS-Z0-9_-]*',
+         r'documents/JNOJIR_xxxx/JIR[a-zB-Z0-9_-]*',
+         r'documents/JNOJIR_xxxx/JIRA[a-zA-LN-Z0-0_-]*',
+         r'documents/JNOJIR_xxxx/JIRAM[a-zA-Z0-9_]*',
+         r'documents/JNOJIR_xxxx/JIRAM-[a-zA-QS-Z0-9_-]*',
+         r'documents/JNOJIR_xxxx/JIRAM-R[a-df-zA-Z0-9_-]*', # enough already!
         ]),
 
     # Below the volume level, only match the directory
-    (r'volumes/JNOJIR_[12]xxx/JNOJIR_[12]\d\d\d/.+', 0,
-            r'documents/JNOJIR_1xxx'),
+    (r'volumes/JNOJIR_xxxx/JNOJIR_[12]\d\d\d/.+', 0,
+            r'documents/JNOJIR_xxxx'),
 
     # This fills in default behavior of the general association rule
-    (r'volumes/(JNOJIR_[12]xxx/JNOJIR_[12]\d\d\d)(|/.*)', 0,
+    (r'volumes/(JNOJIR_xxxx/JNOJIR_[12]\d\d\d)(|/.*)', 0,
             [r'volumes/\1/DOCUMENT',
              r'volumes/\1/CATALOG',
              r'volumes/\1/AAREADME.TXT',
@@ -96,8 +96,8 @@ associations_to_documents = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 neighbors = translator.TranslatorByRegex([
-    (r'volumes/(JNOJIR_[12]xxx/JNOJIR_[12])\d\d\d',          0,  r'volumes/\1???'),
-    (r'volumes/(JNOJIR_[12]xxx/JNOJIR_[12])\d\d\d/DATA',     0,  r'volumes/\1???/DATA'),
+    (r'volumes/(JNOJIR_xxxx/JNOJIR_[12])\d\d\d',      0, r'volumes/\1???'),
+    (r'volumes/(JNOJIR_xxxx/JNOJIR_[12])\d\d\d/DATA', 0, r'volumes/\1???/DATA'),
 ])
 
 ####################################################################################################################################
@@ -106,10 +106,13 @@ neighbors = translator.TranslatorByRegex([
 
 siblings = translator.TranslatorByRegex([
     # Data files are siblings of data files; log files are siblings of log files
-    (r'volumes/(JNOJIR_[12]xxx/JNOJIR_[12])\d\d\d/DATA/JIR_(IMG|SPE)_[ER]DR_20\d{5}T\d{6}_V\d\d\.LBL',       0, r'JIR_[IS]*.LBL'),
-    (r'volumes/(JNOJIR_[12]xxx/JNOJIR_[12])\d\d\d/DATA/JIR_(IMG|SPE)_[ER]DR_20\d{5}T\d{6}_V\d\d\.(IMG|DAT)', 0, r'JIR_[IS]*.[ID]*'),
-    (r'volumes/(JNOJIR_[12]xxx/JNOJIR_[12])\d\d\d/DATA/JIR_LOG_(IMG|SPE)_[ER]DR_20\d{5}T\d{6}_V\d\d\.LBL',   0, r'JIR_LOG_*.LBL'),
-    (r'volumes/(JNOJIR_[12]xxx/JNOJIR_[12])\d\d\d/DATA/JIR_LOG_(IMG|SPE)_[ER]DR_20\d{5}T\d{6}_V\d\d\.TAB',   0, r'JIR_LOG_*.TAB'),
+    (r'volumes/JNOJIR_xxxx/JNOJIR_[12]\d\d\d/DATA/JIR_(IMG|SPE)_[ER]DR_20\d{5}T\d{6}_V\d\d\.LBL',       0, r'JIR_[IS]*.LBL'),
+    (r'volumes/JNOJIR_xxxx/JNOJIR_[12]\d\d\d/DATA/JIR_(IMG|SPE)_[ER]DR_20\d{5}T\d{6}_V\d\d\.(IMG|DAT)', 0, r'JIR_[IS]*.[ID]*'),
+    (r'volumes/JNOJIR_xxxx/JNOJIR_[12]\d\d\d/DATA/JIR_LOG_(IMG|SPE)_[ER]DR_20\d{5}T\d{6}_V\d\d\.LBL',   0, r'JIR_LOG_*.LBL'),
+    (r'volumes/JNOJIR_xxxx/JNOJIR_[12]\d\d\d/DATA/JIR_LOG_(IMG|SPE)_[ER]DR_20\d{5}T\d{6}_V\d\d\.TAB',   0, r'JIR_LOG_*.TAB'),
+
+    # Volume siblings should match 1xxx or 2xxx
+    (r'.*/JNOJIR_xxxx/JNOJIR_([12])\d\d\d([^/]*)', 0, r'JNOJIR_\1???\2'),
 ])
 
 ####################################################################################################################################
@@ -125,6 +128,9 @@ sort_key = translator.TranslatorByRegex([
 
     # Locate the long list of JIRAM reports at the end of the documents directory
     (r'(JIRAM-Report-for-JM.*\.pdf)', 0, r'zzz-\1'),
+
+    # Sort volumes with the same last three digits together
+    (r'JNOJIR_([12])(\d\d\d)', 0, r'JNOJIR_\2\1'),
 ])
 
 ####################################################################################################################################
@@ -144,6 +150,9 @@ split_rules = translator.TranslatorByRegex([
     # after...
     (r'JIR_(20\d{5}T\d{6}_\w\w\w_\wDR_V\d\d)\.(\w+)',         0, (r'JIR_\1', '',         r'.\2')),
     (r'JIR_(20\d{5}T\d{6}_\w\w\w_\wDR_V\d\d)_zzz_LOG\.(\w+)', 0, (r'JIR_\1', '_zzz_LOG', r'.\2')),
+
+    # Group volumes with the same last three digits
+    (r'JNOJIR_([12])(\d\d\d)(|_[a-z]+)(|_md5\.txt|\.tar\.gz)', 0, (r'JNOJIR_x\2', r'_\1xxx\3', r'\4')),
 ])
 
 ####################################################################################################################################
@@ -152,7 +161,7 @@ split_rules = translator.TranslatorByRegex([
 
 class JNOJIR_xxxx(pdsfile.PdsFile):
 
-    pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('JNOJIR_[12]xxx', re.I, 'JNOJIR_xxxx')]) + \
+    pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('JNOJIR_xxxx', re.I, 'JNOJIR_xxxx')]) + \
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON

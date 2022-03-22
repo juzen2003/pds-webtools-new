@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# rules/COSP_xxxx.py
+# rules/JNOSP_xxxx.py
 ####################################################################################################################################
 
 import pdsfile
@@ -11,8 +11,8 @@ import re
 ####################################################################################################################################
 
 associations_to_documents = translator.TranslatorByRegex([
-    (r'volumes/COSP_xxxx.*', 0,
-        r'documents/COSP_xxxx/*'),
+    (r'volumes/JNOSP_xxxx.*', 0,
+        r'documents/JNOSP_xxxx/*'),
 ])
 
 ####################################################################################################################################
@@ -20,7 +20,7 @@ associations_to_documents = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 filespec_to_volset = translator.TranslatorByRegex([
-    (r'COSP_\d{4}.*', 0, r'COSP_xxxx'),
+    (r'JNOSP_\d{4}.*', 0, r'JNOSP_xxxx'),
 ])
 
 ####################################################################################################################################
@@ -35,9 +35,9 @@ info_file_basenames = translator.TranslatorByRegex([
 # Subclass definition
 ####################################################################################################################################
 
-class COSP_xxxx(pdsfile.PdsFile):
+class JNOSP_xxxx(pdsfile.PdsFile):
 
-    pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('COSP_xxxx', re.I, 'COSP_xxxx')]) + \
+    pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('JNOSP_xxxx', re.I, 'JNOSP_xxxx')]) + \
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
 
     ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
@@ -51,6 +51,6 @@ pdsfile.PdsFile.FILESPEC_TO_VOLSET = filespec_to_volset + pdsfile.PdsFile.FILESP
 # Update the global dictionary of subclasses
 ####################################################################################################################################
 
-pdsfile.PdsFile.SUBCLASSES['COSP_xxxx'] = COSP_xxxx
+pdsfile.PdsFile.SUBCLASSES['JNOSP_xxxx'] = JNOSP_xxxx
 
 ####################################################################################################################################

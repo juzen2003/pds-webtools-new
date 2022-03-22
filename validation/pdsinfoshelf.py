@@ -48,8 +48,6 @@ def generate_infodict(pdsdir, selection, old_infodict={},
     Also return the latest modification date among all the files checked.
     """
 
-    NULL_CHECKSUM = '-------------------------------'
-
     ### Internal function
 
     def get_info_for_file(abspath, latest_mtime):
@@ -65,7 +63,7 @@ def generate_infodict(pdsdir, selection, old_infodict={},
             checksum = checkdict[abspath]
         except KeyError:
             logger.error('Missing entry in checksum file', abspath)
-            checksum = NULL_CHECKSUM
+            checksum = ''
 
         size = (0,0)
         ext = os.path.splitext(abspath)[1]
@@ -108,7 +106,7 @@ def generate_infodict(pdsdir, selection, old_infodict={},
                 children += 1
                 modtime = max(modtime, info[2])
 
-            info = (nbytes, children, modtime, NULL_CHECKSUM, (0,0))
+            info = (nbytes, children, modtime, '', (0,0))
 
         elif abspath in old_infodict:
             info = old_infodict[abspath]
@@ -209,11 +207,16 @@ def load_infodict(pdsdir, logger=None):
             shelf = pickle.load(f)
 
         infodict = {}
-        for key in shelf.keys():
+        for (key,info) in shelf.items():
+            # Remove a 'null' checksum indicated by a string of dashes
+            # (Directories do not have checksums.)
+            if info[3] and info[3][0] == '-':
+                info = info[:3] + ('',) + info[4:]
+
             if key == '':
-                infodict[dirpath_[:-1]] = shelf[key]
+                infodict[dirpath_[:-1]] = info
             else:
-                infodict[dirpath_[:lskip] + key] = shelf[key]
+                infodict[dirpath_[:lskip] + key] = info
 
         return infodict
 
@@ -668,7 +671,7 @@ if __name__ == '__main__':
     parser.add_argument('--quiet', '-q', action='store_true',
                         help='Do not also log to the terminal.')
 
-    parser.add_argument('--archives', '-a', default=False, action='store_true', 
+    parser.add_argument('--archives', '-a', default=False, action='store_true',
                         help='Instead of referring to a volume, refer to the ' +
                              'the archive file for that volume.')
 
@@ -829,7 +832,7 @@ if __name__ == '__main__':
             # Open the next level of the log
             if len(info) > 1:
                 logger.blankline()
- 
+
             if selection:
                 logger.open('Task "' + args.task + '" for selection ' +
                             selection, pdsdir.abspath, handler=local_handlers)

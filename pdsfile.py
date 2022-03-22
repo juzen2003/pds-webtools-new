@@ -280,7 +280,8 @@ DEFAULT_CACHING = 'dir'     # 'dir', 'all' or 'none';
 
 PRELOAD_TRIES = 3
 
-def preload(holdings_list, port=0, clear=False, force_reload=False):
+def preload(holdings_list, port=0, clear=False, force_reload=False,
+            icon_color='blue'):
     """Cache the top-level directories, starting from the given holdings
     directories.
 
@@ -292,6 +293,8 @@ def preload(holdings_list, port=0, clear=False, force_reload=False):
         clear               True to clear the cache before preloading.
         force_reload        Re-load the cache regardless of whether the cache
                             appears to contain the needed holdings.
+        icon_color          color of the icons to load from each holdings
+                            directory; default "blue".
     """
 
     global CACHE, MEMCACHE_PORT, DEFAULT_CACHING, LOCAL_PRELOADED, PRELOAD_TRIES
@@ -454,7 +457,7 @@ def preload(holdings_list, port=0, clear=False, force_reload=False):
               CACHE.set(key, {}, lifetime=0)
 
         # Cache all of the top-level PdsFile directories
-        for holdings in holdings_list:
+        for h,holdings in enumerate(holdings_list):
 
             if holdings in LOCAL_PRELOADED:
                 LOGGER.info('Pre-load not needed for ' + holdings)
@@ -484,6 +487,12 @@ def preload(holdings_list, port=0, clear=False, force_reload=False):
                                               caching='all', lifetime=0)
                 _preload_dir(pdsdir)
 
+            # Load the icons
+            icon_path = _clean_join(holdings, '_icons')
+            if os.path.exists(icon_path):
+                icon_url = '/holdings' + (str(h) if h > 0 else '') + '/_icons'
+                pdsviewable.load_icons(icon_path, icon_url, icon_color, LOGGER)
+
     finally:
         CACHE.set('$PRELOADED', LOCAL_PRELOADED, lifetime=0)
         CACHE.resume()
@@ -496,7 +505,7 @@ def preload(holdings_list, port=0, clear=False, force_reload=False):
     # system as case-insensitive.
     FS_IS_CASE_INSENSITIVE = False
     for holdings_dir in LOCAL_PRELOADED:
-        testfile = holdings_dir.replace('/holdings', '/ShElVeS')
+        testfile = holdings_dir.replace('/holdings', '/HoLdInGs')
         if os.path.exists(testfile):
             FS_IS_CASE_INSENSITIVE = True
             break
@@ -578,7 +587,7 @@ def load_volume_info(holdings):
     Blank records and those beginning with "#" are ignored.
     """
 
-    volinfo_path = _clean_join(os.path.split(holdings)[0], 'volinfo')
+    volinfo_path = _clean_join(holdings, '_volinfo')
 
     volinfo_dict = {}           # the master dictionary of high-level paths vs.
                                 # (description, icon_type, version ID,
@@ -685,7 +694,7 @@ class PdsFile(object):
     VERSIONS = pdsfile_rules.VERSIONS
     INFO_FILE_BASENAMES = pdsfile_rules.INFO_FILE_BASENAMES
     NEIGHBORS = pdsfile_rules.NEIGHBORS
-    SIBLINGS = pdsfile_rules.SIBLINGS
+    SIBLINGS = pdsfile_rules.SIBLINGS       # just used by Viewmaster right now
     SORT_KEY = pdsfile_rules.SORT_KEY
     SPLIT_RULES = pdsfile_rules.SPLIT_RULES
     VIEW_OPTIONS = pdsfile_rules.VIEW_OPTIONS
@@ -1079,7 +1088,7 @@ class PdsFile(object):
         system.
         """
 
-        if '/shelves/info/' in abspath:
+        if 'holdings/_infoshelf' in abspath:
             return os.path.exists(abspath)
 
         # Handle index rows
@@ -1113,7 +1122,8 @@ class PdsFile(object):
             if '/holdings/' in abspath:
 
                 # Maybe there's an associated directory in the infoshelf tree
-                shelf_abspath = abspath.replace('/holdings/','/shelves/info/')
+                shelf_abspath = abspath.replace('/holdings/',
+                                                '/holdings/_infoshelf-')
                 if PdsFile.os_path_exists(shelf_abspath):
                     return True
 
@@ -1167,7 +1177,8 @@ class PdsFile(object):
             if '/holdings/' in abspath:
 
                 # Maybe there's an associated directory in the infoshelf tree
-                shelf_abspath = abspath.replace('/holdings/','/shelves/info/')
+                shelf_abspath = abspath.replace('/holdings/',
+                                                '/holdings/_infoshelf-')
                 if os.path.exists(shelf_abspath):
                     return True
 
@@ -1277,7 +1288,8 @@ class PdsFile(object):
             if '/holdings/' in abspath:
 
                 # Maybe there's an associated directory in the infoshelf tree
-                shelf_abspath = abspath.replace('/holdings/','/shelves/info/')
+                shelf_abspath = abspath.replace('/holdings/',
+                                                '/holdings/_infoshelf-')
                 try:
                     results = os.listdir(shelf_abspath)
                 except FileNotFoundError:
@@ -1344,7 +1356,8 @@ class PdsFile(object):
         except ValueError:
             # For a category-level holdings dir, this might still work
             if '/holdings/' in abspath:
-                pattern = abspath.replace('/holdings/', '/shelves/info/')
+                pattern = abspath.replace('/holdings/',
+                                          '/holdings/_infoshelf-')
                 key = None  # Below, None indicates that we handled this error
             else:
                 pattern = ''
@@ -1365,14 +1378,14 @@ class PdsFile(object):
         # If the check for an exact shelf file failed, just convert the list
         # of shelf/info directories back to holdings directories
         if key is None:
-            return [p.replace('/shelves/info/', '/holdings/')
+            return [p.replace('/holdings/_infoshelf-', '/holdings/')
                     for p in shelf_paths]
 
         # Gather the matching entries in each shelf
         abspaths = []
         for shelf_path in shelf_paths:
             shelf = PdsFile._get_shelf(shelf_path)
-            parts = shelf_path.split('/shelves/info/')
+            parts = shelf_path.split('/holdings/_infoshelf-')
             assert len(parts) == 2
 
             root_ = parts[0] + '/holdings/' + parts[1].split('_info.')[0] + '/'
@@ -1511,8 +1524,8 @@ class PdsFile(object):
 
     @property
     def html_path(self):
-        """URL to this file after the domain name and slash, starting with
-        "/holdings"; alias for property "url".
+        """URL to this file after the domain name, starting with "/holdings";
+        alias for property "url".
         """
 
         if self._html_path_filled is not None:
@@ -1539,9 +1552,7 @@ class PdsFile(object):
 
     @property
     def url(self):
-        """URL to this file after the domain name and slash, starting with
-        "/holdings"; alias for property "url".
-        """
+        """URL to this file after the domain name, starting with "/holdings"."""
 
         return self.html_path
 
@@ -1598,7 +1609,8 @@ class PdsFile(object):
                 self._indexshelf_abspath = ''
             else:
                 abspath = self.abspath
-                abspath = abspath.replace('/holdings/', '/shelves/index/')
+                abspath = abspath.replace('/holdings/',
+                                          '/holdings/_indexshelf-')
                 abspath = abspath.replace('.tab', '.pickle')
                 abspath = abspath.replace('.TAB', '.pickle')
                 self._indexshelf_abspath = abspath
@@ -1735,6 +1747,10 @@ class PdsFile(object):
                 else:
                     modtime = None
 
+                # A missing checksum is sometimes represented by dashes
+                if checksum and checksum[0] == '-':
+                    checksum = ''
+
                 self._info_filled = (file_bytes, child_count, modtime,
                                      checksum, size)
                 self._recache()
@@ -1843,9 +1859,9 @@ class PdsFile(object):
         return self._info[4][1]
 
     def _repair_width_height(self):
-        """Internal function to fill in the shape of viewwables, if needed."""
+        """Internal function to fill in the shape of viewables, if needed."""
 
-        if len(self._info[4]) > 2:      # 'TBD' means check the size if needed
+        if len(self._info[4]) > 2:      # (0,0,'TBD') means fill in the size now
 
             LOGGER.warn('Retrieving viewable shape', self.abspath)
             try:
@@ -1855,7 +1871,7 @@ class PdsFile(object):
             except Exception:
                 shape = (0,0)
 
-            self._info = self._info[:4] + (shape,)
+            self._info_filled = self._info[:4] + (shape,)
             self._recache()
 
     @property
@@ -3453,22 +3469,18 @@ class PdsFile(object):
         if parts[0] != '':
             raise ValueError('Not an absolute path: ' + abspath)
 
-        # Search for "holdings" or "shelves"
+        # Search for "holdings"
         parts_lc = [p.lower() for p in parts]
         try:
             holdings_index = parts_lc.index('holdings')
         except ValueError:
-            try:
-                holdings_index = parts_lc.index('shelves')
-            except ValueError:
-                raise ValueError('"holdings" directory not found in: ' +
-                                 abspath)
+            raise ValueError('"holdings" directory not found in: ' + abspath)
 
         ### Pause the cache
         CACHE.pause()
         try:
             # Fill in this.disk_, the absolute path to the directory containing
-            # subdirectories "holdings", "shelves", and "volinfo"
+            # subdirectory "holdings"
             this = PdsFile()
             this.disk_ = drive_spec + '/'.join(parts[:holdings_index]) + '/'
             this.root_ = this.disk_ + 'holdings/'
@@ -4175,11 +4187,20 @@ class PdsFile(object):
         if len(matches) == 0:
             raise ValueError('Unrecognized OPUS ID: ' + opus_id)
 
-        for k, abspath in enumerate(matches):
-            LOGGER.warn('Ambiguous primary product for OPUS ID ' + opus_id,
-                        abspath + (' (selected)' if k == 0 else ''))
+        # Call a special product prioritizer if available
+        pdsfiles = PdsFile.pdsfiles_for_abspaths(matches)
+        if hasattr(pdsfiles[0], 'opus_prioritizer'):
+            fake_opus_key = ('', 0, '', '', True)
+            fake_opus_sublists = [[pdsf] for pdsf in pdsfiles]
+            fake_product_dict = {fake_opus_key: fake_opus_sublists}
+            fake_product_dict = pdsfiles[0].opus_prioritizer(fake_product_dict)
+            return fake_product_dict[fake_opus_key][0][0]
 
-        return PdsFile.from_abspath(matches[0])
+        for k, pdsf in enumerate(pdsfiles):
+            LOGGER.warn('Ambiguous primary product for OPUS ID ' + opus_id,
+                        pdsf.abspath + (' (selected)' if k == 0 else ''))
+
+        return pdsfiles[0]
 
     def opus_products(self):
         """For this primary data product or label, return a dictionary keyed
@@ -4201,12 +4222,14 @@ class PdsFile(object):
              PdsFile for the first embedded .FMT file (if any),
              PdsFile for the second embedded .FMT file (if any), etc.]
         This sublist contains every file that should be added to the OPUS
-        results if that data product is requested.
+        results if that data product is requested. The sublists appear in order
+        of decreasing version.
 
-        The dictionary returns a list of sublists because it is possible for
-        multiple data products to have the same key. However, most of the time,
-        the list contains only one sublist. The list is sorted with the most
-        recent versions first.
+        If a class function opus_prioritizer exists, this is called before the
+        dictionary is returned. In cases where multiple products with the same
+        OPUS ID and version exists, an opus_prioritizer can be used to alter the
+        dictionary returned in order to highlight the "best" among the
+        alternative products.
         """
 
         # Get the associated absolute paths
@@ -4242,10 +4265,9 @@ class PdsFile(object):
         for abspath in abspaths:
             pdsf = PdsFile.from_abspath(abspath)
             if pdsf.islabel:
-                # Check if the corresponding shelves/links files or link info
-                # exist, if not, we skip this label file. That way, the error
-                # handled when calling the linked_abspaths below will not abort
-                # the import process.
+                # Check if the corresponding link info exists. If not, we skip
+                # this label file. That way, the error handled when calling the
+                # linked_abspaths below will not abort the import process.
                 try:
                     pdsf.shelf_lookup('links')
                 except (OSError, KeyError, ValueError):
@@ -4262,29 +4284,29 @@ class PdsFile(object):
                 data_pdsfiles.append(pdsf)
 
         # Construct the dictionary to return
-        opus_pdsfiles = {}
+        pdsfile_dict = {}
         for pdsf in data_pdsfiles:
             key = opus_type_for_abspath.get(pdsf.abspath, pdsf.opus_type)
-            if key not in opus_pdsfiles:
-                opus_pdsfiles[key] = []
+            if key not in pdsfile_dict:
+                pdsfile_dict[key] = []
 
             if pdsf.label_abspath:
                 sublist = [pdsf] + label_pdsfiles[pdsf.label_abspath]
             else:
                 sublist = [pdsf]
 
-            opus_pdsfiles[key].append(sublist)
+            pdsfile_dict[key].append(sublist)
 
         # Sort by version and filepath
-        for (header, sublists) in opus_pdsfiles.items():
+        for (header, sublists) in pdsfile_dict.items():
             sublists.sort(key=lambda x: (x[0].version_rank, x[0].abspath))
             sublists.reverse()
 
         # Call a special product prioritizer if available
         if hasattr(self, 'opus_prioritizer'):
-            self.opus_prioritizer(opus_pdsfiles)
+            self.opus_prioritizer(pdsfile_dict)
 
-        return opus_pdsfiles
+        return pdsfile_dict
 
     ############################################################################
     # Checksum path associations
@@ -4459,13 +4481,15 @@ class PdsFile(object):
             raise ValueError('No shelf files for checksums: ' +
                              self.logical_path)
 
+        short_id = 'link' if id == 'links' else id
         if self.archives_:
             if not self.volset_:
                 raise ValueError('Archive shelves require volume sets: ' +
                                  self.logical_path)
 
-            abspath = ''.join([self.disk_, 'shelves/', id, '/', self.category_,
-                               self.volset, self.suffix, '_', id, '.pickle'])
+            abspath = ''.join([self.disk_, 'holdings/_', short_id, 'shelf-',
+                               self.category_, self.volset, self.suffix, '_',
+                               id, '.pickle'])
             lskip = (len(self.root_) + len(self.category_) +
                      len(self.volset_))
 
@@ -4479,8 +4503,9 @@ class PdsFile(object):
             else:
                 this_volname = self.volname
 
-            abspath = ''.join([self.disk_, 'shelves/', id, '/', self.category_,
-                               self.volset_, this_volname, '_', id, '.pickle'])
+            abspath = ''.join([self.disk_, 'holdings/_', short_id, 'shelf-',
+                               self.category_, self.volset_, this_volname, '_',
+                               id, '.pickle'])
             lskip = (len(self.root_) + len(self.category_) +
                      len(self.volset_) + len(this_volname) + 1)
 
@@ -4637,8 +4662,9 @@ class PdsFile(object):
                 raise ValueError('Archive shelves require volume sets: ' +
                                  logical_path)
 
-            shelf_abspath = ''.join([root, '/shelves/', id, '/', parts[0], '/',
-                                     parts[1], '_', id, '.pickle'])
+            shelf_abspath = ''.join([root, '/holdings/_', id, 'shelf-',
+                                     parts[0], '/', parts[1], '_', id,
+                                     '.pickle'])
             key = '/'.join(parts[2:])
 
         # Otherwise, the shelf is associated with the volume
@@ -4648,9 +4674,9 @@ class PdsFile(object):
                 raise ValueError('Non-archive shelves require volume names: ' +
                                  logical_path)
 
-            shelf_abspath = ''.join([root, '/shelves/', id, '/', parts[0], '/',
-                                     parts[1], '/', parts[2], '_', id,
-                                     '.pickle'])
+            shelf_abspath = ''.join([root, '/holdings/_', id, 'shelf-',
+                                     parts[0], '/', parts[1], '/', parts[2],
+                                     '_', id, '.pickle'])
             key = '/'.join(parts[3:])
 
         return (shelf_abspath, key)
@@ -4829,7 +4855,12 @@ class PdsFile(object):
         # Special case: volname[_...]_md5.txt, volname[_...].tar.gz
         matchobj = VOLNAME_PLUS_REGEX.match(basename)
         if matchobj is not None:
-            return (matchobj.group(1), matchobj.group(2), matchobj.group(3))
+            test = self.SPLIT_RULES.first(basename) # a split rule overrides
+                                                    # the default behavior
+            if test == basename:
+                return (matchobj.group(1), matchobj.group(2), matchobj.group(3))
+            else:
+                return test
 
         return self.SPLIT_RULES.first(basename)
 

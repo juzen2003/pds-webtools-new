@@ -372,7 +372,7 @@ associations_to_previews = translator.TranslatorByRegex([
 ])
 
 associations_to_metadata = translator.TranslatorByRegex([
-    (r'volumes/(GO_0xxx)/(GO_....)/.*/(C\d{10})[A-Z].*', 0,
+    (r'volumes/(GO_0xxx)/(GO_....)/.*/(C\d{10})[RS].*', 0,
             r'metadata/\1/\2/\2_index.tab/\3'),
     (r'volumes/(GO_0xxx_v1)/(GO_....).*', 0,
             r'metadata/\1/\2'),
@@ -382,6 +382,8 @@ associations_to_metadata = translator.TranslatorByRegex([
             [r'metadata/GO_0xxx/GO_0999/GO_0999_\2.tab',
              r'metadata/GO_0xxx/GO_0999/GO_0999_\2.lbl',
             ]),
+    (r'volumes/GO_0xxx/GO_0016/SL9/(C\d{10})[RG].*', 0,
+            r'metadata/GO_0xxx/GO_0016/GO_0016_sl9_index.tab/\1'),
 ])
 
 ####################################################################################################################################
@@ -512,75 +514,75 @@ opus_products = translator.TranslatorByRegex([
             ]),
 
     # Known duplicates...
-    (r'.*/GO_0006/REDO/(C0018062639R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'  , r'previews/GO_0xxx/GO_0002/VENUS/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C0018241745R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'  , r'previews/GO_0xxx/GO_0002/VENUS/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C0018353518R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'  , r'previews/GO_0xxx/GO_0002/VENUS/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C0018518445R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'  , r'previews/GO_0xxx/GO_0002/VENUS/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C0059469700R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/RAW_CAL/\1.*', r'previews/GO_0xxx/GO_0002/RAW_CAL/\1*.jpg']),
-    (r'.*/GO_0006/REDO/(C0059471700R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/RAW_CAL/\1.*', r'previews/GO_0xxx/GO_0002/RAW_CAL/\1*.jpg']),
-    (r'.*/GO_0006/REDO/(C0060964000R).*'   , 0, [r'volumes/GO_0xxx/GO_0003/MOON/\1.*'   , r'previews/GO_0xxx/GO_0003/MOON/\1*.jpg'   ]),
-    (r'.*/GO_0006/REDO/(C0061078900R).*'   , 0, [r'volumes/GO_0xxx/GO_0004/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0004/EARTH/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C0061116.00R).*'   , 0, [r'volumes/GO_0xxx/GO_0004/MOON/\1.*'   , r'previews/GO_0xxx/GO_0004/MOON/\1*.jpg'   ]),
-    (r'.*/GO_0006/REDO/(C0061424500R).*'   , 0, [r'volumes/GO_0xxx/GO_0004/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0004/EARTH/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C0061441500R).*'   , 0, [r'volumes/GO_0xxx/GO_0004/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0004/EARTH/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C0061469100R).*'   , 0, [r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0005/EARTH/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C006150..00R).*'   , 0, [r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0005/EARTH/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C006151..00R).*'   , 0, [r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0005/EARTH/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C006152..00R).*'   , 0, [r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0005/EARTH/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C006153..00R).*'   , 0, [r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0005/EARTH/\1*.jpg'  ]),
-    (r'.*/GO_0006/REDO/(C0061542500R).*'   , 0, [r'volumes/GO_0xxx/GO_0006/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0006/EARTH/\1*.jpg'  ]),
-    (r'.*/GO_0015/REDO/(C0165242700R).*'   , 0, [r'volumes/GO_0xxx/GO_0012/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0012/EARTH/\1*.jpg'  ]),
+    (r'.*/GO_0006/REDO/(C0018062639R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'  , r'previews/GO_0xxx/GO_0002/VENUS/\1*.jpg'  , r'metadata/GO_0xxx/GO_0002/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0018241745R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'  , r'previews/GO_0xxx/GO_0002/VENUS/\1*.jpg'  , r'metadata/GO_0xxx/GO_0002/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0018353518R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'  , r'previews/GO_0xxx/GO_0002/VENUS/\1*.jpg'  , r'metadata/GO_0xxx/GO_0002/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0018518445R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/VENUS/\1.*'  , r'previews/GO_0xxx/GO_0002/VENUS/\1*.jpg'  , r'metadata/GO_0xxx/GO_0002/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0059469700R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/RAW_CAL/\1.*', r'previews/GO_0xxx/GO_0002/RAW_CAL/\1*.jpg', r'metadata/GO_0xxx/GO_0002/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0059471700R).*'   , 0, [r'volumes/GO_0xxx/GO_0002/RAW_CAL/\1.*', r'previews/GO_0xxx/GO_0002/RAW_CAL/\1*.jpg', r'metadata/GO_0xxx/GO_0002/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0060964000R).*'   , 0, [r'volumes/GO_0xxx/GO_0003/MOON/\1.*'   , r'previews/GO_0xxx/GO_0003/MOON/\1*.jpg'   , r'metadata/GO_0xxx/GO_0003/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0061078900R).*'   , 0, [r'volumes/GO_0xxx/GO_0004/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0004/EARTH/\1*.jpg'  , r'metadata/GO_0xxx/GO_0004/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0061116.00R).*'   , 0, [r'volumes/GO_0xxx/GO_0004/MOON/\1.*'   , r'previews/GO_0xxx/GO_0004/MOON/\1*.jpg'   , r'metadata/GO_0xxx/GO_0004/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0061424500R).*'   , 0, [r'volumes/GO_0xxx/GO_0004/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0004/EARTH/\1*.jpg'  , r'metadata/GO_0xxx/GO_0004/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0061441500R).*'   , 0, [r'volumes/GO_0xxx/GO_0004/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0004/EARTH/\1*.jpg'  , r'metadata/GO_0xxx/GO_0004/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0061469100R).*'   , 0, [r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0005/EARTH/\1*.jpg'  , r'metadata/GO_0xxx/GO_0005/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C006150..00R).*'   , 0, [r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0005/EARTH/\1*.jpg'  , r'metadata/GO_0xxx/GO_0005/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C006151..00R).*'   , 0, [r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0005/EARTH/\1*.jpg'  , r'metadata/GO_0xxx/GO_0005/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C006152..00R).*'   , 0, [r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0005/EARTH/\1*.jpg'  , r'metadata/GO_0xxx/GO_0005/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C006153..00R).*'   , 0, [r'volumes/GO_0xxx/GO_0005/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0005/EARTH/\1*.jpg'  , r'metadata/GO_0xxx/GO_0005/GO_0???_index.*']),
+    (r'.*/GO_0006/REDO/(C0061542500R).*'   , 0, [r'volumes/GO_0xxx/GO_0006/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0006/EARTH/\1*.jpg'  , r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0015/REDO/(C0165242700R).*'   , 0, [r'volumes/GO_0xxx/GO_0012/EARTH/\1.*'  , r'previews/GO_0xxx/GO_0012/EARTH/\1*.jpg'  , r'metadata/GO_0xxx/GO_0012/GO_0???_index.*']),
 
-    (r'.*/GO_0002/VENUS/(C0018062639R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0002/VENUS/(C0018241745R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0002/VENUS/(C0018353518R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0002/VENUS/(C0018518445R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0002/RAW_CAL/(C0059469700R).*', 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0002/RAW_CAL/(C0059471700R).*', 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0003/MOON/(C0060964000R).*'   , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0004/EARTH/(C0061078900R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0004/MOON/(C0061116.00R).*'   , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0004/EARTH/(C0061424500R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0004/EARTH/(C0061441500R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0005/EARTH/(C0061469100R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0005/EARTH/(C006150..00R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0005/EARTH/(C006151..00R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0005/EARTH/(C006152..00R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0005/EARTH/(C006153..00R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0006/EARTH/(C0061542500R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg']),
-    (r'.*/GO_0012/EARTH/(C0165242700R).*'  , 0, [r'volumes/GO_0xxx/GO_0015/REDO/\1.*', r'previews/GO_0xxx/GO_0015/REDO/\1*.jpg']),
+    (r'.*/GO_0002/VENUS/(C0018062639R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0002/VENUS/(C0018241745R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0002/VENUS/(C0018353518R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0002/VENUS/(C0018518445R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0002/RAW_CAL/(C0059469700R).*', 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0002/RAW_CAL/(C0059471700R).*', 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0003/MOON/(C0060964000R).*'   , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0004/EARTH/(C0061078900R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0004/MOON/(C0061116.00R).*'   , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0004/EARTH/(C0061424500R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0004/EARTH/(C0061441500R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0005/EARTH/(C0061469100R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0005/EARTH/(C006150..00R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0005/EARTH/(C006151..00R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0005/EARTH/(C006152..00R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0005/EARTH/(C006153..00R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0006/EARTH/(C0061542500R).*'  , 0, [r'volumes/GO_0xxx/GO_0006/REDO/\1.*', r'previews/GO_0xxx/GO_0006/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0006/GO_0???_index.*']),
+    (r'.*/GO_0012/EARTH/(C0165242700R).*'  , 0, [r'volumes/GO_0xxx/GO_0015/REDO/\1.*', r'previews/GO_0xxx/GO_0015/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0015/GO_0???_index.*']),
 
-    (r'.*/GO_0018/REDO/(C3/JUPITER/C036897..00R).*', 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg']),
-    (r'.*/GO_0018/REDO/(C3/JUPITER/C036898..00R).*', 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg']),
-    (r'.*/GO_0018/REDO/(C3/JUPITER/C036899..00R).*', 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg']),
-    (r'.*/GO_0019/REDO/(C3/EUROPA/C0368976...R).*' , 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg']),
-    (r'.*/GO_0019/REDO/(C3/JUPITER/C0368369268R).*', 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg']),
-    (r'.*/GO_0019/REDO/(C3/JUPITER/C0368441600R).*', 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg']),
-    (r'.*/GO_0019/REDO/(E4/EUROPA/C0374667300R).*' , 0, [r'volumes/GO_0xxx/GO_0018/\1.*', r'previews/GO_0xxx/GO_0018/\1*.jpg']),
-    (r'.*/GO_0019/REDO/(E6/IO/C0383655111R).*'     , 0, [r'volumes/GO_0xxx/GO_0018/\1.*', r'previews/GO_0xxx/GO_0018/\1*.jpg']),
+    (r'.*/GO_0018/REDO/(C3/JUPITER/C036897..00R).*', 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg', r'metadata/GO_0xxx/GO_0017/GO_0???_index.*']),
+    (r'.*/GO_0018/REDO/(C3/JUPITER/C036898..00R).*', 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg', r'metadata/GO_0xxx/GO_0017/GO_0???_index.*']),
+    (r'.*/GO_0018/REDO/(C3/JUPITER/C036899..00R).*', 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg', r'metadata/GO_0xxx/GO_0017/GO_0???_index.*']),
+    (r'.*/GO_0019/REDO/(C3/EUROPA/C0368976...R).*' , 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg', r'metadata/GO_0xxx/GO_0017/GO_0???_index.*']),
+    (r'.*/GO_0019/REDO/(C3/JUPITER/C0368369268R).*', 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg', r'metadata/GO_0xxx/GO_0017/GO_0???_index.*']),
+    (r'.*/GO_0019/REDO/(C3/JUPITER/C0368441600R).*', 0, [r'volumes/GO_0xxx/GO_0017/\1.*', r'previews/GO_0xxx/GO_0017/\1*.jpg', r'metadata/GO_0xxx/GO_0017/GO_0???_index.*']),
+    (r'.*/GO_0019/REDO/(E4/EUROPA/C0374667300R).*' , 0, [r'volumes/GO_0xxx/GO_0018/\1.*', r'previews/GO_0xxx/GO_0018/\1*.jpg', r'metadata/GO_0xxx/GO_0018/GO_0???_index.*']),
+    (r'.*/GO_0019/REDO/(E6/IO/C0383655111R).*'     , 0, [r'volumes/GO_0xxx/GO_0018/\1.*', r'previews/GO_0xxx/GO_0018/\1*.jpg', r'metadata/GO_0xxx/GO_0018/GO_0???_index.*']),
 
-    (r'.*/GO_0017/(C3/JUPITER/C036897..00R).*'     , 0, [r'volumes/GO_0xxx/GO_0018/REDO/\1.*', r'previews/GO_0xxx/GO_0018/REDO/\1*.jpg']),
-    (r'.*/GO_0017/(C3/JUPITER/C036898..00R).*'     , 0, [r'volumes/GO_0xxx/GO_0018/REDO/\1.*', r'previews/GO_0xxx/GO_0018/REDO/\1*.jpg']),
-    (r'.*/GO_0017/(C3/JUPITER/C036899..00R).*'     , 0, [r'volumes/GO_0xxx/GO_0018/REDO/\1.*', r'previews/GO_0xxx/GO_0018/REDO/\1*.jpg']),
-    (r'.*/GO_0017/(C3/EUROPA/C0368976...R).*'      , 0, [r'volumes/GO_0xxx/GO_0019/REDO/\1.*', r'previews/GO_0xxx/GO_0019/REDO/\1*.jpg']),
-    (r'.*/GO_0017/(C3/JUPITER/C0368369268R).*'     , 0, [r'volumes/GO_0xxx/GO_0019/REDO/\1.*', r'previews/GO_0xxx/GO_0019/REDO/\1*.jpg']),
-    (r'.*/GO_0017/(C3/JUPITER/C0368441600R).*'     , 0, [r'volumes/GO_0xxx/GO_0019/REDO/\1.*', r'previews/GO_0xxx/GO_0019/REDO/\1*.jpg']),
-    (r'.*/GO_0018/(E4/EUROPA/C0374667300R).*'      , 0, [r'volumes/GO_0xxx/GO_0019/REDO/\1.*', r'previews/GO_0xxx/GO_0019/REDO/\1*.jpg']),
-    (r'.*/GO_0018/(E6/IO/C0383655111R).*'          , 0, [r'volumes/GO_0xxx/GO_0019/REDO/\1.*', r'previews/GO_0xxx/GO_0019/REDO/\1*.jpg']),
+    (r'.*/GO_0017/(C3/JUPITER/C036897..00R).*'     , 0, [r'volumes/GO_0xxx/GO_0018/REDO/\1.*', r'previews/GO_0xxx/GO_0018/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0018/GO_0???_index.*']),
+    (r'.*/GO_0017/(C3/JUPITER/C036898..00R).*'     , 0, [r'volumes/GO_0xxx/GO_0018/REDO/\1.*', r'previews/GO_0xxx/GO_0018/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0018/GO_0???_index.*']),
+    (r'.*/GO_0017/(C3/JUPITER/C036899..00R).*'     , 0, [r'volumes/GO_0xxx/GO_0018/REDO/\1.*', r'previews/GO_0xxx/GO_0018/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0018/GO_0???_index.*']),
+    (r'.*/GO_0017/(C3/EUROPA/C0368976...R).*'      , 0, [r'volumes/GO_0xxx/GO_0019/REDO/\1.*', r'previews/GO_0xxx/GO_0019/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0019/GO_0???_index.*']),
+    (r'.*/GO_0017/(C3/JUPITER/C0368369268R).*'     , 0, [r'volumes/GO_0xxx/GO_0019/REDO/\1.*', r'previews/GO_0xxx/GO_0019/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0019/GO_0???_index.*']),
+    (r'.*/GO_0017/(C3/JUPITER/C0368441600R).*'     , 0, [r'volumes/GO_0xxx/GO_0019/REDO/\1.*', r'previews/GO_0xxx/GO_0019/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0019/GO_0???_index.*']),
+    (r'.*/GO_0018/(E4/EUROPA/C0374667300R).*'      , 0, [r'volumes/GO_0xxx/GO_0019/REDO/\1.*', r'previews/GO_0xxx/GO_0019/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0019/GO_0???_index.*']),
+    (r'.*/GO_0018/(E6/IO/C0383655111R).*'          , 0, [r'volumes/GO_0xxx/GO_0019/REDO/\1.*', r'previews/GO_0xxx/GO_0019/REDO/\1*.jpg', r'metadata/GO_0xxx/GO_0019/GO_0???_index.*']),
 
-    (r'.*/GO_0020/E12/TIRETRACK/(C04262728..)S.*'  , 0, [r'volumes/GO_0xxx/GO_0020/E12/EUROPA/\1R.*'    , r'previews/GO_0xxx/GO_0020/E12/EUROPA/\1*.jpg'    ]),
-    (r'.*/GO_0022/I24/IO/REPAIRED/(C052079....)S.*', 0, [r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/\1R.*', r'previews/GO_0xxx/GO_0022/I24/IO/GARBLED/\1*.jpg']),
-    (r'.*/GO_0022/I24/IO/REPAIRED/(C052080630.)S.*', 0, [r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/\1R.*', r'previews/GO_0xxx/GO_0022/I24/IO/GARBLED/\1*.jpg']),
-    (r'.*/GO_0023/G28/REPAIRED/(C0552447569)S.*'   , 0, [r'volumes/GO_0xxx/GO_0023/G28/GARBLED/\1R.*'   , r'previews/GO_0xxx/GO_0023/G28/GARBLED/\1*.jpg'   ]),
-    (r'.*/GO_0023/G29/REPAIRED/(C060049....)S.*'   , 0, [r'volumes/GO_0xxx/GO_0023/G29/GARBLED/\1R.*'   , r'previews/GO_0xxx/GO_0023/G29/GARBLED/\1*.jpg'   ]),
-    (r'.*/GO_0023/G29/REPAIRED/(C060066....)S.*'   , 0, [r'volumes/GO_0xxx/GO_0023/G29/GARBLED/\1R.*'   , r'previews/GO_0xxx/GO_0023/G29/GARBLED/\1*.jpg'   ]),
+    (r'.*/GO_0020/E12/TIRETRACK/(C04262728..)S.*'  , 0, [r'volumes/GO_0xxx/GO_0020/E12/EUROPA/\1R.*'    , r'previews/GO_0xxx/GO_0020/E12/EUROPA/\1*.jpg'    , r'metadata/GO_0xxx/GO_0020/GO_0???_index.*']),
+    (r'.*/GO_0022/I24/IO/REPAIRED/(C052079....)S.*', 0, [r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/\1R.*', r'previews/GO_0xxx/GO_0022/I24/IO/GARBLED/\1*.jpg', r'metadata/GO_0xxx/GO_0022/GO_0???_index.*']),
+    (r'.*/GO_0022/I24/IO/REPAIRED/(C052080630.)S.*', 0, [r'volumes/GO_0xxx/GO_0022/I24/IO/GARBLED/\1R.*', r'previews/GO_0xxx/GO_0022/I24/IO/GARBLED/\1*.jpg', r'metadata/GO_0xxx/GO_0022/GO_0???_index.*']),
+    (r'.*/GO_0023/G28/REPAIRED/(C0552447569)S.*'   , 0, [r'volumes/GO_0xxx/GO_0023/G28/GARBLED/\1R.*'   , r'previews/GO_0xxx/GO_0023/G28/GARBLED/\1*.jpg'   , r'metadata/GO_0xxx/GO_0023/GO_0???_index.*']),
+    (r'.*/GO_0023/G29/REPAIRED/(C060049....)S.*'   , 0, [r'volumes/GO_0xxx/GO_0023/G29/GARBLED/\1R.*'   , r'previews/GO_0xxx/GO_0023/G29/GARBLED/\1*.jpg'   , r'metadata/GO_0xxx/GO_0023/GO_0???_index.*']),
+    (r'.*/GO_0023/G29/REPAIRED/(C060066....)S.*'   , 0, [r'volumes/GO_0xxx/GO_0023/G29/GARBLED/\1R.*'   , r'previews/GO_0xxx/GO_0023/G29/GARBLED/\1*.jpg'   , r'metadata/GO_0xxx/GO_0023/GO_0???_index.*']),
 
-    (r'.*/GO_0020/E12/EUROPA/(C04262728..)R.*'     , 0, [r'volumes/GO_0xxx/GO_0020/E12/TIRETRACK/\1S.*'  , r'previews/GO_0xxx/GO_0020/E12/TIRETRACK/\1*.jpg'  ]),
-    (r'.*/GO_0022/I24/IO/GARBLED/(C052079....)R.*' , 0, [r'volumes/GO_0xxx/GO_0022/I24/IO/REPAIRED/\1S.*', r'previews/GO_0xxx/GO_0022/I24/IO/REPAIRED/\1*.jpg']),
-    (r'.*/GO_0022/I24/IO/GARBLED/(C052080630.)R.*' , 0, [r'volumes/GO_0xxx/GO_0022/I24/IO/REPAIRED/\1S.*', r'previews/GO_0xxx/GO_0022/I24/IO/REPAIRED/\1*.jpg']),
-    (r'.*/GO_0023/G28/GARBLED/(C0552447569)R.*'    , 0, [r'volumes/GO_0xxx/GO_0023/G28/REPAIRED/\1S.*'   , r'previews/GO_0xxx/GO_0023/G28/REPAIRED/\1*.jpg'   ]),
-    (r'.*/GO_0023/G29/GARBLED/(C060049....)R.*'    , 0, [r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/\1S.*'   , r'previews/GO_0xxx/GO_0023/G29/REPAIRED/\1*.jpg'   ]),
-    (r'.*/GO_0023/G29/GARBLED/(C060066....)R.*'    , 0, [r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/\1S.*'   , r'previews/GO_0xxx/GO_0023/G29/REPAIRED/\1*.jpg'   ]),
+    (r'.*/GO_0020/E12/EUROPA/(C04262728..)R.*'     , 0, [r'volumes/GO_0xxx/GO_0020/E12/TIRETRACK/\1S.*'  , r'previews/GO_0xxx/GO_0020/E12/TIRETRACK/\1*.jpg'  , r'metadata/GO_0xxx/GO_0020/GO_0???_index.*']),
+    (r'.*/GO_0022/I24/IO/GARBLED/(C052079....)R.*' , 0, [r'volumes/GO_0xxx/GO_0022/I24/IO/REPAIRED/\1S.*', r'previews/GO_0xxx/GO_0022/I24/IO/REPAIRED/\1*.jpg', r'metadata/GO_0xxx/GO_0022/GO_0???_index.*']),
+    (r'.*/GO_0022/I24/IO/GARBLED/(C052080630.)R.*' , 0, [r'volumes/GO_0xxx/GO_0022/I24/IO/REPAIRED/\1S.*', r'previews/GO_0xxx/GO_0022/I24/IO/REPAIRED/\1*.jpg', r'metadata/GO_0xxx/GO_0022/GO_0???_index.*']),
+    (r'.*/GO_0023/G28/GARBLED/(C0552447569)R.*'    , 0, [r'volumes/GO_0xxx/GO_0023/G28/REPAIRED/\1S.*'   , r'previews/GO_0xxx/GO_0023/G28/REPAIRED/\1*.jpg'   , r'metadata/GO_0xxx/GO_0023/GO_0???_index.*']),
+    (r'.*/GO_0023/G29/GARBLED/(C060049....)R.*'    , 0, [r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/\1S.*'   , r'previews/GO_0xxx/GO_0023/G29/REPAIRED/\1*.jpg'   , r'metadata/GO_0xxx/GO_0023/GO_0???_index.*']),
+    (r'.*/GO_0023/G29/GARBLED/(C060066....)R.*'    , 0, [r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/\1S.*'   , r'previews/GO_0xxx/GO_0023/G29/REPAIRED/\1*.jpg'   , r'metadata/GO_0xxx/GO_0023/GO_0???_index.*']),
 ])
 
 ####################################################################################################################################
@@ -706,86 +708,66 @@ class GO_0xxx(pdsfile.PdsFile):
 
     FILENAME_KEYLEN = 11    # trim off suffixes
 
+    # Given a metadata path, this returns the same path but with "$" replacing
+    # the volume IDs. Used by opus_prioritizer.
     METADATA_PATH_TRANSLATOR = translator.TranslatorByRegex([
         (r'(.*metadata/GO_0xxx)(|_v[0-9\.]+)/(GO_00..)/\3_(.*)', 0, r'\1\2/$/$_\4')
     ])
 
-    def opus_prioritizer(self, pdsfiles):
-        """Prioritizes items that have gone through the pipeline more than once."""
+    def opus_prioritizer(self, pdsfile_dict):
+        """Prioritize products that have been processed more than once."""
 
-        volumes_found = set()
-        metadata_subdict = {}
-        for header in list(pdsfiles.keys()): # We change pdsfiles in the loop!
-            sublists = pdsfiles[header]
-
-            for sublist in sublists:
-                volumes_found.add(sublist[0].volname)   # track volumes used
-
-            if header[0] == 'metadata':
-                metadata_subdict[header] = sublists
-                continue
-
+        headers = list(pdsfile_dict.keys())     # Save keys so we can alter dict
+        for header in headers:
+            sublists = pdsfile_dict[header]
             if len(sublists) == 1:
                 continue
 
-            if header == '' or not header[0].startswith('Galileo SSI'):
+            # Only prioritize data products
+            if sublists[0][0].voltype_ != 'volumes/':
                 continue
 
-            # Sort items in each sublist by priority
-            priority = []       # (negative version rank, priority from name,
-                                #  sublist)
+            # Split up the sublists by version rank (not currently needed)
+            rank_dict = {}
             for sublist in sublists:
-                volumes_found.add(sublist[0].volname)   # track volumes used
-                abspath = sublist[0].abspath
-                prio = 0
-                if 'TIRETRACK' in abspath: prio = 1
-                if 'REPAIRED' in abspath: prio = 1
-                if 'REDO' in abspath: prio = 1
-
                 rank = sublist[0].version_rank
-                priority.append((-rank, -prio, sublist))
+                if rank not in rank_dict:
+                    rank_dict[rank] = []
+                rank_dict[rank].append(sublist)
 
-            priority.sort()
+            # Sort the version ranks
+            ranks = list(rank_dict.keys())
+            ranks.sort()
+            ranks.reverse()
 
-            # Select the best product
-            prio0 = priority[0][1]
-            list0 = [priority[0][2]]
+            # Define the alternative header
+            alt_header = (header[0], header[1] + 10,
+                                     header[2] + '_alternate',
+                                     header[3] + ' (Superseded Processing)',
+                                     True)
+            pdsfile_dict[alt_header] = []
+            pdsfile_dict[header] = []
 
-            for (_, prio, sublist) in priority[1:]:
-                if prio == prio0:
-                    list0.append(sublist)
-                    continue
+            # Sort items by priority among each available version
+            for rank in ranks:
+                prioritizer = []    # (priority from path, sublist)
 
-                new_header = (header[0],
-                              header[1] + 10,
-                              header[2] + '_alternate',
-                              header[3] + ' (Superseded Processing)',
-                              True)
-                if new_header not in pdsfiles:
-                    pdsfiles[new_header] = []
-                pdsfiles[new_header].append(sublist)
+                for sublist in rank_dict[rank]:
+                    abspath = sublist[0].abspath
+                    prio = 1
+                    if 'TIRETRACK' in abspath: prio = 0
+                    if 'REPAIRED' in abspath: prio = 0
+                    if 'REDO' in abspath: prio = 0
 
-            pdsfiles[header] = list0
+                    prioritizer.append((prio, sublist))
 
-        # Add metadata indices for any missing volumes
-        volumes_found = list(volumes_found)
-        volumes_found.sort()
-        for (header,sublists) in metadata_subdict.items():
-            if len(sublists) == len(volumes_found):
-                continue
+                prioritizer.sort()
 
-            patterns = [pdsf.abspath for pdsf in sublists[0]]
-            patterns = [GO_0xxx.METADATA_PATH_TRANSLATOR.first(p) for p in patterns]
-            new_sublists = []
-            for volume in volumes_found:
-                sublist = []
-                for pattern in patterns:
-                    sublist.append(pdsfile.PdsFile.from_abspath(pattern.replace('$', volume)))
-                new_sublists.append(sublist)
+                # Update the dictionary for each rank
+                pdsfile_dict[header].append(prioritizer[0][-1])
+                pdsfile_dict[alt_header] += [p[-1] for p in prioritizer[1:]]
 
-            pdsfiles[header] = new_sublists
-
-        return pdsfiles
+        return pdsfile_dict
 
 # Global attribute shared by all subclasses
 pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'go-ssi-.*', 0, GO_0xxx)]) + \
