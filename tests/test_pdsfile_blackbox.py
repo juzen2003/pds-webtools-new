@@ -1410,86 +1410,132 @@ class TestPdsFileBlackBox:
     # Test for log path associations
     ############################################################################
     @pytest.mark.parametrize(
-        'root,expected',
+        'input_path,suffix,task,dir,place,logroot,expected',
         [
-            (None, None),
-            (PDS_PDSDATA_PATH + 'logs/', PDS_PDSDATA_PATH + 'logs/')
-        ]
-    )
-    def test_set_log_root(self, root, expected):
-        pdsfile.PdsFile.set_log_root(root=root)
-        assert pdsfile.PdsFile.LOG_ROOT_ == expected
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', '', '', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx/HSTI1_1556_20..-..-..T..-..-..\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', '', '', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx/HSTI1_1556_20..-..-..T..-..-..\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', '', '', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx/HSTI1_1556_alligator_20..-..-..T..-..-..\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', '', '', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx/HSTI1_1556_alligator_20..-..-..T..-..-..\.log'),
 
-    @pytest.mark.parametrize(
-        'input_path,expected',
-        [
-            ('volumes/HSTIx_xxxx/HSTI1_1556',
-             PDS_PDSDATA_PATH + 'logs/volumes/HSTIx_xxxx/HSTI1_1556_.*.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', '', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx/HSTI1_1556_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', '', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx/HSTI1_1556_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', '', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx/HSTI1_1556_alligator_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', '', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx/HSTI1_1556_alligator_20..-..-..T..-..-.._wrestle\.log'),
+
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', 'tallahassee', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx/HSTI1_1556_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', 'tallahassee', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx/HSTI1_1556_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', 'tallahassee', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx/HSTI1_1556_alligator_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', 'tallahassee', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx/HSTI1_1556_alligator_20..-..-..T..-..-.._wrestle\.log'),
+
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', 'tallahassee', 'default', '/florida',
+             r'/florida/tallahassee/volumes/HSTIx_xxxx/HSTI1_1556_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', 'tallahassee', 'parallel', '/florida',
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx/HSTI1_1556_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', 'tallahassee', 'default', '/florida',
+             r'/florida/tallahassee/volumes/HSTIx_xxxx/HSTI1_1556_alligator_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', 'tallahassee', 'parallel', '/florida',
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx/HSTI1_1556_alligator_20..-..-..T..-..-.._wrestle\.log'),
         ]
     )
-    def test_log_path_for_volume(self, input_path, expected):
+    def test_log_path_for_volume(self, input_path, suffix, task, dir, place, logroot, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        res = target_pdsfile.log_path_for_volume(id='', task='', dir='')
+        pdsfile.PdsFile.set_log_root(logroot)
+        res = target_pdsfile.log_path_for_volume(suffix, task, dir, place)
+        pdsfile.PdsFile.set_log_root()
         # escape possible "(" & ")" if that exists in PDS_PDSDATA_PATH
         expected = expected.replace('(', '\\(')
         expected = expected.replace(')', '\\)')
         assert re.match(expected, res)
 
     @pytest.mark.parametrize(
-        'input_path,expected',
+        'input_path,suffix,task,dir,place,logroot,expected',
         [
-            ('volumes/HSTIx_xxxx/HSTI1_1556',
-             PDS_PDSDATA_PATH + 'logs/volumes/HSTIx_xxxx_.*.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', '', '', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx_20..-..-..T..-..-..\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', '', '', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx_20..-..-..T..-..-..\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', '', '', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx_alligator_20..-..-..T..-..-..\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', '', '', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx_alligator_20..-..-..T..-..-..\.log'),
+
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', '', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', '', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', '', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx_alligator_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', '', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/volumes/HSTIx_xxxx_alligator_20..-..-..T..-..-.._wrestle\.log'),
+
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', 'tallahassee', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', 'tallahassee', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', 'tallahassee', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx_alligator_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', 'tallahassee', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx_alligator_20..-..-..T..-..-.._wrestle\.log'),
+
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', 'tallahassee', 'default', '/florida',
+             r'/florida/tallahassee/volumes/HSTIx_xxxx_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', '', 'wrestle', 'tallahassee', 'parallel', '/florida',
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', 'tallahassee', 'default', '/florida',
+             r'/florida/tallahassee/volumes/HSTIx_xxxx_alligator_20..-..-..T..-..-.._wrestle\.log'),
+            ('volumes/HSTIx_xxxx/HSTI1_1556', 'alligator', 'wrestle', 'tallahassee', 'parallel', '/florida',
+             PDS_PDSDATA_PATH + r'logs/tallahassee/volumes/HSTIx_xxxx_alligator_20..-..-..T..-..-.._wrestle\.log'),
         ]
     )
-    def test_log_path_for_volset(self, input_path, expected):
+    def test_log_path_for_volset(self, input_path, suffix, task, dir, place, logroot, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        res = target_pdsfile.log_path_for_volset()
+        pdsfile.PdsFile.set_log_root(logroot)
+        res = target_pdsfile.log_path_for_volset(suffix, task, dir, place)
+        pdsfile.PdsFile.set_log_root()
         # escape possible "(" & ")" if that exists in PDS_PDSDATA_PATH
         expected = expected.replace('(', '\\(')
         expected = expected.replace(')', '\\)')
         assert re.match(expected, res)
 
     @pytest.mark.parametrize(
-        'input_path,expected',
+        'input_path,task,dir,place,logroot,expected',
         [
-            ('volumes/HSTIx_xxxx/HSTI1_1556',
-             PDS_PDSDATA_PATH + 'logs/volumes/HSTIx_xxxx_.*.log'),
-        ]
-    )
-    def test_log_path_for_volset2(self, input_path, expected):
-        target_pdsfile = instantiate_target_pdsfile(input_path)
-        res = target_pdsfile.log_path_for_volset(place='parallel')
-        # escape possible "(" & ")" if that exists in PDS_PDSDATA_PATH
-        expected = expected.replace('(', '\\(')
-        expected = expected.replace(')', '\\)')
-        assert re.match(expected, res)
+            ('metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles.tab', '', '', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles_20..-..-..T..-..-..\.log'),
+            ('metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles.tab', '', '', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles_20..-..-..T..-..-..\.log'),
+            ('metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles.tab', 'scramble', '', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles_20..-..-..T..-..-.._scramble\.log'),
+            ('metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles.tab', 'scramble', '', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles_20..-..-..T..-..-.._scramble\.log'),
 
-    @pytest.mark.parametrize(
-        'input_path,expected',
-        [
-            ('volumes/HSTIx_xxxx/HSTI1_1556',
-             PDS_PDSDATA_PATH + 'logs/index/_.*.log'),
+            ('metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles.tab', 'scramble', 'eggs', 'default', None,
+             PDS_PDSDATA_PATH + r'logs/eggs/metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles_20..-..-..T..-..-.._scramble\.log'),
+            ('metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles.tab', 'scramble', 'eggs', 'parallel', None,
+             PDS_PDSDATA_PATH + r'logs/eggs/metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles_20..-..-..T..-..-.._scramble\.log'),
+            ('metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles.tab', 'scramble', 'eggs', 'default', '/green',
+             r'/green/eggs/metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles_20..-..-..T..-..-.._scramble\.log'),
+            ('metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles.tab', 'scramble', 'eggs', 'parallel', '/green',
+             PDS_PDSDATA_PATH + r'logs/eggs/metadata/HSTIx_xxxx/HSTI1_1556/HSTI1_1556_hstfiles_20..-..-..T..-..-.._scramble\.log'),
         ]
     )
-    def test_log_path_for_index(self, input_path, expected):
+    def test_log_path_for_index(self, input_path, task, dir, place, logroot, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        res = target_pdsfile.log_path_for_index()
-        # escape possible "(" & ")" if that exists in PDS_PDSDATA_PATH
-        expected = expected.replace('(', '\\(')
-        expected = expected.replace(')', '\\)')
-        assert re.match(expected, res)
-
-    @pytest.mark.parametrize(
-        'input_path,expected',
-        [
-            ('volumes/HSTIx_xxxx/HSTI1_1556',
-             PDS_PDSDATA_PATH + 'logs/index/_.*.log'),
-        ]
-    )
-    def test_log_path_for_index2(self, input_path, expected):
-        target_pdsfile = instantiate_target_pdsfile(input_path)
-        res = target_pdsfile.log_path_for_index(place='parallel')
+        pdsfile.PdsFile.set_log_root(logroot)
+        res = target_pdsfile.log_path_for_index(task, dir, place)
+        pdsfile.PdsFile.set_log_root()
         # escape possible "(" & ")" if that exists in PDS_PDSDATA_PATH
         expected = expected.replace('(', '\\(')
         expected = expected.replace(')', '\\)')

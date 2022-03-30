@@ -370,8 +370,8 @@ _ = PdsDependency(
     'Newer index shelf for every metadata table',
     'metadata/$*/$/*.tab',
     r'metadata/(.*)\.tab',
-    [r'_infoshelf-metadata/\1.pickle',
-     r'_infoshelf-metadata/\1.py'],
+    [r'_indexshelf-metadata/\1.pickle',
+     r'_indexshelf-metadata/\1.py'],
     suite='metadata', newer=True,
     exceptions=[r'.*_inventory.tab',
                 r'.*GO_0xxx_v1.*']
@@ -899,9 +899,9 @@ if __name__ == '__main__':
             pdsdir = pdsfile.PdsFile.from_abspath(path)
 
             # Save logs in up to two places
-            logfiles = set([pdsdir.log_path_for_volume(id='dependency',
+            logfiles = set([pdsdir.log_path_for_volume('_dependency',
                                                        dir='pdsdependency'),
-                            pdsdir.log_path_for_volume(id='dependency',
+                            pdsdir.log_path_for_volume('_dependency',
                                                        dir='pdsdependency',
                                                        place='parallel')])
 

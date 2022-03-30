@@ -4,7 +4,7 @@
 #
 # Syntax:
 #   pdschecksums.py --task path [path ...]
-# 
+#
 # Enter the --help option to see more information.
 ################################################################################
 
@@ -100,7 +100,7 @@ def generate_checksums(pdsdir, selection=None, oldpairs=[], regardless=True,
                 elif abspath in md5_dict:
                     newtuples.append((abspath, md5_dict[abspath], file))
                     logger.debug('MD5 copied', abspath)
-    
+
                 else:
                     md5 = hashfile(abspath)
                     newtuples.append((abspath, md5, file))
@@ -112,7 +112,7 @@ def generate_checksums(pdsdir, selection=None, oldpairs=[], regardless=True,
                 return ({}, latest_mtime)
 
             if len(newtuples) > 1:
-                logger.error('Multiple copies of file selection found', 
+                logger.error('Multiple copies of file selection found',
                              selection)
                 return ({}, latest_mtime)
 
@@ -127,7 +127,7 @@ def generate_checksums(pdsdir, selection=None, oldpairs=[], regardless=True,
         for key in old_keys:
             newpairs.append((key, md5_dict[key]))
             del md5_dict[key]
- 
+
         for (key, new_md5, new_file) in newtuples:
             if key in md5_dict:     # if not already copied to list of pairs
                 newpairs.append((key, md5_dict[key]))
@@ -271,7 +271,7 @@ def write_checksums(check_path, abspairs,
 
             f.write('%s  %s\n' % (hex, abspath[lskip:]))
             logger.debug('Written', abspath)
-    
+
         f.close()
 
     except (Exception, KeyboardInterrupt) as e:
@@ -635,12 +635,12 @@ if __name__ == '__main__':
     parser.add_argument('--quiet', '-q', action='store_true',
                         help='Do not also log to the terminal.')
 
-    parser.add_argument('--archives', '-a', default=False, action='store_true', 
+    parser.add_argument('--archives', '-a', default=False, action='store_true',
                         help='Instead of referring to a volume, refer to the ' +
                              'the archive file for that volume.')
 
     parser.add_argument('--infoshelf', '-i', dest='infoshelf',
-                        default=False, action='store_true', 
+                        default=False, action='store_true',
                         help='After a successful run, also execute the '       +
                              'equivalent pdsinfoshelf command.')
 
@@ -768,18 +768,18 @@ if __name__ == '__main__':
 
             # Save logs in up to two places
             if pdsf.volname:
-                logfiles = set([pdsf.log_path_for_volume(id='md5',
+                logfiles = set([pdsf.log_path_for_volume('_md5',
                                                          task=args.task,
                                                          dir='pdschecksums'),
-                                pdsf.log_path_for_volume(id='md5',
+                                pdsf.log_path_for_volume('_md5',
                                                          task=args.task,
                                                          dir='pdschecksums',
                                                          place='parallel')])
             else:
-                logfiles = set([pdsf.log_path_for_volset(id='md5',
+                logfiles = set([pdsf.log_path_for_volset('_md5',
                                                          task=args.task,
                                                          dir='pdschecksums'),
-                                pdsf.log_path_for_volset(id='md5',
+                                pdsf.log_path_for_volset('_md5',
                                                          task=args.task,
                                                          dir='pdschecksums',
                                                          place='parallel')])
@@ -800,7 +800,7 @@ if __name__ == '__main__':
             # Open the next level of the log
             if len(info) > 1:
                 logger.blankline()
- 
+
             if selection:
                 logger.open('Task "' + args.task + '" for selection ' +
                             selection, path, handler=local_handlers)

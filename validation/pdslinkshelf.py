@@ -364,7 +364,7 @@ REPAIRS = translator.TranslatorByRegex([
       translator.TranslatorByDict(
         {'JUNO_REF.CAT'         : 'JUNO_PROJREF.CAT'})),
 
-    # NHSP
+    # NHSP (and *SP_xxxx)
     ('.*/NHSP_xxxx_v1.*/AAREADME\.TXT', 0,
       translator.TranslatorByDict(
         {'personel.cat'         : 'CATALOG/PERSONNEL.CAT',
@@ -403,7 +403,8 @@ REPAIRS = translator.TranslatorByRegex([
          'SOC_INST_ICD.LBL'     : 'DOCUMENT/SOC_INST_ICD/SOC_INST_ICD.LBL'})),
     ('.*/NHxxLO_xxxx.*/NH..LO_2001/data/\w+/.*\.lbl', 0,
       translator.TranslatorByRegex(
-        [(r'(cflat|dead|delta|dsmear|hot|sap)_(\w+\.fit)', 0, r'../../calib/\1_\2')])),
+        [(r'cflat_grnd_SFA_(\w+\.fit)', 0, r'../../calib/cflat_grnd_sfa_\1'),
+         (r'(cflat|dead|delta|dsmear|hot|sap)_(\w+\.fit)', 0, r'../../calib/\1_\2')])),
     ('.*/NHxxMV_xxxx.*/NH..MV_2001/data/\w+/.*\.lbl', 0,
       translator.TranslatorByRegex(
         [(r'(mc[0-3])_(flat_\w+\.fit)s', 0, r'../../calib/mcl/\1_\2'),
@@ -665,10 +666,10 @@ def generate_links(dirpath, old_links={},
 
     Keys ending in .LBL, .CAT and .TXT return a list of tuples
         (recno, link, target)
-    for each link found found. Here,
-        recno = record number in file
-        link = the text of the link
-        target = absolute path to the target of the link
+    for each link found. Here,
+        recno = record number in file;
+        link = the text of the link;
+        target = absolute path to the target of the link.
 
     Other keys return a single string, which indicates the absolute path to the
     label file describing this file.
@@ -1120,7 +1121,7 @@ def load_links(dirpath, limits={}, logger=None):
     logger.open('Reading link shelf file for', dirpath, limits)
 
     try:
-        (link_path, lskip) = pdsdir.shelf_path_and_lskip(id='links')
+        (link_path, lskip) = pdsdir.shelf_path_and_lskip('link')
         prefix_ = pdsdir.volume_abspath() + '/'
 
         logger.info('Link shelf file', link_path)
@@ -1177,7 +1178,7 @@ def write_linkdict(dirpath, link_dict, limits={}, logger=None):
     logger.open('Writing link shelf file for', dirpath, limits)
 
     try:
-        (link_path, lskip) = pdsdir.shelf_path_and_lskip(id='links')
+        (link_path, lskip) = pdsdir.shelf_path_and_lskip('link')
         logger.info('Link shelf file', link_path)
 
         # Create a dictionary using interior paths instead of absolute paths
@@ -1382,7 +1383,7 @@ def move_old_links(shelf_file, logger=None):
 
 def initialize(pdsdir, logger=None):
 
-    link_path = pdsdir.shelf_path_and_lskip(id='links')[0]
+    link_path = pdsdir.shelf_path_and_lskip('link')[0]
 
     # Make sure file does not exist
     if os.path.exists(link_path):
@@ -1402,7 +1403,7 @@ def initialize(pdsdir, logger=None):
 
 def reinitialize(pdsdir, logger=None):
 
-    link_path = pdsdir.shelf_path_and_lskip(id='links')[0]
+    link_path = pdsdir.shelf_path_and_lskip('link')[0]
 
     # Warn if shelf file does not exist
     if not os.path.exists(link_path):
@@ -1423,7 +1424,7 @@ def reinitialize(pdsdir, logger=None):
 
 def validate(pdsdir, logger=None):
 
-    link_path = pdsdir.shelf_path_and_lskip(id='links')[0]
+    link_path = pdsdir.shelf_path_and_lskip('link')[0]
 
     # Make sure file exists
     if not os.path.exists(link_path):
@@ -1442,7 +1443,7 @@ def validate(pdsdir, logger=None):
 
 def repair(pdsdir, logger=None):
 
-    link_path = pdsdir.shelf_path_and_lskip(id='links')[0]
+    link_path = pdsdir.shelf_path_and_lskip('link')[0]
 
     # Make sure file exists
     if not os.path.exists(link_path):
@@ -1500,7 +1501,7 @@ def repair(pdsdir, logger=None):
 
 def update(pdsdir,  logger=None):
 
-    link_path = pdsdir.shelf_path_and_lskip(id='links')[0]
+    link_path = pdsdir.shelf_path_and_lskip('link')[0]
 
     # Make sure link shelf file exists
     if not os.path.exists(link_path):
@@ -1651,10 +1652,10 @@ if __name__ == '__main__':
                 continue
 
             # Save logs in up to two places
-            logfiles = set([pdsdir.log_path_for_volume(id='links',
+            logfiles = set([pdsdir.log_path_for_volume('_links',
                                                        task=args.task,
                                                        dir='pdslinkshelf'),
-                            pdsdir.log_path_for_volume(id='links',
+                            pdsdir.log_path_for_volume('_links',
                                                        task=args.task,
                                                        dir='pdslinkshelf',
                                                        place='parallel')])

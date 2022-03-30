@@ -712,24 +712,8 @@ class TestPdsFileWhiteBox:
             assert path in expected
 
     ############################################################################
-    # Test for log path associations
+    # Test for path associations
     ############################################################################
-    @pytest.mark.parametrize(
-        'input_path,expected',
-        [
-            ('volumes/HSTIx_xxxx/HSTI1_1556',
-             PDS_PDSDATA_PATH + 'logs/volumes/HSTIx_xxxx/HSTI1_1556_.*.log'),
-        ]
-    )
-    def test_log_path_for_volume(self, input_path, expected):
-        target_pdsfile = instantiate_target_pdsfile(input_path)
-        res = target_pdsfile.log_path_for_volume(id='', task='', dir='',
-                                                 place='parallel')
-        # escape possible "(" & ")" if that exists in PDS_PDSDATA_PATH
-        expected = expected.replace('(', '\\(')
-        expected = expected.replace(')', '\\)')
-        assert re.match(expected, res)
-
     @pytest.mark.parametrize(
         'input_path,expected',
         [

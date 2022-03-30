@@ -40,6 +40,9 @@ class NHSP_xxxx(pdsfile.PdsFile):
     pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('NHSP_xxxx.*', re.I, 'NHSP_xxxx')]) + \
                                         pdsfile.PdsFile.VOLSET_TRANSLATOR
 
+    ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
+    ASSOCIATIONS['documents'] += associations_to_documents
+
     INFO_FILE_BASENAMES = info_file_basenames + pdsfile.PdsFile.INFO_FILE_BASENAMES
 
 pdsfile.PdsFile.FILESPEC_TO_VOLSET = filespec_to_volset + pdsfile.PdsFile.FILESPEC_TO_VOLSET

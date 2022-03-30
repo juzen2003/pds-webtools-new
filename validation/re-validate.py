@@ -4,7 +4,7 @@
 #
 # Syntax:
 #   re-validate.py path [path ...]
-# 
+#
 # Enter the --help option to see more information.
 ################################################################################
 
@@ -44,9 +44,9 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
     tests_performed = 0
 
     # Open logger for this volume
-    logfiles = set([pdsdir.log_path_for_volume(id='re-validate',
+    logfiles = set([pdsdir.log_path_for_volume('_re-validate',
                                                dir='re-validate'),
-                    pdsdir.log_path_for_volume(id='re-validate',
+                    pdsdir.log_path_for_volume('_re-validate',
                                                dir='re-validate',
                                                place='parallel')])
 

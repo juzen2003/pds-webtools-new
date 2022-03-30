@@ -141,6 +141,13 @@ CATEGORIES = set(CATEGORY_LIST)
 # Extra description files that can appear in volset directories
 EXTRA_README_BASENAMES = ('AAREADME.txt', 'AAREADME.pdf')
 
+# Directory prefix and file suffix for shelf files
+SHELF_PATH_INFO = {
+    'index': ('_indexshelf-', '_index'),
+    'info' : ('_infoshelf-', '_info'),
+    'link' : ('_linkshelf-', '_links'),
+}
+
 ################################################################################
 # PdsLogger support
 ################################################################################
@@ -2231,7 +2238,7 @@ class PdsFile(object):
         # Otherwise, look up the info in the shelf file
         else:
             try:
-                values = self.shelf_lookup('links')
+                values = self.shelf_lookup('link')
 
             # Shelf file failure
             except (IOError, KeyError, ValueError) as e:
@@ -3928,7 +3935,8 @@ class PdsFile(object):
         if flag is '',  return the selected key even if it doesn't exist.
         """
 
-        assert flag in ('', '=', '>', '<'), 'Invalid flag "%s"' % flag
+        if flag not in ('', '=', '>', '<'):
+            raise ValueError(f'Invalid flag "{flag}"' % flag)
 
         # Truncate the selection key if it is too long
         if self.filename_keylen:
@@ -4269,7 +4277,7 @@ class PdsFile(object):
                 # this label file. That way, the error handled when calling the
                 # linked_abspaths below will not abort the import process.
                 try:
-                    pdsf.shelf_lookup('links')
+                    pdsf.shelf_lookup('link')
                 except (OSError, KeyError, ValueError):
                     LOGGER.warn('Missing links info',
                                 pdsf.logical_path)
@@ -4452,7 +4460,7 @@ class PdsFile(object):
             this.archives_ = ''
             this.category_ = this.voltype_
 
-        return this.log_path_for_volume(id='targz', task=task, dir='archives')
+        return this.log_path_for_volume('_targz', task=task, dir='archives')
 
     ############################################################################
     # Shelf support
@@ -4466,13 +4474,13 @@ class PdsFile(object):
 
     SHELF_NULL_KEY_VALUES = {}
 
-    def shelf_path_and_lskip(self, id='info', volname=''):
+    def shelf_path_and_lskip(self, shelf_type='info', volname=''):
         """The absolute path to the shelf file associated with this PdsFile.
         Also return the number of characters to skip over in that absolute
         path to obtain the key into the shelf.
 
         Inputs:
-            id          shelf type, 'info' or 'link'.
+            shelf_type  shelf type ID: 'index', 'info', or 'link'.
             volname     an optional volume name to append to the end of a this
                         path, which can be used if this is a volset.
         """
@@ -4481,15 +4489,16 @@ class PdsFile(object):
             raise ValueError('No shelf files for checksums: ' +
                              self.logical_path)
 
-        short_id = 'link' if id == 'links' else id
+        (dir_prefix, file_suffix) = SHELF_PATH_INFO[shelf_type]
+
         if self.archives_:
             if not self.volset_:
                 raise ValueError('Archive shelves require volume sets: ' +
                                  self.logical_path)
 
-            abspath = ''.join([self.disk_, 'holdings/_', short_id, 'shelf-',
-                               self.category_, self.volset, self.suffix, '_',
-                               id, '.pickle'])
+            abspath = ''.join([self.root_, dir_prefix,
+                               self.category_, self.volset, self.suffix,
+                               file_suffix, '.pickle'])
             lskip = (len(self.root_) + len(self.category_) +
                      len(self.volset_))
 
@@ -4503,18 +4512,18 @@ class PdsFile(object):
             else:
                 this_volname = self.volname
 
-            abspath = ''.join([self.disk_, 'holdings/_', short_id, 'shelf-',
-                               self.category_, self.volset_, this_volname, '_',
-                               id, '.pickle'])
+            abspath = ''.join([self.root_, dir_prefix,
+                               self.category_, self.volset_, this_volname,
+                               file_suffix, '.pickle'])
             lskip = (len(self.root_) + len(self.category_) +
                      len(self.volset_) + len(this_volname) + 1)
 
         return (abspath, lskip)
 
-    def shelf_path_and_key(self, id='info', volname=''):
+    def shelf_path_and_key(self, shelf_id='info', volname=''):
         """Absolute path to a shelf file, plus the key for this item."""
 
-        (abspath, lskip) = self.shelf_path_and_lskip(id=id, volname=volname)
+        (abspath, lskip) = self.shelf_path_and_lskip(shelf_id, volname)
         if volname:
             return (abspath, '')
         else:
@@ -4602,16 +4611,16 @@ class PdsFile(object):
         for shelf_path in keys:                     # be modified inside loop!
             PdsFile._close_shelf(shelf_path)
 
-    def shelf_lookup(self, id='info', volname=''):
-        """Return the contents of the id's shelf file associated with this
-        object.
+    def shelf_lookup(self, shelf_type='info', volname=''):
+        """Return the contents of a shelf file associated with this object.
 
-        id          indicates the type of the shelf file: 'info' or 'links'.
-        volname     can be used to get info about a volume when the method is
-                    applied to its enclosing volset.
+        shelf_type      indicates the type of the shelf file: 'info', 'link', or
+                        'index'.
+        volname         can be used to get info about a volume when the method
+                        is applied to its enclosing volset.
         """
 
-        (shelf_path, key) = self.shelf_path_and_key(id, volname)
+        (shelf_path, key) = self.shelf_path_and_key(shelf_type, volname)
 
         # This potentially saves the need for a lot of opens and closes when
         # getting info about volumes rather than interior files
@@ -4624,7 +4633,7 @@ class PdsFile(object):
             # Try the second line of the .py file; this is quicker than reading
             # the whole .pickle file. This is useful because it avoids the need
             # to open every info shelf file during preload.
-            if id == 'info':
+            if shelf_type == 'info':
                 py_path = shelf_path.replace('.pickle', '.py')
                 LOGGER.debug('Retrieving key "%s"' % py_path)
 
@@ -4642,18 +4651,20 @@ class PdsFile(object):
         return shelf[key]
 
     @staticmethod
-    def shelf_path_and_key_for_abspath(abspath, id='info'):
+    def shelf_path_and_key_for_abspath(abspath, shelf_type='info'):
         """The absolute path to the shelf file associated with this file path.
         Also return the key for indexing into the shelf.
 
         Inputs:
-            id          shelf type, e.g., 'info' or 'link'.
+            shelf_type      shelf type, e.g., 'info' or 'link'.
         """
 
         # No checksum shelf files allowed
         (root, _, logical_path) = abspath.partition('/holdings/')
         if logical_path.startswith('checksums'):
             raise ValueError('No shelf files for checksums: ' + logical_path)
+
+        (dir_prefix, file_suffix) = SHELF_PATH_INFO[shelf_type]
 
         # For archive files, the shelf is associated with the volset
         if logical_path.startswith('archives'):
@@ -4662,9 +4673,9 @@ class PdsFile(object):
                 raise ValueError('Archive shelves require volume sets: ' +
                                  logical_path)
 
-            shelf_abspath = ''.join([root, '/holdings/_', id, 'shelf-',
-                                     parts[0], '/', parts[1], '_', id,
-                                     '.pickle'])
+            shelf_abspath = ''.join([root, '/holdings/', dir_prefix,
+                                     parts[0], '/', parts[1],
+                                     file_suffix, '.pickle'])
             key = '/'.join(parts[2:])
 
         # Otherwise, the shelf is associated with the volume
@@ -4674,9 +4685,9 @@ class PdsFile(object):
                 raise ValueError('Non-archive shelves require volume names: ' +
                                  logical_path)
 
-            shelf_abspath = ''.join([root, '/holdings/_', id, 'shelf-',
+            shelf_abspath = ''.join([root, '/holdings/', dir_prefix,
                                      parts[0], '/', parts[1], '/', parts[2],
-                                     '_', id, '.pickle'])
+                                     file_suffix, '.pickle'])
             key = '/'.join(parts[3:])
 
         return (shelf_abspath, key)
@@ -4725,10 +4736,10 @@ class PdsFile(object):
         else:
             PdsFile.LOG_ROOT_ = root.rstrip('/') + '/'
 
-    def log_path_for_volume(self, id='', task='', dir='', place='default'):
+    def log_path_for_volume(self, suffix='', task='', dir='', place='default'):
         """Return a complete log file path for this volume.
 
-        The file name is [dir/]category/volset/volname_id_timetag[_task].log.
+        The file name is [dir/]category/volset/volname_suffix_time[_task].log
         """
 
         # This option provides for a temporary override of the default log root
@@ -4749,8 +4760,8 @@ class PdsFile(object):
 
         parts += [self.category_, self.volset_, self.volname]
 
-        if id:
-            parts += ['_', id]
+        if suffix:
+            parts += ['_', suffix.lstrip('_')]  # exactly one "_" before suffix
 
         timetag = datetime.datetime.now().strftime(LOGFILE_TIME_FMT)
         parts += ['_', timetag]
@@ -4762,10 +4773,10 @@ class PdsFile(object):
 
         return ''.join(parts)
 
-    def log_path_for_volset(self, id='', task='', dir='', place='default'):
+    def log_path_for_volset(self, suffix='', task='', dir='', place='default'):
         """Return a complete log file path for this volume set.
 
-        The file name is [dir/]category/volset_id_timetag[_task].log.
+        The file name is [dir/]category/volset_suffix_time[_task].log.
         """
 
         # This option provides for a temporary override of the default log root
@@ -4786,8 +4797,8 @@ class PdsFile(object):
 
         parts += [self.category_, self.volset, self.suffix]
 
-        if id:
-            parts += ['_', id]
+        if suffix:
+            parts += ['_', suffix.lstrip('_')]  # exactly one "_" before suffix
 
         timetag = datetime.datetime.now().strftime(LOGFILE_TIME_FMT)
         parts += ['_', timetag]
@@ -4804,6 +4815,9 @@ class PdsFile(object):
 
         The file name is [dir/]<logical_path_wo_ext>_timetag[_task].log.
         """
+
+        if not self.is_index:
+            raise ValueError('Not an index file: ' + self.logical_path)
 
         # This option provides for a temporary override of the default log root
         if place == 'default':

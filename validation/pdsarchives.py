@@ -4,7 +4,7 @@
 #
 # Syntax:
 #   pdsarchives.py --task path [path ...]
-# 
+#
 # Enter the --help option to see more information.
 ################################################################################
 
@@ -442,10 +442,10 @@ if __name__ == '__main__':
         for pdsdir in pdsdirs:
 
             # Save logs in up to two places
-            logfiles = set([pdsdir.log_path_for_volume(id='links',
+            logfiles = set([pdsdir.log_path_for_volume('_links',
                                                        task=args.task,
                                                        dir='pdsarchives'),
-                            pdsdir.log_path_for_volume(id='links',
+                            pdsdir.log_path_for_volume('_links',
                                                        task=args.task,
                                                        dir='pdsarchives',
                                                        place='parallel')])
@@ -464,7 +464,7 @@ if __name__ == '__main__':
             # Open the next level of the log
             if len(pdsdirs) > 1:
                 logger.blankline()
- 
+
             logger.open('Task %s for' % args.task, pdsdir.abspath,
                                                    handler=local_handlers)
 

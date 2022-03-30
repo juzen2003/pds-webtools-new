@@ -551,7 +551,7 @@ OPUS_ID = translator.TranslatorByRegex([])
 ####################################################################################################################################
 # OPUS_ID_TO_SUBCLASS
 #
-# Translates an OPUS ID to a PdsFile subclass
+# Translates an OPUS ID to a PdsFile subclass.
 ####################################################################################################################################
 
 OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([])

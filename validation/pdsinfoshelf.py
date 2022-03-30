@@ -195,7 +195,7 @@ def load_infodict(pdsdir, logger=None):
     logger.open('Reading info shelf file for', dirpath_[:-1])
 
     try:
-        (info_path, lskip) = pdsdir.shelf_path_and_lskip(id='info')
+        (info_path, lskip) = pdsdir.shelf_path_and_lskip('info')
         logger.info('Info shelf file', info_path)
 
         if not os.path.exists(info_path):
@@ -240,7 +240,7 @@ def write_infodict(pdsdir, infodict, limits={}, logger=None):
     logger.open('Writing info file info for', dirpath, limits=limits)
 
     try:
-        (info_path, lskip) = pdsdir.shelf_path_and_lskip(id='info')
+        (info_path, lskip) = pdsdir.shelf_path_and_lskip('info')
         logger.info('Info shelf file', info_path)
 
         # Create parent directory if necessary
@@ -428,7 +428,7 @@ def move_old_info(shelf_file, logger=None):
 
 def initialize(pdsdir, selection=None, logger=None):
 
-    info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
+    info_path = pdsdir.shelf_path_and_lskip('info')[0]
 
     # Make sure file does not exist
     if os.path.exists(info_path):
@@ -450,7 +450,7 @@ def initialize(pdsdir, selection=None, logger=None):
 
 def reinitialize(pdsdir, selection=None, logger=None):
 
-    info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
+    info_path = pdsdir.shelf_path_and_lskip('info')[0]
 
     # Warn if shelf file does not exist
     if not os.path.exists(info_path):
@@ -477,7 +477,7 @@ def reinitialize(pdsdir, selection=None, logger=None):
 
 def validate(pdsdir, selection=None, logger=None):
 
-    info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
+    info_path = pdsdir.shelf_path_and_lskip('info')[0]
 
     # Make sure file exists
     if not os.path.exists(info_path):
@@ -497,7 +497,7 @@ def validate(pdsdir, selection=None, logger=None):
 
 def repair(pdsdir, selection=None, logger=None):
 
-    info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
+    info_path = pdsdir.shelf_path_and_lskip('info')[0]
 
     # Make sure file exists
     if not os.path.exists(info_path):
@@ -568,7 +568,7 @@ def repair(pdsdir, selection=None, logger=None):
 
 def update(pdsdir, selection=None, logger=None):
 
-    info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
+    info_path = pdsdir.shelf_path_and_lskip('info')[0]
 
     # Make sure info shelf file exists
     if not os.path.exists(info_path):
@@ -791,7 +791,7 @@ if __name__ == '__main__':
     try:
         for (pdsdir, selection) in info:
 
-            info_path = pdsdir.shelf_path_and_lskip(id='info')[0]
+            info_path = pdsdir.shelf_path_and_lskip('info')[0]
 
             if selection:
                 pdsf = pdsdir.child(os.path.basename(selection))
@@ -800,18 +800,18 @@ if __name__ == '__main__':
 
             # Save logs in up to two places
             if pdsf.volname:
-                logfiles = set([pdsf.log_path_for_volume(id='info',
+                logfiles = set([pdsf.log_path_for_volume('_info',
                                                          task=args.task,
                                                          dir='pdsinfoshelf'),
-                                pdsf.log_path_for_volume(id='info',
+                                pdsf.log_path_for_volume('_info',
                                                          task=args.task,
                                                          dir='pdsinfoshelf',
                                                          place='parallel')])
             else:
-                logfiles = set([pdsf.log_path_for_volset(id='info',
+                logfiles = set([pdsf.log_path_for_volset('_info',
                                                          task=args.task,
                                                          dir='pdsinfoshelf'),
-                                pdsf.log_path_for_volset(id='info',
+                                pdsf.log_path_for_volset('_info',
                                                          task=args.task,
                                                          dir='pdsinfoshelf',
                                                          place='parallel')])
