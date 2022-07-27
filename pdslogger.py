@@ -165,6 +165,21 @@ def file_handler(logpath, level=HIDDEN_STATUS+1, rotation='none', suffix=''):
     if rotation == 'midnight':
         handler = logging.handlers.TimedRotatingFileHandler(logpath,
                                                             when='midnight')
+        def _rotator(source, dest):
+            # This hack is required because the Python logging module is not
+            # multi-processor safe, and if there are multiple processes using the
+            # same log file for time rotation, they will all try to rename the
+            # file at midnight, but most will crash and burn because the log file
+            # is gone.
+            # Further we have to rename the destination log filename to something the
+            # logging module isn't expecting so that it doesn't later try to remove
+            # it in another process.
+            # See logging/handlers.py:392 (in Python 3.8)
+            try:
+                os.rename(source, dest+'_')
+            except FileNotFoundError:
+                pass
+        handler.rotator = _rotator
     else:
         handler = logging.FileHandler(logpath, mode='a')
 
