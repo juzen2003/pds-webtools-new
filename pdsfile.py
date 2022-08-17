@@ -5643,13 +5643,13 @@ def is_logical_path(path):
     return ('/holdings/' not in path)
 
 def logical_path_from_abspath(abspath):
-    """Logical path derived from either an absolute path."""
+    """Logical path derived from an absolute path."""
 
     parts = abspath.partition('/holdings/')
     if parts[1]:
         return parts[2]
 
-    raise ValueError('Not a compatible with a logical path: ', abspath)
+    raise ValueError('Not compatible with a logical path: ', abspath)
 
 LOCAL_HOLDINGS_DIRS = None  # Global will contain all the physical holdings
                             # directories on the system.

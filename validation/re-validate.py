@@ -75,7 +75,8 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
         for voltype in voltypes:
             abspath = pdsdir.abspath.replace('/volumes/',
                                              '/' + voltype + '/')
-            if not os.path.exists(abspath): continue
+            if not os.path.exists(abspath):
+                continue
 
             temp_pdsdir = pdsfile.PdsFile.from_abspath(abspath)
             if args.checksums:
@@ -101,7 +102,8 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
                                                  '/archives-' + voltype + '/')
                 abspath += '*.tar.gz'
                 abspath = glob.glob(abspath)
-                if not abspath: continue
+                if not abspath:
+                    continue
 
                 abspath = abspath[0]    # there should only be one
 
@@ -118,7 +120,8 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
         for voltype in voltypes:
             abspath = pdsdir.abspath.replace('/volumes/',
                                              '/' + voltype + '/')
-            if not os.path.exists(abspath): continue
+            if not os.path.exists(abspath):
+                continue
 
             temp_pdsdir = pdsfile.PdsFile.from_abspath(abspath)
             if args.infoshelves:
@@ -145,7 +148,8 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
                                                  '/archives-' + voltype + '/')
                 abspath += '*.tar.gz'
                 abspath = glob.glob(abspath)
-                if not abspath: continue
+                if not abspath:
+                    continue
 
                 abspath = abspath[0]    # there should only be one
 
@@ -188,20 +192,50 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
 # Log and volume management for batch mode
 ################################################################################
 
-def get_log_info(logfile):
+def volume_abspath_from_log(log_path):
+    """Return the absolute path within the holdings directory of the PDS volume
+    described by this validation log.
+    """
+
+    with open(log_path) as f:
+        rec = f.readline()
+
+    parts = rec.split('|')
+    return parts[-1].strip().split(' ')[-1]
+
+
+def key_from_volume_abspath(abspath):
+    """Return 'volset/volname' from this absolute path.
+    """
+
+    parts = abspath.split('/')
+    return '/'.join(parts[-2:])
+
+
+def key_from_log_path(log_path):
+    """Return 'volset/volname' from this log path.
+    """
+
+    parts = abspath.split('/')
+    volname = parts[-1].split('_re-validate_')[0]
+
+    return parts[-2] + '/' + volname
+
+
+def get_log_info(log_path):
     """Return info from the log:
         (start, elapsed, modtime, abspath, had_error, had_fatal).
     """
 
-    with open(logfile) as f:
+    with open(log_path) as f:
         recs = f.readlines()
 
     if not recs:
-        raise ValueError('Empty log file: ' + logfile)
+        raise ValueError('Empty log file: ' + log_path)
 
     parts = recs[0].split('|')
     if len(parts) < 2:
-        raise ValueError('Empty log file: ' + logfile)
+        raise ValueError('Empty log file: ' + log_path)
 
     start_time = parts[0].rstrip()
     if parts[1].strip() != LOGNAME:
@@ -233,43 +267,55 @@ def get_log_info(logfile):
 
     return (start_time, elapsed, modtime, abspath, error, fatal)
 
-def get_all_log_info(logroot):
-    """Read every log file below this root directory; return a list of tuples
-    (start, elapsed, modtime, abspath, had_error, had_fatal)."""
 
-    info_list = []
+def get_all_log_info(logroot):
+    """Return a list of info about the latest version of every log file,
+    skipping those that recorded a FATAL error. Each log file is described by
+    the tuple:
+      (start, elapsed, modtime, abspath, had_error, had_fatal).
+    Also return a dictionary that provides the complete list of existing log
+    files, in chronological order, keyed by volset/volname.
+    """
+
+    # Create a dictionary keyed by volset/volname that returns the chronological
+    # list of all associated log paths
+    logs_for_volset_volume = {}
     for (root, dirs, files) in os.walk(logroot):
+        files = list(files)
+        files.sort()
         for file in files:
-            if not file.endswith('.log'): continue
-            logfile = os.path.join(root, file)
+            if not file.endswith('.log'):
+                continue
+            parts = file.split('_re-validate_')
+            if len(parts) != 2:
+                continue
+            key = os.path.basename(root) + '/' + parts[0]
+            if key not in logs_for_volset_volume:
+                logs_for_volset_volume[key] = []
+            logs_for_volset_volume[key].append(os.path.join(root, file))
+
+    # Create a list containing info about the last log path that did not
+    # produce a FATAL error.
+    info_list = []
+    for key, log_paths in logs_for_volset_volume.items():
+        for log_path in log_paths[::-1]:
             try:
-                info = get_log_info(logfile)
-            except Exception as e:
-                if not isinstance(e, ValueError):
-                    print(logfile, e)
+                info = get_log_info(log_path)
+            except ValueError:
                 continue
 
-            info_list.append(info)
+            # On rare occasions when the holdings tree has been reorganized, the
+            # the log path and internal volume path can disagree.
+            test = key_from_volume_abspath(info[3])     # info[3] is the abspath
+            if test != key:
+                continue
 
-    return info_list
+            if not info[-1]:    # info[-1] is had_fatal
+                info_list.append(info)
+                break
 
-def sort_log_info(info_list):
-    """Sort log info, eliminating duplcated volume paths except most recent and
-    ignoring fatal errors, from least to most recent."""
+    return (info_list, logs_for_volset_volume)
 
-    last_info_for_abspath = {}
-    for info in info_list:
-        (start, elapsed, modtime, abspath, had_error, had_fatal) = info
-        if had_fatal: continue
-
-        if abspath in last_info_for_abspath:
-            if start < last_info_for_abspath[abspath][0]: continue
-
-        last_info_for_abspath[abspath] = info
-
-    new_info = list(last_info_for_abspath.values())
-    new_info.sort()
-    return new_info
 
 def get_volume_info(holdings):
     """Return a list of tuples (volume abspath, modtime) for every volume in
@@ -285,38 +331,67 @@ def get_volume_info(holdings):
 
     return info_list
 
+
 def find_modified_volumes(holdings_info, log_info):
     """Compare the information in the holdings info and log info; return a tuple
-    (modified_holdings, current_log_info)."""
+    (modified_holdings, current_log_info, missing_keys)."""
 
-    log_modtimes = set()
+    # Create a dictionary of log info organized by volset/volume
+    # Also create the set (modtime, volset/volume) for each log volume
     log_dict = {}
+    log_modtimes = set()
     for info in log_info:
         (start, elapsed, modtime, abspath, had_error, had_fatal) = info
-        log_modtimes.add((modtime, abspath))
-        log_dict[abspath] = info
+        key = key_from_volume_abspath(abspath)
+        log_dict[key] = info
+        log_modtimes.add((modtime, key))
 
+    # Create a dictionary of holdings info organized by volset/volume
+    # Also create the set (modtime, volset/volname) for each holdings volume
+    holdings_dict = {}
     holdings_modtimes = set()
     for (abspath, modtime) in holdings_info:
-        holdings_modtimes.add((modtime, abspath))   # time before path, for sort
+        parts = abspath.split('/')
+        key = parts[-2] + '/' + parts[-1]
+        holdings_dict[key] = (abspath, modtime)
+        holdings_modtimes.add((modtime, key))
 
+    # Determine the set of entries that have been modified since their last
+    # validation
     modified_holdings = holdings_modtimes - log_modtimes
+
+    # Update content to an ordered list of tuples (abspath, modtime)
     modified_holdings = list(modified_holdings)
     modified_holdings.sort()    # from oldest to newest
+    modified_holdings = [holdings_dict[info[1]] for info in modified_holdings]
 
-    # Reverse to (abspath, modtime)
-    modified_holdings = [(info[1],info[0]) for info in modified_holdings]
-
-    # Delete these keys from log info
-    for (key,modtime) in modified_holdings:
+    # Delete these keys from the log info dictionary
+    for (_, key) in modified_holdings:
         if key in log_dict:
             del log_dict[key]
 
-    # Sort the logged volumes from oldest to newest
+    # Identify previously logged volumes not found in holdings
+    # Delete these from the log dictionary
+    missing_keys = [key for key in log_dict if key not in holdings_dict]
+    for key in missing_keys:
+        del log_dict[key]
+
+    # If a log file is from a holdings directory tree not currently being
+    # validated, redirect this validation to the correct directory tree.
+    for key, info in log_dict.items():
+        old_path = info[3]
+        new_path = holdings_dict[key][0]
+        if new_path != old_path:
+            info = list(info)
+            info[3] = new_path
+            log_dict[key] = tuple(info)
+
+    # Sort the remaining logged volumes from oldest to newest
     current_log_info = list(log_dict.values())
     current_log_info.sort()
 
-    return (modified_holdings, current_log_info)
+    return (modified_holdings, current_log_info, missing_keys)
+
 
 def send_email(to_addr, subject, message):
     smtp = SMTP()
@@ -416,8 +491,8 @@ parser.add_argument('--timeless', '-T', action='store_true',
                     help='Suppress "newer modification date" tests for '       +
                          'dependencies. These tests are unnecessary during a ' +
                          'full validation because the contents of archive, '   +
-                         'checksum and shelf files are also checked, so their '+
-                         'dates are immaterial.')
+                         'checksum and shelf files are also checked, so the '  +
+                         'dates on these files are immaterial.')
 
 parser.add_argument('--volumes', '-v', action='store_true',
                     help='Check volume directories.')
@@ -436,8 +511,10 @@ parser.add_argument('--previews', '-p', action='store_true',
 
 parser.add_argument('--all', '-a', action='store_true',
                     help='Check all directories and files related to the '     +
-                         'volume (volumes, calibrated, diagrams, metadata, '   +
-                         'previews). This is the default.')
+                         'selected volume(s), i.e., those in volumes/, '       +
+                         'calibrated/, diagrams/, metadata/, and previews/, '  +
+                         'plus their checksums and archives. This is the '     +
+                         'default.')
 
 # Parse and validate the command line
 args = parser.parse_args()
@@ -575,22 +652,27 @@ else:
         print('No holdings path identified')
         sys.exit(1)
 
+    holdings_abspaths = []
     for holdings in args.volume:
         if not os.path.exists(holdings):
             print('Holdings path not found: ' + holdings)
             sys.exit(1)
 
         holdings = holdings.rstrip('/')
+        holdings = os.path.realpath(holdings)
         holdings = os.path.abspath(holdings)
         if not holdings.endswith('/holdings'):
             print('Not a holdings directory: ' + holdings)
             sys.exit(1)
 
-    logger.add_root(args.volume)
+        if holdings not in holdings_abspaths:
+            holdings_abspaths.append(holdings)
+
+    logger.add_root(holdings_abspaths)
+    holdings_abspaths = set(holdings_abspaths)
 
     # Read the existing logs
-    log_info = get_all_log_info(args.log)
-    log_info = sort_log_info(log_info)
+    (log_info, logs_for_volset_volname) = get_all_log_info(args.log)
 
     # Read the current holdings
     holdings_info = []
@@ -599,11 +681,36 @@ else:
 
     # Define an ordered list of tasks
     (modified_holdings,
-     current_logs) = find_modified_volumes(holdings_info, log_info)
+     current_logs,
+     missing_keys) = find_modified_volumes(holdings_info, log_info)
+
+    # Report missing volumes
+    for key in missing_keys:
+        # Determine if this volset/volname has ever appeared in any of the 
+        # holdings directory trees
+        holdings_for_key = set()
+        for log_path in logs_for_volset_volname[key]:
+            volume_abspath = volume_abspath_from_log(log_path)
+            if volume_abspath == '':        # if log file is empty
+                continue
+
+                holdings_abspath = volume_abspath.split('/volumes')[0]
+                holdings_for_key.add(holdings_abspath)
+
+        # If not, ignore
+        if not (holdings_abspaths & holdings_for_key):
+            continue
+
+        # Report error
+        holdings_for_key = list(holdings_for_key)
+        holdings_for_key.sort()
+        for holdings_abspath in holdings_for_key:
+            logger.error('Missing volume',
+                         os.path.join(holdings_abspath + '/volumes', key))
 
     # Print info in trial run mode
     if args.batch_status:
-        fmt = '%4d %20s/%-11s  modified %s, not previously validated'
+        fmt = '%4d %20s%-11s  modified %s, not previously validated'
         line_number = 0
         for (abspath, date) in modified_holdings:
             pdsdir = pdsfile.PdsFile.from_abspath(abspath)
@@ -630,8 +737,9 @@ else:
 
     batch_messages = []
     error_messages = []
-    batch_prefix = ('Batch re-validate started at %s\n' %
-                    start.strftime("%Y-%m-%d %H:%M:%S"))
+    batch_prefix = ('Batch re-validate started at %s on %s\n' %
+                    (start.strftime("%Y-%m-%d %H:%M:%S"),
+                     ','.join(args.volume)))
     print(batch_prefix)
 
     # Main loop
@@ -649,7 +757,7 @@ else:
                             (pdsdir.volset_, pdsdir.volname, mod_date[:10], ps)
             print(batch_message)
 
-            (logfile,
+            (log_path,
              fatal, errors) = validate_one_volume(pdsdir, voltypes, tests,
                                                   args, logger)
             error_message = ''
@@ -659,7 +767,7 @@ else:
                     stringlist += ['Fatal = ', str(fatal), '; ']
                 if errors:
                     stringlist += ['Errors = ', str(errors), '; ']
-                stringlist.append(logfile)
+                stringlist.append(log_path)
                 error_message = ''.join(stringlist)
 
                 print(error_message)
