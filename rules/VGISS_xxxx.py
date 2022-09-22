@@ -383,6 +383,9 @@ opus_type = translator.TranslatorByRegex([
     (r'volumes/.*/BROWSE/.*/C\d{7}_CLEANED\..*', 0, ('Voyager ISS', 70, 'vgiss_cleaned_browse', 'Extra Preview (cleaned)',                 False)),
     (r'volumes/.*/BROWSE/.*/C\d{7}_CALIB\..*',   0, ('Voyager ISS', 80, 'vgiss_calib_browse',   'Extra Preview (calibrated)',              False)),
     (r'volumes/.*/BROWSE/.*/C\d{7}_GEOMED\..*',  0, ('Voyager ISS', 90, 'vgiss_geomed_browse',  'Extra Preview (geometrically corrected)', False)),
+    (r'volumes/.*/BROWSE/.*/C\d{7}_GEOMED\..*',  0, ('Voyager ISS', 90, 'vgiss_geomed_browse',  'Extra Preview (geometrically corrected)', False)),
+    # Documentation
+    (r'documents/VGISS_.xxx/.*',                 0, ('Voyager ISS', 100, 'vgiss_documentation', 'Documentation', False)),
 ])
 
 ####################################################################################################################################
@@ -449,6 +452,7 @@ opus_products = translator.TranslatorByRegex([
              r'metadata/\1/\2/\2_raw_image_index.lbl',
              r'metadata/\1/\2/\2_supplemental_index.tab',
              r'metadata/\1/\2/\2_supplemental_index.lbl',
+             r'documents/VGISS_5xxx/*.[!lz]*'
             ]),
 ])
 
@@ -588,7 +592,7 @@ class VGISS_xxxx(pdsfile.PdsFile):
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
-    OPUS_PRODUCTS = opus_products
+    OPUS_PRODUCTS = opus_products + pdsfile.PdsFile.OPUS_PRODUCTS
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
@@ -723,7 +727,16 @@ from .pytest_support import *
           'supplemental_index',
           'Supplemental Index',
           False): ['metadata/VGISS_5xxx/VGISS_5101/VGISS_5101_supplemental_index.tab',
-                   'metadata/VGISS_5xxx/VGISS_5101/VGISS_5101_supplemental_index.lbl']}
+                   'metadata/VGISS_5xxx/VGISS_5101/VGISS_5101_supplemental_index.lbl'],
+         ('Voyager ISS',
+          100,
+          'vgiss_documentation',
+          'Documentation',
+          False): ['documents/VGISS_5xxx/VICAR-File-Format.pdf',
+                   'documents/VGISS_5xxx/User-Tutorial.txt',
+                   'documents/VGISS_5xxx/Saturn-Image-Anomalies.txt',
+                   'documents/VGISS_5xxx/Jupiter-Image-Anomalies.txt',
+                   'documents/VGISS_5xxx/CDROM-Info.txt']}
         )
     ]
 )
@@ -995,9 +1008,10 @@ def test_opus_id_to_primary_logical_path():
             for pdsf_list in pdsf_lists:
                 product_pdsfiles += pdsf_list
 
-        # Filter out the metadata products and format files
+        # Filter out the metadata/documents products and format files
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
-                                 if pdsf.voltype_ != 'metadata/']
+                                 if pdsf.voltype_ != 'metadata/'
+                                 and pdsf.voltype_ != 'documents/']
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
                                  if pdsf.extension.lower() != '.fmt']
 

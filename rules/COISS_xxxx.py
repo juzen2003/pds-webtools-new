@@ -240,6 +240,9 @@ opus_type = translator.TranslatorByRegex([
     (r'volumes/.*/extras/thumbnail/.*\.jpeg_small', 0, ('Cassini ISS', 110, 'coiss_thumb',  'Extra Preview (thumbnail)', False)),
     (r'volumes/.*/extras/browse/.*\.jpeg',          0, ('Cassini ISS', 120, 'coiss_medium', 'Extra Preview (medium)',    False)),
     (r'volumes/.*/extras/(tiff|full)/.*\.\w+',      0, ('Cassini ISS', 130, 'coiss_full',   'Extra Preview (full)',      False)),
+    (r'volumes/.*/extras/(tiff|full)/.*\.\w+',      0, ('Cassini ISS', 130, 'coiss_full',   'Extra Preview (full)',      False)),
+    # Documentation
+    (r'documents/COISS_0xxx/.*',                    0, ('Cassini ISS', 140, 'coiss_documentation', 'Documentation', False)),
 ])
 
 ####################################################################################################################################
@@ -281,6 +284,7 @@ opus_products = translator.TranslatorByRegex([
              r'metadata/\1/\3/\3_inventory.lbl',
              r'metadata/\1/\3/\3_index.tab',
              r'metadata/\1/\3/\3_index.lbl',
+             r'documents/COISS_0xxx/*.[!lz]*',
             ]),
 ])
 
@@ -380,7 +384,7 @@ class COISS_xxxx(pdsfile.PdsFile):
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
-    OPUS_PRODUCTS = opus_products
+    OPUS_PRODUCTS = opus_products + pdsfile.PdsFile.OPUS_PRODUCTS
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
@@ -497,7 +501,22 @@ from .pytest_support import *
            'rms_index',
            'RMS Node Augmented Index',
            False): ['metadata/COISS_1xxx/COISS_1001/COISS_1001_index.tab',
-                    'metadata/COISS_1xxx/COISS_1001/COISS_1001_index.lbl']}
+                    'metadata/COISS_1xxx/COISS_1001/COISS_1001_index.lbl'],
+          ('Cassini ISS',
+           140,
+           'coiss_documentation',
+           'Documentation',
+           False): ['documents/COISS_0xxx/VICAR-File-Format.pdf',
+                    'documents/COISS_0xxx/ISS-Users-Guide.pdf',
+                    'documents/COISS_0xxx/ISS-Users-Guide.docx',
+                    'documents/COISS_0xxx/Data-Product-SIS.txt',
+                    'documents/COISS_0xxx/Data-Product-SIS.pdf',
+                    'documents/COISS_0xxx/Cassini-ISS-Final-Report.pdf',
+                    'documents/COISS_0xxx/Calibration-Theoretical-Basis.pdf',
+                    'documents/COISS_0xxx/Calibration-Plan.pdf',
+                    'documents/COISS_0xxx/CISSCAL-Users-Guide.pdf',
+                    'documents/COISS_0xxx/Archive-SIS.txt',
+                    'documents/COISS_0xxx/Archive-SIS.pdf']}
         ),
     ]
 )
@@ -708,9 +727,10 @@ def test_opus_id_to_primary_logical_path():
             for pdsf_list in pdsf_lists:
                 product_pdsfiles += pdsf_list
 
-        # Filter out the metadata products and format files
+        # Filter out the metadata/documents products and format files
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
-                                 if pdsf.voltype_ != 'metadata/']
+                                 if pdsf.voltype_ != 'metadata/'
+                                 and pdsf.voltype_ != 'documents/']
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
                                  if pdsf.extension.lower() != '.fmt']
 

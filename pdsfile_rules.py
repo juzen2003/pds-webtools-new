@@ -537,7 +537,8 @@ OPUS_FORMAT = translator.TranslatorByRegex([
 
 # Default is to return an empty list
 OPUS_PRODUCTS = translator.TranslatorByRegex([
-    (r'.*', 0, []),
+    # (r'.*', 0, []),
+    (r'volumes/([A-Z0-9a-z]+_[A-Z0-9a-z]+).*', 0, [r'documents/\1/*.[!lz]*'])
 ])
 
 ####################################################################################################################################

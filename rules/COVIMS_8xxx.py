@@ -78,6 +78,8 @@ associations_to_volumes = translator.TranslatorByRegex([
             [r'volumes/COVIMS_8xxx/COVIMS_8001/data',
              r'volumes/COVIMS_8xxx/COVIMS_8001/browse',
             ]),
+    (r'documents/COVIMS_8xxx.*', 0,
+            r'volumes/COVIMS_8xxx'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
@@ -128,6 +130,13 @@ associations_to_metadata = translator.TranslatorByRegex([
             ]),
 ])
 
+associations_to_documents = translator.TranslatorByRegex([
+    (r'volumes/COVIMS_8xxx/COVIMS_8\d\d\d', 0,
+            r'documents/COVIMS_8xxx/*'),
+    (r'volumes/COVIMS_8xxx/COVIMS_8\d\d\d/.+', 0,
+            r'documents/COVIMS_8xxx'),
+])
+
 ####################################################################################################################################
 # VERSIONS
 ####################################################################################################################################
@@ -170,6 +179,8 @@ split_rules = translator.TranslatorByRegex([
 opus_type = translator.TranslatorByRegex([
     (r'volumes/.*_TAU_01KM\.(TAB|LBL)', 0, ('Cassini VIMS', 10, 'covims_occ_01', 'Occultation Profile (1 km)',  True)),
     (r'volumes/.*_TAU_10KM\.(TAB|LBL)', 0, ('Cassini VIMS', 20, 'covims_occ_10', 'Occultation Profile (10 km)', True)),
+    # Documentation
+    (r'documents/COVIMS_8xxx/.*',       0, ('Cassini VIMS', 30, 'covims_occ_documentation', 'Documentation', False)),
 ])
 
 ####################################################################################################################################
@@ -250,7 +261,7 @@ class COVIMS_8xxx(pdsfile.PdsFile):
     SPLIT_RULES = split_rules + pdsfile.PdsFile.SPLIT_RULES
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
-    OPUS_PRODUCTS = opus_products
+    OPUS_PRODUCTS = opus_products + pdsfile.PdsFile.OPUS_PRODUCTS
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
@@ -264,6 +275,7 @@ class COVIMS_8xxx(pdsfile.PdsFile):
     ASSOCIATIONS['previews'] += associations_to_previews
     ASSOCIATIONS['diagrams'] += associations_to_diagrams
     ASSOCIATIONS['metadata'] += associations_to_metadata
+    ASSOCIATIONS['documents'] = associations_to_documents
 
     VERSIONS = versions + pdsfile.PdsFile.VERSIONS
 
@@ -378,7 +390,13 @@ from .pytest_support import *
           'supplemental_index',
           'Supplemental Index',
           False): ['metadata/COVIMS_8xxx/COVIMS_8001/COVIMS_8001_supplemental_index.tab',
-                   'metadata/COVIMS_8xxx/COVIMS_8001/COVIMS_8001_supplemental_index.lbl']}
+                   'metadata/COVIMS_8xxx/COVIMS_8001/COVIMS_8001_supplemental_index.lbl'],
+         ('Cassini VIMS',
+          30,
+          'covims_occ_documentation',
+          'Documentation',
+          False): ['documents/COVIMS_8xxx/VIMS-ring-occultations-summary.pdf',
+                   'documents/COVIMS_8xxx/Cassini-VIMS-Final-Report.pdf']}
         ),
     ]
 )
@@ -403,9 +421,10 @@ def test_opus_id_to_primary_logical_path():
             for pdsf_list in pdsf_lists:
                 product_pdsfiles += pdsf_list
 
-        # Filter out the metadata products and format files
+        # Filter out the metadata/documents products and format files
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
-                                 if pdsf.voltype_ != 'metadata/']
+                                 if pdsf.voltype_ != 'metadata/'
+                                 and pdsf.voltype_ != 'documents/']
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
                                  if pdsf.extension.lower() != '.fmt']
 

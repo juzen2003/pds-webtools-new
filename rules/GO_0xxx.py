@@ -346,6 +346,8 @@ associations_to_volumes = translator.TranslatorByRegex([
     (r'volumes/GO_0xxx/GO_0023/G28/GARBLED/(C0552447569)R.*'    , 0, r'volumes/GO_0xxx/GO_0023/G28/REPAIRED/\1S.*'),
     (r'volumes/GO_0xxx/GO_0023/G29/GARBLED/(C060049.*)R.*'      , 0, r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/\1S.*'),
     (r'volumes/GO_0xxx/GO_0023/G29/GARBLED/(C060066.*)R.*'      , 0, r'volumes/GO_0xxx/GO_0023/G29/REPAIRED/\1S.*'),
+
+    (r'documents/GO_0xxx.*'                                     , 0, r'volumes/GO_0xxx'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
@@ -384,6 +386,11 @@ associations_to_metadata = translator.TranslatorByRegex([
             ]),
     (r'volumes/GO_0xxx/GO_0016/SL9/(C\d{10})[RG].*', 0,
             r'metadata/GO_0xxx/GO_0016/GO_0016_sl9_index.tab/\1'),
+])
+
+associations_to_documents = translator.TranslatorByRegex([
+    (r'volumes/GO_0xxx(|_[^/]+)/GO_0\d\d\d',    0, r'documents/GO_0xxx/*'),
+    (r'volumes/GO_0xxx(|_[^/]+)/GO_0\d\d\d/.+', 0, r'documents/GO_0xxx'),
 ])
 
 ####################################################################################################################################
@@ -465,6 +472,8 @@ split_rules = translator.TranslatorByRegex([
 opus_type = translator.TranslatorByRegex([
     (r'volumes/GO_0xxx/GO_0.../(?!CATALOG|DOCUMENT|INDEX|LABEL).*[^G]\.(IMG|LBL)', 0, ('Galileo SSI', 10, 'gossi_raw', 'Raw Image', True)),
     (r'volumes/GO_0xxx/GO_0016/SL9/.*G.(IMG|LBL)',                                 0, ('Galileo SSI', 12, 'gossi_sl9', 'Image with SL9 graphics overlay', True)),
+    # Documentation
+    (r'documents/GO_0xxx/.*',                                                      0, ('Galileo SSI', 20, 'gossi_documentation', 'Documentation', False)),
 ])
 
 ####################################################################################################################################
@@ -492,6 +501,7 @@ opus_products = translator.TranslatorByRegex([
              r'previews/GO_0xxx/\1/\2_thumb.jpg',
              r'metadata/GO_0xxx/\1/\1_index.lbl',
              r'metadata/GO_0xxx/\1/\1_index.tab',
+             r'documents/GO_0xxx/*.[!lz]*'
             ]),
 
     # SL9 "graphics" file associations
@@ -502,6 +512,7 @@ opus_products = translator.TranslatorByRegex([
              r'previews/GO_0xxx/GO_0016/SL9/\1G_med.jpg',
              r'previews/GO_0xxx/GO_0016/SL9/\1G_small.jpg',
              r'previews/GO_0xxx/GO_0016/SL9/\1G_thumb.jpg',
+             r'documents/GO_0xxx/*.[!lz]*'
             ]),
 
     (r'.*volumes/GO_0xxx/GO_0016/SL9/(C\d{10})G\.(IMG|LBL)', 0,
@@ -693,7 +704,7 @@ class GO_0xxx(pdsfile.PdsFile):
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
-    OPUS_PRODUCTS = opus_products
+    OPUS_PRODUCTS = opus_products + pdsfile.PdsFile.OPUS_PRODUCTS
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
@@ -703,6 +714,7 @@ class GO_0xxx(pdsfile.PdsFile):
     ASSOCIATIONS['volumes']  += associations_to_volumes
     ASSOCIATIONS['previews'] += associations_to_previews
     ASSOCIATIONS['metadata'] += associations_to_metadata
+    ASSOCIATIONS['documents'] += associations_to_documents
 
     VERSIONS = versions + pdsfile.PdsFile.VERSIONS
 
@@ -823,7 +835,15 @@ from .pytest_support import *
            'rms_index',
            'RMS Node Augmented Index',
            False): ['metadata/GO_0xxx/GO_0017/GO_0017_index.tab',
-                    'metadata/GO_0xxx/GO_0017/GO_0017_index.lbl']}
+                    'metadata/GO_0xxx/GO_0017/GO_0017_index.lbl'],
+          ('Galileo SSI',
+           20,
+           'gossi_documentation',
+           'Documentation',
+           False): ['documents/GO_0xxx/VICAR-File-Format.pdf',
+                    'documents/GO_0xxx/Data-Product-SIS.pdf',
+                    'documents/GO_0xxx/Archive-SIS.pdf']}
+
         )
     ]
 )
@@ -1082,9 +1102,10 @@ def test_opus_id_to_primary_logical_path():
             for pdsf_list in pdsf_lists:
                 product_pdsfiles += pdsf_list
 
-        # Filter out the metadata products and format files
+        # Filter out the metadata/documents products and format files
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
-                                 if pdsf.voltype_ != 'metadata/']
+                                 if pdsf.voltype_ != 'metadata/'
+                                 and pdsf.voltype_ != 'documents/']
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
                                  if pdsf.extension.lower() != '.fmt']
 

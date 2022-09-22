@@ -292,6 +292,8 @@ class TestPdsFileBlackBox:
              ('browse', 10, 'browse_thumb', 'Browse Image (thumbnail)', False)),
             ('metadata/HSTUx_xxxx/HSTU0_5167/HSTU0_5167_index.tab',
              ('metadata', 5, 'rms_index', 'RMS Node Augmented Index', False)),
+            ('documents/COISS_0xxx/CISSCAL-Users-Guide.pdf',
+             ('Cassini ISS', 140, 'coiss_documentation', 'Documentation', False)),
         ]
     )
     def test_opus_type(self, input_path, expected):

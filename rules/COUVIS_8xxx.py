@@ -48,6 +48,8 @@ associations_to_volumes = translator.TranslatorByRegex([
              r'volumes/COUVIS_8xxx\1/\2/\3/\4_TAU_10KM.LBL',
              r'volumes/COUVIS_8xxx\1/\2/\3/\4_TAU_10KM.TAB',
             ]),
+    (r'documents/COUVIS_8xxx.*', 0,
+             r'volumes/COUVIS_8xxx'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
@@ -74,6 +76,11 @@ associations_to_metadata = translator.TranslatorByRegex([
              r'metadata/COUVIS_8xxx/\2/\2_profile_index.tab/\4_TAU01',
              r'metadata/COUVIS_8xxx/\2/\2_supplemental_index.tab/\4_TAU01',
             ]),
+])
+
+associations_to_documents = translator.TranslatorByRegex([
+    (r'volumes/COUVIS_8xxx(|_[^/]+)/COUVIS_8\d\d\d',    0, r'documents/COUVIS_8xxx/*'),
+    (r'volumes/COUVIS_8xxx(|_[^/]+)/COUVIS_8\d\d\d/.+', 0, r'documents/COUVIS_8xxx'),
 ])
 
 ####################################################################################################################################
@@ -144,6 +151,8 @@ split_rules = translator.TranslatorByRegex([
 opus_type = translator.TranslatorByRegex([
     (r'volumes/.*_TAU_?01KM\.(TAB|LBL)', 0, ('Cassini UVIS', 10, 'couvis_occ_01', 'Occultation Profile (1 km)',  True)),
     (r'volumes/.*_TAU_?10KM\.(TAB|LBL)', 0, ('Cassini UVIS', 20, 'couvis_occ_10', 'Occultation Profile (10 km)', True)),
+    # Documentation
+    (r'documents/COUVIS_8xxx/.*',        0, ('Cassini UVIS', 30, 'couvis_occ_documentation', 'Documentation', False)),
 ])
 
 ####################################################################################################################################
@@ -208,7 +217,7 @@ class COUVIS_8xxx(pdsfile.PdsFile):
     SPLIT_RULES = split_rules + pdsfile.PdsFile.SPLIT_RULES
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
-    OPUS_PRODUCTS = opus_products
+    OPUS_PRODUCTS = opus_products + pdsfile.PdsFile.OPUS_PRODUCTS
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
@@ -222,6 +231,7 @@ class COUVIS_8xxx(pdsfile.PdsFile):
     ASSOCIATIONS['previews'] += associations_to_previews
     ASSOCIATIONS['diagrams'] += associations_to_diagrams
     ASSOCIATIONS['metadata'] += associations_to_metadata
+    ASSOCIATIONS['documents'] += associations_to_documents
 
     VERSIONS = versions + pdsfile.PdsFile.VERSIONS
 
@@ -327,7 +337,23 @@ from .pytest_support import *
             'supplemental_index',
             'Supplemental Index',
             False): ['metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.tab',
-                     'metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.lbl']}
+                     'metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.lbl'],
+           ('Cassini UVIS',
+            30,
+            'couvis_occ_documentation',
+            'Documentation',
+            False): ['documents/COUVIS_8xxx/UVIS-Users-Guide.pdf',
+                     'documents/COUVIS_8xxx/UVIS-Users-Guide.docx',
+                     'documents/COUVIS_8xxx/Cassini-UVIS-Final-Report.pdf',
+                     'documents/COUVIS_8xxx/Atlas-Volume8-Rev246-to-Rev288.pdf',
+                     'documents/COUVIS_8xxx/Atlas-Volume7-Rev202-to-Rev245.pdf',
+                     'documents/COUVIS_8xxx/Atlas-Volume6-Rev124-to-Rev194.pdf',
+                     'documents/COUVIS_8xxx/Atlas-Volume5-Rev092-to-Rev117.pdf',
+                     'documents/COUVIS_8xxx/Atlas-Volume4-Rev060-to-Rev090.pdf',
+                     'documents/COUVIS_8xxx/Atlas-Volume3-Rev040-to-Rev058.pdf',
+                     'documents/COUVIS_8xxx/Atlas-Volume2-Rev031-to-Rev039.pdf',
+                     'documents/COUVIS_8xxx/Atlas-Volume1-RevOOA-to-Rev030.pdf']}
+
         )
     ]
 )
@@ -352,9 +378,10 @@ def test_opus_id_to_primary_logical_path():
             for pdsf_list in pdsf_lists:
                 product_pdsfiles += pdsf_list
 
-        # Filter out the metadata products and format files
+        # Filter out the metadata/documents products and format files
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
-                                 if pdsf.voltype_ != 'metadata/']
+                                 if pdsf.voltype_ != 'metadata/'
+                                 and pdsf.voltype_ != 'documents/']
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
                                  if pdsf.extension.lower() != '.fmt']
 

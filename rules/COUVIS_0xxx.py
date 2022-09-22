@@ -66,6 +66,8 @@ associations_to_volumes = translator.TranslatorByRegex([
             ]),
     (r'.*/COUVIS_0999.*', 0,
             r'volumes/COUVIS_0xxx'),
+    (r'documents/COUVIS_0xxx.*', 0,
+             r'volumes/COUVIS_0xxx'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
@@ -95,6 +97,11 @@ associations_to_metadata = translator.TranslatorByRegex([
              r'metadata/COUVIS_0xxx\1/COUVIS_0999/COUVIS_0999_\2.csv',
              r'metadata/COUVIS_0xxx\1/COUVIS_0999/COUVIS_0999_\2.lbl',
             ]),
+])
+
+associations_to_documents = translator.TranslatorByRegex([
+    (r'volumes/COUVIS_0xxx(|_[^/]+)/COUVIS_0\d\d\d',    0, r'documents/COUVIS_0xxx/*'),
+    (r'volumes/COUVIS_0xxx(|_[^/]+)/COUVIS_0\d\d\d/.+', 0, r'documents/COUVIS_0xxx'),
 ])
 
 ####################################################################################################################################
@@ -135,6 +142,8 @@ sort_key = translator.TranslatorByRegex([
 opus_type = translator.TranslatorByRegex([
     (r'volumes/.*/DATA/.*\.DAT',  0, ('Cassini UVIS', 10, 'couvis_raw',        'Raw Data',         True)),
     (r'volumes/.*/CALIB/.*\.DAT', 0, ('Cassini UVIS', 20, 'couvis_calib_corr', 'Calibration Data', True)),
+    # Documentation
+    (r'documents/COUVIS_0xxx/.*', 0, ('Cassini UVIS', 30, 'couvis_documentation', 'Documentation', False)),
 ])
 
 ####################################################################################################################################
@@ -230,7 +239,7 @@ class COUVIS_0xxx(pdsfile.PdsFile):
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
-    OPUS_PRODUCTS = opus_products
+    OPUS_PRODUCTS = opus_products + pdsfile.PdsFile.OPUS_PRODUCTS
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
@@ -240,6 +249,7 @@ class COUVIS_0xxx(pdsfile.PdsFile):
     ASSOCIATIONS['volumes']  += associations_to_volumes
     ASSOCIATIONS['previews'] += associations_to_previews
     ASSOCIATIONS['metadata'] += associations_to_metadata
+    ASSOCIATIONS['documents']  += associations_to_documents
 
     ############################################################################
     # DATA_SET_ID is defined as a function rather than a translator
@@ -344,8 +354,18 @@ from .pytest_support import *
            'supplemental_index',
            'Supplemental Index',
            False): ['metadata/COUVIS_0xxx/COUVIS_0001/COUVIS_0001_supplemental_index.tab',
-                    'metadata/COUVIS_0xxx/COUVIS_0001/COUVIS_0001_supplemental_index.lbl']}
-        )
+                    'metadata/COUVIS_0xxx/COUVIS_0001/COUVIS_0001_supplemental_index.lbl'],
+          ('Cassini UVIS',
+           30,
+           'couvis_documentation',
+           'Documentation',
+           False): ['documents/COUVIS_0xxx/UVIS-Users-Guide.pdf',
+                    'documents/COUVIS_0xxx/UVIS-Users-Guide.docx',
+                    'documents/COUVIS_0xxx/UVIS-Preview-Interpretation-Guide.txt',
+                    'documents/COUVIS_0xxx/UVIS-Archive-SIS.txt',
+                    'documents/COUVIS_0xxx/UVIS-Archive-SIS.pdf',
+                    'documents/COUVIS_0xxx/Cassini-UVIS-Final-Report.pdf']}
+                )
     ]
 )
 def test_opus_products(input_path, expected):
@@ -448,9 +468,10 @@ def test_opus_id_to_primary_logical_path():
             for pdsf_list in pdsf_lists:
                 product_pdsfiles += pdsf_list
 
-        # Filter out the metadata products and format files
+        # Filter out the metadata/documents products and format files
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
-                                 if pdsf.voltype_ != 'metadata/']
+                                 if pdsf.voltype_ != 'metadata/'
+                                 and pdsf.voltype_ != 'documents/']
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
                                  if pdsf.extension.lower() != '.fmt']
 

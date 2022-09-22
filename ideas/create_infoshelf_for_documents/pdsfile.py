@@ -44,7 +44,7 @@ VOLSET_REGEX_I      = re.compile(VOLSET_REGEX.pattern, re.I)
 VOLSET_PLUS_REGEX   = re.compile(VOLSET_REGEX.pattern[:-1] +
                         r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
                         r'_in_prep|_prelim|_peer_review|_lien_resolution|)' +
-                        r'((|_calibrated|_diagrams|_metadata|_previews)' +
+                        r'((|_calibrated|_diagrams|_metadata|_previews|_documents)' +
                         r'(|_md5\.txt|\.tar\.gz))$')
 VOLSET_PLUS_REGEX_I = re.compile(VOLSET_PLUS_REGEX.pattern, re.I)
 # Groups are (volset, version_suffix, other_suffix, extension)
@@ -1107,9 +1107,7 @@ class PdsFile(object):
             return (pdsf.exists and
                     pdsf.child_of_index(parts[2], flag='').exists)
 
-        # If it's for documentation, we don't create shelf files, we will just use the
-        # os.path.exists
-        if SHELVES_ONLY and 'holdings/documents' not in abspath:
+        if SHELVES_ONLY:
             try:
                 (shelf_abspath,
                  key) = PdsFile.shelf_path_and_key_for_abspath(abspath, 'info')
@@ -1302,12 +1300,7 @@ class PdsFile(object):
                 try:
                     results = os.listdir(shelf_abspath)
                 except FileNotFoundError:
-                    # If the shelf file is missing, try the actual file system
-                    # For documentation, we have all files available but not the shelf
-                    # files, therefore we will check the actual file system for documents.
-                    childnames = os.listdir(abspath)
-                    return [c for c in childnames
-                            if c != '.DS_Store' and not c.startswith('._')]
+                    return []
 
                 if not results:
                     return []
@@ -1488,7 +1481,7 @@ class PdsFile(object):
         return self._isdir_filled
 
     @property
-    def is_documents(self):
+    def isdocuments(self):
         """True if the file is under documents directory."""
 
         return self.voltype_ == 'documents/'
@@ -3274,7 +3267,7 @@ class PdsFile(object):
             if self.volset_:                # if parent is a volset
 
                 # Handle documents directory
-                if self.is_documents:
+                if self.isdocuments:
                     this.volname_ = ''
                     this.interior = basename
                     return this._complete(must_exist, caching, lifetime)
@@ -4347,7 +4340,7 @@ class PdsFile(object):
         else:
             suffix = '_' + self.voltype_[:-1]
 
-        if self.archives_:
+        if self.archives_ or self.isdocuments:
             abspath = ''.join([self.root_, 'checksums-', self.category_,
                                self.volset, self.suffix, suffix, '_md5.txt'])
             lskip = (len(self.root_) + len('checksums_') + len(self.category_))
@@ -4504,7 +4497,7 @@ class PdsFile(object):
 
         (dir_prefix, file_suffix) = SHELF_PATH_INFO[shelf_type]
 
-        if self.archives_:
+        if self.archives_ or self.isdocuments:
             if not self.volset_:
                 raise ValueError('Archive shelves require volume sets: ' +
                                  self.logical_path)
@@ -4632,9 +4625,6 @@ class PdsFile(object):
         volname         can be used to get info about a volume when the method
                         is applied to its enclosing volset.
         """
-        # we don't have shelf files for documents
-        if self.is_documents:
-            return
 
         (shelf_path, key) = self.shelf_path_and_key(shelf_type, volname)
 
@@ -4683,7 +4673,7 @@ class PdsFile(object):
         (dir_prefix, file_suffix) = SHELF_PATH_INFO[shelf_type]
 
         # For archive files, the shelf is associated with the volset
-        if logical_path.startswith('archives'):
+        if logical_path.startswith('archives') or logical_path.startswith('documents'):
             parts = logical_path.split('/')
             if len(parts) < 2:
                 raise ValueError('Archive shelves require volume sets: ' +
@@ -4718,8 +4708,8 @@ class PdsFile(object):
             return False
 
         # The document tree does not have info shelves
-        if self.is_documents:
-            return False
+        if self.isdocuments:
+            return True
 
         # Category-level directories are merged
         if self.is_category_dir:

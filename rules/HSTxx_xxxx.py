@@ -57,6 +57,7 @@ associations_to_volumes = translator.TranslatorByRegex([
     (r'.*/(HST.x_xxxx)(|_.*)/(HST.._..../DATA/VISIT_..)',           0, r'volumes/\1/\3'),
     (r'.*/(HST.x_xxxx)(|_.*)/(HST.._..../DATA)',                    0, r'volumes/\1/\3'),
     (r'.*/(HST.)9_9999.*',                                          0, r'volumes/\1x_xxxx'),
+    (r'documents/(HST.x_xxxx).*',                                   0, r'volumes/\1'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
@@ -121,6 +122,8 @@ opus_type = translator.TranslatorByRegex([
     (r'volumes/.*_MOS\.JPG',             0, ('HST',  90, 'hst_mosaic',      'Mosaic Preview',                             True)),
     (r'volumes/.*_(X1D|SX1)\.JPG',       0, ('HST', 100, 'hst_1d_spectrum', '1-D Spectrum Preview',                       True)),
     (r'volumes/.*_(X2D|SX2)\.JPG',       0, ('HST', 110, 'hst_2d_spectrum', '2-D Spectrum Preview',                       True)),
+    # Documentation
+    (r'documents/HST\wx_xxxx/.*',         0, ('HST', 120, 'hst_documentation', 'Documentation', False)),
 ])
 
 ####################################################################################################################################
@@ -190,7 +193,7 @@ class HSTxx_xxxx(pdsfile.PdsFile):
     NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
-    OPUS_PRODUCTS = opus_products
+    OPUS_PRODUCTS = opus_products + pdsfile.PdsFile.OPUS_PRODUCTS
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
@@ -308,7 +311,14 @@ from .pytest_support import *
            'hstfiles_index',
            'HST Files Associations Index',
            False): ['metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.tab',
-                    'metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.lbl']}
+                    'metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.lbl'],
+          ('HST',
+           120,
+           'hst_documentation',
+           'Documentation',
+           False): ['documents/HSTIx_xxxx/WFC3-Instrument-Handbook-13.0.pdf',
+                    'documents/HSTIx_xxxx/WFC3-Data-Handbook-4.0.pdf',
+                    'documents/HSTIx_xxxx/FITS-Standard-4.0.pdf']}
         ),
     ]
 )
@@ -365,9 +375,10 @@ def test_opus_id_to_primary_logical_path():
             for pdsf_list in pdsf_lists:
                 product_pdsfiles += pdsf_list
 
-        # Filter out the metadata products and format files
+        # Filter out the metadata/documents products and format files
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
-                                 if pdsf.voltype_ != 'metadata/']
+                                 if pdsf.voltype_ != 'metadata/'
+                                 and pdsf.voltype_ != 'documents/']
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
                                  if pdsf.extension.lower() != '.fmt']
 

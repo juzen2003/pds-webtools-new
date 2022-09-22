@@ -148,10 +148,7 @@ associations_to_volumes = translator.TranslatorByRegex([
              r'volumes/\1\2/\3_1\4/DATA\5',
              r'volumes/\1\2/\3_2\4/data\5',
             ]),
-    (r'documents/NHxxxx_xxxx.*', 0,
-            [r'volumes/NHxxLO_xxxx',
-             r'volumes/NHxxMV_xxxx'
-            ]),
+    (r'documents/(NHxx.._xxxx).*', 0, r'volumes/\1')
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
@@ -187,8 +184,7 @@ associations_to_documents = translator.TranslatorByRegex([
              r'\1/document/ralph_ssr.pdf',
              r'\1/document/payload_ssr.pdf',
             ]),
-    (r'volumes/NH...._xxxx.*', 0,
-            r'documents/NHxxxx_xxxx/*'),
+    (r'volumes/(NHxx.._xxxx).*', 0, r'documents/\1/*'),
 ])
 
 ####################################################################################################################################
@@ -263,6 +259,10 @@ opus_type = translator.TranslatorByRegex([
     (r'volumes/.*/NH..MV_1.../data/.*\.(fit|lbl)', re.I, ('New Horizons MVIC',   0, 'nh_mvic_raw',            'Raw Image',        True)),
     (r'volumes/.*/NH..MV_2.../data/.*\.(fit|lbl)', re.I, ('New Horizons MVIC', 100, 'nh_mvic_calib',          'Calibrated Image', True)),
     (r'previews/.*/NH..MV_2.../data/.*\.jpg',      0,    ('New Horizons MVIC', 200, 'nh_mvic_calib_browse',   'Extra Preview (calibrated)', False)),
+
+    # Documentation
+    (r'documents/NHxxLO_xxxx/.*',                  0, ('New Horizons LORRI', 300, 'nh_lorri_documentation', 'Documentation', False)),
+    (r'documents/NHxxMV_xxxx/.*',                  0, ('New Horizons MVIC',  300, 'nh_mvic_documentation', 'Documentation', False)),
 ])
 
 ####################################################################################################################################
@@ -467,7 +467,7 @@ class NHxxxx_xxxx(pdsfile.PdsFile):
     SPLIT_RULES = split_rules + pdsfile.PdsFile.SPLIT_RULES
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
-    OPUS_PRODUCTS = opus_products
+    OPUS_PRODUCTS = opus_products + pdsfile.PdsFile.OPUS_PRODUCTS
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
@@ -705,7 +705,18 @@ def test_opus_products_count():
                    'volumes/NHxxLO_xxxx_v2/NHLALO_2001/data/20060224_000310/lor_0003103486_0x631_sci_1.fit',
                    'volumes/NHxxLO_xxxx_v2/NHLALO_2001/data/20060224_000310/lor_0003103486_0x631_sci_1.lbl',
                    'volumes/NHxxLO_xxxx_v1/NHLALO_2001/data/20060224_000310/lor_0003103486_0x631_sci_1.fit',
-                   'volumes/NHxxLO_xxxx_v1/NHLALO_2001/data/20060224_000310/lor_0003103486_0x631_sci_1.lbl']}
+                   'volumes/NHxxLO_xxxx_v1/NHLALO_2001/data/20060224_000310/lor_0003103486_0x631_sci_1.lbl'],
+          ('New Horizons LORRI',
+           300,
+           'nh_lorri_documentation',
+           'Documentation',
+           False): ['documents/NHxxLO_xxxx/Weaver-etal-2008-SSR.pdf',
+                    'documents/NHxxLO_xxxx/NH-Boresight-FOVs.png',
+                    'documents/NHxxLO_xxxx/Morgan-etal-2005-SPIE.pdf',
+                    'documents/NHxxLO_xxxx/LORRI-responsivity-plot.png',
+                    'documents/NHxxLO_xxxx/LORRI-True-Exposure-Times.pdf',
+                    'documents/NHxxLO_xxxx/FITS-Standard-4.0.pdf',
+                    'documents/NHxxLO_xxxx/Cheng-etal-2007-SSR.pdf']}
         )
     ]
 )
@@ -810,9 +821,10 @@ def test_opus_id_to_primary_logical_path():
             for pdsf_list in pdsf_lists:
                 product_pdsfiles += pdsf_list
 
-        # Filter out the metadata products and format files
+        # Filter out the metadata/documents products and format files
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
-                                 if pdsf.voltype_ != 'metadata/']
+                                 if pdsf.voltype_ != 'metadata/'
+                                 and pdsf.voltype_ != 'documents/']
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
                                  if pdsf.extension.lower() != '.fmt']
 

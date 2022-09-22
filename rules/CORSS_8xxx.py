@@ -194,6 +194,8 @@ associations_to_volumes = translator.TranslatorByRegex([
             ]),
     (r'volumes/CORSS_8xxx_v1/CORSS_8001/EASYDATA/Rev(\d\d)(C?[EI])(\w+)(|/.*)', 0,
             r'volumes/CORSS_8xxx/CORSS_8001/data/Rev0\1/Rev0\1\2/Rev0\1\2\3'),
+    (r'documents/CORSS_8xxx.*', 0,
+            r'volumes/CORSS_8xxx'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
@@ -375,6 +377,8 @@ opus_type = translator.TranslatorByRegex([
 
     (r'volumes/.*_(DSN_Elevation|TimeLine_Figure|TimeLine_Table|Summary|OccTrack_Geometry)\.(pdf|LBL)',
                                          0, ('Cassini RSS', 60, 'corss_occ_doc', 'Occultation Documentation', True)),
+    # Documentation
+    (r'documents/CORSS_8xxx/.*',         0, ('Cassini RSS', 70, 'corss_occ_documentation', 'Documentation',     False)),
 ])
 
 ####################################################################################################################################
@@ -456,7 +460,7 @@ class CORSS_8xxx(pdsfile.PdsFile):
     SPLIT_RULES = split_rules + pdsfile.PdsFile.SPLIT_RULES
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
-    OPUS_PRODUCTS = opus_products
+    OPUS_PRODUCTS = opus_products + pdsfile.PdsFile.OPUS_PRODUCTS
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
@@ -748,7 +752,13 @@ def test_associations():
               'supplemental_index',
               'Supplemental Index',
               False): ['metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.tab',
-                       'metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.lbl']}
+                       'metadata/CORSS_8xxx/CORSS_8001/CORSS_8001_supplemental_index.lbl'],
+             ('Cassini RSS',
+              70,
+              'corss_occ_documentation',
+              'Documentation',
+              False): ['documents/CORSS_8xxx/Cassini-RSS-Final-Report.pdf',
+                       'documents/CORSS_8xxx/Archived-RSS-Ring-Profiles.pdf']}
         )
     ]
 )
@@ -778,9 +788,10 @@ def test_opus_id_to_primary_logical_path():
             for pdsf_list in pdsf_lists:
                 product_pdsfiles += pdsf_list
 
-        # Filter out the metadata products and format files
+        # Filter out the metadata/documents products and format files
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
-                                 if pdsf.voltype_ != 'metadata/']
+                                 if pdsf.voltype_ != 'metadata/'
+                                 and pdsf.voltype_ != 'documents/']
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
                                  if pdsf.extension.lower() != '.fmt']
 

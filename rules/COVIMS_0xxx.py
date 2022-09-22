@@ -63,6 +63,8 @@ associations_to_volumes = translator.TranslatorByRegex([
     (r'.*/COVIMS_0xxx(|_v[0-9\.]+)/(COVIMS_....)/extras', 0,
             r'volumes/COVIMS_0xxx\1/\2/data'),
     (r'.*/COVIMS_0999.*', 0, r'volumes/COVIMS_0xxx'),
+    (r'documents/COVIMS_0xxx.*', 0,
+            r'volumes/COVIMS_0xxx'),
 ])
 
 associations_to_previews = translator.TranslatorByRegex([
@@ -98,16 +100,18 @@ associations_to_metadata = translator.TranslatorByRegex([
 ])
 
 associations_to_documents = translator.TranslatorByRegex([
-        (r'(volumes/COVIMS_0xxx.*/COVIMS_0...).*', 0,
-                [r'volumes/\1/catalog',
-                 r'volumes/\1/aareadme.txt',
-                 r'volumes/\1/errata.txt',
-                 r'volumes/\1/voldesc.cat',
-                 r'volumes/\1/document/*',
-                ]),
+    (r'(volumes/COVIMS_0xxx.*/COVIMS_0...).*', 0,
+            [r'volumes/\1/catalog',
+             r'volumes/\1/aareadme.txt',
+             r'volumes/\1/errata.txt',
+             r'volumes/\1/voldesc.cat',
+             r'volumes/\1/document/*',
+            ]),
 
-    (r'volumes/COVIMS_0xxx.*', 0,
+    (r'volumes/COVIMS_0xxx/COVIMS_0\d\d\d', 0,
             r'documents/COVIMS_0xxx/*'),
+    (r'volumes/COVIMS_0xxx/COVIMS_0\d\d\d/.+', 0,
+            r'documents/COVIMS_0xxx'),
     (r'previews/COVIMS_0xxx.*', 0,
             r'documents/COVIMS_0xxx/VIMS-Preview-Interpretation-Guide.pdf'),
 ])
@@ -138,6 +142,8 @@ opus_type = translator.TranslatorByRegex([
     (r'volumes/.*/extras/thumbnail/.*\.jpeg_small', 0, ('Cassini VIMS', 110, 'covims_thumb',  'Extra Preview (thumbnail)', False)),
     (r'volumes/.*/extras/browse/.*\.jpeg',          0, ('Cassini VIMS', 120, 'covims_medium', 'Extra Preview (medium)',    False)),
     (r'volumes/.*/extras/(tiff|full)/.*\.\w+',      0, ('Cassini VIMS', 130, 'covims_full',   'Extra Preview (full)',      False)),
+    # Documentation
+    (r'documents/COVIMS_0xxx/.*',                   0, ('Cassini VIMS', 140, 'covims_documentation', 'Documentation', False)),
 ])
 
 ####################################################################################################################################
@@ -275,7 +281,7 @@ class COVIMS_0xxx(pdsfile.PdsFile):
 
     OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
     OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
-    OPUS_PRODUCTS = opus_products
+    OPUS_PRODUCTS = opus_products + pdsfile.PdsFile.OPUS_PRODUCTS
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
@@ -467,7 +473,15 @@ def test_opus_products_count():
           'supplemental_index',
           'Supplemental Index',
           False): ['metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_supplemental_index.tab',
-           'metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_supplemental_index.lbl']}
+           'metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_supplemental_index.lbl'],
+         ('Cassini VIMS',
+          140,
+          'covims_documentation',
+          'Documentation',
+          False): ['documents/COVIMS_0xxx/VIMS-Preview-Interpretation-Guide.pdf',
+                   'documents/COVIMS_0xxx/Data-Product-SIS.txt',
+                   'documents/COVIMS_0xxx/Cassini-VIMS-Final-Report.pdf',
+                   'documents/COVIMS_0xxx/Archive-SIS.txt']}
         ),
     ]
 )
@@ -664,9 +678,10 @@ def test_opus_id_to_primary_logical_path():
             for pdsf_list in pdsf_lists:
                 product_pdsfiles += pdsf_list
 
-        # Filter out the metadata products and format files
+        # Filter out the metadata/documents products and format files
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
-                                 if pdsf.voltype_ != 'metadata/']
+                                 if pdsf.voltype_ != 'metadata/'
+                                 and pdsf.voltype_ != 'documents/']
         product_pdsfiles = [pdsf for pdsf in product_pdsfiles
                                  if pdsf.extension.lower() != '.fmt']
 
