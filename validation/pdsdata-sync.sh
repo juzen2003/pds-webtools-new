@@ -14,7 +14,7 @@
 # pdsdata-admin to the drive pdsdata-raid45.
 ################################################################################
 
-for voltype in metadata previews calibrated diagrams volumes _infoshelf-volumes _infoshelf-archives-volumes _linkshelf-volumes _volinfo
+for voltype in metadata previews calibrated diagrams volumes
 do
   if [ -d /Volumes/pdsdata-$1/holdings/$voltype/$3 ]; then
     echo "\n\n**** holdings/archives-$voltype/$3 ****"
