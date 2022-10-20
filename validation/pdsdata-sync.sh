@@ -31,31 +31,37 @@ do
               /Volumes/pdsdata-$1/holdings/checksums-archives-$voltype/ \
               /Volumes/pdsdata-$2/holdings/checksums-archives-$voltype/ $4
 
-    echo "\n\n**** shelves/info/$voltype/$3 ****"
-    rsync -av /Volumes/pdsdata-$1/shelves/info/$voltype/$3/ \
-              /Volumes/pdsdata-$2/shelves/info/$voltype/$3/ $4
+    echo "\n\n**** holdings/_infoshelf-$voltype/$3 ****"
+    rsync -av /Volumes/pdsdata-$1/holdings/_infoshelf-$voltype/$3/ \
+              /Volumes/pdsdata-$2/holdings/_infoshelf-$voltype/$3/ $4
 
-    echo "\n\n**** shelves/info/archives-$voltype/$3_info.py ****"
+    echo "\n\n**** holdings/_infoshelf-archives-$voltype/$3_info.py ****"
     rsync -av --include="$3_info.py" --include="$3_info.pickle" \
               --exclude="*" \
-              /Volumes/pdsdata-$1/shelves/info/archives-$voltype/ \
-              /Volumes/pdsdata-$2/shelves/info/archives-$voltype/ $4
+              /Volumes/pdsdata-$1/holdings/_infoshelf-archives-$voltype/ \
+              /Volumes/pdsdata-$2/holdings/_infoshelf-archives-$voltype/ $4
 
-    if [ -d /Volumes/pdsdata-$1/shelves/links/$voltype ]; then
-      echo "\n\n**** shelves/info/links/$voltype/$3 ****"
-      rsync -av /Volumes/pdsdata-$1/shelves/links/$voltype/$3/ \
-                /Volumes/pdsdata-$2/shelves/links/$voltype/$3/ $4
+    if [ -d /Volumes/pdsdata-$1/holdings/_linkshelf-$voltype ]; then
+      echo "\n\n**** holdings/_linkshelf-$voltype/$3 ****"
+      rsync -av /Volumes/pdsdata-$1/holdings/_linkshelf-$voltype/$3/ \
+                /Volumes/pdsdata-$2/holdings/_linkshelf-$voltype/$3/ $4
     fi
 
-    if [ -d /Volumes/pdsdata-$1/shelves/index/$voltype ]; then
-      echo "\n\n**** shelves/info/index/$voltype/$3 ****"
-      rsync -av /Volumes/pdsdata-$1/shelves/index/$voltype/$3/ \
-                /Volumes/pdsdata-$2/shelves/index/$voltype/$3/ $4
+    if [ -d /Volumes/pdsdata-$1/holdings/_indexshelf-$voltype ]; then
+      echo "\n\n**** holdings/_indexshelf-$voltype/$3 ****"
+      rsync -av /Volumes/pdsdata-$1/holdings/_indexshelf-$voltype/$3/ \
+                /Volumes/pdsdata-$2/holdings/_indexshelf-$voltype/$3/ $4
     fi
 
     echo "\n\n**** holdings/$voltype/$3 ****"
     rsync -av /Volumes/pdsdata-$1/holdings/$voltype/$3/ \
               /Volumes/pdsdata-$2/holdings/$voltype/$3/ $4
+
+    echo "\n\n**** holdings/_volinfo/$3.txt ****"
+    rsync -av --include="$3.txt" --exclude="*" \
+              /Volumes/pdsdata-$1/holdings/_volinfo/ \
+              /Volumes/pdsdata-$2/holdings/_volinfo/ $4
+
   fi
 done
 
