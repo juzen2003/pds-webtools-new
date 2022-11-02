@@ -57,13 +57,18 @@ do
     rsync -av /Volumes/pdsdata-$1/holdings/$voltype/$3/ \
               /Volumes/pdsdata-$2/holdings/$voltype/$3/ $4
 
-    echo "\n\n**** holdings/_volinfo/$3.txt ****"
-    rsync -av --include="$3.txt" --exclude="*" \
-              /Volumes/pdsdata-$1/holdings/_volinfo/ \
-              /Volumes/pdsdata-$2/holdings/_volinfo/ $4
-
   fi
 done
+
+echo "\n\n**** holdings/_volinfo/$3.txt ****"
+rsync -av --include="$3.txt" --exclude="*" \
+      /Volumes/pdsdata-$1/holdings/_volinfo/ \
+      /Volumes/pdsdata-$2/holdings/_volinfo/ $4
+
+echo "\n\n**** holdings/documents/$3 ****"
+rsync -av \
+      /Volumes/pdsdata-$1/holdings/documents/$3/ \
+      /Volumes/pdsdata-$2/holdings/documents/$3/ $4
 
 ################################################################################
 
