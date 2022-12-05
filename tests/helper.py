@@ -5,7 +5,7 @@ import pdsgrouptable
 
 try:
     PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
-except KeyError:
+except KeyError: # pragma: no cover
     PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 def instantiate_target_pdsfile(path, is_abspath=True):
@@ -65,4 +65,3 @@ def opus_products_test(input_path, expected):
             all_files_abspath.append(pdsf.abspath)
         msg = f'File does not match under {key}'
         assert all_files_abspath.sort() == expected[key].sort(), msg
-

@@ -11,12 +11,12 @@ from tests.helper import instantiate_target_pdsfile, get_pdsfiles
 # Check environment variables or else look in the default places
 try:
     PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
-except KeyError:
+except KeyError: # pragma: no cover
     PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 try:
     PDS_TESTING_ROOT = PDS_HOLDINGS_DIR[:PDS_HOLDINGS_DIR.rindex('pdsdata')]
-except ValueError:
+except ValueError: # pragma: no cover
     PDS_TESTING_ROOT = '/Library/WebServer/Documents/'
 
 ################################################################################

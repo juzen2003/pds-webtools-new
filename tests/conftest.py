@@ -5,7 +5,7 @@ import pytest
 
 try:
     PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
-except KeyError:
+except KeyError: # pragma: no cover
     PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 ################################################################################
@@ -26,7 +26,7 @@ def setup(request):
         pdsfile.use_shelves_only(True)
     elif mode == '2':
         pdsfile.use_shelves_only(False)
-    else: # default
+    else: # pragma: no cover
         pdsfile.use_shelves_only(True)
     turn_on_logger("test_log.txt")
     pdsfile.preload(PDS_HOLDINGS_DIR)

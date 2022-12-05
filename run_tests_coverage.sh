@@ -3,7 +3,6 @@ echo "Clean up previous coverage record"
 coverage erase
 count=1
 numOfModes=2
-targetFile="pdsfile.py\|pdsgroup.py\|pdsgrouptable.py"
 
 while [ $count -le $numOfModes ]
 do
@@ -14,7 +13,7 @@ do
 done
 echo "Combine results from all modes"
 coverage combine
-echo "Report coverage"
-coverage report |grep $targetFile
 echo "Generate html"
 coverage html
+echo "Report coverage"
+coverage report

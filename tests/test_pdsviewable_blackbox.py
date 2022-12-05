@@ -7,7 +7,7 @@ from tests.helper import instantiate_target_pdsfile
 
 try:
     PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
-except KeyError:
+except KeyError: # pragma: no cover
     PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 ################################################################################

@@ -735,6 +735,7 @@ from .pytest_support import *
           False): ['documents/VGISS_5xxx/VICAR-File-Format.pdf',
                    'documents/VGISS_5xxx/User-Tutorial.txt',
                    'documents/VGISS_5xxx/Saturn-Image-Anomalies.txt',
+                   'documents/VGISS_5xxx/Image-Processing.txt',
                    'documents/VGISS_5xxx/Jupiter-Image-Anomalies.txt',
                    'documents/VGISS_5xxx/CDROM-Info.txt']}
         )

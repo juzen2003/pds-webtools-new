@@ -403,7 +403,6 @@ def test_opus_id_to_primary_logical_path():
             # Every associated product is in the product set except metadata
             for category in ('volumes', 'previews'):
                 for abspath in pdsf.associated_abspaths(category):
-                    if '.' not in os.path.basename(abspath): continue   # skip dirs
                     assert abspath in opus_id_abspaths
 
 @pytest.mark.parametrize(

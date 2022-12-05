@@ -13,7 +13,7 @@ from tests.helper import *
 
 try:
     PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
-except KeyError:
+except KeyError: # pragma: no cover
     PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 PDS_PDSDATA_PATH = PDS_HOLDINGS_DIR[:PDS_HOLDINGS_DIR.index('holdings')]
@@ -229,7 +229,7 @@ class TestPdsFileBlackBox:
     def test_absolute_or_logical_path(self, input_path, expected):
         """absolute_or_logical_path: get abspath."""
         target_pdsfile = instantiate_target_pdsfile(input_path)
-        if expected is None:
+        if expected is None: # pragma: no cover
             expected = PDS_HOLDINGS_DIR + '/' + input_path
         assert target_pdsfile.absolute_or_logical_path == expected
 
@@ -262,7 +262,7 @@ class TestPdsFileBlackBox:
         except ValueError:
             dot_idx = None
 
-        if expected is None:
+        if expected is None: # pragma: no cover
             expected = input_path[dot_idx:] if dot_idx else ''
         assert target_pdsfile.extension == expected
 
@@ -281,10 +281,10 @@ class TestPdsFileBlackBox:
         input_path = input_path[:-1] if input_path[-1] == '/' else input_path
         try:
             slash_idx = input_path.rindex('/')
-        except ValueError:
+        except ValueError: # pragma: no cover
             slash_idx = None
 
-        if expected is None:
+        if expected is None: # pragma: no cover
             expected = input_path[:slash_idx] if slash_idx else ''
         assert target_pdsfile.parent_logical_path == expected
 
@@ -619,7 +619,7 @@ class TestPdsFileBlackBox:
              True),
         ]
     )
-    def test_continuous_view_allowed(self, input_path, expected):
+    def test_continuous_view_allowed2(self, input_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res = target_pdsfile.continuous_view_allowed
         assert res == expected
@@ -944,9 +944,8 @@ class TestPdsFileBlackBox:
     )
     def test_from_lid_mismatched_lid(self, input_lid, expected):
         try:
-            res = pdsfile.PdsFile.from_lid(input_lid)
-            # Must raise an exception
-            assert False
+            res = pdsfile.PdsFile.from_lid(input_lid) # Must raise an exception
+            assert False # pragma: no cover
         except ValueError as e:
             # input LID data set id doesn't match the one from res
             assert 'does not match the one from pdsfile:' in str(e)
@@ -960,9 +959,8 @@ class TestPdsFileBlackBox:
     )
     def test_from_lid_invalid_lid(self, input_lid, expected):
         try:
-            res = pdsfile.PdsFile.from_lid(input_lid)
-            # Must raise an exception
-            assert False
+            res = pdsfile.PdsFile.from_lid(input_lid) # Must raise an exception
+            assert False # pragma: no cover
         except ValueError as e:
             # input LID is not a valid LID
             assert 'is not a valid LID' in str(e)
