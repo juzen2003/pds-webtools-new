@@ -1883,7 +1883,7 @@ class PdsFile(object):
 
         if len(self._info[4]) > 2:      # (0,0,'TBD') means fill in the size now
 
-            LOGGER.warn('Retrieving viewable shape', self.abspath)
+            LOGGER.debug('Retrieving viewable shape', self.abspath)
             try:
                 im = PIL.Image.open(self.abspath)
                 shape = im.size
