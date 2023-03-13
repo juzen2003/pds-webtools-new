@@ -31,22 +31,23 @@ import translator
 ################################################################################
 # Configuration
 ################################################################################
+PDS4_HOLDINGS = 'pds4-holdings'
 
 VOLTYPES = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews',
-            'documents']
+            'documents', 'bundles']
 VIEWABLE_VOLTYPES = ['previews', 'diagrams']
 
 VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'tif', 'tiff', 'jpeg', 'jpeg_small'])
 DATAFILE_EXTS = set(['dat', 'img', 'cub', 'qub', 'fit', 'fits'])
 
-VOLSET_REGEX        = re.compile(r'^([A-Z][A-Z0-9x]{1,5}_[0-9x]{3}x)$')
-VOLSET_REGEX_I      = re.compile(VOLSET_REGEX.pattern, re.I)
-VOLSET_PLUS_REGEX   = re.compile(VOLSET_REGEX.pattern[:-1] +
+BUNDLESET_REGEX        = re.compile(r'(^uranus_occs_earthbased)$') # Hard-code for the moment, but will need to generalise
+BUNDLESET_REGEX_I      = re.compile(BUNDLESET_REGEX.pattern, re.I)
+BUNDLESET_PLUS_REGEX   = re.compile(BUNDLESET_REGEX.pattern[:-1] +
                         r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
                         r'_in_prep|_prelim|_peer_review|_lien_resolution|)' +
                         r'((|_calibrated|_diagrams|_metadata|_previews)' +
                         r'(|_md5\.txt|\.tar\.gz))$')
-VOLSET_PLUS_REGEX_I = re.compile(VOLSET_PLUS_REGEX.pattern, re.I)
+BUNDLESET_PLUS_REGEX_I = re.compile(BUNDLESET_PLUS_REGEX.pattern, re.I)
 # Groups are (volset, version_suffix, other_suffix, extension)
 # Example: "COISS_0xxx_v1_calibrated_md5.txt" -> ("COISS_0xxx", "_v1",
 #                                                 "_calibrated", "_md5.txt")
@@ -54,19 +55,19 @@ VOLSET_PLUS_REGEX_I = re.compile(VOLSET_PLUS_REGEX.pattern, re.I)
 CATEGORY_REGEX      = re.compile(r'^(|checksums\-)(|archives\-)(\w+)$')
 CATEGORY_REGEX_I    = re.compile(CATEGORY_REGEX.pattern, re.I)
 
-VOLNAME_REGEX       = re.compile(r'^([A-Z][A-Z0-9]{1,5}_(?:[0-9]{4}))$')
-VOLNAME_REGEX_I     = re.compile(VOLNAME_REGEX.pattern, re.I)
-VOLNAME_PLUS_REGEX  = re.compile(VOLNAME_REGEX.pattern[:-1] +
+BUNDLENAME_REGEX       = re.compile(r'^(uranus_occ_u\d{0,4}._[a-z]*_(fos|\d{2,3}cm))$') # regex for uranus occs bundle, will need to expand for other bundles
+BUNDLENAME_REGEX_I     = re.compile(BUNDLENAME_REGEX.pattern, re.I)
+BUNDLENAME_PLUS_REGEX  = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
                                   r'(|_[a-z]+)(|_md5\.txt|\.tar\.gz)$')
-VOLNAME_PLUS_REGEX_I = re.compile(VOLNAME_PLUS_REGEX.pattern, re.I)
+BUNDLENAME_PLUS_REGEX_I = re.compile(BUNDLENAME_PLUS_REGEX.pattern, re.I)
 # Groups are (volname, suffix, extension)
 # Example: "VGISS_5101_previews_md5.txt" -> ("VGISS_5101", "_previews",
 #                                            "_md5.txt")
 
-VOLNAME_VERSION     = re.compile(VOLNAME_REGEX.pattern[:-1] +
+BUNDLENAME_VERSION     = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
                         r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
                         r'_in_prep|_prelim|_peer_review|_lien_resolution)$')
-VOLNAME_VERSION_I   = re.compile(VOLNAME_VERSION.pattern, re.I)
+BUNDLENAME_VERSION_I   = re.compile(BUNDLENAME_VERSION.pattern, re.I)
 # Example: "VGISS_5101_peer_review" -> ("VGISS_5101", "_peer_review")
 
 VIEWABLE_ANCHOR_REGEX = re.compile(r'(.*/\w+)_[a-z]+\.(jpg|png)')
@@ -3246,7 +3247,7 @@ class PdsFile(object):
             if self.volset:
                 class_key = self.volset
             elif self.category_:
-                matchobj = VOLSET_PLUS_REGEX_I.match(basename)
+                matchobj = BUNDLESET_PLUS_REGEX_I.match(basename)
                 if matchobj is None:
                     raise ValueError('Illegal volume set directory "%s": %s' %
                                      (basename, self.logical_path))
@@ -3280,7 +3281,7 @@ class PdsFile(object):
                     return this._complete(must_exist, caching, lifetime)
 
                 # Handle volume name
-                matchobj = VOLNAME_PLUS_REGEX_I.match(basename)
+                matchobj = BUNDLENAME_PLUS_REGEX_I.match(basename)
                 if matchobj:
                     this.volname_ = basename + '/'
                     this.volname  = matchobj.group(1)
@@ -3298,7 +3299,7 @@ class PdsFile(object):
             if self.category_:
 
                 # Handle volume set and suffix
-                matchobj = VOLSET_PLUS_REGEX_I.match(basename)
+                matchobj = BUNDLESET_PLUS_REGEX_I.match(basename)
                 if matchobj is None:
                     raise ValueError('Illegal volume set directory "%s": %s' %
                                      (basename, this.logical_path))
@@ -3492,18 +3493,17 @@ class PdsFile(object):
         # Search for "holdings"
         parts_lc = [p.lower() for p in parts]
         try:
-            holdings_index = parts_lc.index('holdings')
+            pds4_holdings_index = parts_lc.index(PDS4_HOLDINGS) # Change variable name to distinguish from PDS3
         except ValueError:
-            raise ValueError('"holdings" directory not found in: ' + abspath)
-
+            raise ValueError('"{}" directory not found in: '.format(PDS4_HOLDINGS) + abspath)
         ### Pause the cache
         CACHE.pause()
         try:
             # Fill in this.disk_, the absolute path to the directory containing
             # subdirectory "holdings"
             this = PdsFile()
-            this.disk_ = drive_spec + '/'.join(parts[:holdings_index]) + '/'
-            this.root_ = this.disk_ + 'holdings/'
+            this.disk_ = drive_spec + '/'.join(parts[:pds4_holdings_index]) + '/'
+            this.root_ = this.disk_ + PDS4_HOLDINGS + '/'
 
             # Get case right if necessary
             if fix_case:
@@ -3519,27 +3519,26 @@ class PdsFile(object):
             # named holdings, holding1, ... holdings9
 
             if len(LOCAL_PRELOADED) <= 1:   # There's only one holdings dir
-                this.html_root_ = '/holdings/'
+                this.html_root_ = '/' + PDS4_HOLDINGS +'/'
             else:                       # Find this holdings dir among preloaded
-                holdings_abspath = this.disk_ + 'holdings'
+                pds4_holdings_abspath = this.disk_ + PDS4_HOLDINGS
                 try:
-                    k = LOCAL_PRELOADED.index(holdings_abspath)
+                    k = LOCAL_PRELOADED.index(pds4_holdings_abspath)
                 except ValueError:
-                    LOGGER.warn('No URL: ' + holdings_abspath)
+                    LOGGER.warn('No URL: ' + pds4_holdings_abspath)
                     this.html_root_ = '/'
 
                 else:       # "holdings", "holdings1", ... "holdings9"
                     if k:
-                        this.html_root_ = '/holdings' + str(k) + '/'
+                        this.html_root_ = '/' + PDS4_HOLDINGS + str(k) + '/'
                     else:
-                        this.html_root_ = '/holdings/'
+                        this.html_root_ = '/' + PDS4_HOLDINGS + '/'
 
             this.logical_path = ''
-            this.abspath = this.disk_ + 'holdings'
-            this.basename = 'holdings'
-
+            this.abspath = this.disk_ + PDS4_HOLDINGS
+            this.basename = PDS4_HOLDINGS
             # Handle the rest of the tree using child()
-            for part in parts[holdings_index + 1:]:
+            for part in parts[pds4_holdings_index + 1:]:
                 this = this.child(part, fix_case=fix_case, must_exist=must_exist,
                                         caching=caching, lifetime=lifetime)
 
@@ -4877,13 +4876,13 @@ class PdsFile(object):
             basename = self.basename
 
         # Special case: volset[_...], volset[_...]_md5.txt, volset[_...].tar.gz
-        matchobj = VOLSET_PLUS_REGEX.match(basename)
+        matchobj = BUNDLESET_PLUS_REGEX.match(basename)
         if matchobj is not None:
             return (matchobj.group(1), matchobj.group(2) + matchobj.group(3),
                     matchobj.group(4))
 
         # Special case: volname[_...]_md5.txt, volname[_...].tar.gz
-        matchobj = VOLNAME_PLUS_REGEX.match(basename)
+        matchobj = BUNDLENAME_PLUS_REGEX.match(basename)
         if matchobj is not None:
             test = self.SPLIT_RULES.first(basename) # a split rule overrides
                                                     # the default behavior
@@ -4920,7 +4919,7 @@ class PdsFile(object):
         def modified_sort_key(basename):
 
             # Volumes of the same name sort by decreasing version number
-            matchobj = VOLSET_PLUS_REGEX_I.match(basename)
+            matchobj = BUNDLESET_PLUS_REGEX_I.match(basename)
             if matchobj is not None:
                 splits = matchobj.groups()
                 parts = [splits[0],
@@ -5661,7 +5660,7 @@ def is_logical_path(path):
 def logical_path_from_abspath(abspath):
     """Logical path derived from an absolute path."""
 
-    parts = abspath.partition('/holdings/')
+    parts = abspath.partition('/'+PDS4_HOLDINGS+'/')
     if parts[1]:
         return parts[2]
 
