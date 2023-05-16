@@ -36,7 +36,7 @@ VOLTYPES = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews',
             'documents']
 VIEWABLE_VOLTYPES = ['previews', 'diagrams']
 
-VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'tif', 'tiff', 'jpeg', 'jpeg_small'])
+VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'jpeg', 'jpeg_small'])
 DATAFILE_EXTS = set(['dat', 'img', 'cub', 'qub', 'fit', 'fits'])
 
 VOLSET_REGEX        = re.compile(r'^([A-Z][A-Z0-9x]{1,5}_[0-9x]{3}x)$')
