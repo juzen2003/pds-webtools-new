@@ -4634,9 +4634,6 @@ class PdsFile(object):
         volname         can be used to get info about a volume when the method
                         is applied to its enclosing volset.
         """
-        # we don't have shelf files for documents
-        if self.is_documents:
-            return []
 
         (shelf_path, key) = self.shelf_path_and_key(shelf_type, volname)
 
