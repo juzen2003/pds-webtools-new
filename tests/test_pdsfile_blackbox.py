@@ -640,7 +640,14 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('previews/COUVIS_0xxx/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39_thumb.png',
-             'f43e6fe3d9eb02ed72e0aba47be443f2')
+             'f43e6fe3d9eb02ed72e0aba47be443f2'),
+            ('documents/COCIRS_0xxx', ''),
+            ('documents/COCIRS_5xxx', ''),
+            ('documents/COCISS_0xxx', ''),
+            ('documents/COUVIS_0xxx', ''),
+            ('documents/COUVIS_8xxx', ''),
+            ('documents/COVIMS_0xxx', ''),
+            ('documents/COVIMS_8xxx', ''),
         ]
     )
     def test_checksum(self, input_path, expected):
