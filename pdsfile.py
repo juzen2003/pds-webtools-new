@@ -1305,12 +1305,10 @@ class PdsFile(object):
                     # If the shelf file is missing, try the actual file system
                     # For documentation, we have all files available but not the shelf
                     # files, therefore we will check the actual file system for documents.
-                    if '/holdings/documents' in abspath:
-                        childnames = os.listdir(abspath)
-                        return [c for c in childnames
-                                if c != '.DS_Store' and not c.startswith('._')]
-                    else:
-                        return []
+                    childnames = os.listdir(abspath)
+                    return [c for c in childnames
+                            if c != '.DS_Store' and not c.startswith('._')]
+
                 if not results:
                     return []
 
