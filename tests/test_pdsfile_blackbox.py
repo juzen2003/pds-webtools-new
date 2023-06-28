@@ -1029,6 +1029,20 @@ class TestPdsFileBlackBox:
         assert isinstance(res, pdsfile.PdsFile)
         assert res.abspath == expected
 
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            ('volumes/COVIMS_0xxx/COVIMS_0001/data/1999017T031657_1999175T202056/v1308946681_1_002.qub',
+             True),
+            ('documents/COCIRS_0xxx/Chan-etal-2015.link',
+             None),
+        ]
+    )
+    def test_shelf_exists_if_expected(self, input_path, expected):
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        res = target_pdsfile.shelf_exists_if_expected()
+        assert res == expected
+
     ############################################################################
     # Test for OPUS support methods
     ############################################################################

@@ -4733,6 +4733,20 @@ class PdsFile(object):
         # This leaves volset-level files and their AAREADMEs
         return False
 
+    def shelf_exists_if_expected(self):
+        """True if shelf exists for a pdsfile instance expected to have the shelf file.
+        False if shelf doesn't exist for a pdsfile instance expected to have one."""
+
+        if self.info_shelf_expected:
+            try:
+                self.shelf_lookup('info')
+                return True
+            except OSError:
+                return False
+
+        # Return None if a pdsfile instance doesn't expect the shelf file
+        return None
+
     ############################################################################
     # Log path associations
     ############################################################################
