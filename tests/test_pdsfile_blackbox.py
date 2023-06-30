@@ -640,7 +640,14 @@ class TestPdsFileBlackBox:
         'input_path,expected',
         [
             ('previews/COUVIS_0xxx/COUVIS_0009/DATA/D2004_274/EUV2004_274_01_39_thumb.png',
-             'f43e6fe3d9eb02ed72e0aba47be443f2')
+             'f43e6fe3d9eb02ed72e0aba47be443f2'),
+            ('documents/COCIRS_0xxx', ''),
+            ('documents/COCIRS_5xxx', ''),
+            ('documents/COCISS_0xxx', ''),
+            ('documents/COUVIS_0xxx', ''),
+            ('documents/COUVIS_8xxx', ''),
+            ('documents/COVIMS_0xxx', ''),
+            ('documents/COVIMS_8xxx', ''),
         ]
     )
     def test_checksum(self, input_path, expected):
@@ -1021,6 +1028,20 @@ class TestPdsFileBlackBox:
         res = pdsfile.PdsFile.from_path(path=input_path)
         assert isinstance(res, pdsfile.PdsFile)
         assert res.abspath == expected
+
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            ('volumes/COVIMS_0xxx/COVIMS_0001/data/1999017T031657_1999175T202056/v1308946681_1_002.qub',
+             True),
+            ('documents/COCIRS_0xxx/Chan-etal-2015.link',
+             None),
+        ]
+    )
+    def test_shelf_exists_if_expected(self, input_path, expected):
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        res = target_pdsfile.shelf_exists_if_expected()
+        assert res == expected
 
     ############################################################################
     # Test for OPUS support methods

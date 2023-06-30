@@ -36,7 +36,7 @@ VOLTYPES = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews',
             'documents']
 VIEWABLE_VOLTYPES = ['previews', 'diagrams']
 
-VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'tif', 'tiff', 'jpeg', 'jpeg_small'])
+VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'jpeg', 'jpeg_small'])
 DATAFILE_EXTS = set(['dat', 'img', 'cub', 'qub', 'fit', 'fits'])
 
 VOLSET_REGEX        = re.compile(r'^([A-Z][A-Z0-9x]{1,5}_[0-9x]{3}x)$')
@@ -1883,7 +1883,7 @@ class PdsFile(object):
 
         if len(self._info[4]) > 2:      # (0,0,'TBD') means fill in the size now
 
-            LOGGER.warn('Retrieving viewable shape', self.abspath)
+            LOGGER.debug('Retrieving viewable shape', self.abspath)
             try:
                 im = PIL.Image.open(self.abspath)
                 shape = im.size
@@ -4632,9 +4632,6 @@ class PdsFile(object):
         volname         can be used to get info about a volume when the method
                         is applied to its enclosing volset.
         """
-        # we don't have shelf files for documents
-        if self.is_documents:
-            return
 
         (shelf_path, key) = self.shelf_path_and_key(shelf_type, volname)
 
@@ -4735,6 +4732,20 @@ class PdsFile(object):
 
         # This leaves volset-level files and their AAREADMEs
         return False
+
+    def shelf_exists_if_expected(self):
+        """True if shelf exists for a pdsfile instance expected to have the shelf file.
+        False if shelf doesn't exist for a pdsfile instance expected to have one."""
+
+        if self.info_shelf_expected:
+            try:
+                self.shelf_lookup('info')
+                return True
+            except OSError:
+                return False
+
+        # Return None if a pdsfile instance doesn't expect the shelf file
+        return None
 
     ############################################################################
     # Log path associations
