@@ -40,7 +40,8 @@ VIEWABLE_VOLTYPES = ['previews', 'diagrams']
 VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'tif', 'tiff', 'jpeg', 'jpeg_small'])
 DATAFILE_EXTS = set(['dat', 'img', 'cub', 'qub', 'fit', 'fits'])
 
-BUNDLESET_REGEX        = re.compile(r'(^uranus_occs_earthbased)$') # Hard-code for the moment, but will need to generalise
+#BUNDLESET_REGEX        = re.compile(r'(^uranus_occs_earthbased)$') # Hard-code for the moment, but will need to generalise
+BUNDLESET_REGEX        = re.compile(r'^(uranus\_occs\_earthbased|^cassini_iss|^cassini_vims)$') # Use new "cassini" bundleset to hold cassini_iss_cruise, etc bundles
 BUNDLESET_REGEX_I      = re.compile(BUNDLESET_REGEX.pattern, re.I)
 BUNDLESET_PLUS_REGEX   = re.compile(BUNDLESET_REGEX.pattern[:-1] +
                         r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
@@ -55,7 +56,7 @@ BUNDLESET_PLUS_REGEX_I = re.compile(BUNDLESET_PLUS_REGEX.pattern, re.I)
 CATEGORY_REGEX      = re.compile(r'^(|checksums\-)(|archives\-)(\w+)$')
 CATEGORY_REGEX_I    = re.compile(CATEGORY_REGEX.pattern, re.I)
 
-BUNDLENAME_REGEX       = re.compile(r'^(uranus_occ_u\d{0,4}._[a-z]*_(fos|\d{2,3}cm))$') # regex for uranus occs bundle, will need to expand for other bundles
+BUNDLENAME_REGEX       = re.compile(r'((^uranus_occ_u\d{0,4}._[a-z]*_(fos|\d{2,3}cm))|(^cassini\_[a-z]{3,4}\_cruise))$') # regex for uranus occs bundle, and cassini bundles
 BUNDLENAME_REGEX_I     = re.compile(BUNDLENAME_REGEX.pattern, re.I)
 BUNDLENAME_PLUS_REGEX  = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
                                   r'(|_[a-z]+)(|_md5\.txt|\.tar\.gz)$')
@@ -5537,7 +5538,7 @@ PdsFile.SUBCLASSES['default'] = PdsFile
 ################################################################################
 
 try:
-    from rules import *     # Data set-specific rules are implemented as
+    from pds4_rules import *     # Data set-specific rules are implemented as
                             # subclasses of PdsFile
 except AttributeError:
     pass                    # This occurs when running pytests on individual
