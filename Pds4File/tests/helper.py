@@ -9,7 +9,7 @@ except KeyError: # pragma: no cover
 
 def instantiate_target_pdsfile(path, is_abspath=True):
     if is_abspath:
-        TESTFILE_PATH = PDS4_HOLDINGS_DIR + '/' + path
+        TESTFILE_PATH = PDS4_HOLDINGS_DIR + '/bundles/' + path
         target_pdsfile = pds4file.PdsFile.from_abspath(TESTFILE_PATH)
     else:
         TESTFILE_PATH = path
