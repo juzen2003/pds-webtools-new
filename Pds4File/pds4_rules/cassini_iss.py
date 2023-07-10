@@ -405,7 +405,7 @@ class cassini_iss(pds4file.PdsFile): # Cassini_ISS
     ASSOCIATIONS['metadata']   += associations_to_metadata
     ASSOCIATIONS['documents']  += associations_to_documents
 
-    pdsfile.PdsFile.FILESPEC_TO_BUNDLESET = filespec_to_bundleset + pdsfile.PdsFile.FILESPEC_TO_BUNDLESET
+    pds4file.PdsFile.FILESPEC_TO_BUNDLESET = filespec_to_bundleset + pds4file.PdsFile.FILESPEC_TO_BUNDLESET
 
     def FILENAME_KEYLEN(self):
         if self.volset[:10] == 'COISS_3xxx':

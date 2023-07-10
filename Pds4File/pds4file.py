@@ -4170,11 +4170,11 @@ class PdsFile(object):
         path, without the category or prefix specified.
         """
 
-        volset = PdsFile.FILESPEC_TO_BUNDLESET.first(filespec)
-        if not volset:
+        bundleset = PdsFile.FILESPEC_TO_BUNDLESET.first(filespec)
+        if not bundleset:
             raise ValueError('Unrecognized file specification: ' + filespec)
 
-        return PdsFile.from_logical_path('volumes/' + volset + '/' + filespec,
+        return PdsFile.from_logical_path('bundles/' + bundleset + '/' + filespec,
                                          fix_case)
 
     @staticmethod
