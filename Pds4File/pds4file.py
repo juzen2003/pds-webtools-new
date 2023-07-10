@@ -719,7 +719,7 @@ class PdsFile(object):
         pdsfile_rules.OPUS_ID_TO_PRIMARY_LOGICAL_PATH
 
     OPUS_ID_TO_SUBCLASS = pdsfile_rules.OPUS_ID_TO_SUBCLASS
-    FILESPEC_TO_VOLSET = pdsfile_rules.FILESPEC_TO_VOLSET
+    FILESPEC_TO_BUNDLESET = pdsfile_rules.FILESPEC_TO_BUNDLESET
 
     FILENAME_KEYLEN = 0
 
@@ -4166,11 +4166,11 @@ class PdsFile(object):
 
     @staticmethod
     def from_filespec(filespec, fix_case=False):
-        """The PdsFile object based on a volume name plus file specification
+        """The PdsFile object based on a bundle name plus file specification
         path, without the category or prefix specified.
         """
 
-        volset = PdsFile.FILESPEC_TO_VOLSET.first(filespec)
+        volset = PdsFile.FILESPEC_TO_BUNDLESET.first(filespec)
         if not volset:
             raise ValueError('Unrecognized file specification: ' + filespec)
 
