@@ -3789,7 +3789,8 @@ class PdsFile(object):
                 # Pop the first entry from the pseudo-path and try again
                 parts = parts[1:]
 
-        # If the voltype is missing, it must be "volumes". For pds4, it's 'bundles/'
+        # If the voltype is missing, it must be "volumes" (for PDS3). For PDS4, it's
+        # "bundles"
         if this.voltype_ == '':
             # this.voltype_ = 'volumes/'
             this.voltype_ = 'bundles/'
