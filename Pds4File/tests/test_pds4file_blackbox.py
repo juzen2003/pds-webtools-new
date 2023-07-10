@@ -375,6 +375,15 @@ class TestPds4FileBlackBox:
             f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise'),
             ('cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308946681_xxx/1308946681_001-full.xml',
             f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308946681_xxx/1308946681_001-full.xml'),
+            ('uranus_occs_earthbased/uranus_occ_u0_kao_91cm',
+            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm'),('uranus_occ_u0_kao_91cm',
+            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm'),
+            ('uranus_occ_u0_kao_91cm/data/atmosphere',
+            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere'),
+            ('uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml',
+            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml'),
+            ('uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml',
+            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml'),
         ]
     )
     def test_from_path(self, input_path, expected):
