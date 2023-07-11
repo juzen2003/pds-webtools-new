@@ -294,8 +294,15 @@ opus_products = translator.TranslatorByRegex([
 
 opus_id = translator.TranslatorByRegex([
     (r'.*/cassini_vims/cassini_vims\w*/[a-z]*_raw/\d{3}xxxxxxx/\d{5}xxxxx/\d{10}_xxx/(\d{10}_\d{3}).*[a-z]{3}|.*/cassini_vims/cassini_vims\w*/[a-z]*_raw/\d{3}xxxxxxx/\d{5}xxxxx/(\d{10}).*[a-z]{3}', 0, r'co-vims-v\1\2'),
-]) # Suffix "_vis", "_ir" handled elsewhere in code. 
+]) # Suffix "_vis", "_ir" handled elsewhere in code.
 
+####################################################################################################################################
+# FILESPEC_TO_BUNDLESET
+####################################################################################################################################
+
+filespec_to_bundleset = translator.TranslatorByRegex([
+    (r'(cassini_vims)_.*', 0, r'\1'),
+])
 
 ####################################################################################################################################
 # OPUS_ID_TO_PRIMARY_LOGICAL_PATH
@@ -397,6 +404,8 @@ class cassini_vims(pds4file.PdsFile):
     ASSOCIATIONS['previews']   += associations_to_previews
     ASSOCIATIONS['metadata']   += associations_to_metadata
     ASSOCIATIONS['documents']  += associations_to_documents
+
+    pds4file.PdsFile.FILESPEC_TO_BUNDLESET = filespec_to_bundleset + pds4file.PdsFile.FILESPEC_TO_BUNDLESET
 
     def FILENAME_KEYLEN(self):
         if self.volset[:10] == 'COISS_3xxx':

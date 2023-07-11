@@ -317,7 +317,13 @@ opus_id = translator.TranslatorByRegex([
     (r'.*/uranus_occs_earthbased/(uranus_occ_u\d{0,4}_[a-z]*_(fos|\d{2,3}cm))/.*/.*/u\d{0,4}_[a-z]*_(fos|\d{2,3}cm)_(\d{3,4}nm_.*).[a-z]{3}', 0, r'\1'),
 ])
 
+####################################################################################################################################
+# FILESPEC_TO_BUNDLESET
+####################################################################################################################################
 
+filespec_to_bundleset = translator.TranslatorByRegex([
+    (r'(uranus_occ)_.*', 0, r'\1s_earthbased'),
+])
 
 ####################################################################################################################################
 # OPUS_ID_TO_PRIMARY_LOGICAL_PATH
@@ -420,6 +426,8 @@ class uranus_occs_earthbased(pds4file.PdsFile):
     ASSOCIATIONS['metadata']   += associations_to_metadata
     ASSOCIATIONS['documents']  += associations_to_documents
 
+    pds4file.PdsFile.FILESPEC_TO_BUNDLESET = filespec_to_bundleset + pds4file.PdsFile.FILESPEC_TO_BUNDLESET
+
     def FILENAME_KEYLEN(self):
         if self.volset[:10] == 'COISS_3xxx':
             return 0
@@ -427,7 +435,7 @@ class uranus_occs_earthbased(pds4file.PdsFile):
             return 11   # trim off suffixes
 
 # Global attribute shared by all subclasses
-pds4file.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-iss-.*', 0, uranus_occs_earthbased)]) + \
+pds4file.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'uranus-occ-.*', 0, uranus_occs_earthbased)]) + \
                                       pds4file.PdsFile.OPUS_ID_TO_SUBCLASS
 
 ####################################################################################################################################

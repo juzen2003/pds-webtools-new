@@ -20,7 +20,7 @@ try: # pragma: no cover
 except ImportError: # pragma: no cover
     HAS_PYLIBMC = False
 
-import pdsfile_rules        # Default parsing rules
+import pds4file_rules        # Default parsing rules
 import pdscache
 import pdslogger
 import pdsviewable
@@ -41,7 +41,7 @@ VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'tif', 'tiff', 'jpeg', 'jpeg_small'])
 DATAFILE_EXTS = set(['dat', 'img', 'cub', 'qub', 'fit', 'fits'])
 
 #BUNDLESET_REGEX        = re.compile(r'(^uranus_occs_earthbased)$') # Hard-code for the moment, but will need to generalise
-BUNDLESET_REGEX        = re.compile(r'^(uranus\_occs\_earthbased|^cassini_iss|^cassini_vims)$') # Use new "cassini" bundleset to hold cassini_iss_cruise, etc bundles
+BUNDLESET_REGEX        = re.compile(r'^(uranus_occs_earthbased|^cassini_iss|^cassini_vims)$') # Use new "cassini" bundleset to hold cassini_iss_cruise, etc bundles
 BUNDLESET_REGEX_I      = re.compile(BUNDLESET_REGEX.pattern, re.I)
 BUNDLESET_PLUS_REGEX   = re.compile(BUNDLESET_REGEX.pattern[:-1] +
                         r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
@@ -698,28 +698,28 @@ class PdsFile(object):
     VOLSET_TRANSLATOR = translator.TranslatorByRegex([('.*', 0, 'default')])
 
     # Default translators, can be overridden by bundleset-specific subclasses
-    DESCRIPTION_AND_ICON = pdsfile_rules.DESCRIPTION_AND_ICON
-    ASSOCIATIONS = pdsfile_rules.ASSOCIATIONS
-    VERSIONS = pdsfile_rules.VERSIONS
-    INFO_FILE_BASENAMES = pdsfile_rules.INFO_FILE_BASENAMES
-    NEIGHBORS = pdsfile_rules.NEIGHBORS
-    SIBLINGS = pdsfile_rules.SIBLINGS       # just used by Viewmaster right now
-    SORT_KEY = pdsfile_rules.SORT_KEY
-    SPLIT_RULES = pdsfile_rules.SPLIT_RULES
-    VIEW_OPTIONS = pdsfile_rules.VIEW_OPTIONS
-    VIEWABLES = pdsfile_rules.VIEWABLES
-    LID_AFTER_DSID = pdsfile_rules.LID_AFTER_DSID
-    DATA_SET_ID = pdsfile_rules.DATA_SET_ID
+    DESCRIPTION_AND_ICON = pds4file_rules.DESCRIPTION_AND_ICON
+    ASSOCIATIONS = pds4file_rules.ASSOCIATIONS
+    VERSIONS = pds4file_rules.VERSIONS
+    INFO_FILE_BASENAMES = pds4file_rules.INFO_FILE_BASENAMES
+    NEIGHBORS = pds4file_rules.NEIGHBORS
+    SIBLINGS = pds4file_rules.SIBLINGS       # just used by Viewmaster right now
+    SORT_KEY = pds4file_rules.SORT_KEY
+    SPLIT_RULES = pds4file_rules.SPLIT_RULES
+    VIEW_OPTIONS = pds4file_rules.VIEW_OPTIONS
+    VIEWABLES = pds4file_rules.VIEWABLES
+    LID_AFTER_DSID = pds4file_rules.LID_AFTER_DSID
+    DATA_SET_ID = pds4file_rules.DATA_SET_ID
 
-    OPUS_TYPE = pdsfile_rules.OPUS_TYPE
-    OPUS_FORMAT = pdsfile_rules.OPUS_FORMAT
-    OPUS_PRODUCTS = pdsfile_rules.OPUS_PRODUCTS
-    OPUS_ID = pdsfile_rules.OPUS_ID
+    OPUS_TYPE = pds4file_rules.OPUS_TYPE
+    OPUS_FORMAT = pds4file_rules.OPUS_FORMAT
+    OPUS_PRODUCTS = pds4file_rules.OPUS_PRODUCTS
+    OPUS_ID = pds4file_rules.OPUS_ID
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = \
-        pdsfile_rules.OPUS_ID_TO_PRIMARY_LOGICAL_PATH
+        pds4file_rules.OPUS_ID_TO_PRIMARY_LOGICAL_PATH
 
-    OPUS_ID_TO_SUBCLASS = pdsfile_rules.OPUS_ID_TO_SUBCLASS
-    FILESPEC_TO_BUNDLESET = pdsfile_rules.FILESPEC_TO_BUNDLESET
+    OPUS_ID_TO_SUBCLASS = pds4file_rules.OPUS_ID_TO_SUBCLASS
+    FILESPEC_TO_BUNDLESET = pds4file_rules.FILESPEC_TO_BUNDLESET
 
     FILENAME_KEYLEN = 0
 

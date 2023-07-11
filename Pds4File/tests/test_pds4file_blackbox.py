@@ -362,31 +362,53 @@ class TestPds4FileBlackBox:
     'input_path,expected',
         [
             ('cassini_iss/cassini_iss_cruise',
-            f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise'),
+             f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise'),
             ('cassini_iss_cruise',
-            f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise'),
+             f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise'),
             ('cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml',
-            f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml'),
+             f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml'),
             ('cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml',
-            f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml'),
+             f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml'),
             ('cassini_vims/cassini_vims_cruise',
-            f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise'),
+             f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise'),
             ('cassini_vims_cruise',
-            f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise'),
+             f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise'),
             ('cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308946681_xxx/1308946681_001-full.xml',
-            f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308946681_xxx/1308946681_001-full.xml'),
+             f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308946681_xxx/1308946681_001-full.xml'),
             ('uranus_occs_earthbased/uranus_occ_u0_kao_91cm',
-            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm'),('uranus_occ_u0_kao_91cm',
-            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm'),
+             f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm'),
+            ('uranus_occ_u0_kao_91cm',
+             f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm'),
             ('uranus_occ_u0_kao_91cm/data/atmosphere',
-            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere'),
+             f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere'),
             ('uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml',
-            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml'),
+             f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml'),
             ('uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml',
-            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml'),
+             f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml'),
         ]
     )
     def test_from_path(self, input_path, expected):
         res = pds4file.PdsFile.from_path(path=input_path)
+        assert isinstance(res, pds4file.PdsFile)
+        assert res.abspath == expected
+
+    @pytest.mark.parametrize(
+        'filespec,expected',
+        [
+            ('cassini_iss_cruise', f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise'),
+            ('cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml',
+             f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml'),
+            ('cassini_vims_cruise', f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise'),
+            ('cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308946681_xxx/1308946681_001-full.xml',
+             f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308946681_xxx/1308946681_001-full.xml'),
+            ('uranus_occ_u0_kao_91cm',
+             f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm'),
+            ('uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml',
+             f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml'),
+        ]
+    )
+    def test_from_filespec(self, filespec, expected):
+        res = pds4file.PdsFile.from_filespec(filespec=filespec)
+        print(res)
         assert isinstance(res, pds4file.PdsFile)
         assert res.abspath == expected
