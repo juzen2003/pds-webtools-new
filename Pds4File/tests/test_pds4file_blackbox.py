@@ -1,4 +1,5 @@
 import os
+import pds4file
 import pytest
 
 from tests.helper import instantiate_target_pdsfile
@@ -9,6 +10,8 @@ try:
 except KeyError: # pragma: no cover
     # TODO: update this when we know the actual path of pds4 holdings on the webserver
     PDS4_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+
+PDS4_BUNDLES_DIR = f'{PDS4_HOLDINGS_DIR}/bundles'
 
 ################################################################################
 # Blackbox tests for pds4file.py
@@ -66,9 +69,9 @@ class TestPds4FileBlackBox:
 #            ('uranus_occs_earthbased/uranus_occ_u0_kao_91cm',
 #             f'{PDS4_HOLDINGS_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm'),
              ('cassini_iss/cassini_iss_cruise',
-             f'{PDS4_HOLDINGS_DIR}/cassini_iss/cassini_iss_cruise'),
+             f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise'),
              ('cassini_vims/cassini_vims_cruise',
-             f'{PDS4_HOLDINGS_DIR}/cassini_vims/cassini_vims_cruise'),
+             f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise'),
         ]
     )
     def test_abspath(self, input_path, expected):
@@ -170,29 +173,29 @@ class TestPds4FileBlackBox:
             ('cassini_iss',
              ''), # bundlesets currently have empty string instead of False
             ('cassini_iss/cassini_iss_cruise',
-             True), 
+             True),
             ('cassini_iss/cassini_iss_cruise/browse',
              False),
             ('cassini_iss/cassini_iss_cruise/xml_schema/collection_xml_schema.csv',
              False),
             ('cassini_iss/cassini_iss_cruise',
-             True), 
+             True),
             ('cassini_iss/cassini_iss_cruise/bundle.xml',
              False),
             ('cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n.img',
              False),
             ('cassini_iss/cassini_iss_cruise/',
-             True), 
+             True),
             ('cassini_vims',
              ''), # bundlesets currently have empty string instead of False
             ('cassini_vims/cassini_vims_cruise',
-             True), 
+             True),
             ('cassini_vims/cassini_vims_cruise/calibration',
              False),
             ('cassini_vims/cassini_vims_cruise/xml_schema/collection_xml_schema.csv',
              False),
             ('cassini_vims/cassini_vims_cruise',
-             True), 
+             True),
             ('cassini_vims/cassini_vims_cruise/bundle.xml',
              False),
             ('cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947926_xxx/1308947926_008.qub',
@@ -200,7 +203,7 @@ class TestPds4FileBlackBox:
             ('cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx//1308947715.xml',
              False),
             ('cassini_vims/cassini_vims_cruise/',
-             True), 
+             True),
         ]
     )
     def test_is_bundle_dir(self, input_path, expected):
@@ -355,3 +358,35 @@ class TestPds4FileBlackBox:
         res = target_pdsfile.childnames
         assert res == expected
 
+    @pytest.mark.parametrize(
+    'input_path,expected',
+        [
+            ('cassini_iss/cassini_iss_cruise',
+            f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise'),
+            ('cassini_iss_cruise',
+            f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise'),
+            ('cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml',
+            f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml'),
+            ('cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml',
+            f'{PDS4_BUNDLES_DIR}/cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.xml'),
+            ('cassini_vims/cassini_vims_cruise',
+            f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise'),
+            ('cassini_vims_cruise',
+            f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise'),
+            ('cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308946681_xxx/1308946681_001-full.xml',
+            f'{PDS4_BUNDLES_DIR}/cassini_vims/cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308946681_xxx/1308946681_001-full.xml'),
+            ('uranus_occs_earthbased/uranus_occ_u0_kao_91cm',
+            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm'),('uranus_occ_u0_kao_91cm',
+            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm'),
+            ('uranus_occ_u0_kao_91cm/data/atmosphere',
+            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere'),
+            ('uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml',
+            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml'),
+            ('uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml',
+            f'{PDS4_BUNDLES_DIR}/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml'),
+        ]
+    )
+    def test_from_path(self, input_path, expected):
+        res = pds4file.PdsFile.from_path(path=input_path)
+        assert isinstance(res, pds4file.PdsFile)
+        assert res.abspath == expected

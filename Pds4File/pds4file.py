@@ -3753,21 +3753,24 @@ class PdsFile(object):
             matchobj = BUNDLENAME_PLUS_REGEX_I.match(parts[0])
             if matchobj:
                 this.bundlename = matchobj.group(1).upper()
-                extension = (matchobj.group(2) + matchobj.group(3)).lower()
 
-                # <bundlename>...tar.gz must be an archive file
-                if extension.endswith('.tar.gz'):
-                    this.archives_ = 'archives-'
+                # If there is a matched extension
+                if matchobj.group(2) and matchobj.group(3):
+                    extension = (matchobj.group(2) + matchobj.group(3)).lower()
 
-                # <bundlename>..._md5.txt must be a checksum file
-                elif extension.endswith('_md5.txt'):
-                    this.checksums_ = 'checksums-'
+                    # <bundlename>...tar.gz must be an archive file
+                    if extension.endswith('.tar.gz'):
+                        this.archives_ = 'archives-'
 
-                # <bundlename>_diagrams... must be in the diagrams tree, etc.
-                for test_type in VOLTYPES:
-                    if extension[1:].startswith(test_type):
-                        this.voltype_ = test_type + '/'
-                        break
+                    # <bundlename>..._md5.txt must be a checksum file
+                    elif extension.endswith('_md5.txt'):
+                        this.checksums_ = 'checksums-'
+
+                    # <bundlename>_diagrams... must be in the diagrams tree, etc.
+                    for test_type in VOLTYPES:
+                        if extension[1:].startswith(test_type):
+                            this.voltype_ = test_type + '/'
+                            break
 
                 # Pop the first entry from the pseudo-path and try again
                 parts = parts[1:]
@@ -3786,9 +3789,11 @@ class PdsFile(object):
                 # Pop the first entry from the pseudo-path and try again
                 parts = parts[1:]
 
-        # If the voltype is missing, it must be "volumes"
+        # If the voltype is missing, it must be "volumes" (for PDS3). For PDS4, it's
+        # "bundles"
         if this.voltype_ == '':
-            this.voltype_ = 'volumes/'
+            # this.voltype_ = 'volumes/'
+            this.voltype_ = 'bundles/'
 
         this.category_ = this.checksums_ + this.archives_ + this.voltype_
 
