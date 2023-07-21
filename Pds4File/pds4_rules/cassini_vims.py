@@ -40,22 +40,18 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'.*/(COISS_[12]xxx)(|_v[0-9\.]+)/(COISS_[12].../data/\w+/[NW][0-9]{10}_[0-9]+).*', 0,
-            [r'previews/\1/\3_full.png',
-             r'previews/\1/\3_med.jpg',
-             r'previews/\1/\3_small.jpg',
-             r'previews/\1/\3_thumb.jpg',
-            ]),
-    (r'.*/(COISS_3xxx.*/COISS_3.../data)/(images|maps)/(\w+)\..*', 0,
-            [r'previews/\1/\2/\3_full.png',
-             r'previews/\1/\2/\3_med.png',
-             r'previews/\1/\2/\3_small.png',
-             r'previews/\1/\2/\3_thumb.png',
-             r'previews/\1/\2/\3_full.jpg',
-             r'previews/\1/\2/\3_med.jpg',
-             r'previews/\1/\2/\3_small.jpg',
-             r'previews/\1/\2/\3_thumb.jpg',
-            ]),
+    (r'.*/(cassini_vims/cassini_vims\w*)/[a-z]*_([a-z]*)/(\d{3}xxxxxxx/\d{5}xxxxx/\d{10}_xxx)/(\d{10}_\d{3}).*[a-z]{3}', 0,
+        [r'bundles/\1/browse_\2/\3/\4-full.png',
+         r'bundles/\1/browse_\2/\3/\4-med.png',
+         r'bundles/\1/browse_\2/\3/\4-small.png',
+         r'bundles/\1/browse_\2/\3/\4-thumb.png',
+        ]),
+    (r'.*/(cassini_vims/cassini_vims\w*)/[a-z]*_([a-z]*)/(\d{3}xxxxxxx/\d{5}xxxxx)/(\d{10}).*[a-z]{3}', 0,
+        [r'bundles/\1/browse_\2/\3/\4-full.png',
+         r'bundles/\1/browse_\2/\3/\4-med.png',
+         r'bundles/\1/browse_\2/\3/\4-small.png',
+         r'bundles/\1/browse_\2/\3/\4-thumb.png',
+        ]),
 ])
 
 ####################################################################################################################################

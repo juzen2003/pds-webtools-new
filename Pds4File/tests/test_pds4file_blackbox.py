@@ -420,7 +420,7 @@ class TestPds4FileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
         [
-            ('cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n.img',
+            ('cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n.xml',
              [
                  f'/{PDS4_HOLDINGS_NAME}/bundles/cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.png'
              ]
@@ -428,6 +428,16 @@ class TestPds4FileBlackBox:
             ('cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947273n.img',
              [
                  f'/{PDS4_HOLDINGS_NAME}/bundles/cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947273n-full.png'
+             ]
+            ),
+            ('cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947223.xml',
+             [
+                 f'/{PDS4_HOLDINGS_NAME}/bundles/cassini_vims/cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947223-full.png'
+             ]
+            ),
+            ('cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947079_xxx/1308947079_003.qub',
+             [
+                 f'/{PDS4_HOLDINGS_NAME}/bundles/cassini_vims/cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947079_xxx/1308947079_003-full.png'
              ]
             ),
 
