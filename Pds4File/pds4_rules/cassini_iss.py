@@ -40,6 +40,12 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 default_viewables = translator.TranslatorByRegex([
+    (r'.*/(cassini_iss/cassini_iss\w*)/[a-z]*_([a-z]*)/(\d{3}xxxxxxx/\d{5}xxxxx)/(\d{10}n|w).*[a-z]{3}',
+            [r'bundles/\1/browse_\2/\3/\4-full.png',
+             r'bundles/\1/browse_\2/\3/\4-med.png',
+             r'bundles/\1/browse_\2/\3/\4-small.png',
+             r'bundles/\1/browse_\2/\3/\4-thumb.png',
+            ]),
     (r'.*/(COISS_[12]xxx)(|_v[0-9\.]+)/(COISS_[12].../data/\w+/[NW][0-9]{10}_[0-9]+).*', 0,
             [r'previews/\1/\3_full.png',
              r'previews/\1/\3_med.jpg',

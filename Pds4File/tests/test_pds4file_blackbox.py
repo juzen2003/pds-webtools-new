@@ -1,6 +1,7 @@
 import os
 import pds4file
 import pytest
+import pdsviewable
 
 from tests.helper import instantiate_target_pdsfile
 
@@ -12,6 +13,7 @@ except KeyError: # pragma: no cover
     PDS4_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 PDS4_BUNDLES_DIR = f'{PDS4_HOLDINGS_DIR}/bundles'
+PDS4_HOLDINGS_NAME = 'pds4-holdings'
 
 ################################################################################
 # Blackbox tests for pds4file.py
@@ -412,3 +414,29 @@ class TestPds4FileBlackBox:
         print(res)
         assert isinstance(res, pds4file.PdsFile)
         assert res.abspath == expected
+
+    # For now there is only full image available in the pds4 bundles, when images
+    # of other sizes are included in the future, the expected values need to be updated.
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            ('cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n.img',
+             [
+                 f'/{PDS4_HOLDINGS_NAME}/bundles/cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947228n-full.png'
+             ]
+            ),
+            ('cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947273n.img',
+             [
+                 f'/{PDS4_HOLDINGS_NAME}/bundles/cassini_iss/cassini_iss_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947273n-full.png'
+             ]
+            ),
+
+        ]
+    )
+    def test_viewset(self, input_path, expected):
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        res = target_pdsfile.viewset
+        assert isinstance(res, pdsviewable.PdsViewSet)
+        viewables = res.to_dict()['viewables']
+        for viewable in viewables:
+            assert viewable['url'] in expected
