@@ -417,6 +417,9 @@ class TestPds4FileBlackBox:
 
     # For now there is only full image available in the pds4 bundles, when images
     # of other sizes are included in the future, the expected values need to be updated.
+    # Also for uranus occ, we don't have any .png/.jpg/.jpeg, so there is no viewset,
+    # will need to update the expected result when viewset are included in the uranus
+    # bundle in the future.
     @pytest.mark.parametrize(
         'input_path,expected',
         [
@@ -440,13 +443,19 @@ class TestPds4FileBlackBox:
                  f'/{PDS4_HOLDINGS_NAME}/bundles/cassini_vims/cassini_vims_cruise/browse_raw/130xxxxxxx/13089xxxxx/1308947079_xxx/1308947079_003-full.png'
              ]
             ),
+            ('uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml', False
+            ),
 
         ]
     )
     def test_viewset(self, input_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
         res = target_pdsfile.viewset
-        assert isinstance(res, pdsviewable.PdsViewSet)
-        viewables = res.to_dict()['viewables']
-        for viewable in viewables:
-            assert viewable['url'] in expected
+        if res != False:
+            assert isinstance(res, pdsviewable.PdsViewSet)
+            viewables = res.to_dict()['viewables']
+            for viewable in viewables:
+                assert viewable['url'] in expected
+        else:
+            # For the case when viewset is None, the function will return False
+            assert res == expected
