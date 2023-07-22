@@ -41,7 +41,10 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 
 default_viewables = translator.TranslatorByRegex([
     (r'.*/(uranus_occs_earthbased/uranus_occ_u\d{0,4}_[a-z]*_(fos|\d{2,3}cm))/data(.*|_[a-z]*])/(.*)/(u\d{0,4}_[a-z]*_(fos|\d{2,3}cm)_\d{3,4}nm_.*).[a-z]{3}', 0,
-        [r'bundles/\1/browse\3/\4/\5.pdf',
+        [r'bundles/\1/browse\3/\4/\5-full.png',
+         r'bundles/\1/browse\3/\4/\5-med.png',
+         r'bundles/\1/browse\3/\4/\5-small.png',
+         r'bundles/\1/browse\3/\4/\5-thumb.png',
         ]),
 ])
 
