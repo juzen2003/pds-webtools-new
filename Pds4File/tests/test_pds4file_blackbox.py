@@ -344,7 +344,7 @@ class TestPds4FileBlackBox:
             ('cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n.xml',
              []),
             ('cassini_vims/',
-             ['cassini_vims_cruise']),
+             ['bundleset_member_index.csv', 'cassini_vims_cruise']),
             ('cassini_vims/cassini_vims_cruise',
              ['browse_raw', 'bundle.xml', 'calibration', 'context', 'data_raw', 'document','xml_schema']),
             ('cassini_vims/cassini_vims_cruise/bundle.xml',
