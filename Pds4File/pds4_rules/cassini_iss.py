@@ -297,6 +297,14 @@ opus_id = translator.TranslatorByRegex([
 ])
 
 ####################################################################################################################################
+# FILESPEC_TO_BUNDLESET
+####################################################################################################################################
+
+filespec_to_bundleset = translator.TranslatorByRegex([
+    (r'(cassini_iss)_.*', 0, r'\1'),
+])
+
+####################################################################################################################################
 # OPUS_ID_TO_PRIMARY_LOGICAL_PATH
 ####################################################################################################################################
 
@@ -396,6 +404,8 @@ class cassini_iss(pds4file.PdsFile): # Cassini_ISS
     ASSOCIATIONS['previews']   += associations_to_previews
     ASSOCIATIONS['metadata']   += associations_to_metadata
     ASSOCIATIONS['documents']  += associations_to_documents
+
+    pds4file.PdsFile.FILESPEC_TO_BUNDLESET = filespec_to_bundleset + pds4file.PdsFile.FILESPEC_TO_BUNDLESET
 
     def FILENAME_KEYLEN(self):
         if self.volset[:10] == 'COISS_3xxx':
