@@ -1,8 +1,8 @@
 ####################################################################################################################################
-# rules/COISS_xxxx.py
+# pds4_rules/cassini_iss.py
 ####################################################################################################################################
 
-import pdsfile
+import pds4file
 import translator
 import re
 
@@ -293,7 +293,15 @@ opus_products = translator.TranslatorByRegex([
 ####################################################################################################################################
 
 opus_id = translator.TranslatorByRegex([
-    (r'.*/COISS_[12]xxx.*/([NW][0-9]{10})_[0-9]+.*', 0, r'co-iss-#LOWER#\1'),
+     (r'.*/cassini_iss/cassini_iss\w*/[a-z]*_raw/\d{3}xxxxxxx/\d{5}xxxxx/(\d{10})(n|w).*[a-z]{3}', 0, r'co-iss-\2\1')
+])
+
+####################################################################################################################################
+# FILESPEC_TO_BUNDLESET
+####################################################################################################################################
+
+filespec_to_bundleset = translator.TranslatorByRegex([
+    (r'(cassini_iss)_.*', 0, r'\1'),
 ])
 
 ####################################################################################################################################
@@ -372,30 +380,32 @@ opus_id_to_primary_logical_path = translator.TranslatorByRegex([
 # Subclass definition
 ####################################################################################################################################
 
-class COISS_xxxx(pdsfile.PdsFile):
+class cassini_iss(pds4file.PdsFile): # Cassini_ISS
 
-    pdsfile.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('COISS_[0123x]xxx', re.I, 'COISS_xxxx')]) + \
-                                        pdsfile.PdsFile.VOLSET_TRANSLATOR
+    pds4file.PdsFile.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('cassini_iss', re.I, 'cassini_iss')]) + \
+                                        pds4file.PdsFile.VOLSET_TRANSLATOR
 
-    DESCRIPTION_AND_ICON = description_and_icon_by_regex + pdsfile.PdsFile.DESCRIPTION_AND_ICON
-    VIEW_OPTIONS = view_options + pdsfile.PdsFile.VIEW_OPTIONS
-    NEIGHBORS = neighbors + pdsfile.PdsFile.NEIGHBORS
-    SORT_KEY = sort_key + pdsfile.PdsFile.SORT_KEY
+    DESCRIPTION_AND_ICON = description_and_icon_by_regex + pds4file.PdsFile.DESCRIPTION_AND_ICON
+    VIEW_OPTIONS = view_options + pds4file.PdsFile.VIEW_OPTIONS
+    NEIGHBORS = neighbors + pds4file.PdsFile.NEIGHBORS
+    SORT_KEY = sort_key + pds4file.PdsFile.SORT_KEY
 
-    OPUS_TYPE = opus_type + pdsfile.PdsFile.OPUS_TYPE
-    OPUS_FORMAT = opus_format + pdsfile.PdsFile.OPUS_FORMAT
-    OPUS_PRODUCTS = opus_products + pdsfile.PdsFile.OPUS_PRODUCTS
+    OPUS_TYPE = opus_type + pds4file.PdsFile.OPUS_TYPE
+    OPUS_FORMAT = opus_format + pds4file.PdsFile.OPUS_FORMAT
+    OPUS_PRODUCTS = opus_products + pds4file.PdsFile.OPUS_PRODUCTS
     OPUS_ID = opus_id
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = opus_id_to_primary_logical_path
 
     VIEWABLES = {'default': default_viewables}
 
-    ASSOCIATIONS = pdsfile.PdsFile.ASSOCIATIONS.copy()
+    ASSOCIATIONS = pds4file.PdsFile.ASSOCIATIONS.copy()
     ASSOCIATIONS['volumes']    += associations_to_volumes
     ASSOCIATIONS['calibrated'] += associations_to_calibrated
     ASSOCIATIONS['previews']   += associations_to_previews
     ASSOCIATIONS['metadata']   += associations_to_metadata
     ASSOCIATIONS['documents']  += associations_to_documents
+
+    pds4file.PdsFile.FILESPEC_TO_BUNDLESET = filespec_to_bundleset + pds4file.PdsFile.FILESPEC_TO_BUNDLESET
 
     def FILENAME_KEYLEN(self):
         if self.volset[:10] == 'COISS_3xxx':
@@ -404,14 +414,14 @@ class COISS_xxxx(pdsfile.PdsFile):
             return 11   # trim off suffixes
 
 # Global attribute shared by all subclasses
-pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-iss-.*', 0, COISS_xxxx)]) + \
-                                      pdsfile.PdsFile.OPUS_ID_TO_SUBCLASS
+pds4file.PdsFile.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-iss-.*', 0, cassini_iss)]) + \
+                                      pds4file.PdsFile.OPUS_ID_TO_SUBCLASS
 
 ####################################################################################################################################
 # Update the global dictionary of subclasses
 ####################################################################################################################################
 
-pdsfile.PdsFile.SUBCLASSES['COISS_xxxx'] = COISS_xxxx
+pds4file.PdsFile.SUBCLASSES['cassini_iss'] = cassini_iss
 
 ####################################################################################################################################
 # Unit tests
@@ -715,14 +725,14 @@ def test_opus_id_to_primary_logical_path():
     ]
 
     for logical_path in TESTS:
-        test_pdsf = pdsfile.PdsFile.from_logical_path(logical_path)
+        test_pdsf = pds4file.PdsFile.from_logical_path(logical_path)
         opus_id = test_pdsf.opus_id
-        opus_id_pdsf = pdsfile.PdsFile.from_opus_id(opus_id)
+        opus_id_pdsf = pds4file.PdsFile.from_opus_id(opus_id)
         assert opus_id_pdsf.logical_path == logical_path
 
         # Gather all the associated OPUS products
         product_dict = test_pdsf.opus_products()
-        product_pdsfiles = []
+        product_pds4files = []
         for pdsf_lists in product_dict.values():
             for pdsf_list in pdsf_lists:
                 product_pdsfiles += pdsf_list
