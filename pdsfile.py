@@ -20,7 +20,7 @@ try: # pragma: no cover
 except ImportError: # pragma: no cover
     HAS_PYLIBMC = False
 
-import pdsfile_rules        # Default parsing rules
+import pds4file_rules        # Default parsing rules
 import pdscache
 import pdslogger
 import pdsviewable
@@ -31,42 +31,44 @@ import translator
 ################################################################################
 # Configuration
 ################################################################################
+PDS4_HOLDINGS = 'pds4-holdings'
 
 VOLTYPES = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews',
-            'documents']
+            'documents', 'bundles']
 VIEWABLE_VOLTYPES = ['previews', 'diagrams']
 
-VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'jpeg', 'jpeg_small'])
+VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'tif', 'tiff', 'jpeg', 'jpeg_small'])
 DATAFILE_EXTS = set(['dat', 'img', 'cub', 'qub', 'fit', 'fits'])
 
-VOLSET_REGEX        = re.compile(r'^([A-Z][A-Z0-9x]{1,5}_[0-9x]{3}x)$')
-VOLSET_REGEX_I      = re.compile(VOLSET_REGEX.pattern, re.I)
-VOLSET_PLUS_REGEX   = re.compile(VOLSET_REGEX.pattern[:-1] +
+#BUNDLESET_REGEX        = re.compile(r'(^uranus_occs_earthbased)$') # Hard-code for the moment, but will need to generalise
+BUNDLESET_REGEX        = re.compile(r'^(uranus_occs_earthbased|^cassini_iss|^cassini_vims)$') # Use new "cassini" bundleset to hold cassini_iss_cruise, etc bundles
+BUNDLESET_REGEX_I      = re.compile(BUNDLESET_REGEX.pattern, re.I)
+BUNDLESET_PLUS_REGEX   = re.compile(BUNDLESET_REGEX.pattern[:-1] +
                         r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
                         r'_in_prep|_prelim|_peer_review|_lien_resolution|)' +
                         r'((|_calibrated|_diagrams|_metadata|_previews)' +
                         r'(|_md5\.txt|\.tar\.gz))$')
-VOLSET_PLUS_REGEX_I = re.compile(VOLSET_PLUS_REGEX.pattern, re.I)
-# Groups are (volset, version_suffix, other_suffix, extension)
+BUNDLESET_PLUS_REGEX_I = re.compile(BUNDLESET_PLUS_REGEX.pattern, re.I)
+# Groups are (bundleset, version_suffix, other_suffix, extension)
 # Example: "COISS_0xxx_v1_calibrated_md5.txt" -> ("COISS_0xxx", "_v1",
 #                                                 "_calibrated", "_md5.txt")
 
 CATEGORY_REGEX      = re.compile(r'^(|checksums\-)(|archives\-)(\w+)$')
 CATEGORY_REGEX_I    = re.compile(CATEGORY_REGEX.pattern, re.I)
 
-VOLNAME_REGEX       = re.compile(r'^([A-Z][A-Z0-9]{1,5}_(?:[0-9]{4}))$')
-VOLNAME_REGEX_I     = re.compile(VOLNAME_REGEX.pattern, re.I)
-VOLNAME_PLUS_REGEX  = re.compile(VOLNAME_REGEX.pattern[:-1] +
+BUNDLENAME_REGEX       = re.compile(r'((^uranus_occ_u\d{0,4}._[a-z]*_(fos|\d{2,3}cm))|(^cassini\_[a-z]{3,4}\_cruise))$') # regex for uranus occs bundle, and cassini bundles
+BUNDLENAME_REGEX_I     = re.compile(BUNDLENAME_REGEX.pattern, re.I)
+BUNDLENAME_PLUS_REGEX  = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
                                   r'(|_[a-z]+)(|_md5\.txt|\.tar\.gz)$')
-VOLNAME_PLUS_REGEX_I = re.compile(VOLNAME_PLUS_REGEX.pattern, re.I)
-# Groups are (volname, suffix, extension)
+BUNDLENAME_PLUS_REGEX_I = re.compile(BUNDLENAME_PLUS_REGEX.pattern, re.I)
+# Groups are (bundlename, suffix, extension)
 # Example: "VGISS_5101_previews_md5.txt" -> ("VGISS_5101", "_previews",
 #                                            "_md5.txt")
 
-VOLNAME_VERSION     = re.compile(VOLNAME_REGEX.pattern[:-1] +
+BUNDLENAME_VERSION     = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
                         r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
                         r'_in_prep|_prelim|_peer_review|_lien_resolution)$')
-VOLNAME_VERSION_I   = re.compile(VOLNAME_VERSION.pattern, re.I)
+BUNDLENAME_VERSION_I   = re.compile(BUNDLENAME_VERSION.pattern, re.I)
 # Example: "VGISS_5101_peer_review" -> ("VGISS_5101", "_peer_review")
 
 VIEWABLE_ANCHOR_REGEX = re.compile(r'(.*/\w+)_[a-z]+\.(jpg|png)')
@@ -97,7 +99,7 @@ MIME_TYPES_VS_EXT = {
     'html'      : 'text/html',
 }
 
-# Key is (voltype, is_volset). Return is default icon_type.
+# Key is (voltype, is_bundleset). Return is default icon_type.
 DEFAULT_HIGH_LEVEL_ICONS = {
   ('volumes/',    True ): 'VOLDIR',
   ('volumes/',    False): 'VOLUME',
@@ -138,7 +140,7 @@ CATEGORY_LIST.remove('checksums-archives-documents')
 
 CATEGORIES = set(CATEGORY_LIST)
 
-# Extra description files that can appear in volset directories
+# Extra description files that can appear in bundleset directories
 EXTRA_README_BASENAMES = ('AAREADME.txt', 'AAREADME.pdf')
 
 # Directory prefix and file suffix for shelf files
@@ -218,25 +220,25 @@ def require_shelves(status=True):
 # These entries in the cache are permanent:
 #
 # CACHE['$RANKS-<category>/']
-#       This is a dictionary keyed by [volset] or [volname], which returns a
+#       This is a dictionary keyed by [bundleset] or [bundlename], which returns a
 #       sorted list of ranks. Ranks are the PdsFile way of tracking versions of
 #       objects. A higher rank (an integer) means a later version. All keys are
 #       lower case. Replace "<category>" above by one of the names of the
 #       holdings/ subdirectories.
 #
 # CACHE['$VOLS-<category>/']
-#       This is a dictionary of dictionaries, keyed by [volset][rank] or
-#       [volname][rank]. It returns the directory path of the volset or volname.
+#       This is a dictionary of dictionaries, keyed by [bundleset][rank] or
+#       [bundlename][rank]. It returns the directory path of the bundleset or bundlename.
 #       Keys are lower case.
 #
 # CACHE['$PRELOADED']
 #       This is a list of holdings abspaths that have been preloaded.
 #
-# CACHE['$VOLINFO-<volset>']
-# CACHE['$VOLINFO-<volset/volname>']
+# CACHE['$VOLINFO-<bundleset>']
+# CACHE['$VOLINFO-<bundleset/bundlename>']
 #       Returns (description, icon_type, version, publication date, list of
 #                data set IDs)
-#       for volnames and volsets. Keys are lower case.
+#       for bundlenames and bundlesets. Keys are lower case.
 #
 # In addition...
 #
@@ -260,12 +262,12 @@ def cache_lifetime(arg):
     elif not isinstance(arg, PdsFile):
         return 0
 
-    # Cache PdsFile volsets/volumes for a long time, but not necessarily forever
+    # Cache PdsFile bundlesets/bundles for a long time, but not necessarily forever
     elif not arg.interior:
         return LONG_FILE_CACHE_LIFETIME
 
     elif arg.isdir and arg.interior.lower().endswith('data'):
-        return LONG_FILE_CACHE_LIFETIME     # .../volname/*data for a long time
+        return LONG_FILE_CACHE_LIFETIME     # .../bundlename/*data for a long time
     elif arg.isdir:
         return 2 * 24 * 60 * 60             # Other directories for two days
     else:
@@ -417,8 +419,8 @@ def preload(holdings_list, port=0, clear=False, force_reload=False,
         if pdsdir.is_category_dir:
             LOGGER.info('Pre-loading: ' + pdsdir.abspath)
 
-        # Log volsets as debug
-        elif pdsdir.is_volset:
+        # Log bundlesets as debug
+        elif pdsdir.is_bundleset:
             LOGGER.debug('Pre-loading: ' + pdsdir.abspath)
 
         # Don't go deeper
@@ -508,7 +510,7 @@ def preload(holdings_list, port=0, clear=False, force_reload=False,
     LOGGER.info('PdsFile preloading completed')
 
     # Determine if the file system is case-sensitive
-    # If any physical volume is case-insensitive, then we treat the whole file
+    # If any physical bundle is case-insensitive, then we treat the whole file
     # system as case-insensitive.
     FS_IS_CASE_INSENSITIVE = False
     for holdings_dir in LOCAL_PRELOADED:
@@ -541,20 +543,20 @@ def get_permanent_values(holdings_list, port):
             _ = CACHE['$VOLS-'  + category + '/']
             pdsf0 = CACHE[category]
 
-            # Also get the volset-level PdsFile inside each category
-            for volset in pdsf0.childnames:
-                if volset.endswith('.txt') or volset.endswith('.tar.gz'):
+            # Also get the bundleset-level PdsFile inside each category
+            for bundleset in pdsf0.childnames:
+                if bundleset.endswith('.txt') or bundleset.endswith('.tar.gz'):
                     continue
 
                 # Get the entry keyed by the logical path
-                pdsf1 = CACHE[category + '/' + volset.lower()]
+                pdsf1 = CACHE[category + '/' + bundleset.lower()]
 
-                # Also get its volume-level children
-                for volname in pdsf1.childnames:
-                    if volname.endswith('.txt') or volname.endswith('.tar.gz'):
+                # Also get its bundle-level children
+                for bundlename in pdsf1.childnames:
+                    if bundlename.endswith('.txt') or bundlename.endswith('.tar.gz'):
                         continue
 
-                    key = (pdsf1.logical_path + '/' + volname).lower()
+                    key = (pdsf1.logical_path + '/' + bundlename).lower()
                     pdsf2 = CACHE[key]
 
     except KeyError as e:
@@ -570,10 +572,10 @@ def get_permanent_values(holdings_list, port):
         resume_caching()
 
 def load_volume_info(holdings):
-    """Load volume info associated with this holdings directory.
+    """Load bundle info associated with this holdings directory.
 
     Each record contains a sequence of values separated by "|":
-        key: volset, volset/volname, category/volset, or category/volset/volname
+        key: bundleset, bundleset/bundlename, category/bundleset, or category/bundleset/bundlename
         description
         icon_type or blank for default
         version ID or a string of dashes "-" if not applicable
@@ -667,9 +669,9 @@ def load_volume_info(holdings):
         (category, _, remainder) = key.partition('/')
         if category in VOLTYPES:
             (volset_with_suffix, _, remainder) = remainder.partition('/')
-            volset = '_'.join(volset_with_suffix.split('_')[:2])
-            alt_keys = (volset + '/' + remainder,
-                        'volumes/' + volset + '/' + remainder)
+            bundleset = '_'.join(volset_with_suffix.split('_')[:2])
+            alt_keys = (bundleset + '/' + remainder,
+                        'volumes/' + bundleset + '/' + remainder)
             for alt_key in alt_keys:
                 if alt_key in dsids_vs_key:
                     volinfo_dict[key] = (volinfo_dict[key][:4] +
@@ -692,32 +694,32 @@ class PdsFile(object):
     # Global registry of subclasses
     SUBCLASSES = {}
 
-    # Translator from volume set ID to key in global registry
+    # Translator from bundle set ID to key in global registry
     VOLSET_TRANSLATOR = translator.TranslatorByRegex([('.*', 0, 'default')])
 
-    # Default translators, can be overridden by volset-specific subclasses
-    DESCRIPTION_AND_ICON = pdsfile_rules.DESCRIPTION_AND_ICON
-    ASSOCIATIONS = pdsfile_rules.ASSOCIATIONS
-    VERSIONS = pdsfile_rules.VERSIONS
-    INFO_FILE_BASENAMES = pdsfile_rules.INFO_FILE_BASENAMES
-    NEIGHBORS = pdsfile_rules.NEIGHBORS
-    SIBLINGS = pdsfile_rules.SIBLINGS       # just used by Viewmaster right now
-    SORT_KEY = pdsfile_rules.SORT_KEY
-    SPLIT_RULES = pdsfile_rules.SPLIT_RULES
-    VIEW_OPTIONS = pdsfile_rules.VIEW_OPTIONS
-    VIEWABLES = pdsfile_rules.VIEWABLES
-    LID_AFTER_DSID = pdsfile_rules.LID_AFTER_DSID
-    DATA_SET_ID = pdsfile_rules.DATA_SET_ID
+    # Default translators, can be overridden by bundleset-specific subclasses
+    DESCRIPTION_AND_ICON = pds4file_rules.DESCRIPTION_AND_ICON
+    ASSOCIATIONS = pds4file_rules.ASSOCIATIONS
+    VERSIONS = pds4file_rules.VERSIONS
+    INFO_FILE_BASENAMES = pds4file_rules.INFO_FILE_BASENAMES
+    NEIGHBORS = pds4file_rules.NEIGHBORS
+    SIBLINGS = pds4file_rules.SIBLINGS       # just used by Viewmaster right now
+    SORT_KEY = pds4file_rules.SORT_KEY
+    SPLIT_RULES = pds4file_rules.SPLIT_RULES
+    VIEW_OPTIONS = pds4file_rules.VIEW_OPTIONS
+    VIEWABLES = pds4file_rules.VIEWABLES
+    LID_AFTER_DSID = pds4file_rules.LID_AFTER_DSID
+    DATA_SET_ID = pds4file_rules.DATA_SET_ID
 
-    OPUS_TYPE = pdsfile_rules.OPUS_TYPE
-    OPUS_FORMAT = pdsfile_rules.OPUS_FORMAT
-    OPUS_PRODUCTS = pdsfile_rules.OPUS_PRODUCTS
-    OPUS_ID = pdsfile_rules.OPUS_ID
+    OPUS_TYPE = pds4file_rules.OPUS_TYPE
+    OPUS_FORMAT = pds4file_rules.OPUS_FORMAT
+    OPUS_PRODUCTS = pds4file_rules.OPUS_PRODUCTS
+    OPUS_ID = pds4file_rules.OPUS_ID
     OPUS_ID_TO_PRIMARY_LOGICAL_PATH = \
-        pdsfile_rules.OPUS_ID_TO_PRIMARY_LOGICAL_PATH
+        pds4file_rules.OPUS_ID_TO_PRIMARY_LOGICAL_PATH
 
-    OPUS_ID_TO_SUBCLASS = pdsfile_rules.OPUS_ID_TO_SUBCLASS
-    FILESPEC_TO_VOLSET = pdsfile_rules.FILESPEC_TO_VOLSET
+    OPUS_ID_TO_SUBCLASS = pds4file_rules.OPUS_ID_TO_SUBCLASS
+    FILESPEC_TO_BUNDLESET = pds4file_rules.FILESPEC_TO_BUNDLESET
 
     FILENAME_KEYLEN = 0
 
@@ -784,15 +786,15 @@ class PdsFile(object):
         self.archives_    = ''      # Either 'archives-' or ''
         self.voltype_     = ''      # One of 'volumes', 'metadata', etc.
 
-        self.volset_      = ''      # Volset name + suffix + '/'
-        self.volset       = ''      # Volset name, suffix stripped
-        self.suffix       = ''      # Volset suffix alone
+        self.bundleset_      = ''   # Bundleset name + suffix + '/'
+        self.bundleset       = ''   # Bundleset name, suffix stripped
+        self.suffix       = ''      # Bundleset suffix alone
         self.version_message = ''
         self.version_rank = 0       # int; 'v1.2.3' -> 10203; 999999 for latest
         self.version_id   = ''      # E.g., 'v1.2.3'; version number of volume
 
-        self.volname_     = ''      # Volume name + '/'
-        self.volname      = ''      # Volume name alone
+        self.bundlename_     = ''   # Bundle name + '/'
+        self.bundlename      = ''   # Bundle name alone
 
         self.interior     = ''      # Path starting inside volume directory
 
@@ -882,14 +884,14 @@ class PdsFile(object):
             this.checksums_      = self.checksums_
             this.archives_       = self.archives_
             this.voltype_        = self.voltype_
-            this.volset_         = self.volset_
-            this.volset          = self.volset
+            this.bundleset_      = self.bundleset_
+            this.bundleset       = self.bundleset
             this.suffix          = self.suffix
             this.version_message = self.version_message
             this.version_rank    = self.version_rank
             this.version_id      = self.version_id
-            this.volname_        = self.volname_
-            this.volname         = self.volname
+            this.bundlename_     = self.bundlename_
+            this.bundlename      = self.bundlename
             this.interior        = self.interior
 
         return this
@@ -918,15 +920,15 @@ class PdsFile(object):
         this.archives_    = 'archives-'  if 'archives-'  in basename else ''
         this.voltype_     = basename.split('-')[-1].rstrip('/') + '/'
 
-        this.volset_      = ''
-        this.volset       = ''
+        this.bundleset_      = ''
+        this.bundleset       = ''
         this.suffix       = ''
         this.version_message = ''
         this.version_rank = 0
         this.version_id   = ''
 
-        this.volname_     = ''
-        this.volname      = ''
+        this.bundlename_     = ''
+        this.bundlename      = ''
 
         this.interior     = ''
 
@@ -1317,18 +1319,18 @@ class PdsFile(object):
                 if len(parts) == 1:         # category-level call
                     return results
 
-                # Isolate unique volume names from shelf files
+                # Isolate unique bundle names from shelf files
                 # This prevent duplicated results for _info.py and _info.pickle
                 filtered = []
                 for result in results:
                     parts = result.split('_info.')
                     if len(parts) == 1: continue
 
-                    volname = parts[0]
-                    if volname not in filtered:
-                        filtered.append(volname)
+                    bundlename = parts[0]
+                    if bundlename not in filtered:
+                        filtered.append(bundlename)
 
-                # Check the actual file system for a volset-level AAREADME
+                # Check the actual file system for a bundleset-level AAREADME
                 aareadmes = []
                 for basename in EXTRA_README_BASENAMES:
                     if os.path.exists(abspath + '/' + basename):
@@ -1495,12 +1497,12 @@ class PdsFile(object):
 
     @property
     def filespec(self):
-        """volname or volname/interior."""
+        """bundlename or bundlename/interior."""
 
         if self.interior:
-            return self.volname_ + self.interior
+            return self.bundlename_ + self.interior
         else:
-            return self.volname
+            return self.bundlename
 
     @property
     def absolute_or_logical_path(self):
@@ -1777,7 +1779,7 @@ class PdsFile(object):
                 return self._info_filled
 
         # Get info for a single file directly from the file system. This will
-        # occur for documents and volset-level AAREADME files.
+        # occur for documents and bundleset-level AAREADME files.
         if not self.isdir:
 
             file_bytes = os.path.getsize(self.abspath)
@@ -1795,24 +1797,24 @@ class PdsFile(object):
             self._recache()
             return self._info_filled
 
-        # Sum up the info for volset-level directories
-        elif self.is_volset_dir:
+        # Sum up the info for bundleset-level directories
+        elif self.is_bundleset_dir:
 
             child_count = len(self.childnames)
             latest_modtime = datetime.datetime.min
             total_bytes = 0
-            for volname in self.childnames:
+            for bundlename in self.childnames:
 
                 # Ignore AAREADME files in this context
-                if volname in EXTRA_README_BASENAMES:
+                if bundlename in EXTRA_README_BASENAMES:
                     child_count -= 1
                     continue
 
                 try:
                     (file_bytes, _,
-                     timestring, _, _) = self.shelf_lookup('info', volname)
-                except IOError:     # Shelf file for volname is missing--maybe
-                                    # it's not a volume name after all
+                     timestring, _, _) = self.shelf_lookup('info', bundlename)
+                except IOError:     # Shelf file for bundlename is missing--maybe
+                                    # it's not a bundle name after all
                     file_bytes = os.path.getsize(self.abspath)
                     timestamp = os.path.getmtime(self.abspath)
                     modtime = datetime.datetime.fromtimestamp(timestamp)
@@ -1883,7 +1885,7 @@ class PdsFile(object):
 
         if len(self._info[4]) > 2:      # (0,0,'TBD') means fill in the size now
 
-            LOGGER.debug('Retrieving viewable shape', self.abspath)
+            LOGGER.warn('Retrieving viewable shape', self.abspath)
             try:
                 im = PIL.Image.open(self.abspath)
                 shape = im.size
@@ -1938,9 +1940,9 @@ class PdsFile(object):
 
         if self._volume_info_filled is None:
 
-            base_key = self.volset + self.suffix
-            if self.volname:
-                base_key += '/' + self.volname
+            base_key = self.bundleset + self.suffix
+            if self.bundlename:
+                base_key += '/' + self.bundlename
 
             # Try lookup with and without voltype
             base_key = base_key.lower()
@@ -1976,11 +1978,11 @@ class PdsFile(object):
             else:
                 pair = ('Selected rows of index', 'INFO')
 
-        # Volumes and volsets get their descriptions from the $VOLINFO cache
-        elif self.is_volset or self.is_volume:
+        # Bundles and bundlesets get their descriptions from the $VOLINFO cache
+        elif self.is_bundleset or self.is_bundle:
             (desc, icon_type) = self._volume_info[:2]
 
-            # Munge the descriptions of volset-level directories, if necessary,
+            # Munge the descriptions of bundleset-level directories, if necessary,
             # based on volume type. Example: This changes "Cassini data" to
             # "Previews of Cassini data" for preview data.
             desc_lc = desc.lower()
@@ -1996,7 +1998,7 @@ class PdsFile(object):
             # Fill in missing icon types
             if (icon_type is None and
                 self.basename not in EXTRA_README_BASENAMES):
-                    key = (self.category_, self.is_volset)
+                    key = (self.category_, self.is_bundleset)
                     icon_type = DEFAULT_HIGH_LEVEL_ICONS.get(key, None)
 
             if icon_type is None:
@@ -2218,10 +2220,10 @@ class PdsFile(object):
             elif self.label_basename:
                 self._info_basename_filled = self.label_basename
 
-        # On failure, look for a volset-level AAREADME file
-        # Note that this requires a physical check of the volumes tree because
+        # On failure, look for a bundle set-level AAREADME file
+        # Note that this requires a physical check of the bundles tree because
         # these files do not appear in infoshelf files.
-        if not self._info_basename_filled and self.is_volume_dir:
+        if not self._info_basename_filled and self.is_bundle_dir:
             for info_name in EXTRA_README_BASENAMES:
                 if os.path.exists(self.abspath + '/../' + info_name):
                     self._info_basename_filled = info_name
@@ -2256,9 +2258,9 @@ class PdsFile(object):
             # Shelf file failure
             except (IOError, KeyError, ValueError) as e:
 
-                # This can happen for volset-level AAREADME files.
+                # This can happen for bundleset-level AAREADME files.
                 # Otherwise, it's an error
-                if not (self.parent().is_volset_dir and
+                if not (self.parent().is_bundleset_dir and
                         self.basename in EXTRA_README_BASENAMES):
 
                     self._internal_links_filled = ()
@@ -2272,7 +2274,7 @@ class PdsFile(object):
                     if SHELVES_REQUIRED:
                         raise
 
-                else:       # volset AAREADME file
+                else:       # bundleset AAREADME file
                     self._internal_links_filled = []
 
             else:
@@ -2422,8 +2424,8 @@ class PdsFile(object):
         if self._viewset_filled is not None:
             return self._viewset_filled
 
-        # Don't look for PdsViewSets at volume root; saves time
-        if (self.exists and self.volname_ and
+        # Don't look for PdsViewSets at bundle root; saves time
+        if (self.exists and self.bundlename_ and
             not self.archives_ and not self.checksums_ and self.interior):
                 self._viewset_filled = self.viewset_lookup('default')
 
@@ -2607,12 +2609,12 @@ class PdsFile(object):
                 self._version_ranks_filled = []
 
             else:
-                if self.volname:
-                    key = self.volname.lower()
+                if self.bundlename:
+                    key = self.bundlename.lower()
                     self._version_ranks_filled = ranks[key]
 
-                elif self.volset:
-                    key = self.volset.lower()
+                elif self.bundleset:
+                    key = self.bundleset.lower()
                     self._version_ranks_filled = ranks[key]
 
                 else:
@@ -2967,40 +2969,42 @@ class PdsFile(object):
     ### typing them wrong.
 
     @property
-    def is_volume_dir(self):
-        """True if this is the root level directory of a volume."""
-        return (self.volname_ and not self.interior)
+    def is_bundle_dir(self):
+        """True if this is the root level directory of a bundle."""
+        return (self.bundlename_ and not self.interior) # Note that a bundle set will return an empty string '' rather than False
+        #return (self.volname_ and not self.interior or False) # MJTM: 'or False' account for bundle sets
 
     @property
-    def is_volume_file(self):
-        """True if this is a volume-level checksum or archive file."""
-        return (self.volname and not self.volname_)
+    def is_bundle_file(self):
+        """True if this is a bundle-level checksum or archive file."""
+        return (self.bundlename and not self.bundlename_) # Note that a bundle set will return an empty string '' rather than False
+        #return (self.volname and not self.volname_ or False) # MJTM: 'or False' account for bundle sets
 
     @property
-    def is_volume(self):
-        """True if this is a volume-level file, be it a directory or a
+    def is_bundle(self):
+        """True if this is a bundle-level file, be it a directory or a
         checksum or archive file."""
-        return self.is_volume_dir or self.is_volume_file
+        return self.is_bundle_dir or self.is_bundle_file
 
     @property
-    def is_volset_dir(self):
-        """True if this is the root level directory of a volset."""
-        return (self.volset and not self.volname and self.isdir)
+    def is_bundleset_dir(self):
+        """True if this is the root level directory of a bundleset."""
+        return (self.bundleset and not self.bundlename and self.isdir)
 
     @property
-    def is_volset_file(self):
-        """True if this is a volset-level checksum or AAREADME file."""
-        return (self.volset and not self.volname and not self.isdir)
+    def is_bundleset_file(self):
+        """True if this is a bundleset-level checksum or AAREADME file."""
+        return (self.bundleset and not self.bundlename and not self.isdir)
 
     @property
-    def is_volset(self):
-        """True if this is a volset-level directory or file."""
-        return (self.volset and not self.volname)
+    def is_bundleset(self):
+        """True if this is a bundleset-level directory or file."""
+        return (self.bundleset and not self.bundlename)
 
     @property
     def is_category_dir(self):
-        """True if this is a category-level directory (i.e., above volset)."""
-        return (self.volset == '')
+        """True if this is a category-level directory (i.e., above bundleset)."""
+        return (self.bundleset == '')
 
     def volume_abspath(self, category=None):
         """The absolute path to the volume file or directory associated with
@@ -3010,7 +3014,7 @@ class PdsFile(object):
         version. The specified file is not required to exist.
         """
 
-        if not self.volname:
+        if not self.bundlename:
             return ''
 
         if category:
@@ -3041,8 +3045,8 @@ class PdsFile(object):
             insert = ''
             ext = ''
 
-        return (self.root_ + category_ + self.volset + suffix + '/' +
-                self.volname + insert + ext)
+        return (self.root_ + category_ + self.bundleset + suffix + '/' +
+                self.bundlename + insert + ext)
 
     def volset_abspath(self, category=None):
         """The absolute path to a volset file or directory associated with this
@@ -3052,7 +3056,7 @@ class PdsFile(object):
         The specified file is not required to exist.
         """
 
-        if not self.volset:
+        if not self.bundleset:
             return None
 
         if category:
@@ -3075,7 +3079,7 @@ class PdsFile(object):
         else:
             ext = ''
 
-        return (self.root_ + category_ + self.volset + suffix + ext)
+        return (self.root_ + category_ + self.bundleset + suffix + ext)
 
     ############################################################################
     # Support for alternative constructors
@@ -3131,23 +3135,23 @@ class PdsFile(object):
         """Maintains the RANKS and VOLS dictionaries. Must be called for all
         PdsFile objects down to the volume name level."""
 
-        # CACHE['$RANKS-category_'] is keyed by [volume set or name] and returns
+        # CACHE['$RANKS-category_'] is keyed by [bundle set or name] and returns
         # a sorted list of ranks.
 
-        # CACHE['$VOLS-category_'] is keyed by [volume set or name][rank] and
-        # returns a volset or volname PdsFile.
+        # CACHE['$VOLS-category_'] is keyed by [bundle set or name][rank] and
+        # returns a bundleset or bundlename PdsFile.
 
         global LOCAL_PRELOADED
 
         if not LOCAL_PRELOADED:     # we don't track ranks without a preload
             return
 
-        if self.volset and not self.volname:
-            key = self.volset
-        elif self.volname and not self.volname_:
-            key = self.volname
-        elif self.volname_ and not self.interior:
-            key = self.volname
+        if self.bundleset and not self.bundlename:
+            key = self.bundleset
+        elif self.bundlename and not self.bundlename_:
+            key = self.bundlename
+        elif self.bundlename_ and not self.interior:
+            key = self.bundlename
         else:
             return
 
@@ -3243,12 +3247,12 @@ class PdsFile(object):
                 child_abspath = None
 
             # Select the correct subclass for the child...
-            if self.volset:
-                class_key = self.volset
+            if self.bundleset:
+                class_key = self.bundleset
             elif self.category_:
-                matchobj = VOLSET_PLUS_REGEX_I.match(basename)
+                matchobj = BUNDLESET_PLUS_REGEX_I.match(basename)
                 if matchobj is None:
-                    raise ValueError('Illegal volume set directory "%s": %s' %
+                    raise ValueError('Illegal bundle set directory "%s": %s' %
                                      (basename, self.logical_path))
                 class_key = matchobj.group(1)
             else:
@@ -3263,52 +3267,52 @@ class PdsFile(object):
             this.abspath = child_abspath    # might be None, for now
             this.basename = basename
 
-            if self.interior:               # if parent is inside a volume
+            if self.interior:               # if parent is inside a bundle
                 this.interior = _clean_join(self.interior, basename)
                 return this._complete(must_exist, caching, lifetime)
 
-            if self.volname_:               # if parent is a volume
+            if self.bundlename_:               # if parent is a bundle
                 this.interior = basename
                 return this._complete(must_exist, caching, lifetime)
 
-            if self.volset_:                # if parent is a volset
+            if self.bundleset_:                # if parent is a bundleset
 
                 # Handle documents directory
                 if self.is_documents:
-                    this.volname_ = ''
+                    this.bundlename_ = ''
                     this.interior = basename
                     return this._complete(must_exist, caching, lifetime)
 
-                # Handle volume name
-                matchobj = VOLNAME_PLUS_REGEX_I.match(basename)
+                # Handle bundle name
+                matchobj = BUNDLENAME_PLUS_REGEX_I.match(basename)
                 if matchobj:
-                    this.volname_ = basename + '/'
-                    this.volname  = matchobj.group(1)
+                    this.bundlename_ = basename + '/'
+                    this.bundlename  = matchobj.group(1)
 
                     if self.checksums_ or self.archives_:
-                        this.volname_ = ''
+                        this.bundlename_ = ''
                         this.interior = basename
 
                 if self.checksums_ or self.archives_:
-                    this.volname_ = ''
+                    this.bundlename_ = ''
                     this.interior = basename
 
                 return this._complete(must_exist, caching, lifetime)
 
             if self.category_:
 
-                # Handle volume set and suffix
-                matchobj = VOLSET_PLUS_REGEX_I.match(basename)
+                # Handle bundle set and suffix
+                matchobj = BUNDLESET_PLUS_REGEX_I.match(basename)
                 if matchobj is None:
-                    raise ValueError('Illegal volume set directory "%s": %s' %
+                    raise ValueError('Illegal bundle set directory "%s": %s' %
                                      (basename, this.logical_path))
 
-                this.volset_ = basename + '/'
-                this.volset  = matchobj.group(1)
+                this.bundleset_ = basename + '/'
+                this.bundleset  = matchobj.group(1)
                 this.suffix  = matchobj.group(2)
 
                 if matchobj.group(3):
-                    this.volset_ = ''
+                    this.bundleset_ = ''
                     this.interior = basename
                     parts = this.suffix.split('_')
                     if parts[-1] == this.voltype_[:-1]:
@@ -3492,18 +3496,17 @@ class PdsFile(object):
         # Search for "holdings"
         parts_lc = [p.lower() for p in parts]
         try:
-            holdings_index = parts_lc.index('holdings')
+            pds4_holdings_index = parts_lc.index(PDS4_HOLDINGS) # Change variable name to distinguish from PDS3
         except ValueError:
-            raise ValueError('"holdings" directory not found in: ' + abspath)
-
+            raise ValueError('"{}" directory not found in: '.format(PDS4_HOLDINGS) + abspath)
         ### Pause the cache
         CACHE.pause()
         try:
             # Fill in this.disk_, the absolute path to the directory containing
             # subdirectory "holdings"
             this = PdsFile()
-            this.disk_ = drive_spec + '/'.join(parts[:holdings_index]) + '/'
-            this.root_ = this.disk_ + 'holdings/'
+            this.disk_ = drive_spec + '/'.join(parts[:pds4_holdings_index]) + '/'
+            this.root_ = this.disk_ + PDS4_HOLDINGS + '/'
 
             # Get case right if necessary
             if fix_case:
@@ -3519,27 +3522,26 @@ class PdsFile(object):
             # named holdings, holding1, ... holdings9
 
             if len(LOCAL_PRELOADED) <= 1:   # There's only one holdings dir
-                this.html_root_ = '/holdings/'
+                this.html_root_ = '/' + PDS4_HOLDINGS +'/'
             else:                       # Find this holdings dir among preloaded
-                holdings_abspath = this.disk_ + 'holdings'
+                pds4_holdings_abspath = this.disk_ + PDS4_HOLDINGS
                 try:
-                    k = LOCAL_PRELOADED.index(holdings_abspath)
+                    k = LOCAL_PRELOADED.index(pds4_holdings_abspath)
                 except ValueError:
-                    LOGGER.warn('No URL: ' + holdings_abspath)
+                    LOGGER.warn('No URL: ' + pds4_holdings_abspath)
                     this.html_root_ = '/'
 
                 else:       # "holdings", "holdings1", ... "holdings9"
                     if k:
-                        this.html_root_ = '/holdings' + str(k) + '/'
+                        this.html_root_ = '/' + PDS4_HOLDINGS + str(k) + '/'
                     else:
-                        this.html_root_ = '/holdings/'
+                        this.html_root_ = '/' + PDS4_HOLDINGS + '/'
 
             this.logical_path = ''
-            this.abspath = this.disk_ + 'holdings'
-            this.basename = 'holdings'
-
+            this.abspath = this.disk_ + PDS4_HOLDINGS
+            this.basename = PDS4_HOLDINGS
             # Handle the rest of the tree using child()
-            for part in parts[holdings_index + 1:]:
+            for part in parts[pds4_holdings_index + 1:]:
                 this = this.child(part, fix_case=fix_case, must_exist=must_exist,
                                         caching=caching, lifetime=lifetime)
 
@@ -3660,7 +3662,7 @@ class PdsFile(object):
 
             # If the pseudo-path starts with "v1", "v1.1", "peer_review", etc.,
             # this is the version suffix; otherwise, this is something else
-            # (such as a volset or volname) so proceed to the next step
+            # (such as a bundleset or bundlename) so proceed to the next step
             else:
                 try:
                     _ = PdsFile.version_info('_' + part)
@@ -3707,27 +3709,27 @@ class PdsFile(object):
             # Pop the last entry from the pseudo-path and try again
             parts = parts[:-1]
 
-        # Look for a volume set at the beginning of the pseudo-path
+        # Look for a bundle set at the beginning of the pseudo-path
         if len(parts) > 0:
-            # Parse the next part of the pseudo-path as if it is a volset
-            # Parts are (volset, version_suffix, other_suffix, extension)
+            # Parse the next part of the pseudo-path as if it is a bundleset
+            # Parts are (bundleset, version_suffix, other_suffix, extension)
             # Example: COISS_0xxx_v1_md5.txt -> (COISS_0xxx, v1, _md5, .txt)
-            matchobj = VOLSET_PLUS_REGEX_I.match(parts[0])
+            matchobj = BUNDLESET_PLUS_REGEX_I.match(parts[0])
             if matchobj:
                 subparts = matchobj.group(1).partition('_')
-                this.volset = subparts[0].upper() + '_' + subparts[2].lower()
+                this.bundleset = subparts[0].upper() + '_' + subparts[2].lower()
                 suffix    = matchobj.group(2).lower()
                 extension = (matchobj.group(3) + matchobj.group(4)).lower()
 
-                # <volset>...tar.gz must be an archive file
+                # <bundleset>...tar.gz must be an archive file
                 if extension.endswith('.tar.gz'):
                     this.archives_ = 'archives-'
 
-                # <volset>..._md5.txt must be a checksum file
+                # <bundleset>..._md5.txt must be a checksum file
                 elif extension.endswith('_md5.txt'):
                     this.checksums_ = 'checksums-'
 
-                # <volset>_diagrams... must be in the diagrams tree, etc.
+                # <bundleset>_diagrams... must be in the diagrams tree, etc.
                 for test_type in VOLTYPES:
                     if extension[1:].startswith(test_type):
                         this.voltype_ = test_type + '/'
@@ -3742,67 +3744,72 @@ class PdsFile(object):
                 # Pop the first entry from the pseudo-path and try again
                 parts = parts[1:]
 
-        # Look for a volume name
+        # Look for a bundle name
         if len(parts) > 0:
-            # Parse the next part of the pseudo-path as if it is a volname
-            # Parts are (volname, suffix, extension)
+            # Parse the next part of the pseudo-path as if it is a bundlename
+            # Parts are (bundlename, suffix, extension)
             # Example: COISS_2001_previews_md5.txt -> (COISS_2001,
             #                                          _previews_md5, .txt)
-            matchobj = VOLNAME_PLUS_REGEX_I.match(parts[0])
+            matchobj = BUNDLENAME_PLUS_REGEX_I.match(parts[0])
             if matchobj:
-                this.volname = matchobj.group(1).upper()
-                extension = (matchobj.group(2) + matchobj.group(3)).lower()
+                this.bundlename = matchobj.group(1).upper()
 
-                # <volname>...tar.gz must be an archive file
-                if extension.endswith('.tar.gz'):
-                    this.archives_ = 'archives-'
+                # If there is a matched extension
+                if matchobj.group(2) and matchobj.group(3):
+                    extension = (matchobj.group(2) + matchobj.group(3)).lower()
 
-                # <volname>..._md5.txt must be a checksum file
-                elif extension.endswith('_md5.txt'):
-                    this.checksums_ = 'checksums-'
+                    # <bundlename>...tar.gz must be an archive file
+                    if extension.endswith('.tar.gz'):
+                        this.archives_ = 'archives-'
 
-                # <volname>_diagrams... must be in the diagrams tree, etc.
-                for test_type in VOLTYPES:
-                    if extension[1:].startswith(test_type):
-                        this.voltype_ = test_type + '/'
-                        break
+                    # <bundlename>..._md5.txt must be a checksum file
+                    elif extension.endswith('_md5.txt'):
+                        this.checksums_ = 'checksums-'
+
+                    # <bundlename>_diagrams... must be in the diagrams tree, etc.
+                    for test_type in VOLTYPES:
+                        if extension[1:].startswith(test_type):
+                            this.voltype_ = test_type + '/'
+                            break
 
                 # Pop the first entry from the pseudo-path and try again
                 parts = parts[1:]
 
-        # Look for a volume name + version. Not standard but has been seen in
+        # Look for a bundle name + version. Not standard but has been seen in
         # Viewmaster URLs
         if len(parts) > 0:
-            # Parse the next part of the pseudo-path as if it is a volname
-            # Parts are (volname, version)
+            # Parse the next part of the pseudo-path as if it is a bundlename
+            # Parts are (bundlename, version)
             # Example: "VGISS_5101_peer_review" -> (VGISS_5101, _peer_review)
-            matchobj = VOLNAME_VERSION_I.match(parts[0])
+            matchobj = BUNDLENAME_VERSION_I.match(parts[0])
             if matchobj:
-                this.volname = matchobj.group(1).upper()
+                this.bundlename = matchobj.group(1).upper()
                 this.suffix = matchobj.group(2).lower()
 
                 # Pop the first entry from the pseudo-path and try again
                 parts = parts[1:]
 
-        # If the voltype is missing, it must be "volumes"
+        # If the voltype is missing, it must be "volumes" (for PDS3). For PDS4, it's
+        # "bundles"
         if this.voltype_ == '':
-            this.voltype_ = 'volumes/'
+            # this.voltype_ = 'volumes/'
+            this.voltype_ = 'bundles/'
 
         this.category_ = this.checksums_ + this.archives_ + this.voltype_
 
-        # If a volume name was found, try to find the absolute path
-        if this.volname:
+        # If a bundle name was found, try to find the absolute path
+        if this.bundlename:
 
             # Fill in the rank
-            volname = this.volname.lower()
+            bundlename = this.bundlename.lower()
             if this.suffix:
                 rank = PdsFile.version_info(this.suffix)[0]
             else:
-                rank = CACHE['$RANKS-' + this.category_][volname][-1]
+                rank = CACHE['$RANKS-' + this.category_][bundlename][-1]
 
             # Try to get the absolute path
             try:
-                this_abspath = CACHE['$VOLS-' + this.category_][volname][rank]
+                this_abspath = CACHE['$VOLS-' + this.category_][bundlename][rank]
 
             # On failure, see if an updated suffix will help
             except KeyError:
@@ -3825,7 +3832,7 @@ class PdsFile(object):
                 this_abspath = None
                 for alt_rank in alt_ranks:
                   try:
-                    this_abspath = CACHE['$VOLS-' + this.category_][volname]\
+                    this_abspath = CACHE['$VOLS-' + this.category_][bundlename]\
                                                                    [alt_rank]
                     break
                   except KeyError:
@@ -3835,22 +3842,22 @@ class PdsFile(object):
                     raise ValueError('Suffix "%s" not found: %s' %
                                      (this.suffix, path))
 
-            # This is the PdsFile object down to the volname
+            # This is the PdsFile object down to the bundlename
             this = PdsFile.from_abspath(this_abspath, must_exist=must_exist)
 
-        # If a volset was found but not a volname, try to find the absolute path
-        elif this.volset:
+        # If a bundleset was found but not a bundlename, try to find the absolute path
+        elif this.bundleset:
 
             # Fill in the rank
-            volset = this.volset.lower()
+            bundleset = this.bundleset.lower()
             if this.suffix:
                 rank = PdsFile.version_info(this.suffix)[0]
             else:
-                rank = CACHE['$RANKS-' + this.category_][volset][-1]
+                rank = CACHE['$RANKS-' + this.category_][bundleset][-1]
 
             # Try to get the absolute path
             try:
-                this_abspath = CACHE['$VOLS-' + this.category_][volset][rank]
+                this_abspath = CACHE['$VOLS-' + this.category_][bundleset][rank]
 
             # On failure, see if an updated suffix will help
             except KeyError:
@@ -3873,7 +3880,7 @@ class PdsFile(object):
                 this_abspath = None
                 for alt_rank in alt_ranks:
                   try:
-                    this_abspath = CACHE['$VOLS-' + this.category_][volset]\
+                    this_abspath = CACHE['$VOLS-' + this.category_][bundleset]\
                                                                    [alt_rank]
                     break
                   except KeyError:
@@ -3883,10 +3890,10 @@ class PdsFile(object):
                     raise ValueError('Suffix "%s" not found: %s' %
                                      (this.suffix, path))
 
-            # This is the PdsFile object down to the volset
+            # This is the PdsFile object down to the bundleset
             this = PdsFile.from_abspath(this_abspath, must_exist=must_exist)
 
-        # Without a volname or volset, this must be a very high-level directory
+        # Without a bundlename or bundleset, this must be a very high-level directory
         else:
             this = CACHE[this.category_[:-1]]
 
@@ -4164,15 +4171,15 @@ class PdsFile(object):
 
     @staticmethod
     def from_filespec(filespec, fix_case=False):
-        """The PdsFile object based on a volume name plus file specification
+        """The PdsFile object based on a bundle name plus file specification
         path, without the category or prefix specified.
         """
 
-        volset = PdsFile.FILESPEC_TO_VOLSET.first(filespec)
-        if not volset:
+        bundleset = PdsFile.FILESPEC_TO_BUNDLESET.first(filespec)
+        if not bundleset:
             raise ValueError('Unrecognized file specification: ' + filespec)
 
-        return PdsFile.from_logical_path('volumes/' + volset + '/' + filespec,
+        return PdsFile.from_logical_path('bundles/' + bundleset + '/' + filespec,
                                          fix_case)
 
     @staticmethod
@@ -4349,14 +4356,14 @@ class PdsFile(object):
 
         if self.archives_:
             abspath = ''.join([self.root_, 'checksums-', self.category_,
-                               self.volset, self.suffix, suffix, '_md5.txt'])
+                               self.bundleset, self.suffix, suffix, '_md5.txt'])
             lskip = (len(self.root_) + len('checksums_') + len(self.category_))
 
-        elif self.volname:
+        elif self.bundlename:
             abspath = ''.join([self.root_, 'checksums-', self.category_,
-                               self.volset_, self.volname, suffix, '_md5.txt'])
+                               self.bundleset_, self.bundlename, suffix, '_md5.txt'])
             lskip = (len(self.root_) + len('checksums_') + len(self.category_) +
-                     len(self.volset_))
+                     len(self.bundleset_))
 
         else:
             raise ValueError('Missing volume name for checksum file: ' +
@@ -4373,10 +4380,10 @@ class PdsFile(object):
             return ''
 
         path_if_exact = ''
-        if self.archives_ and self.is_volset_dir:
+        if self.archives_ and self.is_bundleset_dir:
             path_if_exact = self.checksum_path_and_lskip()[0]
 
-        if self.is_volume_dir:
+        if self.is_bundle_dir:
             path_if_exact = self.checksum_path_and_lskip()[0]
 
         if PdsFile.os_path_exists(path_if_exact):
@@ -4392,13 +4399,13 @@ class PdsFile(object):
 
         if self.archives_:
             dirpath = ''.join([self.root_, self.archives_, self.voltype_,
-                               self.volset, self.suffix])
+                               self.bundleset, self.suffix])
             prefix_ = ''.join([self.root_, self.archives_, self.voltype_,
-                               self.volset, self.suffix, '/'])
+                               self.bundleset, self.suffix, '/'])
         else:
             dirpath = ''.join([self.root_, self.archives_, self.voltype_,
-                               self.volset_, self.volname])
-            prefix_ = ''.join([self.root_, self.voltype_, self.volset_])
+                               self.bundleset_, self.bundlename])
+            prefix_ = ''.join([self.root_, self.voltype_, self.bundleset_])
 
         return (dirpath, prefix_)
 
@@ -4424,13 +4431,13 @@ class PdsFile(object):
         else:
             suffix = '_' + self.voltype_[:-1]
 
-        if not self.volname:
-            raise ValueError('Archives require volume names: ' +
+        if not self.bundlename:
+            raise ValueError('Archives require bundle names: ' +
                               self.logical_path)
 
         abspath = ''.join([self.root_, 'archives-', self.category_,
-                           self.volset_, self.volname, suffix, '.tar.gz'])
-        lskip = len(self.root_) + len(self.category_) + len(self.volset_)
+                           self.bundleset_, self.bundlename, suffix, '.tar.gz'])
+        lskip = len(self.root_) + len(self.category_) + len(self.bundleset_)
 
         return (abspath, lskip)
 
@@ -4458,9 +4465,9 @@ class PdsFile(object):
         """Absolute path to the directory associated with this archive path."""
 
         dirpath = ''.join([self.root_, self.voltype_,
-                           self.volset_, self.volname])
+                           self.bundleset_, self.bundlename])
 
-        parent = ''.join([self.root_, self.voltype_, self.volset_])
+        parent = ''.join([self.root_, self.voltype_, self.bundleset_])
 
         return (dirpath, parent)
 
@@ -4487,15 +4494,15 @@ class PdsFile(object):
 
     SHELF_NULL_KEY_VALUES = {}
 
-    def shelf_path_and_lskip(self, shelf_type='info', volname=''):
+    def shelf_path_and_lskip(self, shelf_type='info', bundlename=''):
         """The absolute path to the shelf file associated with this PdsFile.
         Also return the number of characters to skip over in that absolute
         path to obtain the key into the shelf.
 
         Inputs:
             shelf_type  shelf type ID: 'index', 'info', or 'link'.
-            volname     an optional volume name to append to the end of a this
-                        path, which can be used if this is a volset.
+            bundlename     an optional bundle name to append to the end of a this
+                        path, which can be used if this is a bundleset.
         """
 
         if self.checksums_:
@@ -4505,39 +4512,39 @@ class PdsFile(object):
         (dir_prefix, file_suffix) = SHELF_PATH_INFO[shelf_type]
 
         if self.archives_:
-            if not self.volset_:
-                raise ValueError('Archive shelves require volume sets: ' +
+            if not self.bundleset_:
+                raise ValueError('Archive shelves require bundle sets: ' +
                                  self.logical_path)
 
             abspath = ''.join([self.root_, dir_prefix,
-                               self.category_, self.volset, self.suffix,
+                               self.category_, self.bundleset, self.suffix,
                                file_suffix, '.pickle'])
             lskip = (len(self.root_) + len(self.category_) +
-                     len(self.volset_))
+                     len(self.bundleset_))
 
         else:
-            if not self.volname_ and not volname:
-                raise ValueError('Non-archive shelves require volume names: ' +
+            if not self.bundlename_ and not bundlename:
+                raise ValueError('Non-archive shelves require bundle names: ' +
                                  self.logical_path)
 
-            if volname:
-                this_volname = volname.rstrip('/')
+            if bundlename:
+                this_bundlename = bundlename.rstrip('/')
             else:
-                this_volname = self.volname
+                this_bundlename = self.bundlename
 
             abspath = ''.join([self.root_, dir_prefix,
-                               self.category_, self.volset_, this_volname,
+                               self.category_, self.bundleset_, this_bundlename,
                                file_suffix, '.pickle'])
             lskip = (len(self.root_) + len(self.category_) +
-                     len(self.volset_) + len(this_volname) + 1)
+                     len(self.bundleset_) + len(this_bundlename) + 1)
 
         return (abspath, lskip)
 
-    def shelf_path_and_key(self, shelf_id='info', volname=''):
+    def shelf_path_and_key(self, shelf_id='info', bundlename=''):
         """Absolute path to a shelf file, plus the key for this item."""
 
-        (abspath, lskip) = self.shelf_path_and_lskip(shelf_id, volname)
-        if volname:
+        (abspath, lskip) = self.shelf_path_and_lskip(shelf_id, bundlename)
+        if bundlename:
             return (abspath, '')
         else:
             return (abspath, self.interior)
@@ -4578,7 +4585,7 @@ class PdsFile(object):
         shelf = dict(keys_vals)
 
         # Save the null key values from the info shelves. This can save a lot of
-        # shelf open/close operations when we just need info about a volume,
+        # shelf open/close operations when we just need info about a bundle,
         # not an interior file.
         if '' in shelf and shelf_path not in PdsFile.SHELF_NULL_KEY_VALUES:
             PdsFile.SHELF_NULL_KEY_VALUES[shelf_path] = shelf['']
@@ -4624,19 +4631,22 @@ class PdsFile(object):
         for shelf_path in keys:                     # be modified inside loop!
             PdsFile._close_shelf(shelf_path)
 
-    def shelf_lookup(self, shelf_type='info', volname=''):
+    def shelf_lookup(self, shelf_type='info', bundlename=''):
         """Return the contents of a shelf file associated with this object.
 
         shelf_type      indicates the type of the shelf file: 'info', 'link', or
                         'index'.
-        volname         can be used to get info about a volume when the method
-                        is applied to its enclosing volset.
+        bundlename         can be used to get info about a bundle when the method
+                        is applied to its enclosing bundleset.
         """
+        # we don't have shelf files for documents
+        if self.is_documents:
+            return
 
-        (shelf_path, key) = self.shelf_path_and_key(shelf_type, volname)
+        (shelf_path, key) = self.shelf_path_and_key(shelf_type, bundlename)
 
         # This potentially saves the need for a lot of opens and closes when
-        # getting info about volumes rather than interior files
+        # getting info about bundles rather than interior files
         if key == '':
             try:
                 return PdsFile.SHELF_NULL_KEY_VALUES[shelf_path]
@@ -4679,11 +4689,11 @@ class PdsFile(object):
 
         (dir_prefix, file_suffix) = SHELF_PATH_INFO[shelf_type]
 
-        # For archive files, the shelf is associated with the volset
+        # For archive files, the shelf is associated with the bundleset
         if logical_path.startswith('archives'):
             parts = logical_path.split('/')
             if len(parts) < 2:
-                raise ValueError('Archive shelves require volume sets: ' +
+                raise ValueError('Archive shelves require bundle sets: ' +
                                  logical_path)
 
             shelf_abspath = ''.join([root, '/holdings/', dir_prefix,
@@ -4691,11 +4701,11 @@ class PdsFile(object):
                                      file_suffix, '.pickle'])
             key = '/'.join(parts[2:])
 
-        # Otherwise, the shelf is associated with the volume
+        # Otherwise, the shelf is associated with the bundle
         else:
             parts = logical_path.split('/')
             if len(parts) < 3:
-                raise ValueError('Non-archive shelves require volume names: ' +
+                raise ValueError('Non-archive shelves require bundle names: ' +
                                  logical_path)
 
             shelf_abspath = ''.join([root, '/holdings/', dir_prefix,
@@ -4722,30 +4732,16 @@ class PdsFile(object):
         if self.is_category_dir:
             return False
 
-        # Archives have info shelves from the volset level on down
+        # Archives have info shelves from the bundleset level on down
         if self.archives_:
             return True
 
-        # Other files have shelves from the volname level on down
-        if self.volname:
+        # Other files have shelves from the bundlename level on down
+        if self.bundlename:
             return True
 
-        # This leaves volset-level files and their AAREADMEs
+        # This leaves bundleset-level files and their AAREADMEs
         return False
-
-    def shelf_exists_if_expected(self):
-        """True if shelf exists for a pdsfile instance expected to have the shelf file.
-        False if shelf doesn't exist for a pdsfile instance expected to have one."""
-
-        if self.info_shelf_expected:
-            try:
-                self.shelf_lookup('info')
-                return True
-            except OSError:
-                return False
-
-        # Return None if a pdsfile instance doesn't expect the shelf file
-        return None
 
     ############################################################################
     # Log path associations
@@ -4763,10 +4759,10 @@ class PdsFile(object):
         else:
             PdsFile.LOG_ROOT_ = root.rstrip('/') + '/'
 
-    def log_path_for_volume(self, suffix='', task='', dir='', place='default'):
-        """Return a complete log file path for this volume.
+    def log_path_for_bundle(self, suffix='', task='', dir='', place='default'):
+        """Return a complete log file path for this bundle.
 
-        The file name is [dir/]category/volset/volname_suffix_time[_task].log
+        The file name is [dir/]category/bundleset/bundlename_suffix_time[_task].log
         """
 
         # This option provides for a temporary override of the default log root
@@ -4785,7 +4781,7 @@ class PdsFile(object):
         if dir:
             parts += [dir.rstrip('/'), '/']
 
-        parts += [self.category_, self.volset_, self.volname]
+        parts += [self.category_, self.bundleset_, self.bundlename]
 
         if suffix:
             parts += ['_', suffix.lstrip('_')]  # exactly one "_" before suffix
@@ -4800,10 +4796,10 @@ class PdsFile(object):
 
         return ''.join(parts)
 
-    def log_path_for_volset(self, suffix='', task='', dir='', place='default'):
-        """Return a complete log file path for this volume set.
+    def log_path_for_bundlset(self, suffix='', task='', dir='', place='default'):
+        """Return a complete log file path for this bundle set.
 
-        The file name is [dir/]category/volset_suffix_time[_task].log.
+        The file name is [dir/]category/bundleset_suffix_time[_task].log.
         """
 
         # This option provides for a temporary override of the default log root
@@ -4822,7 +4818,7 @@ class PdsFile(object):
         if dir:
             parts += [dir.rstrip('/'), '/']
 
-        parts += [self.category_, self.volset, self.suffix]
+        parts += [self.category_, self.bundleset, self.suffix]
 
         if suffix:
             parts += ['_', suffix.lstrip('_')]  # exactly one "_" before suffix
@@ -4838,7 +4834,7 @@ class PdsFile(object):
         return ''.join(parts)
 
     def log_path_for_index(self, task='', dir='index', place='default'):
-        """Return a complete log file path for this volume.
+        """Return a complete log file path for this bundle.
 
         The file name is [dir/]<logical_path_wo_ext>_timetag[_task].log.
         """
@@ -4881,20 +4877,20 @@ class PdsFile(object):
     def split_basename(self, basename=''):
         """Split into (anchor, suffix, extension).
 
-        Default behavior is to split a file at first period; split a volume
+        Default behavior is to split a file at first period; split a bundle
         set name before the suffix. Can be overridden."""
 
         if basename == '':
             basename = self.basename
 
-        # Special case: volset[_...], volset[_...]_md5.txt, volset[_...].tar.gz
-        matchobj = VOLSET_PLUS_REGEX.match(basename)
+        # Special case: bundleset[_...], bundleset[_...]_md5.txt, bundleset[_...].tar.gz
+        matchobj = BUNDLESET_PLUS_REGEX.match(basename)
         if matchobj is not None:
             return (matchobj.group(1), matchobj.group(2) + matchobj.group(3),
                     matchobj.group(4))
 
-        # Special case: volname[_...]_md5.txt, volname[_...].tar.gz
-        matchobj = VOLNAME_PLUS_REGEX.match(basename)
+        # Special case: bundlename[_...]_md5.txt, bundlename[_...].tar.gz
+        matchobj = BUNDLENAME_PLUS_REGEX.match(basename)
         if matchobj is not None:
             test = self.SPLIT_RULES.first(basename) # a split rule overrides
                                                     # the default behavior
@@ -4931,7 +4927,7 @@ class PdsFile(object):
         def modified_sort_key(basename):
 
             # Volumes of the same name sort by decreasing version number
-            matchobj = VOLSET_PLUS_REGEX_I.match(basename)
+            matchobj = BUNDLESET_PLUS_REGEX_I.match(basename)
             if matchobj is not None:
                 splits = matchobj.groups()
                 parts = [splits[0],
@@ -5294,7 +5290,7 @@ class PdsFile(object):
                 try:
                     new_abspaths.append(pdsf.checksum_path_and_lskip()[0])
                 # This can happen for associations to cumulative metadata files.
-                # These are associated with volsets, not volumes, and volsets
+                # These are associated with bundlesets, not bundles, and bundlesets
                 # have no checksum files.
                 except ValueError:
                     pass
@@ -5316,7 +5312,7 @@ class PdsFile(object):
                 try:
                     new_abspaths.append(pdsf.archive_path_and_lskip()[0])
                 # This can happen for associations to cumulative metadata files.
-                # These are associated with volsets, not volumes, and volsets
+                # These are associated with bundlesets, not bundles, and bundlesets
                 # have no archives.
                 except ValueError:
                     pass
@@ -5498,8 +5494,8 @@ class PdsFile(object):
         else:
             rankstr = ''
 
-        # Handle a volset-level parallel
-        if not self.volname:
+        # Handle a bundleset-level parallel
+        if not self.bundlename:
             parallel = self.volset_pdsfile(category, rank)
             return _cache_and_return(parallel)
 
@@ -5547,7 +5543,7 @@ PdsFile.SUBCLASSES['default'] = PdsFile
 ################################################################################
 
 try:
-    from rules import *     # Data set-specific rules are implemented as
+    from pds4_rules import *     # Data set-specific rules are implemented as
                             # subclasses of PdsFile
 except AttributeError:
     pass                    # This occurs when running pytests on individual
@@ -5672,7 +5668,7 @@ def is_logical_path(path):
 def logical_path_from_abspath(abspath):
     """Logical path derived from an absolute path."""
 
-    parts = abspath.partition('/holdings/')
+    parts = abspath.partition('/'+PDS4_HOLDINGS+'/')
     if parts[1]:
         return parts[2]
 
