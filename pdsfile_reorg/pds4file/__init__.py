@@ -8,3 +8,10 @@ from pdsfile_reorg import *
 
 class Pds4File(PdsFile):
     pass
+
+
+################################################################################
+# Initialize the global registry of subclasses
+################################################################################
+
+Pds4File.SUBCLASSES['default'] = Pds4File

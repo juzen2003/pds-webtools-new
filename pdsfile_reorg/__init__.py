@@ -35,7 +35,7 @@ import translator
 ################################################################################
 # Configuration
 ################################################################################
-PDS4_HOLDINGS = 'pds4-holdings'
+PDS_HOLDINGS = 'holdings'
 
 VOLTYPES = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews',
             'documents', 'bundles']
@@ -724,7 +724,8 @@ class PdsFile(object):
         pdsfile_rules.OPUS_ID_TO_PRIMARY_LOGICAL_PATH
 
     OPUS_ID_TO_SUBCLASS = pdsfile_rules.OPUS_ID_TO_SUBCLASS
-    FILESPEC_TO_BUNDLESET = pdsfile_rules.FILESPEC_TO_BUNDLESET
+    # FILESPEC_TO_BUNDLESET = pdsfile_rules.FILESPEC_TO_BUNDLESET
+    FILESPEC_TO_BUNDLESET = None
 
     FILENAME_KEYLEN = 0
 
@@ -863,18 +864,19 @@ class PdsFile(object):
 
     def new_pdsfile(self, key=None, copypath=False):
         """Empty PdsFile of the same subclass or a specified subclass."""
-
+        cls = type(self)
         if key is None:
             cls = type(self)
-        elif key in PdsFile.SUBCLASSES:
-            cls = PdsFile.SUBCLASSES[key]
+        elif key in cls.SUBCLASSES:
+            cls = cls.SUBCLASSES[key]
         else:
-            key2 = PdsFile.VOLSET_TRANSLATOR.first(key)
-            cls = PdsFile.SUBCLASSES[key2]
+            key2 = cls.VOLSET_TRANSLATOR.first(key)
+            cls = cls.SUBCLASSES[key2]
 
         this = cls.__new__(cls)
 
-        source = PdsFile()
+        # source = PdsFile()
+        source = cls()
         for (key, value) in source.__dict__.items():
             this.__dict__[key] = value
 
@@ -901,8 +903,9 @@ class PdsFile(object):
 
         return this
 
-    @staticmethod
-    def new_merged_dir(basename):
+    # @staticmethod
+    @classmethod
+    def new_merged_dir(cls, basename):
         """A merged directory with the given basename. Merged directories
         contain children from multiple physical directories. Examples are
         volumes/, archives-volumes/, etc."""
@@ -910,7 +913,8 @@ class PdsFile(object):
         if basename not in CATEGORIES:
             raise ValueError('Invalid category: ' + basename)
 
-        this = PdsFile()
+        # this = PdsFile()
+        this = cls()
 
         this.basename     = basename
         this.abspath      = None
@@ -3466,8 +3470,9 @@ class PdsFile(object):
         abspath = abspath_for_logical_path(path)
         return PdsFile.from_abspath(abspath)
 
-    @staticmethod
-    def from_abspath(abspath, fix_case=False, must_exist=False,
+    # @staticmethod
+    @classmethod
+    def from_abspath(cls, abspath, fix_case=False, must_exist=False,
                               caching='default', lifetime=None):
         """Constructor from an absolute path."""
 
@@ -3501,17 +3506,18 @@ class PdsFile(object):
         # Search for "holdings"
         parts_lc = [p.lower() for p in parts]
         try:
-            pds4_holdings_index = parts_lc.index(PDS4_HOLDINGS) # Change variable name to distinguish from PDS3
+            PDS_HOLDINGS_index = parts_lc.index(PDS_HOLDINGS) # Change variable name to distinguish from PDS3
         except ValueError:
-            raise ValueError('"{}" directory not found in: '.format(PDS4_HOLDINGS) + abspath)
+            raise ValueError('"{}" directory not found in: '.format(PDS_HOLDINGS) + abspath)
         ### Pause the cache
         CACHE.pause()
         try:
             # Fill in this.disk_, the absolute path to the directory containing
             # subdirectory "holdings"
-            this = PdsFile()
-            this.disk_ = drive_spec + '/'.join(parts[:pds4_holdings_index]) + '/'
-            this.root_ = this.disk_ + PDS4_HOLDINGS + '/'
+            # this = PdsFile()
+            this = cls()
+            this.disk_ = drive_spec + '/'.join(parts[:PDS_HOLDINGS_index]) + '/'
+            this.root_ = this.disk_ + PDS_HOLDINGS + '/'
 
             # Get case right if necessary
             if fix_case:
@@ -3527,26 +3533,26 @@ class PdsFile(object):
             # named holdings, holding1, ... holdings9
 
             if len(LOCAL_PRELOADED) <= 1:   # There's only one holdings dir
-                this.html_root_ = '/' + PDS4_HOLDINGS +'/'
+                this.html_root_ = '/' + PDS_HOLDINGS +'/'
             else:                       # Find this holdings dir among preloaded
-                pds4_holdings_abspath = this.disk_ + PDS4_HOLDINGS
+                PDS_HOLDINGS_abspath = this.disk_ + PDS_HOLDINGS
                 try:
-                    k = LOCAL_PRELOADED.index(pds4_holdings_abspath)
+                    k = LOCAL_PRELOADED.index(PDS_HOLDINGS_abspath)
                 except ValueError:
-                    LOGGER.warn('No URL: ' + pds4_holdings_abspath)
+                    LOGGER.warn('No URL: ' + PDS_HOLDINGS_abspath)
                     this.html_root_ = '/'
 
                 else:       # "holdings", "holdings1", ... "holdings9"
                     if k:
-                        this.html_root_ = '/' + PDS4_HOLDINGS + str(k) + '/'
+                        this.html_root_ = '/' + PDS_HOLDINGS + str(k) + '/'
                     else:
-                        this.html_root_ = '/' + PDS4_HOLDINGS + '/'
+                        this.html_root_ = '/' + PDS_HOLDINGS + '/'
 
             this.logical_path = ''
-            this.abspath = this.disk_ + PDS4_HOLDINGS
-            this.basename = PDS4_HOLDINGS
+            this.abspath = this.disk_ + PDS_HOLDINGS
+            this.basename = PDS_HOLDINGS
             # Handle the rest of the tree using child()
-            for part in parts[pds4_holdings_index + 1:]:
+            for part in parts[PDS_HOLDINGS_index + 1:]:
                 this = this.child(part, fix_case=fix_case, must_exist=must_exist,
                                         caching=caching, lifetime=lifetime)
 
@@ -3598,8 +3604,9 @@ class PdsFile(object):
                                              fix_case=False, must_exist=False,
                                              caching='default', lifetime=None)
 
-    @staticmethod
-    def from_path(path, must_exist=False, caching='default', lifetime=None):
+    # @staticmethod
+    @classmethod
+    def from_path(cls, path, must_exist=False, caching='default', lifetime=None):
         """Find the PdsFile, if possible based on anything roughly resembling
         an actual path in the filesystem, using sensible defaults for missing
         components.
@@ -3636,7 +3643,8 @@ class PdsFile(object):
             path = path.partition('/')[2]   # remove up to the next slash
 
         # Interpret leading parts
-        this = PdsFile()
+        # this = PdsFile()
+        this = cls()
 
         # Look for checksums, archives, voltypes, and an isolated version suffix
         # among the leading items of the pseudo-path
@@ -5673,7 +5681,7 @@ def is_logical_path(path):
 def logical_path_from_abspath(abspath):
     """Logical path derived from an absolute path."""
 
-    parts = abspath.partition('/'+PDS4_HOLDINGS+'/')
+    parts = abspath.partition('/'+PDS_HOLDINGS+'/')
     if parts[1]:
         return parts[2]
 
