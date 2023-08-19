@@ -901,6 +901,11 @@ class PdsFile(object):
             this.bundlename      = self.bundlename
             this.interior        = self.interior
 
+            this.volset_  = self.bundleset_
+            this.volset   = self.bundleset
+            this.volname_ = self.bundlename_
+            this.volname  = self.bundlename
+
         return this
 
     # @staticmethod
@@ -983,6 +988,11 @@ class PdsFile(object):
         this._infoshelf_path_and_key         = ('', '')
         this._is_index                       = False
         this._indexshelf_abspath             = ''
+
+        this.volset_  = this.bundleset_
+        this.volset   = this.bundleset
+        this.volname_ = this.bundlename_
+        this.volname  = this.bundlename
 
         return this
 
