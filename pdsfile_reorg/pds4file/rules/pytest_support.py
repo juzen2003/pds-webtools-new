@@ -1,5 +1,5 @@
 ################################################################################
-# rules/pytest_support.py
+# pds4file/ruless/pytest_support.py
 ################################################################################
 
 import pdsfile_reorg.pds4file as pds4file

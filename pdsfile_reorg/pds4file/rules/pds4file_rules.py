@@ -1,5 +1,5 @@
 ################################################################################
-# pds4file/rules/__init__.py
+# pds4file/rules/pds4file_rules.py
 #
 # Subclasses of PdsFile, encompassing dataset-specific information
 # TODO: Modify the general rules for pds4, for now all variables have placeholder values

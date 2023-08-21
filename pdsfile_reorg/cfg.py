@@ -1,5 +1,6 @@
 ################################################################################
-# Store global variables that will be modified or have different values in the subclasses
+# Store global variables that will be modified or have different values in both
+# pds3 & pds4 subclasses
 ################################################################################
 import pdscache
 import pdslogger
