@@ -9,7 +9,44 @@ from .rules import pds3file_rules as pdsfile_rules
 # Constants specific to the pds4file package
 ################################################################################
 # FILESPEC_TO_BUNDLESET = pdsfile_rules.FILESPEC_TO_VOLSET
-PDS_HOLDINGS = 'holdings'
+# cfg.PDS_HOLDINGS = 'holdings'
+# SHELVES_ONLY = False
+# SHELVES_ONLY = cfg.SHELVES_ONLY
+# cfg.CACHE = cfg.CACHE
+
+def cache_lifetime(arg):
+    """Used by caches. Given any object, it returns the default lifetime in
+    seconds. A returned lifetime of zero means keep forever.
+    """
+
+    # Keep Viewmaster HTML for 12 hours
+    if isinstance(arg, str):
+        return 12 * 60 * 60
+
+    # Keep RANKS, VOLS, etc. forever
+    elif not isinstance(arg, Pds3File):
+        return 0
+
+    # Cache PdsFile bundlesets/bundles for a long time, but not necessarily forever
+    elif not arg.interior:
+        return LONG_FILE_CACHE_LIFETIME
+
+    elif arg.isdir and arg.interior.lower().endswith('data'):
+        return LONG_FILE_CACHE_LIFETIME     # .../bundlename/*data for a long time
+    elif arg.isdir:
+        return 2 * 24 * 60 * 60             # Other directories for two days
+    else:
+        return DEFAULT_FILE_CACHE_LIFETIME
+
+# Initialize the cache
+MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
+DICTIONARY_CACHE_LIMIT = 200000
+cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
+                                 limit=DICTIONARY_CACHE_LIMIT,
+                                 logger=LOGGER)
+
+DEFAULT_CACHING = 'dir'
+PRELOAD_TRIES = 3
 
 def preload(holdings_list, port=0, clear=False, force_reload=False,
             icon_color='blue'):
@@ -28,8 +65,7 @@ def preload(holdings_list, port=0, clear=False, force_reload=False,
                             directory; default "blue".
     """
 
-    global CACHE, MEMCACHE_PORT, DEFAULT_CACHING, LOCAL_PRELOADED, PRELOAD_TRIES
-    global FS_IS_CASE_INSENSITIVE
+    global MEMCACHE_PORT, DEFAULT_CACHING, PRELOAD_TRIES
 
     # Convert holdings to a list of absolute paths
     if not isinstance(holdings_list, (list,tuple)):
@@ -39,8 +75,8 @@ def preload(holdings_list, port=0, clear=False, force_reload=False,
 
     # Use cache as requested
     if (port == 0 and MEMCACHE_PORT == 0) or not HAS_PYLIBMC:
-        if not isinstance(CACHE, pdscache.DictionaryCache):
-            CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
+        if not isinstance(cfg.CACHE, pdscache.DictionaryCache):
+            cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                              limit=DICTIONARY_CACHE_LIMIT,
                                              logger=LOGGER)
         LOGGER.info('Using local dictionary cache')
@@ -50,7 +86,7 @@ def preload(holdings_list, port=0, clear=False, force_reload=False,
 
         for k in range(PRELOAD_TRIES):
           try:
-            CACHE = pdscache.MemcachedCache(MEMCACHE_PORT,
+            cfg.CACHE = pdscache.MemcachedCache(MEMCACHE_PORT,
                                             lifetime=cache_lifetime,
                                             logger=LOGGER)
             LOGGER.info('Connecting to PdsFile Memcache [%s]' % MEMCACHE_PORT)
@@ -67,8 +103,8 @@ def preload(holdings_list, port=0, clear=False, force_reload=False,
                               'using dictionary instead') %  MEMCACHE_PORT)
 
                 MEMCACHE_PORT = 0
-                if not isinstance(CACHE, pdscache.DictionaryCache):
-                    CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
+                if not isinstance(cfg.CACHE, pdscache.DictionaryCache):
+                    cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                                 limit=DICTIONARY_CACHE_LIMIT,
                                                 logger=LOGGER)
 
@@ -85,25 +121,25 @@ def preload(holdings_list, port=0, clear=False, force_reload=False,
     #### to proceed
 
     if clear:
-        CACHE.clear(block=True) # For a MemcachedCache, this will pause for any
+        cfg.CACHE.clear(block=True) # For a MemcachedCache, this will pause for any
                                 # other thread's block, then clear, and retain
                                 # the block until the preload is finished.
-        LOCAL_PRELOADED = []
+        cfg.LOCAL_PRELOADED = []
         LOGGER.info('Cache cleared')
 
     elif force_reload:
-        LOCAL_PRELOADED = []
+        cfg.LOCAL_PRELOADED = []
         LOGGER.info('Forcing a complete new preload')
-        CACHE.wait_and_block()
+        cfg.CACHE.wait_and_block()
 
     else:
         while True:
-            LOCAL_PRELOADED = CACHE.get_now('$PRELOADED') or []
+            cfg.LOCAL_PRELOADED = cfg.CACHE.get_now('$PRELOADED') or []
 
             # Report status
             something_is_missing = False
             for holdings in holdings_list:
-                if holdings in LOCAL_PRELOADED:
+                if holdings in cfg.LOCAL_PRELOADED:
                     LOGGER.info('Holdings are already cached', holdings)
                 else:
                     something_is_missing = True
@@ -117,17 +153,17 @@ def preload(holdings_list, port=0, clear=False, force_reload=False,
 
                 return
 
-            waited = CACHE.wait_and_block()
+            waited = cfg.CACHE.wait_and_block()
             if not waited:      # A wait suggests the answer might have changed,
                                 # so try again.
                 break
 
-            CACHE.unblock()
+            cfg.CACHE.unblock()
 
     # At this point, the cache is blocked.
 
     # Pause the cache before proceeding--saves I/O
-    CACHE.pause()       # Paused means no local changes will be flushed to the
+    cfg.CACHE.pause()       # Paused means no local changes will be flushed to the
                         # external cache until resume() is called.
 
     ############################################################################
@@ -170,31 +206,31 @@ def preload(holdings_list, port=0, clear=False, force_reload=False,
         # sets to exist on multiple physical drives in a way that is invisible
         # to the user.
         for category in CATEGORY_LIST:
-            CACHE.set(category, Pds3File.new_merged_dir(category), lifetime=0)
+            cfg.CACHE.set(category, Pds3File.new_merged_dir(category), lifetime=0)
 
         # Initialize RANKS, VOLS and category list
         for category in CATEGORY_LIST:
           category_ = category + '/'
           key = '$RANKS-' + category_
           try:
-              _ = CACHE[key]
+              _ = cfg.CACHE[key]
           except KeyError:
-              CACHE.set(key, {}, lifetime=0)
+              cfg.CACHE.set(key, {}, lifetime=0)
 
           key = '$VOLS-'  + category_
           try:
-              _ = CACHE[key]
+              _ = cfg.CACHE[key]
           except KeyError:
-              CACHE.set(key, {}, lifetime=0)
+              cfg.CACHE.set(key, {}, lifetime=0)
 
         # Cache all of the top-level PdsFile directories
         for h,holdings in enumerate(holdings_list):
 
-            if holdings in LOCAL_PRELOADED:
+            if holdings in cfg.LOCAL_PRELOADED:
                 LOGGER.info('Pre-load not needed for ' + holdings)
                 continue
 
-            LOCAL_PRELOADED.append(holdings)
+            cfg.LOCAL_PRELOADED.append(holdings)
             LOGGER.info('Pre-loading ' + holdings)
 
             # Load volume info
@@ -225,20 +261,20 @@ def preload(holdings_list, port=0, clear=False, force_reload=False,
                 pdsviewable.load_icons(icon_path, icon_url, icon_color, LOGGER)
 
     finally:
-        CACHE.set('$PRELOADED', LOCAL_PRELOADED, lifetime=0)
-        CACHE.resume()
-        CACHE.unblock(flush=True)
+        cfg.CACHE.set('$PRELOADED', cfg.LOCAL_PRELOADED, lifetime=0)
+        cfg.CACHE.resume()
+        cfg.CACHE.unblock(flush=True)
 
     LOGGER.info('PdsFile preloading completed')
 
     # Determine if the file system is case-sensitive
     # If any physical bundle is case-insensitive, then we treat the whole file
     # system as case-insensitive.
-    FS_IS_CASE_INSENSITIVE = False
-    for holdings_dir in LOCAL_PRELOADED:
+    cfg.FS_IS_CASE_INSENSITIVE = False
+    for holdings_dir in cfg.LOCAL_PRELOADED:
         testfile = holdings_dir.replace('/holdings', '/HoLdInGs')
         if os.path.exists(testfile):
-            FS_IS_CASE_INSENSITIVE = True
+            cfg.FS_IS_CASE_INSENSITIVE = True
             break
 
 class Pds3File(PdsFile):
@@ -265,6 +301,8 @@ class Pds3File(PdsFile):
     OPUS_ID_TO_SUBCLASS = pdsfile_rules.OPUS_ID_TO_SUBCLASS
     FILESPEC_TO_VOLSET = pdsfile_rules.FILESPEC_TO_VOLSET
     FILESPEC_TO_BUNDLESET = FILESPEC_TO_VOLSET
+
+    BUNDLE_DIR_NAME = 'volumes'
 
     def __init__(self):
         super().__init__()
@@ -298,6 +336,23 @@ class Pds3File(PdsFile):
     @property
     def is_volume_dir(self):
         return self.is_bundle_dir
+
+    def log_path_for_volset(self, suffix='', task='', dir='', place='default'):
+        return self.log_path_for_bundleset(suffix, task, dir, place)
+
+    def log_path_for_volume(self, suffix='', task='', dir='', place='default'):
+        return self.log_path_for_bundle(suffix, task, dir, place)
+
+    # Override functions
+    def __repr__(self):
+        if self.abspath is None:
+            return 'Pds3File-logical("' + self.logical_path + '")'
+        elif type(self) == Pds3File:
+            return 'Pds3File("' + self.abspath + '")'
+        else:
+            return ('Pds3File.' + type(self).__name__ + '("' +
+                    self.abspath + '")')
+
 
 
 ################################################################################

@@ -5,6 +5,7 @@
 ################################################################################
 
 import pdsfile
+import pdsfile_reorg
 import pdsgroup
 
 class PdsGroupTable(object):
@@ -169,6 +170,10 @@ class PdsGroupTable(object):
             self.insert_group(thing)
 
         elif isinstance(thing, pdsfile.PdsFile):
+            self.insert_file(thing)
+        elif (isinstance(thing, pdsfile_reorg.PdsFile) or
+              isinstance(thing, pdsfile_reorg.pds3file.Pds3File) or
+              isinstance(thing, pdsfile_reorg.pds4file.Pds4File)) :
             self.insert_file(thing)
 
         else:

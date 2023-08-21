@@ -1808,6 +1808,8 @@ class PdsFile(object):
                     child_count -= 1
                     continue
 
+                print("----------------")
+                print(volname)
                 try:
                     (file_bytes, _,
                      timestring, _, _) = self.shelf_lookup('info', volname)
