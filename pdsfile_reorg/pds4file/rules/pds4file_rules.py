@@ -1,13 +1,10 @@
-####################################################################################################################################
-# pdsfile_reorg/pds3file/rules/__init__.py
+################################################################################
+# pds4file/rules/__init__.py
 #
-# Definitions of Translator objects used by the PdsFile class.
-####################################################################################################################################
-# DESCRIPTION_AND_ICON
-#
-# Translates an absolute file path within any directory tree to a brief description of the file and an associated icon type.
-####################################################################################################################################
-
+# Subclasses of PdsFile, encompassing dataset-specific information
+# TODO: Modify the general rules for pds4, for now all variables have placeholder values
+# the same as the pds3 general rules.
+################################################################################
 import re
 import translator
 

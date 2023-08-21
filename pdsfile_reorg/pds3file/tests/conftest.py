@@ -1,6 +1,5 @@
 import os
 import pdsfile_reorg.pds3file as pds3file
-import pdsfile_reorg as pdsfile
 import pdslogger
 import pytest
 

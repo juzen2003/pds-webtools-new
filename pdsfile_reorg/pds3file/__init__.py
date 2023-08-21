@@ -5,15 +5,6 @@
 from pdsfile_reorg import *
 from .rules import pds3file_rules as pdsfile_rules
 
-################################################################################
-# Constants specific to the pds4file package
-################################################################################
-# FILESPEC_TO_BUNDLESET = pdsfile_rules.FILESPEC_TO_VOLSET
-# cfg.PDS_HOLDINGS = 'holdings'
-# SHELVES_ONLY = False
-# SHELVES_ONLY = cfg.SHELVES_ONLY
-# cfg.CACHE = cfg.CACHE
-
 def cache_lifetime(arg):
     """Used by caches. Given any object, it returns the default lifetime in
     seconds. A returned lifetime of zero means keep forever.

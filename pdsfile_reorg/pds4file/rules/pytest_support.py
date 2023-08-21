@@ -2,7 +2,7 @@
 # rules/pytest_support.py
 ################################################################################
 
-import pdsfile_reorg.pds3file as pds3file
+import pdsfile_reorg.pds4file as pds4file
 
 def translate_first(trans, path):
     """Logical paths of "first" files found using given translator on path."""
@@ -15,11 +15,11 @@ def translate_first(trans, path):
         patterns = [patterns]
 
     patterns = [p for p in patterns if p]       # skip empty translations
-    patterns = pds3file.Pds3File.abspaths_for_logicals(patterns)
+    patterns = pds4file.Pds4File.abspaths_for_logicals(patterns)
 
     abspaths = []
     for pattern in patterns:
-        abspaths += pds3file.Pds3File.glob_glob(pattern)
+        abspaths += pds4file.Pds4File.glob_glob(pattern)
 
     return abspaths
 
@@ -34,11 +34,11 @@ def translate_all(trans, path):
         patterns = [patterns]
 
     patterns = [p for p in patterns if p]       # skip empty translations
-    patterns = pds3file.Pds3File.abspaths_for_logicals(patterns)
+    patterns = pds4file.Pds4File.abspaths_for_logicals(patterns)
 
     abspaths = []
     for pattern in patterns:
-        abspaths += pds3file.Pds3File.glob_glob(pattern)
+        abspaths += pds4file.Pds4File.glob_glob(pattern)
 
     return abspaths
 
@@ -48,11 +48,11 @@ def unmatched_patterns(trans, path):
 
     patterns = trans.all(path)
     patterns = [p for p in patterns if p]       # skip empty translations
-    patterns = pds3file.Pds3File.abspaths_for_logicals(patterns)
+    patterns = pds4file.Pds4File.abspaths_for_logicals(patterns)
 
     unmatched = []
     for pattern in patterns:
-        abspaths = pds3file.Pds3File.glob_glob(pattern)
+        abspaths = pds4file.Pds4File.glob_glob(pattern)
         if not abspaths:
             unmatched.append(pattern)
 
@@ -64,24 +64,24 @@ def unmatched_patterns(trans, path):
 
 def instantiate_target_pdsfile(path, is_abspath=True):
     if is_abspath:
-        TESTFILE_PATH = pds3file.abspath_for_logical_path(path)
-        target_pdsfile = pds3file.Pds3File.from_abspath(TESTFILE_PATH)
+        TESTFILE_PATH = pds4file.abspath_for_logical_path(path)
+        target_pdsfile = pds4file.Pds4File.from_abspath(TESTFILE_PATH)
     else:
         TESTFILE_PATH = path
-        target_pdsfile = pds3file.Pds3File.from_logical_path(TESTFILE_PATH)
+        target_pdsfile = pds4file.Pds4File.from_logical_path(TESTFILE_PATH)
     return target_pdsfile
 
 def get_pdsfiles(paths, is_abspath=True):
     pdsfiles_arr = []
     if is_abspath:
         for path in paths:
-            TESTFILE_PATH = pds3file.abspath_for_logical_path(path)
-            target_pdsfile = pds3file.Pds3File.from_abspath(TESTFILE_PATH)
+            TESTFILE_PATH = pds4file.abspath_for_logical_path(path)
+            target_pdsfile = pds4file.Pds4File.from_abspath(TESTFILE_PATH)
             pdsfiles_arr.append(target_pdsfile)
     else:
         for path in paths:
             TESTFILE_PATH = path
-            target_pdsfile = pds3file.Pds3File.from_logical_path(TESTFILE_PATH)
+            target_pdsfile = pds4file.Pds4File.from_logical_path(TESTFILE_PATH)
             pdsfiles_arr.append(target_pdsfile)
     return pdsfiles_arr
 
@@ -89,7 +89,7 @@ def get_pdsgroups(paths_group, is_abspath=True):
     pdsgroups_arr = []
     for paths in paths_group:
         pdsfiles = get_pdsfiles(paths, is_abspath)
-        pdsgroup = pds3file.PdsGroup(pdsfiles=pdsfiles)
+        pdsgroup = pds4file.PdsGroup(pdsfiles=pdsfiles)
         pdsgroups_arr.append(pdsgroup)
     return pdsgroups_arr
 
@@ -106,7 +106,7 @@ def opus_products_test(input_path, expected):
     for key in results:
         result_paths = []       # flattened list of logical paths
         for pdsfiles in results[key]:
-            result_paths += pds3file.Pds3File.logicals_for_pdsfiles(pdsfiles)
+            result_paths += pds4file.Pds4File.logicals_for_pdsfiles(pdsfiles)
         for path in result_paths:
             assert path in expected[key], f'Extra file under key {key}: {path}'
         for path in expected[key]:

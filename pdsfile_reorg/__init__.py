@@ -45,14 +45,14 @@ VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'tif', 'tiff', 'jpeg', 'jpeg_small'])
 DATAFILE_EXTS = set(['dat', 'img', 'cub', 'qub', 'fit', 'fits'])
 
 # For Pds3File only
-BUNDLESET_REGEX        = re.compile(r'^([A-Z][A-Z0-9x]{1,5}_[0-9x]{3}x)$')
-BUNDLESET_REGEX_I      = re.compile(BUNDLESET_REGEX.pattern, re.I)
-BUNDLESET_PLUS_REGEX   = re.compile(BUNDLESET_REGEX.pattern[:-1] +
-                        r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
-                        r'_in_prep|_prelim|_peer_review|_lien_resolution|)' +
-                        r'((|_calibrated|_diagrams|_metadata|_previews)' +
-                        r'(|_md5\.txt|\.tar\.gz))$')
-BUNDLESET_PLUS_REGEX_I = re.compile(BUNDLESET_PLUS_REGEX.pattern, re.I)
+# BUNDLESET_REGEX    = re.compile(r'^([A-Z][A-Z0-9x]{1,5}_[0-9x]{3}x)$')
+# BUNDLESET_REGEX_I      = re.compile(BUNDLESET_REGEX.pattern, re.I)
+# BUNDLESET_PLUS_REGEX   = re.compile(BUNDLESET_REGEX.pattern[:-1] +
+#                         r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
+#                         r'_in_prep|_prelim|_peer_review|_lien_resolution|)' +
+#                         r'((|_calibrated|_diagrams|_metadata|_previews)' +
+#                         r'(|_md5\.txt|\.tar\.gz))$')
+# BUNDLESET_PLUS_REGEX_I = re.compile(BUNDLESET_PLUS_REGEX.pattern, re.I)
 # Groups are (bundleset, version_suffix, other_suffix, extension)
 # Example: "COISS_0xxx_v1_calibrated_md5.txt" -> ("COISS_0xxx", "_v1",
 #                                                 "_calibrated", "_md5.txt")
@@ -61,19 +61,19 @@ CATEGORY_REGEX      = re.compile(r'^(|checksums\-)(|archives\-)(\w+)$')
 CATEGORY_REGEX_I    = re.compile(CATEGORY_REGEX.pattern, re.I)
 
 # For Pds3File only
-BUNDLENAME_REGEX       = re.compile(r'^([A-Z][A-Z0-9]{1,5}_(?:[0-9]{4}))$')
-BUNDLENAME_REGEX_I     = re.compile(BUNDLENAME_REGEX.pattern, re.I)
-BUNDLENAME_PLUS_REGEX  = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
-                                  r'(|_[a-z]+)(|_md5\.txt|\.tar\.gz)$')
-BUNDLENAME_PLUS_REGEX_I = re.compile(BUNDLENAME_PLUS_REGEX.pattern, re.I)
-# Groups are (bundlename, suffix, extension)
-# Example: "VGISS_5101_previews_md5.txt" -> ("VGISS_5101", "_previews",
-#                                            "_md5.txt")
+# BUNDLENAME_REGEX   = re.compile(r'^([A-Z][A-Z0-9]{1,5}_(?:[0-9]{4}))$')
+# BUNDLENAME_REGEX_I     = re.compile(BUNDLENAME_REGEX.pattern, re.I)
+# BUNDLENAME_PLUS_REGEX  = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
+#                                   r'(|_[a-z]+)(|_md5\.txt|\.tar\.gz)$')
+# BUNDLENAME_PLUS_REGEX_I = re.compile(BUNDLENAME_PLUS_REGEX.pattern, re.I)
+# # Groups are (bundlename, suffix, extension)
+# # Example: "VGISS_5101_previews_md5.txt" -> ("VGISS_5101", "_previews",
+# #                                            "_md5.txt")
 
-BUNDLENAME_VERSION     = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
-                        r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
-                        r'_in_prep|_prelim|_peer_review|_lien_resolution)$')
-BUNDLENAME_VERSION_I   = re.compile(BUNDLENAME_VERSION.pattern, re.I)
+# BUNDLENAME_VERSION     = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
+#                         r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
+#                         r'_in_prep|_prelim|_peer_review|_lien_resolution)$')
+# BUNDLENAME_VERSION_I   = re.compile(BUNDLENAME_VERSION.pattern, re.I)
 # Example: "VGISS_5101_peer_review" -> ("VGISS_5101", "_peer_review")
 
 VIEWABLE_ANCHOR_REGEX = re.compile(r'(.*/\w+)_[a-z]+\.(jpg|png)')
@@ -1829,8 +1829,6 @@ class PdsFile(object):
                     child_count -= 1
                     continue
 
-                print("----------------")
-                print(bundlename)
                 try:
                     (file_bytes, _,
                      timestring, _, _) = self.shelf_lookup('info', bundlename)
@@ -3269,7 +3267,7 @@ class PdsFile(object):
             if self.bundleset:
                 class_key = self.bundleset
             elif self.category_:
-                matchobj = BUNDLESET_PLUS_REGEX_I.match(basename)
+                matchobj = cfg.BUNDLESET_PLUS_REGEX_I.match(basename)
                 if matchobj is None:
                     raise ValueError('Illegal bundle set directory "%s": %s' %
                                      (basename, self.logical_path))
@@ -3303,7 +3301,7 @@ class PdsFile(object):
                     return this._complete(must_exist, caching, lifetime)
 
                 # Handle bundle name
-                matchobj = BUNDLENAME_PLUS_REGEX_I.match(basename)
+                matchobj = cfg.BUNDLENAME_PLUS_REGEX_I.match(basename)
                 if matchobj:
                     this.bundlename_ = basename + '/'
                     this.bundlename  = matchobj.group(1)
@@ -3321,7 +3319,7 @@ class PdsFile(object):
             if self.category_:
 
                 # Handle bundle set and suffix
-                matchobj = BUNDLESET_PLUS_REGEX_I.match(basename)
+                matchobj = cfg.BUNDLESET_PLUS_REGEX_I.match(basename)
                 if matchobj is None:
                     raise ValueError('Illegal bundle set directory "%s": %s' %
                                      (basename, this.logical_path))
@@ -3735,7 +3733,7 @@ class PdsFile(object):
             # Parse the next part of the pseudo-path as if it is a bundleset
             # Parts are (bundleset, version_suffix, other_suffix, extension)
             # Example: COISS_0xxx_v1_md5.txt -> (COISS_0xxx, v1, _md5, .txt)
-            matchobj = BUNDLESET_PLUS_REGEX_I.match(parts[0])
+            matchobj = cfg.BUNDLESET_PLUS_REGEX_I.match(parts[0])
             if matchobj:
                 subparts = matchobj.group(1).partition('_')
                 this.bundleset = subparts[0].upper() + '_' + subparts[2].lower()
@@ -3771,7 +3769,7 @@ class PdsFile(object):
             # Parts are (bundlename, suffix, extension)
             # Example: COISS_2001_previews_md5.txt -> (COISS_2001,
             #                                          _previews_md5, .txt)
-            matchobj = BUNDLENAME_PLUS_REGEX_I.match(parts[0])
+            matchobj = cfg.BUNDLENAME_PLUS_REGEX_I.match(parts[0])
             if matchobj:
                 this.bundlename = matchobj.group(1).upper()
 
@@ -3802,7 +3800,7 @@ class PdsFile(object):
             # Parse the next part of the pseudo-path as if it is a bundlename
             # Parts are (bundlename, version)
             # Example: "VGISS_5101_peer_review" -> (VGISS_5101, _peer_review)
-            matchobj = BUNDLENAME_VERSION_I.match(parts[0])
+            matchobj = cfg.BUNDLENAME_VERSION_I.match(parts[0])
             if matchobj:
                 this.bundlename = matchobj.group(1).upper()
                 this.suffix = matchobj.group(2).lower()
@@ -4919,13 +4917,13 @@ class PdsFile(object):
             basename = self.basename
 
         # Special case: bundleset[_...], bundleset[_...]_md5.txt, bundleset[_...].tar.gz
-        matchobj = BUNDLESET_PLUS_REGEX.match(basename)
+        matchobj = cfg.BUNDLESET_PLUS_REGEX.match(basename)
         if matchobj is not None:
             return (matchobj.group(1), matchobj.group(2) + matchobj.group(3),
                     matchobj.group(4))
 
         # Special case: bundlename[_...]_md5.txt, bundlename[_...].tar.gz
-        matchobj = BUNDLENAME_PLUS_REGEX.match(basename)
+        matchobj = cfg.BUNDLENAME_PLUS_REGEX.match(basename)
         if matchobj is not None:
             test = self.SPLIT_RULES.first(basename) # a split rule overrides
                                                     # the default behavior
@@ -4962,7 +4960,7 @@ class PdsFile(object):
         def modified_sort_key(basename):
 
             # Volumes of the same name sort by decreasing version number
-            matchobj = BUNDLESET_PLUS_REGEX_I.match(basename)
+            matchobj = cfg.BUNDLESET_PLUS_REGEX_I.match(basename)
             if matchobj is not None:
                 splits = matchobj.groups()
                 parts = [splits[0],
