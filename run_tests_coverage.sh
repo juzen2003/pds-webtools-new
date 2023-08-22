@@ -8,9 +8,10 @@ while [ $count -le $numOfModes ]
 do
     echo "Run mode $count"
     # Run tests under tests/ and rules/
-    coverage run --parallel-mode -m pytest pdsfile_reorg/pds3file/tests/ \
-    pdsfile_reorg/pds3file/rules/*.py --mode $count
-    coverage run --parallel-mode -m pytest pdsfile_reorg/pds4file/tests/  --mode $count
+    coverage run --parallel-mode -m pytest pdsfile/pds3file/tests/ \
+    pdsfile/pds3file/rules/*.py --mode $count
+    coverage run --parallel-mode -m pytest pdsfile/pds4file/tests/ --mode $count
+
 
     count=`expr $count + 1`
 done
