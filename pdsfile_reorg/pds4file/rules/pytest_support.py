@@ -41,19 +41,19 @@ def unmatched_patterns(trans, path):
 
 def instantiate_target_pdsfile(path, is_abspath=True):
     return instantiate_target_pdsfile_for_class(path, pds4file.Pds4File,
-                                                PDS_HOLDINGS_DIR, is_abspath)
+                                                PDS4_BUNDLES_DIR, is_abspath)
 
 def get_pdsfiles(paths, is_abspath=True):
-    return get_pdsfiles_for_class(paths, pds4file.Pds4File, PDS_HOLDINGS_DIR, is_abspath)
+    return get_pdsfiles_for_class(paths, pds4file.Pds4File, PDS4_BUNDLES_DIR, is_abspath)
 
 def get_pdsgroups(paths_group, is_abspath=True):
     return get_pdsgroups_for_class(paths_group, pds4file.Pds4File,
-                                   PDS_HOLDINGS_DIR, is_abspath)
+                                   PDS4_BUNDLES_DIR, is_abspath)
 
 def opus_products_test(input_path, expected):
     opus_products_test_for_class(input_path, pds4file.Pds4File,
-                                 PDS_HOLDINGS_DIR, expected)
+                                 PDS4_BUNDLES_DIR, expected)
 
 def versions_test(input_path, expected):
     versions_test_for_class(input_path, pds4file.Pds4File,
-                            PDS_HOLDINGS_DIR, expected)
+                            PDS4_BUNDLES_DIR, expected)
