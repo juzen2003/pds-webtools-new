@@ -194,30 +194,30 @@ def require_shelves(status=True):
 #
 # These entries in the cache are permanent:
 #
-# cfg.CACHE['$RANKS-<category>/']
+# CACHE['$RANKS-<category>/']
 #       This is a dictionary keyed by [bundleset] or [bundlename], which returns a
 #       sorted list of ranks. Ranks are the PdsFile way of tracking versions of
 #       objects. A higher rank (an integer) means a later version. All keys are
 #       lower case. Replace "<category>" above by one of the names of the
 #       holdings/ subdirectories.
 #
-# cfg.CACHE['$VOLS-<category>/']
+# CACHE['$VOLS-<category>/']
 #       This is a dictionary of dictionaries, keyed by [bundleset][rank] or
 #       [bundlename][rank]. It returns the directory path of the bundleset or bundlename.
 #       Keys are lower case.
 #
-# cfg.CACHE['$PRELOADED']
+# CACHE['$PRELOADED']
 #       This is a list of holdings abspaths that have been preloaded.
 #
-# cfg.CACHE['$VOLINFO-<bundleset>']
-# cfg.CACHE['$VOLINFO-<bundleset/bundlename>']
+# CACHE['$VOLINFO-<bundleset>']
+# CACHE['$VOLINFO-<bundleset/bundlename>']
 #       Returns (description, icon_type, version, publication date, list of
 #                data set IDs)
 #       for bundlenames and bundlesets. Keys are lower case.
 #
 # In addition...
 #
-# cfg.CACHE[<logical-path-in-lower-case>]
+# CACHE[<logical-path-in-lower-case>]
 #       Returns the PdsFile object associated with the given path, if it has
 #       been cached.
 
@@ -225,14 +225,10 @@ def cache_lifetime(arg):
     return cache_lifetime_for_class(arg, PdsFile)
 
 # Initialize the cache
-# LOCAL_PRELOADED = []        # local copy of cfg.CACHE['$PRELOADED']
 MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
 DICTIONARY_CACHE_LIMIT = 200000
 
 # This cache is used if preload() is never called. No filesystem is required.
-# cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
-#                                  limit=DICTIONARY_CACHE_LIMIT,
-#                                  logger=LOGGER)
 cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                      limit=DICTIONARY_CACHE_LIMIT,
                                      logger=LOGGER)
@@ -422,27 +418,6 @@ class PdsFile(object):
     VOLSET_TRANSLATOR = translator.TranslatorByRegex([('.*', 0, 'default')])
 
     # Default translators, can be overridden by bundleset-specific subclasses
-    # DESCRIPTION_AND_ICON = pdsfile_rules.DESCRIPTION_AND_ICON
-    # ASSOCIATIONS = pdsfile_rules.ASSOCIATIONS
-    # VERSIONS = pdsfile_rules.VERSIONS
-    # INFO_FILE_BASENAMES = pdsfile_rules.INFO_FILE_BASENAMES
-    # NEIGHBORS = pdsfile_rules.NEIGHBORS
-    # SIBLINGS = pdsfile_rules.SIBLINGS       # just used by Viewmaster right now
-    # SORT_KEY = pdsfile_rules.SORT_KEY
-    # SPLIT_RULES = pdsfile_rules.SPLIT_RULES
-    # VIEW_OPTIONS = pdsfile_rules.VIEW_OPTIONS
-    # VIEWABLES = pdsfile_rules.VIEWABLES
-    # LID_AFTER_DSID = pdsfile_rules.LID_AFTER_DSID
-    # DATA_SET_ID = pdsfile_rules.DATA_SET_ID
-
-    # OPUS_TYPE = pdsfile_rules.OPUS_TYPE
-    # OPUS_FORMAT = pdsfile_rules.OPUS_FORMAT
-    # OPUS_PRODUCTS = pdsfile_rules.OPUS_PRODUCTS
-    # OPUS_ID = pdsfile_rules.OPUS_ID
-    # OPUS_ID_TO_PRIMARY_LOGICAL_PATH = \
-    #     pdsfile_rules.OPUS_ID_TO_PRIMARY_LOGICAL_PATH
-
-    # OPUS_ID_TO_SUBCLASS = pdsfile_rules.OPUS_ID_TO_SUBCLASS
     DESCRIPTION_AND_ICON = None
     ASSOCIATIONS = None
     VERSIONS = None
