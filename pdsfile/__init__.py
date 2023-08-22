@@ -248,7 +248,7 @@ def pause_caching():
 def resume_caching():
     cfg.CACHE.resume()
 
-def get_permanent_values(holdings_list, port):
+def get_permanent_values(holdings_list, port, cls):
     """Load the most obvious set of permanent values from the cache to ensure
     we have current local copies."""
 
@@ -282,7 +282,7 @@ def get_permanent_values(holdings_list, port):
     except KeyError as e:
         LOGGER.warn('Permanent value %s missing from Memcache; '
                     'preloading again' % str(e))
-        preload(holdings_list, port, force_reload=True)
+        cls.preload(holdings_list, port, force_reload=True)
 
     else:
         LOGGER.info('Permanent values retrieved from Memcache',
@@ -723,7 +723,7 @@ class PdsFile(object):
 
                 if not something_is_missing:
                     if MEMCACHE_PORT:
-                        get_permanent_values(holdings_list, MEMCACHE_PORT)
+                        get_permanent_values(holdings_list, MEMCACHE_PORT, cls)
                         # Note that if any permanently cached values are missing,
                         # this call will recursively clear the cache and preload
                         # again. This reduces the chance of a corrupted cache.
