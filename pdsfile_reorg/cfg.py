@@ -2,6 +2,8 @@
 # Store global variables that will be modified or have different values in both
 # pds3 & pds4 subclasses
 ################################################################################
+
+import os
 import re
 
 PDS_HOLDINGS = 'holdings'
@@ -34,3 +36,17 @@ BUNDLENAME_VERSION     = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
                         r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
                         r'_in_prep|_prelim|_peer_review|_lien_resolution)$')
 BUNDLENAME_VERSION_I   = re.compile(BUNDLENAME_VERSION.pattern, re.I)
+
+# For tests
+try:
+    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+except KeyError: # pragma: no cover
+    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+
+try:
+    PDS4_HOLDINGS_DIR = os.environ['PDS4_HOLDINGS_DIR']
+except KeyError: # pragma: no cover
+    # TODO: update this when we know the actual path of pds4 holdings on the webserver
+    PDS4_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+
+PDS4_BUNDLES_DIR = f'{PDS4_HOLDINGS_DIR}/bundles'

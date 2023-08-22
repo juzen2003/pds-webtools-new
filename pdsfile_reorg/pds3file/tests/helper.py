@@ -1,15 +1,11 @@
 import os
 import pdsfile_reorg.pds3file as pds3file
 
+from pdsfile_reorg.cfg import PDS_HOLDINGS_DIR
 from pdsfile_reorg.general_helper import (instantiate_target_pdsfile_for_class,
                                           get_pdsfiles_for_class,
                                           get_pdsgroups_for_class,
                                           opus_products_test_for_class)
-
-try:
-    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
-except KeyError: # pragma: no cover
-    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 def instantiate_target_pdsfile(path, is_abspath=True):
     return instantiate_target_pdsfile_for_class(path, pds3file.Pds3File,

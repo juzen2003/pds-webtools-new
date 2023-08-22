@@ -1,8 +1,9 @@
 ################################################################################
-# Helper functions being used in the parent class & both pds3 & pds4 subclasses
+# Helper functions being used in tests, the parent class & both pds3 & pds4 subclasses
 ################################################################################
 
 import pdsgroup
+import os
 
 DEFAULT_FILE_CACHE_LIFETIME =  12 * 60 * 60      # 12 hours
 LONG_FILE_CACHE_LIFETIME = 7 * 24 * 60 * 60      # 7 days
@@ -31,7 +32,7 @@ def cache_lifetime_for_class(arg, cls):
     else:
         return DEFAULT_FILE_CACHE_LIFETIME
 
-# For tests
+# For tests under /tests
 def instantiate_target_pdsfile_for_class(path, cls, holdings_dir, is_abspath=True):
     if is_abspath:
         TESTFILE_PATH = holdings_dir + '/' + path
@@ -68,27 +69,90 @@ def opus_products_test_for_class(
 ):
     target_pdsfile = instantiate_target_pdsfile_for_class(input_path, cls,
                                                           holdings_dir, is_abspath)
-    res = target_pdsfile.opus_products()
-    msg = (f'Total number of products ({len(res)}) does not match the expected'+
-           f' results ({len(expected)})')
-    assert len(res) == len(expected), msg
-    for key in res:
-        assert key in expected, f'"{key}" does not exist'
-        all_files = []
-        all_files_abspath = []
-        for files in res[key]:
-            all_files += files
-        msg = f'Total number of files does not match under {key}'
-        if len(all_files) != len(expected[key]):
-            print(len(all_files))
-            print(len(expected[key]))
-        assert len(all_files) == len(expected[key]), msg
-        for pdsf in all_files:
-            if pdsf.abspath not in expected[key]:
-                print(pdsf.abspath)
-                print(key)
-            msg = f'{pdsf.logical_path} does not exist under {key}'
-            assert pdsf.abspath in expected[key], msg
-            all_files_abspath.append(pdsf.abspath)
-        msg = f'File does not match under {key}'
-        assert all_files_abspath.sort() == expected[key].sort(), msg
+    results = target_pdsfile.opus_products()
+    # Note that messages are more useful if extra values are identified before
+    # missing values. That's because extra items are generally more diagnostic
+    # of the issue at hand.
+    for key in results:
+        assert key in expected, f'Extra key: {key}'
+    for key in expected:
+        assert key in results, f'Missing key: {key}'
+    for key in results:
+        result_paths = []       # flattened list of logical paths
+        for pdsfiles in results[key]:
+            result_paths += cls.logicals_for_pdsfiles(pdsfiles)
+        for path in result_paths:
+            assert path in expected[key], f'Extra file under key {key}: {path}'
+        for path in expected[key]:
+            assert path in result_paths, f'Missing file under key {key}: {path}'
+
+def versions_test_for_class(input_path, cls, holdings_dir, expected, is_abspath=True):
+    target_pdsfile = instantiate_target_pdsfile_for_class(input_path, cls,
+                                                          holdings_dir, is_abspath)
+    res = target_pdsfile.all_versions()
+    keys = list(res.keys())
+    keys.sort()
+    keys.reverse()
+    for key in keys:
+        assert key in expected, f'"{key}" not expected'
+        assert res[key].logical_path == expected[key], f'value mismatch at "{key}": {expected[key]}'
+    keys = list(expected.keys())
+    keys.sort()
+    keys.reverse()
+    for key in keys:
+        assert key in res, f'"{key}" missing'
+
+# For tests under rules
+def translate_first_for_class(trans, path, cls):
+    """Logical paths of "first" files found using given translator on path."""
+
+    patterns = trans.first(path)
+    if not patterns:
+        return []
+
+    if isinstance(patterns, str):
+        patterns = [patterns]
+
+    patterns = [p for p in patterns if p]       # skip empty translations
+    patterns = cls.abspaths_for_logicals(patterns)
+
+    abspaths = []
+    for pattern in patterns:
+        abspaths += cls.glob_glob(pattern)
+
+    return abspaths
+
+def translate_all_for_class(trans, path, cls):
+    """Logical paths of all files found using given translator on path."""
+
+    patterns = trans.all(path)
+    if not patterns:
+        return []
+
+    if isinstance(patterns, str):
+        patterns = [patterns]
+
+    patterns = [p for p in patterns if p]       # skip empty translations
+    patterns = cls.abspaths_for_logicals(patterns)
+
+    abspaths = []
+    for pattern in patterns:
+        abspaths += cls.glob_glob(pattern)
+
+    return abspaths
+
+def unmatched_patterns_for_class(trans, path, cls):
+    """List all translated patterns that did not find a matching path in the
+    file system."""
+
+    patterns = trans.all(path)
+    patterns = [p for p in patterns if p]       # skip empty translations
+    patterns = cls.abspaths_for_logicals(patterns)
+
+    unmatched = []
+    for pattern in patterns:
+        abspaths = cls.glob_glob(pattern)
+        if not abspaths:
+            unmatched.append(pattern)
+
+    return unmatched
