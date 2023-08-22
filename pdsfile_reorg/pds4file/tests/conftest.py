@@ -13,4 +13,4 @@ except KeyError: # pragma: no cover
 @pytest.fixture(scope='session', autouse=True)
 def setup(request):
     pds4file.use_shelves_only(False) # pragma: no cover
-    pds4file.preload(PDS4_HOLDINGS_DIR)
+    pds4file.Pds4File.preload(PDS4_HOLDINGS_DIR)

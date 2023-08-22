@@ -1,6 +1,7 @@
 import os
 import pdsfile_reorg.pds3file as pds3file
 import pdsviewable
+import pdsgroup
 import pytest
 import re
 

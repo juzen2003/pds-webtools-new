@@ -2,8 +2,6 @@
 # Store global variables that will be modified or have different values in both
 # pds3 & pds4 subclasses
 ################################################################################
-import pdscache
-import pdslogger
 import re
 
 PDS_HOLDINGS = 'holdings'

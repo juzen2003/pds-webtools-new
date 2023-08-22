@@ -3,6 +3,9 @@
 ################################################################################
 
 import pdsfile_reorg.pds3file as pds3file
+import translator
+import re
+import os
 
 def translate_first(trans, path):
     """Logical paths of "first" files found using given translator on path."""
