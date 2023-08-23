@@ -3,13 +3,13 @@
 ################################################################################
 
 from pdsfile import *
-from .rules import pds3file_rules as pdsfile_rules
+from . import rules as pdsfile_rules
 
 from pdsfile.general_helper import cache_lifetime_for_class
 
 def cache_lifetime(arg):
     return cache_lifetime_for_class(arg, Pds3File)
-
+LOGGER = pdslogger.NullLogger()
 # Initialize the cache
 MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
 DICTIONARY_CACHE_LIMIT = 200000
@@ -102,36 +102,37 @@ class Pds3File(PdsFile):
 Pds3File.SUBCLASSES['default'] = Pds3File
 
 ################################################################################
-# This import must wait until after the PdsFile class has been fully initialized
+# This import must wait until after the Pds3File class has been fully initialized
+# because all instruments specific rules are the subclasses of Pds3File
 ################################################################################
 
 try:
     # Data set-specific rules are implemented as subclasses of Pds3File
     # from pdsfile_reorg.pds3file.rules import *
-    from pdsfile.pds3file.rules import (ASTROM_xxxx,
-                                              COCIRS_xxxx,
-                                              COISS_xxxx,
-                                              CORSS_8xxx,
-                                              COSP_xxxx,
-                                              COUVIS_0xxx,
-                                              COUVIS_8xxx,
-                                              COVIMS_0xxx,
-                                              COVIMS_8xxx,
-                                              EBROCC_xxxx,
-                                              GO_0xxx,
-                                              HSTxx_xxxx,
-                                              JNOJIR_xxxx,
-                                              JNOJNC_xxxx,
-                                              JNOSP_xxxx,
-                                              NHSP_xxxx,
-                                              NHxxxx_xxxx,
-                                              RES_xxxx,
-                                              RPX_xxxx,
-                                              VG_0xxx,
-                                              VG_20xx,
-                                              VG_28xx,
-                                              VGIRIS_xxxx,
-                                              VGISS_xxxx)
+    from .rules import (ASTROM_xxxx,
+                        COCIRS_xxxx,
+                        COISS_xxxx,
+                        CORSS_8xxx,
+                        COSP_xxxx,
+                        COUVIS_0xxx,
+                        COUVIS_8xxx,
+                        COVIMS_0xxx,
+                        COVIMS_8xxx,
+                        EBROCC_xxxx,
+                        GO_0xxx,
+                        HSTxx_xxxx,
+                        JNOJIR_xxxx,
+                        JNOJNC_xxxx,
+                        JNOSP_xxxx,
+                        NHSP_xxxx,
+                        NHxxxx_xxxx,
+                        RES_xxxx,
+                        RPX_xxxx,
+                        VG_0xxx,
+                        VG_20xx,
+                        VG_28xx,
+                        VGIRIS_xxxx,
+                        VGISS_xxxx)
 except AttributeError:
     pass                    # This occurs when running pytests on individual
                             # rule subclasses, where pdsfile can be imported

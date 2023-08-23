@@ -24,8 +24,6 @@ try: # pragma: no cover
 except ImportError: # pragma: no cover
     HAS_PYLIBMC = False
 
-# import pdsfile_rules        # Default parsing rules
-# from .pds3file.rules import pds3file_rules as pdsfilerules
 import pdscache
 import pdslogger
 import pdsviewable
@@ -5519,18 +5517,6 @@ class PdsFile(object):
 ################################################################################
 
 PdsFile.SUBCLASSES['default'] = PdsFile
-
-################################################################################
-# This import must wait until after the PdsFile class has been fully initialized
-################################################################################
-
-try:
-    from pds4_rules import *     # Data set-specific rules are implemented as
-                            # subclasses of PdsFile
-except AttributeError:
-    pass                    # This occurs when running pytests on individual
-                            # rule subclasses, where pdsfile can be imported
-                            # recursively.
 
 ################################################################################
 # After the constructors are defined, always create and cache permanent,

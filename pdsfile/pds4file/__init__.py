@@ -3,7 +3,7 @@
 ################################################################################
 
 from pdsfile import *
-from .rules import pds4file_rules as pdsfile_rules
+from . import rules as pdsfile_rules
 
 from pdsfile.general_helper import cache_lifetime_for_class
 
@@ -82,15 +82,16 @@ class Pds4File(PdsFile):
 Pds4File.SUBCLASSES['default'] = Pds4File
 
 ################################################################################
-# This import must wait until after the PdsFile class has been fully initialized
+# This import must wait until after the Pds4File class has been fully initialized
+# because all bundle set specific rules are the subclasses of Pds4File
 ################################################################################
 
 try:
     # Data set-specific rules are implemented as subclasses of Pds4File
     # from pdsfile_reorg.Pds4File.rules import *
-    from pdsfile.pds4file.rules import (cassini_iss,
-                                              cassini_vims,
-                                              uranus_occs_earthbased)
+    from .rules import (cassini_iss,
+                        cassini_vims,
+                        uranus_occs_earthbased)
 except AttributeError:
     pass                    # This occurs when running pytests on individual
                             # rule subclasses, where pdsfile can be imported
