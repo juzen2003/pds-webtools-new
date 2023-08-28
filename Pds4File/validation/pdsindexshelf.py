@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-################################################################################
+##########################################################################################
 # pdsindexshelf.py library and main program
 #
 # Syntax:
 #   pdsindexshelf.py --task index_path.tab [index_path.tab ...]
-# 
+#
 # Enter the --help option to see more information.
-################################################################################
+##########################################################################################
 
 import argparse
 import datetime
@@ -22,7 +22,7 @@ import pdstable
 LOGNAME = 'pds.validation.indexshelf'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
 
-################################################################################
+##########################################################################################
 
 def generate_indexdict(pdsf, logger=None):
     """Generate a dictionary keyed by row key for each row in the given table.
@@ -59,7 +59,7 @@ def generate_indexdict(pdsf, logger=None):
 
     return (index_dict, latest_mtime)
 
-################################################################################
+##########################################################################################
 
 def write_indexdict(pdsf, index_dict, logger=None):
     """Write a new shelf file for the rows of this index."""
@@ -119,7 +119,7 @@ def write_indexdict(pdsf, index_dict, logger=None):
     finally:
         _ = logger.close()
 
-################################################################################
+##########################################################################################
 
 def load_indexdict(pdsf, logger=None):
 
@@ -149,7 +149,7 @@ def load_indexdict(pdsf, logger=None):
 
     return index_dict
 
-################################################################################
+##########################################################################################
 
 def validate_infodict(pdsf, tabdict, shelfdict, logger=None):
 
@@ -162,9 +162,9 @@ def validate_infodict(pdsf, tabdict, shelfdict, logger=None):
     else:
         logger.error('Validation failed for', pdsf.abspath)
 
-################################################################################
+##########################################################################################
 # Simplified functions to perform tasks
-################################################################################
+##########################################################################################
 
 def initialize(pdsf, logger=None):
 
@@ -298,8 +298,8 @@ def update(pdsf, selection=None, logger=None):
     else:
         initialize(pdsf, logger)
 
-################################################################################
-################################################################################
+##########################################################################################
+##########################################################################################
 
 if __name__ == '__main__':
 

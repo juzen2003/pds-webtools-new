@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-################################################################################
+##########################################################################################
 # # pdslinkshelf.py library and main program
 #
 # Syntax:
 #   pdslinkshelf.py --task path [path ...]
 #
 # Enter the --help option to see more information.
-################################################################################
+##########################################################################################
 
 import argparse
 import datetime
@@ -630,7 +630,7 @@ LINK_REGEX = re.compile(r'(?:|.*?[^/@\w\.])/?(?:\.\./)*(([A-Z0-9][-\w]+/)*' +
 
 EXTS_WO_LABELS = set(['.LBL', '.CAT', '.TXT', '.FMT', '.SFD'])
 
-################################################################################
+##########################################################################################
 
 class LinkInfo(object):
     """Used internally to describe a link within a specified record of a file.
@@ -1105,7 +1105,7 @@ def locate_link_with_path(abspath, filename):
 
     return link_path
 
-################################################################################
+##########################################################################################
 
 def load_links(dirpath, limits={}, logger=None):
     """Load link dictionary from a shelf file, converting interior paths to
@@ -1164,7 +1164,7 @@ def load_links(dirpath, limits={}, logger=None):
     finally:
         _ = logger.close()
 
-################################################################################
+##########################################################################################
 
 def write_linkdict(dirpath, link_dict, limits={}, logger=None):
     """Write a new link shelf file for a directory tree."""
@@ -1288,7 +1288,7 @@ def write_linkdict(dirpath, link_dict, limits={}, logger=None):
     finally:
         _ = logger.close()
 
-################################################################################
+##########################################################################################
 
 def validate_links(dirpath, dirdict, shelfdict, limits={}, logger=None):
 
@@ -1335,7 +1335,7 @@ def validate_links(dirpath, dirdict, shelfdict, limits={}, logger=None):
     finally:
         return logger.close()
 
-################################################################################
+##########################################################################################
 
 def move_old_links(shelf_file, logger=None):
     """Move a file to the /logs/ directory tree and append a time tag."""
@@ -1377,9 +1377,9 @@ def move_old_links(shelf_file, logger=None):
         pickle_dest = dest.rpartition('.')[0] + '.pickle'
         shutil.copy(pickle_src, pickle_dest)
 
-################################################################################
+##########################################################################################
 # Simplified functions to perform tasks
-################################################################################
+##########################################################################################
 
 def initialize(pdsdir, logger=None):
 
@@ -1530,7 +1530,7 @@ def update(pdsdir,  logger=None):
     move_old_links(link_path, logger=logger)
     write_linkdict(pdsdir.abspath, dir_linkdict, logger=logger)
 
-################################################################################
+##########################################################################################
 
 if __name__ == '__main__':
 

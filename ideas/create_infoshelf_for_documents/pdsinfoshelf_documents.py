@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-################################################################################
+##########################################################################################
 # pdsinfoshelf_documents.py library and main program
 #
 # Syntax:
 #   pdsinfoshelf_documents.py --task path [path ...]
 #
 # Enter the --help option to see more information.
-################################################################################
+##########################################################################################
 
 import argparse
 import datetime
@@ -30,7 +30,7 @@ LOGROOT_ENV = 'PDS_LOG_ROOT'
 PREVIEW_EXTS = set(['.jpg', '.png', '.gif', '.tif', '.tiff',
                     '.jpeg', '.jpeg_small'])
 
-################################################################################
+##########################################################################################
 
 def generate_infodict(pdsdir, selection, old_infodict={},
                               limits={'normal':-1}, logger=None):
@@ -183,7 +183,7 @@ def generate_infodict(pdsdir, selection, old_infodict={},
 
     return (merged, latest_mtime)
 
-################################################################################
+##########################################################################################
 
 def load_infodict(pdsdir, logger=None):
 
@@ -227,7 +227,7 @@ def load_infodict(pdsdir, logger=None):
     finally:
         _ = logger.close()
 
-################################################################################
+##########################################################################################
 
 def write_infodict(pdsdir, infodict, limits={}, logger=None):
     """Write a new info shelf file for a directory tree."""
@@ -302,7 +302,7 @@ def write_infodict(pdsdir, infodict, limits={}, logger=None):
     finally:
         _ = logger.close()
 
-################################################################################
+##########################################################################################
 
 def validate_infodict(pdsdir, dirdict, shelfdict, selection,
                       limits={'normal': 0}, logger=None):
@@ -385,7 +385,7 @@ def validate_infodict(pdsdir, dirdict, shelfdict, selection,
     finally:
         return logger.close()
 
-################################################################################
+##########################################################################################
 
 def move_old_info(shelf_file, logger=None):
     """Move a file to the /logs/ directory tree and append a time tag."""
@@ -422,9 +422,9 @@ def move_old_info(shelf_file, logger=None):
         dest = dest.rpartition('.')[0] + '.py'
         shutil.copy(python_file, dest)
 
-################################################################################
+##########################################################################################
 # Simplified functions to perform tasks
-################################################################################
+##########################################################################################
 
 def initialize(pdsdir, selection=None, logger=None):
 
@@ -600,8 +600,8 @@ def update(pdsdir, selection=None, logger=None):
     move_old_info(info_path, logger=logger)
     write_infodict(pdsdir, dir_infodict, logger=logger)
 
-################################################################################
-################################################################################
+##########################################################################################
+##########################################################################################
 
 if __name__ == '__main__':
 

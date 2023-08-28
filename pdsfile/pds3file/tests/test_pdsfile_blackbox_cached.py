@@ -19,9 +19,9 @@ try:
 except ValueError: # pragma: no cover
     PDS_TESTING_ROOT = '/Library/WebServer/Documents/'
 
-################################################################################
+##########################################################################################
 # Blackbox test for internal cached in PdsFile class
-################################################################################
+##########################################################################################
 class TestPdsFileBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',
@@ -719,9 +719,9 @@ class TestPdsFileBlackBox:
         assert res1 == expected
         assert res1 == res2
 
-################################################################################
+##########################################################################################
 # Blackbox test for internal cached in PdsGroup class
-################################################################################
+##########################################################################################
 class TestPdsGroupBlackBox:
     @pytest.mark.parametrize(
         'input_paths,expected',

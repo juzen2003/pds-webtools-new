@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-################################################################################
+##########################################################################################
 # pdschecksums_documents.py library and main program
 #
 # Syntax:
 #   pdschecksums_documents.py --task path [path ...]
 #
 # Enter the --help option to see more information.
-################################################################################
+##########################################################################################
 
 import argparse
 import datetime
@@ -25,7 +25,7 @@ LOGDIRS = []
 LOGNAME = 'pds.validation.checksums'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
 
-################################################################################
+##########################################################################################
 
 # From http://stackoverflow.com/questions/3431825/-
 #       generating-an-md5-checksum-of-a-file
@@ -39,7 +39,7 @@ def hashfile(fname, blocksize=65536):
         buf = f.read(blocksize)
     return hasher.hexdigest()
 
-################################################################################
+##########################################################################################
 
 def generate_checksums(pdsdir, selection=None, oldpairs=[], regardless=True,
                        limits={'normal':-1}, logger=None):
@@ -145,7 +145,7 @@ def generate_checksums(pdsdir, selection=None, oldpairs=[], regardless=True,
 
     return (newpairs, latest_mtime)
 
-################################################################################
+##########################################################################################
 
 def read_checksums(check_path, selection=None, limits={}, logger=None):
 
@@ -208,7 +208,7 @@ def read_checksums(check_path, selection=None, limits={}, logger=None):
 
     return abspairs
 
-################################################################################
+##########################################################################################
 
 def checksum_dict(dirpath, logger=None):
 
@@ -229,7 +229,7 @@ def checksum_dict(dirpath, logger=None):
     logger.info('Checksum load completed', dirpath, force=True)
     return pair_dict
 
-################################################################################
+##########################################################################################
 
 def write_checksums(check_path, abspairs,
                     limits={'dot_':-1, 'ds_store':-1, 'invisible':100},
@@ -281,7 +281,7 @@ def write_checksums(check_path, abspairs,
     finally:
         _ = logger.close()
 
-################################################################################
+##########################################################################################
 
 def validate_pairs(pairs1, pairs2, selection=None, limits={}, logger=None):
     """Validate the first checksum list against the second.
@@ -329,7 +329,7 @@ def validate_pairs(pairs1, pairs2, selection=None, limits={}, logger=None):
         logger.close()
         return success
 
-################################################################################
+##########################################################################################
 
 def move_old_checksums(check_path, logger=None):
     """Appends a version number to an existing checksum file and moves it to
@@ -363,9 +363,9 @@ def move_old_checksums(check_path, logger=None):
 
         logger.info('Checksum file moved to', dest)
 
-################################################################################
+##########################################################################################
 # Simplified functions to perform tasks
-################################################################################
+##########################################################################################
 
 def initialize(pdsdir, selection=None, logger=None):
 
@@ -563,9 +563,9 @@ def update(pdsdir, selection=None, logger=None):
     write_checksums(check_path, dirpairs, logger=logger)
     return True
 
-################################################################################
+##########################################################################################
 # Executable program
-################################################################################
+##########################################################################################
 
 if __name__ == '__main__':
 

@@ -1,12 +1,12 @@
-################################################################################
+##########################################################################################
 # finder_colors.py
 #
 # Mark Showalter, SETI Institute, April 2017
-################################################################################
+##########################################################################################
 
 # import os
 # import subprocess
-# 
+#
 # COLOR_VALUES = {
 #     'none'   : 0,
 #     'orange' : 1,
@@ -19,7 +19,7 @@
 #     'gray'   : 7,
 #     'grey'   : 7,
 # }
-# 
+#
 # def set_color(filepath, color):
 #     filepath = os.path.abspath(filepath)
 #     color = color.lower()
@@ -27,7 +27,7 @@
 #               '(POSIX file "%s" as alias) to %d' % (filepath,
 #                                                     COLOR_VALUES[color]))
 #     cmd = ['osascript', '-e', script]
-# 
+#
 # #     _ = subprocess.Popen(['osascript', '-e', script], stdout=subprocess.PIPE)
 #     _ = subprocess.call(['osascript', '-e', script])
 
@@ -52,4 +52,3 @@ def set_color(filename, color_name):
     flags[9] = COLORS.index(color_name) * 2
     finder_attrs = pack(32*'B', *flags)
     attrs.set(FINDER_KEY, finder_attrs)
-

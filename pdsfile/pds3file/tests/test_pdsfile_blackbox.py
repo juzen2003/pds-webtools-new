@@ -18,9 +18,9 @@ except KeyError: # pragma: no cover
 
 PDS_PDSDATA_PATH = PDS_HOLDINGS_DIR[:PDS_HOLDINGS_DIR.index('holdings')]
 
-################################################################################
+##########################################################################################
 # Blackbox test for functions & properties in Pds3File class
-################################################################################
+##########################################################################################
 class TestPds3FileBlackBox:
     ############################################################################
     # Test on SUBCLASS, make sure rules all exist in the dictionary
@@ -1896,9 +1896,9 @@ class TestPds3FileBlackBox:
         assert res == expected
 
 
-################################################################################
+##########################################################################################
 # Blackbox test for functions & properties in PdsGroup class
-################################################################################
+##########################################################################################
 class TestPdsGroupBlackBox:
     @pytest.mark.parametrize(
         'input_paths,expected_achor,expected_path',
@@ -2248,9 +2248,9 @@ class TestPdsGroupBlackBox:
         for pdsf in target_pdsgroup.iterator_for_hidden():
             assert pdsf.logical_path in expected
 
-################################################################################
+##########################################################################################
 # Blackbox test for functions & properties in PdsGroupTable class
-################################################################################
+##########################################################################################
 class TestPdsGroupTableBlackBox:
     #  PdsGroup parent does not match PdsGroupTable parent
     @pytest.mark.parametrize(
@@ -3183,9 +3183,9 @@ class TestPdsGroupTableBlackBox:
                 assert pdsf.logical_path in expected
 
 
-################################################################################
+##########################################################################################
 # Blackbox test for heler functions in pds3file.py
-################################################################################
+##########################################################################################
 class TestPds3FileHelperBlackBox:
     @pytest.mark.parametrize(
         'input_path,expected',

@@ -1,9 +1,9 @@
-################################################################################
+##########################################################################################
 # File grouping class. An ordered set of PdsFiles, some of which may be hidden.
 # They must share a common parent and anchor. In Viewmaster, they appear on the
 # same row of a table, where a row boundaries are identified by transition
 # between gray and white.
-################################################################################
+##########################################################################################
 
 import os
 import pdsfile
@@ -450,4 +450,4 @@ class PdsGroup(object):
 
         return groups
 
-################################################################################
+##########################################################################################

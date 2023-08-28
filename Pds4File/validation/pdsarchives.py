@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-################################################################################
+##########################################################################################
 # pdsarchives.py library and main program
 #
 # Syntax:
 #   pdsarchives.py --task path [path ...]
 #
 # Enter the --help option to see more information.
-################################################################################
+##########################################################################################
 
 import sys
 import os
@@ -20,9 +20,9 @@ import pdsfile
 LOGNAME = 'pds.validation.archives'
 LOGROOT_ENV = 'PDS_LOG_ROOT'
 
-################################################################################
+##########################################################################################
 # General tarfile functions
-################################################################################
+##########################################################################################
 
 def load_directory_info(pdsdir, limits={'normal':100}, logger=None):
     """Generate a list of tuples (abspath, dirpath, nbytes, mod time) recursively
@@ -86,7 +86,7 @@ def load_directory_info(pdsdir, limits={'normal':100}, logger=None):
 
     return tuples
 
-################################################################################
+##########################################################################################
 
 def read_archive_info(tarpath, limits={'normal':100}, logger=None):
     """Return a list of tuples (abspath, dirpath, nbytes, modtime) from a .tar.gz
@@ -135,7 +135,7 @@ def read_archive_info(tarpath, limits={'normal':100}, logger=None):
 
     return tuples
 
-################################################################################
+##########################################################################################
 
 def write_archive(pdsdir, clobber=True, archive_invisibles=True,
                            limits={'normal':-1, 'dot_':100}, logger=None):
@@ -203,7 +203,7 @@ def write_archive(pdsdir, clobber=True, archive_invisibles=True,
     finally:
         _ = logger.close()
 
-################################################################################
+##########################################################################################
 
 def validate_tuples(dir_tuples, tar_tuples, limits={'normal':100}, logger=None):
     """Validate the directory list of tuples against the list from the tarfile.
@@ -256,9 +256,9 @@ def validate_tuples(dir_tuples, tar_tuples, limits={'normal':100}, logger=None):
     finally:
         logger.close()
 
-################################################################################
+##########################################################################################
 # Simplified functions to perform tasks
-################################################################################
+##########################################################################################
 
 def initialize(pdsdir, logger=None):
     write_archive(pdsdir, clobber=False, logger=logger)
@@ -317,9 +317,9 @@ def update(pdsdir, logger=None):
     write_archive(pdsdir, clobber=True, logger=logger)
     return True
 
-################################################################################
+##########################################################################################
 # Executable program
-################################################################################
+##########################################################################################
 
 if __name__ == '__main__':
 

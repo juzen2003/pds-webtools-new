@@ -100,8 +100,8 @@ def versions_test_for_class(input_path, cls, holdings_dir, expected, is_abspath=
     keys.sort(reverse=True)
     for key in keys:
         assert key in expected, f'"{key}" not expected'
-        assert (res[key].logical_path == expected[key],
-                f'value mismatch at "{key}": {expected[key]}')
+        assert res[key].logical_path == expected[key], \
+               f'value mismatch at "{key}": {expected[key]}'
     keys = list(expected.keys())
     keys.sort(reverse=True)
     for key in keys:

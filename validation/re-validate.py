@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-################################################################################
+##########################################################################################
 # re-validate.py
 #
 # Syntax:
 #   re-validate.py path [path ...]
 #
 # Enter the --help option to see more information.
-################################################################################
+##########################################################################################
 
 import sys
 import os
@@ -34,9 +34,9 @@ REPORT_SUBJ_W_ERRORS = "Re-validate report with ERRORs from " + \
                                               socket.gethostname()
 ERROR_REPORT_SUBJ = "Re-validate ERROR report from " + socket.gethostname()
 
-################################################################################
+##########################################################################################
 # Function to validate one volume
-################################################################################
+##########################################################################################
 
 def validate_one_volume(pdsdir, voltypes, tests, args, logger):
     """Validates one volume."""
@@ -188,9 +188,9 @@ def validate_one_volume(pdsdir, voltypes, tests, args, logger):
 
     return (logfile, fatal, errors)
 
-################################################################################
+##########################################################################################
 # Log and volume management for batch mode
-################################################################################
+##########################################################################################
 
 def volume_abspath_from_log(log_path):
     """Return the absolute path within the holdings directory of the PDS volume
@@ -411,9 +411,9 @@ def send_email(to_addr, subject, message):
 
     smtp.quit()
 
-################################################################################
+##########################################################################################
 # Executable program
-################################################################################
+##########################################################################################
 
 # Set up parser
 parser = argparse.ArgumentParser(
@@ -686,7 +686,7 @@ else:
 
     # Report missing volumes
     for key in missing_keys:
-        # Determine if this volset/volname has ever appeared in any of the 
+        # Determine if this volset/volname has ever appeared in any of the
         # holdings directory trees
         holdings_for_key = set()
         for log_path in logs_for_volset_volname[key]:
@@ -815,4 +815,3 @@ else:
 #     sys.exit(status)
     sys.exit(0)         # In batch mode, don't cancel the launchdaemon.
                         # Does this help??
-
