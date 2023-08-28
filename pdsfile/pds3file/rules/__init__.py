@@ -1,12 +1,12 @@
-####################################################################################################################################
+##########################################################################################
 # pds3file/rules/pds3file_rules.py
 #
 # Definitions of Translator objects used by the PdsFile class.
-####################################################################################################################################
+##########################################################################################
 # DESCRIPTION_AND_ICON
 #
 # Translates an absolute file path within any directory tree to a brief description of the file and an associated icon type.
-####################################################################################################################################
+##########################################################################################
 
 import re
 import translator
@@ -276,14 +276,14 @@ DESCRIPTION_AND_ICON = translator.TranslatorByRegex([
     (r'.*\..*',                         0,    ('Document',                      'UNKNOWN' )),
 ])
 
-####################################################################################################################################
+##########################################################################################
 # ASSOCIATIONS
 #
 # Defines files associated with a given file. A dictionary of Translators keyed by 'volumes', 'calibrated', 'browse', 'diagrams',
 # or 'metadata'.
 #
 # These Translators take a logical path and return logical paths of associated files based on the key.
-####################################################################################################################################
+##########################################################################################
 
 ASSOCIATIONS = {
     'volumes'   : translator.TranslatorByRegex([
@@ -332,11 +332,11 @@ ASSOCIATIONS = {
                     ]),
 }
 
-####################################################################################################################################
+##########################################################################################
 # VERSIONS
 #
 # Defines a list of files defining all the versions of a given product, given the product's logical path.
-####################################################################################################################################
+##########################################################################################
 
 VERSIONS = translator.TranslatorByRegex([
 
@@ -355,12 +355,12 @@ VERSIONS = translator.TranslatorByRegex([
             ]),
 ])
 
-####################################################################################################################################
+##########################################################################################
 # VIEWABLES
 #
 # A dictionary of translators, each of which translates a file path to a set of viewables. The key 'default' defines the viewable
 # used by default.
-####################################################################################################################################
+##########################################################################################
 
 VIEWABLES = {'default': translator.NullTranslator()}
 
@@ -368,34 +368,34 @@ VIEWABLE_TOOLTIPS = {
     'default': 'Default browse product for this observation',
 }
 
-####################################################################################################################################
+##########################################################################################
 # VIEW_OPTIONS
 #
 # Given a file path, returns (grid_flag, multipage_flag, continuous_flag). Each flag indicates True if that particular options is
 # allowed for this directory.
-####################################################################################################################################
+##########################################################################################
 
 VIEW_OPTIONS = translator.TranslatorByRegex([
     (r'.*', 0, (False, False, False)),       # default is for single-page viewing
 ])
 
-####################################################################################################################################
+##########################################################################################
 # NEIGHBORS
 #
 # Given a directory path, return the file fnmatch pattern to indicate other logical paths to directories to be treated as adjacent.
-####################################################################################################################################
+##########################################################################################
 
 NEIGHBORS = translator.TranslatorByRegex([
     (r'(.*)/[^/]+', 0, r'\1/*'),
 ])
 
-####################################################################################################################################
+##########################################################################################
 # SIBLINGS
 #
 # Given a logical file path, return the fnmatch pattern to match other basenames to be treated as adjacent within the same
 # directory. If a SIBLINGS rule is unspecified, default behavior is to use a match pattern defined by the concatenation of "*" and
 # the second and third results of the SPLIT_RULE.
-####################################################################################################################################
+##########################################################################################
 
 SIBLINGS = translator.TranslatorByRegex([
     # In document/, calib/, catalog/, index/, label/, and root, all files are siblings
@@ -405,11 +405,11 @@ SIBLINGS = translator.TranslatorByRegex([
     (r'(\w+-?\w+-?\w+)/[^/]+',             re.I, '*'),
 ])
 
-####################################################################################################################################
+##########################################################################################
 # INFO_FILE_BASENAMES
 #
 # Translates a file basename it itself if it is a suitable information file about the directory in which it is found.
-####################################################################################################################################
+##########################################################################################
 
 INFO_FILE_BASENAMES = translator.TranslatorByRegex([
     (r'(voldesc\.(?:cat|sfd))', re.I, r'\1'),
@@ -420,12 +420,12 @@ INFO_FILE_BASENAMES = translator.TranslatorByRegex([
     (r'(README\.txt)',          re.I, r'\1'),
 ])
 
-####################################################################################################################################
+##########################################################################################
 # SORT_KEY
 #
 # Translates a file basename into a key used for sorting. For example, this is used to force COISS data files to sort
 # chronologically, by ignoring the leading "N" or "W".
-####################################################################################################################################
+##########################################################################################
 
 SORT_KEY = translator.TranslatorByRegex([
 
@@ -460,7 +460,7 @@ SORT_KEY = translator.TranslatorByRegex([
     (r'(.*)', 0, r'\1'),
 ])
 
-####################################################################################################################################
+##########################################################################################
 # SPLIT_RULES
 #
 # Used for defining how to group files by separating a leading anchor, which is possibly shared among multiple files, with an
@@ -469,7 +469,7 @@ SORT_KEY = translator.TranslatorByRegex([
 # These translations take a file basename and return a tuple of three strings that concatenate to the original basename.
 #
 # Note that they must also work for the sort keys of basenames.
-####################################################################################################################################
+##########################################################################################
 
 SPLIT_RULES = translator.TranslatorByRegex([
 
@@ -485,7 +485,7 @@ SPLIT_RULES = translator.TranslatorByRegex([
     (r'(.*)',       0, (r'\1', '', '')),
 ])
 
-####################################################################################################################################
+##########################################################################################
 # OPUS_TYPE
 #
 # Used for indicating the type of a data file as it will appear in OPUS, e.g., "Raw Data", "Calibrated Data", etc. The tuple
@@ -496,7 +496,7 @@ SPLIT_RULES = translator.TranslatorByRegex([
 #   title is a meaning title for product, e.g., 'Raw Data (when calibrated is unavailable)'
 #
 # These translations take a file's logical path and return a string indicating the file's OPUS_TYPE.
-####################################################################################################################################
+##########################################################################################
 
 OPUS_TYPE = translator.TranslatorByRegex([
 
@@ -528,12 +528,12 @@ OPUS_TYPE = translator.TranslatorByRegex([
     (r'metadata/.*supplemental_index\..*', 0, ('metadata', 9, 'supplemental_index', 'Supplemental Index',           False)),
 ])
 
-####################################################################################################################################
+##########################################################################################
 # OPUS_FORMAT
 #
 # Returns a tuple (interchange format, file format) where the first is 'Binary', 'ASCII' or 'UTF-8' and the latter is the format
 # of the file, e.g., 'Vicar', 'FITS', 'Table', 'PDS3 Label', etc.
-####################################################################################################################################
+##########################################################################################
 
 OPUS_FORMAT = translator.TranslatorByRegex([
     (r'.*\.LBL',   re.I, ('ASCII',  'PDS3 Label')),
@@ -556,12 +556,12 @@ OPUS_FORMAT = translator.TranslatorByRegex([
     (r'.*\.TI',    re.I, ('ASCII',  'SPICE IK')),
 ])
 
-####################################################################################################################################
+##########################################################################################
 # OPUS_PRODUCTS
 #
 # Returns a list of glob.glob() patterns that match the absolute paths to the all associated files for an OPUS
 # query, given the logical path to the primary data file or its label.
-####################################################################################################################################
+##########################################################################################
 
 # Default is to return an empty list
 OPUS_PRODUCTS = translator.TranslatorByRegex([
@@ -569,58 +569,58 @@ OPUS_PRODUCTS = translator.TranslatorByRegex([
     (r'volumes/([A-Z0-9a-z]+_[A-Z0-9a-z]+).*', 0, [r'documents/\1/*.[!lz]*'])
 ])
 
-####################################################################################################################################
+##########################################################################################
 # OPUS_ID
 #
 # Translates an absolute or logical path to an OPUS ID.
-####################################################################################################################################
+##########################################################################################
 
 OPUS_ID = translator.TranslatorByRegex([])
 
-####################################################################################################################################
+##########################################################################################
 # OPUS_ID_TO_SUBCLASS
 #
 # Translates an OPUS ID to a PdsFile subclass.
-####################################################################################################################################
+##########################################################################################
 
 OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([])
 
-####################################################################################################################################
+##########################################################################################
 # OPUS_ID_TO_PRIMARY_LOGICAL_PATH
 #
 # Translates an OPUS ID to a regular expression that matches the path (absolute or logical) of the primary data file.
 # Note: This is a class attribute, not an object attribute. It is shared by all subclasses.
-####################################################################################################################################
+##########################################################################################
 
 OPUS_ID_TO_PRIMARY_LOGICAL_PATH = translator.TranslatorByRegex([])
 
-####################################################################################################################################
+##########################################################################################
 # FILESPEC_TO_VOLSET
 #
 # Translates a file specification, starting from the volume ID, to a logical path. It is shared by all subclasses. Default behavior
 # is to replace the last three characters of the volume name by "xxx". This needs to be overridden for volsets that have a different
 # number of x's in their names.
-####################################################################################################################################
+##########################################################################################
 
 FILESPEC_TO_VOLSET = translator.TranslatorByRegex([
     (r'([A-Z0-9]{2,6}_\d)\d{3}.*', 0, r'\1xxx'),
 ])
 
-####################################################################################################################################
+##########################################################################################
 # LID_AFTER_DSID
 # Translates a PDS3 file path (absolute or logical) to a PDS4 LID starting after the data set ID. The returned format is:
 #       volume_id:directory_tree:filename
-####################################################################################################################################
+##########################################################################################
 
 LID_AFTER_DSID = translator.TranslatorByRegex([
     (r'.*volumes/(\w+)/(\w+)/(.*)/(\w+\..*)',  0, r'\2:\3:\4'),
 ])
 
-####################################################################################################################################
+##########################################################################################
 # DATA_SET_ID
 # Translates a file path (absolute or logical) to a data set ID.
-####################################################################################################################################
+##########################################################################################
 
 DATA_SET_ID = translator.NullTranslator()
 
-####################################################################################################################################
+##########################################################################################
