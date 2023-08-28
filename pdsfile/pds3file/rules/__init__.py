@@ -1,11 +1,7 @@
 ##########################################################################################
-# pds3file/rules/pds3file_rules.py
+# pds3file/rules/__init__.py
 #
 # Definitions of Translator objects used by the PdsFile class.
-##########################################################################################
-# DESCRIPTION_AND_ICON
-#
-# Translates an absolute file path within any directory tree to a brief description of the file and an associated icon type.
 ##########################################################################################
 
 import re

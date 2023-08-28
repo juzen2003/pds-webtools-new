@@ -1,10 +1,11 @@
 ################################################################################
-# pds4file/rules/pds4file_rules.py
+# pds4file/rules/__init__.py
 #
 # Subclasses of PdsFile, encompassing dataset-specific information
 # TODO: Modify the general rules for pds4, for now all variables have placeholder values
 # the same as the pds3 general rules.
 ################################################################################
+
 import re
 import translator
 
