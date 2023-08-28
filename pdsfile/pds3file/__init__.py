@@ -1,6 +1,6 @@
-################################################################################
+##########################################################################################
 # pds3file subpackage & Pds3File subclass with PdsFile as the parent class
-################################################################################
+##########################################################################################
 
 from pdsfile import *
 from . import rules as pdsfile_rules
@@ -14,8 +14,8 @@ LOGGER = pdslogger.NullLogger()
 MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
 DICTIONARY_CACHE_LIMIT = 200000
 cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
-                                 limit=DICTIONARY_CACHE_LIMIT,
-                                 logger=LOGGER)
+                                     limit=DICTIONARY_CACHE_LIMIT,
+                                     logger=LOGGER)
 
 class Pds3File(PdsFile):
     # Override the rules
@@ -95,16 +95,16 @@ class Pds3File(PdsFile):
 
 
 
-################################################################################
+##########################################################################################
 # Initialize the global registry of subclasses
-################################################################################
+##########################################################################################
 
 Pds3File.SUBCLASSES['default'] = Pds3File
 
-################################################################################
-# This import must wait until after the Pds3File class has been fully initialized
-# because all instruments specific rules are the subclasses of Pds3File
-################################################################################
+##########################################################################################
+# This import must wait until after the Pds3File class has been fully initialized because
+# all instruments specific rules are the subclasses of Pds3File
+##########################################################################################
 
 try:
     # Data set-specific rules are implemented as subclasses of Pds3File

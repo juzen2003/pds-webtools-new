@@ -1,25 +1,31 @@
-################################################################################
+##########################################################################################
 # Helper functions being used in tests, the parent class & both pds3 & pds4 subclasses
-################################################################################
+##########################################################################################
 
 import pdsgroup
 import os
 
 DEFAULT_FILE_CACHE_LIFETIME =  12 * 60 * 60      # 12 hours
 LONG_FILE_CACHE_LIFETIME = 7 * 24 * 60 * 60      # 7 days
+SHORT_FILE_CACHE_LIFETIME = 2 * 24 * 60 * 60     # 2 days
+FOEVER_FILE_CACHE_LIFETIME = 0                   # forever
 
 def cache_lifetime_for_class(arg, cls):
-    """Used by caches. Given any object, it returns the default lifetime in
-    seconds. A returned lifetime of zero means keep forever.
+    """Return the default cache lifetime in seconds with a given object. A returned
+    lifetime of zero means keep forever.
+
+    Keyword arguments:
+        arg -- an object
+        cls -- the class calling the method
     """
 
     # Keep Viewmaster HTML for 12 hours
     if isinstance(arg, str):
-        return 12 * 60 * 60
+        return DEFAULT_FILE_CACHE_LIFETIME
 
     # Keep RANKS, VOLS, etc. forever
     elif not isinstance(arg, cls):
-        return 0
+        return FOEVER_FILE_CACHE_LIFETIME
 
     # Cache PdsFile bundlesets/bundles for a long time, but not necessarily forever
     elif not arg.interior:
@@ -28,7 +34,7 @@ def cache_lifetime_for_class(arg, cls):
     elif arg.isdir and arg.interior.lower().endswith('data'):
         return LONG_FILE_CACHE_LIFETIME     # .../bundlename/*data for a long time
     elif arg.isdir:
-        return 2 * 24 * 60 * 60             # Other directories for two days
+        return SHORT_FILE_CACHE_LIFETIME            # Other directories for two days
     else:
         return DEFAULT_FILE_CACHE_LIFETIME
 
@@ -91,20 +97,25 @@ def versions_test_for_class(input_path, cls, holdings_dir, expected, is_abspath=
                                                           holdings_dir, is_abspath)
     res = target_pdsfile.all_versions()
     keys = list(res.keys())
-    keys.sort()
-    keys.reverse()
+    keys.sort(reverse=True)
     for key in keys:
         assert key in expected, f'"{key}" not expected'
-        assert res[key].logical_path == expected[key], f'value mismatch at "{key}": {expected[key]}'
+        assert (res[key].logical_path == expected[key],
+                f'value mismatch at "{key}": {expected[key]}')
     keys = list(expected.keys())
-    keys.sort()
-    keys.reverse()
+    keys.sort(reverse=True)
     for key in keys:
         assert key in res, f'"{key}" missing'
 
 # For tests under rules
 def translate_first_for_class(trans, path, cls):
-    """Logical paths of "first" files found using given translator on path."""
+    """Return the logical paths of "first" files found using given translator on path.
+
+    Keyword arguments:
+        trans -- a translator instance
+        path  -- a file path
+        cls   -- the class calling the method
+    """
 
     patterns = trans.first(path)
     if not patterns:
@@ -123,7 +134,13 @@ def translate_first_for_class(trans, path, cls):
     return abspaths
 
 def translate_all_for_class(trans, path, cls):
-    """Logical paths of all files found using given translator on path."""
+    """Return logical paths of all files found using given translator on path.
+
+    Keyword arguments:
+        trans -- a translator instance
+        path  -- a file path
+        cls   -- the class calling the method
+    """
 
     patterns = trans.all(path)
     if not patterns:
