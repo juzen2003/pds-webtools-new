@@ -168,11 +168,7 @@ class PdsGroupTable(object):
         elif isinstance(thing, pdsgroup.PdsGroup):
             self.insert_group(thing)
 
-        elif isinstance(thing, pdsfile.PdsFile):
-            self.insert_file(thing)
-        elif (isinstance(thing, pdsfile.PdsFile) or
-              isinstance(thing, pdsfile.pds3file.Pds3File) or
-              isinstance(thing, pdsfile.pds4file.Pds4File)) :
+        elif isinstance(thing, pdsfile.PdsFile) or issubclass(thing, pdsfile.PdsFile):
             self.insert_file(thing)
 
         else:
