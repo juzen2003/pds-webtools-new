@@ -1,3 +1,9 @@
+##########################################################################################
+# pds4file/tests/conftest.py
+#
+# Configuration & setup before running tests on pds4file
+##########################################################################################
+
 import os
 import pdsfile.pds4file as pds4file
 from pdsfile.cfg import PDS4_HOLDINGS_DIR
