@@ -38,7 +38,7 @@ info_file_basenames = translator.TranslatorByRegex([
 class COSP_xxxx(pds3file.Pds3File):
 
     pds3file.Pds3File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('COSP_xxxx', re.I, 'COSP_xxxx')]) + \
-                                        pds3file.Pds3File.VOLSET_TRANSLATOR
+                                          pds3file.Pds3File.VOLSET_TRANSLATOR
 
     ASSOCIATIONS = pds3file.Pds3File.ASSOCIATIONS.copy()
     ASSOCIATIONS['documents'] += associations_to_documents

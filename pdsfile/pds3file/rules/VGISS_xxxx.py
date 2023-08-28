@@ -582,7 +582,7 @@ opus_id_to_primary_logical_path = translator.TranslatorByRegex([
 class VGISS_xxxx(pds3file.Pds3File):
 
     pds3file.Pds3File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('VGISS_[5678x]xxx', re.I, 'VGISS_xxxx')]) + \
-                                        pds3file.Pds3File.VOLSET_TRANSLATOR
+                                          pds3file.Pds3File.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pds3file.Pds3File.DESCRIPTION_AND_ICON
     SORT_KEY = sort_key + pds3file.Pds3File.SORT_KEY
@@ -608,7 +608,7 @@ class VGISS_xxxx(pds3file.Pds3File):
 
 # Global attribute shared by all subclasses
 pds3file.Pds3File.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'vg-iss-[12]-[jsun]-(?!prof).*', 0, VGISS_xxxx)]) + \
-                                      pds3file.Pds3File.OPUS_ID_TO_SUBCLASS
+                                        pds3file.Pds3File.OPUS_ID_TO_SUBCLASS
 
 ##########################################################################################
 # Update the global dictionary of subclasses

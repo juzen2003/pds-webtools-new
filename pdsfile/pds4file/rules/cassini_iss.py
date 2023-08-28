@@ -383,7 +383,7 @@ opus_id_to_primary_logical_path = translator.TranslatorByRegex([
 class cassini_iss(pds4file.Pds4File): # Cassini_ISS
 
     pds4file.Pds4File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('cassini_iss', re.I, 'cassini_iss')]) + \
-                                        pds4file.Pds4File.VOLSET_TRANSLATOR
+                                          pds4file.Pds4File.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pds4file.Pds4File.DESCRIPTION_AND_ICON
     VIEW_OPTIONS = view_options + pds4file.Pds4File.VIEW_OPTIONS
@@ -415,7 +415,7 @@ class cassini_iss(pds4file.Pds4File): # Cassini_ISS
 
 # Global attribute shared by all subclasses
 pds4file.Pds4File.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'co-iss-.*', 0, cassini_iss)]) + \
-                                      pds4file.Pds4File.OPUS_ID_TO_SUBCLASS
+                                        pds4file.Pds4File.OPUS_ID_TO_SUBCLASS
 
 ##########################################################################################
 # Update the global dictionary of subclasses

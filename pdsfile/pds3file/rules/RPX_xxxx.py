@@ -204,7 +204,7 @@ neighbors = translator.TranslatorByRegex([
 class RPX_xxxx(pds3file.Pds3File):
 
     pds3file.Pds3File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('RPX_xxxx', re.I, 'RPX_xxxx')]) + \
-                                        pds3file.Pds3File.VOLSET_TRANSLATOR
+                                          pds3file.Pds3File.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pds3file.Pds3File.DESCRIPTION_AND_ICON
     VIEW_OPTIONS = view_options + pds3file.Pds3File.VIEW_OPTIONS

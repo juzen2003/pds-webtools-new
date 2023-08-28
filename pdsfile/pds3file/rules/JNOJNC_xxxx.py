@@ -105,7 +105,7 @@ neighbors = translator.TranslatorByRegex([
 class JNOJNC_xxxx(pds3file.Pds3File):
 
     pds3file.Pds3File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('JNOJNC_0xxx', re.I, 'JNOJNC_xxxx')]) + \
-                                        pds3file.Pds3File.VOLSET_TRANSLATOR
+                                          pds3file.Pds3File.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pds3file.Pds3File.DESCRIPTION_AND_ICON
     NEIGHBORS = neighbors + pds3file.Pds3File.NEIGHBORS

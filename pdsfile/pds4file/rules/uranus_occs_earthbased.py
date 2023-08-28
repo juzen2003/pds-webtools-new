@@ -404,7 +404,7 @@ opus_id_to_primary_logical_path = translator.TranslatorByRegex([
 class uranus_occs_earthbased(pds4file.PdsFile):
 
     pds4file.Pds4File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('uranus_occs_earthbased', re.I, 'uranus_occs_earthbased')]) + \
-                                        pds4file.Pds4File.VOLSET_TRANSLATOR
+                                          pds4file.Pds4File.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pds4file.Pds4File.DESCRIPTION_AND_ICON
     VIEW_OPTIONS = view_options + pds4file.Pds4File.VIEW_OPTIONS
@@ -436,7 +436,7 @@ class uranus_occs_earthbased(pds4file.PdsFile):
 
 # Global attribute shared by all subclasses
 pds4file.Pds4File.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'uranus-occ-.*', 0, uranus_occs_earthbased)]) + \
-                                      pds4file.Pds4File.OPUS_ID_TO_SUBCLASS
+                                        pds4file.Pds4File.OPUS_ID_TO_SUBCLASS
 
 ##########################################################################################
 # Update the global dictionary of subclasses

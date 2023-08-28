@@ -151,7 +151,7 @@ opus_id = translator.TranslatorByRegex([
 class VG_0xxx(pds3file.Pds3File):
 
     pds3file.Pds3File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('VG_0xxx', re.I, 'VG_0xxx')]) + \
-                                        pds3file.Pds3File.VOLSET_TRANSLATOR
+                                          pds3file.Pds3File.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pds3file.Pds3File.DESCRIPTION_AND_ICON
     VIEW_OPTIONS = view_options + pds3file.Pds3File.VIEW_OPTIONS

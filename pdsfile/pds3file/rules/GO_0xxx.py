@@ -694,7 +694,7 @@ opus_id_to_primary_logical_path = translator.TranslatorByRegex([
 class GO_0xxx(pds3file.Pds3File):
 
     pds3file.Pds3File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('GO_0xxx', re.I, 'GO_0xxx')]) + \
-                                        pds3file.Pds3File.VOLSET_TRANSLATOR
+                                          pds3file.Pds3File.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pds3file.Pds3File.DESCRIPTION_AND_ICON
     VIEW_OPTIONS = view_options + pds3file.Pds3File.VIEW_OPTIONS
@@ -783,7 +783,7 @@ class GO_0xxx(pds3file.Pds3File):
 
 # Global attribute shared by all subclasses
 pds3file.Pds3File.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'go-ssi-.*', 0, GO_0xxx)]) + \
-                                      pds3file.Pds3File.OPUS_ID_TO_SUBCLASS
+                                        pds3file.Pds3File.OPUS_ID_TO_SUBCLASS
 
 ##########################################################################################
 # Update the global dictionary of subclasses

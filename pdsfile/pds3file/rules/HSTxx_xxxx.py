@@ -185,7 +185,7 @@ filespec_to_volset = translator.TranslatorByRegex([
 class HSTxx_xxxx(pds3file.Pds3File):
 
     pds3file.Pds3File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('HST.x_xxxx', re.I, 'HSTxx_xxxx')]) + \
-                                        pds3file.Pds3File.VOLSET_TRANSLATOR
+                                          pds3file.Pds3File.VOLSET_TRANSLATOR
 
     DESCRIPTION_AND_ICON = description_and_icon_by_regex + pds3file.Pds3File.DESCRIPTION_AND_ICON
     SPLIT_RULES = split_rules + pds3file.Pds3File.SPLIT_RULES
@@ -209,7 +209,7 @@ class HSTxx_xxxx(pds3file.Pds3File):
 
 # Global attribute shared by all subclasses
 pds3file.Pds3File.OPUS_ID_TO_SUBCLASS = translator.TranslatorByRegex([(r'hst-.*', 0, HSTxx_xxxx)]) + \
-                                      pds3file.Pds3File.OPUS_ID_TO_SUBCLASS
+                                        pds3file.Pds3File.OPUS_ID_TO_SUBCLASS
 
 pds3file.Pds3File.FILESPEC_TO_VOLSET = filespec_to_volset + pds3file.Pds3File.FILESPEC_TO_VOLSET
 

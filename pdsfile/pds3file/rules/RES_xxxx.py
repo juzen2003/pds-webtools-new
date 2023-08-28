@@ -13,7 +13,7 @@ import re
 class RES_xxxx(pds3file.Pds3File):
 
     pds3file.Pds3File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('RES_xxxx', re.I, 'RES_xxxx')]) + \
-                                        pds3file.Pds3File.VOLSET_TRANSLATOR
+                                          pds3file.Pds3File.VOLSET_TRANSLATOR
 
 ##########################################################################################
 # Update the global dictionary of subclasses
