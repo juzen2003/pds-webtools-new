@@ -3,7 +3,7 @@
 ##########################################################################################
 
 from pdsfile import *
-from . import rules as pdsfile_rules
+from . import rules
 
 from pdsfile.general_helper import cache_lifetime_for_class
 
@@ -19,27 +19,27 @@ cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
 
 class Pds3File(PdsFile):
     # Override the rules
-    DESCRIPTION_AND_ICON = pdsfile_rules.DESCRIPTION_AND_ICON
-    ASSOCIATIONS = pdsfile_rules.ASSOCIATIONS
-    VERSIONS = pdsfile_rules.VERSIONS
-    INFO_FILE_BASENAMES = pdsfile_rules.INFO_FILE_BASENAMES
-    NEIGHBORS = pdsfile_rules.NEIGHBORS
-    SIBLINGS = pdsfile_rules.SIBLINGS       # just used by Viewmaster right now
-    SORT_KEY = pdsfile_rules.SORT_KEY
-    SPLIT_RULES = pdsfile_rules.SPLIT_RULES
-    VIEW_OPTIONS = pdsfile_rules.VIEW_OPTIONS
-    VIEWABLES = pdsfile_rules.VIEWABLES
-    LID_AFTER_DSID = pdsfile_rules.LID_AFTER_DSID
-    DATA_SET_ID = pdsfile_rules.DATA_SET_ID
+    DESCRIPTION_AND_ICON = rules.DESCRIPTION_AND_ICON
+    ASSOCIATIONS = rules.ASSOCIATIONS
+    VERSIONS = rules.VERSIONS
+    INFO_FILE_BASENAMES = rules.INFO_FILE_BASENAMES
+    NEIGHBORS = rules.NEIGHBORS
+    SIBLINGS = rules.SIBLINGS       # just used by Viewmaster right now
+    SORT_KEY = rules.SORT_KEY
+    SPLIT_RULES = rules.SPLIT_RULES
+    VIEW_OPTIONS = rules.VIEW_OPTIONS
+    VIEWABLES = rules.VIEWABLES
+    LID_AFTER_DSID = rules.LID_AFTER_DSID
+    DATA_SET_ID = rules.DATA_SET_ID
 
-    OPUS_TYPE = pdsfile_rules.OPUS_TYPE
-    OPUS_FORMAT = pdsfile_rules.OPUS_FORMAT
-    OPUS_PRODUCTS = pdsfile_rules.OPUS_PRODUCTS
-    OPUS_ID = pdsfile_rules.OPUS_ID
-    OPUS_ID_TO_PRIMARY_LOGICAL_PATH = pdsfile_rules.OPUS_ID_TO_PRIMARY_LOGICAL_PATH
+    OPUS_TYPE = rules.OPUS_TYPE
+    OPUS_FORMAT = rules.OPUS_FORMAT
+    OPUS_PRODUCTS = rules.OPUS_PRODUCTS
+    OPUS_ID = rules.OPUS_ID
+    OPUS_ID_TO_PRIMARY_LOGICAL_PATH = rules.OPUS_ID_TO_PRIMARY_LOGICAL_PATH
 
-    OPUS_ID_TO_SUBCLASS = pdsfile_rules.OPUS_ID_TO_SUBCLASS
-    FILESPEC_TO_VOLSET = pdsfile_rules.FILESPEC_TO_VOLSET
+    OPUS_ID_TO_SUBCLASS = rules.OPUS_ID_TO_SUBCLASS
+    FILESPEC_TO_VOLSET = rules.FILESPEC_TO_VOLSET
     FILESPEC_TO_BUNDLESET = FILESPEC_TO_VOLSET
 
     BUNDLE_DIR_NAME = 'volumes'

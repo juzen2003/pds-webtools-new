@@ -12,9 +12,6 @@ from pdsfile.general_helper import (instantiate_target_pdsfile_for_class,
                                     translate_first_for_class,
                                     translate_all_for_class,
                                     unmatched_patterns_for_class)
-
-
-
 import translator
 import re
 import os
