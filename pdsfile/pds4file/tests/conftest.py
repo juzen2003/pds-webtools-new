@@ -23,9 +23,9 @@ def turn_on_logger(filename):
 @pytest.fixture(scope='session', autouse=True)
 def setup(request):
     mode = request.config.option.mode
-    if mode == '1':
+    if mode == 's':
         pds4file.use_shelves_only(True)
-    elif mode == '2':
+    elif mode == 'ns':
         pds4file.use_shelves_only(False)
     else: # pragma: no cover
         pds4file.use_shelves_only(True)
