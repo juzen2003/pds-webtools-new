@@ -1,3 +1,8 @@
+##########################################################################################
+# pds3file/tests/test_pdsviewable_blackbox.py
+# Blackbox tests for pdsviewable
+##########################################################################################
+
 import os
 import pdsfile.pds3file as pds3file
 import pdsviewable

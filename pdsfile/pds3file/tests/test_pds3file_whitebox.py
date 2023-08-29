@@ -1,3 +1,8 @@
+##########################################################################################
+# pds3file/tests/test_pds3file_whitebox.py
+# Whitebox tests for pds3file
+##########################################################################################
+
 import os
 import pdsfile.pds3file as pds3file
 import pdsviewable

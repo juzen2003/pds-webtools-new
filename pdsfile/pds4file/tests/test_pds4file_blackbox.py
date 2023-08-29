@@ -1,3 +1,8 @@
+##########################################################################################
+# pds4file/tests/test_pds4file_blackbox.py
+# Blackbox tests for pds4file
+##########################################################################################
+
 import os
 import pdsfile.pds4file as pds4file
 import pytest
