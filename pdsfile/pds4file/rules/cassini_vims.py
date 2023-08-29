@@ -380,7 +380,7 @@ opus_id_to_primary_logical_path = translator.TranslatorByRegex([
 # Subclass definition
 ##########################################################################################
 
-class cassini_vims(pds4file.PdsFile):
+class cassini_vims(pds4file.Pds4File):
 
     pds4file.Pds4File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('cassini_vims', re.I, 'cassini_vims')]) + \
                                           pds4file.Pds4File.VOLSET_TRANSLATOR

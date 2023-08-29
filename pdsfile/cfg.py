@@ -7,7 +7,7 @@
 import os
 import re
 
-PDS_HOLDINGS = 'holdings'
+# PDS_HOLDINGS = 'holdings'
 
 # Flag
 SHELVES_ONLY = False

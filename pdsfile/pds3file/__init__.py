@@ -19,6 +19,8 @@ cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                      logger=LOGGER)
 
 class Pds3File(PdsFile):
+    PDS_HOLDINGS = 'holdings'
+
     # Override the rules
     DESCRIPTION_AND_ICON = rules.DESCRIPTION_AND_ICON
     ASSOCIATIONS = rules.ASSOCIATIONS

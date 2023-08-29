@@ -33,7 +33,8 @@ import pdsparser
 import translator
 
 from . import cfg
-from .general_helper import cache_lifetime_for_class
+from .general_helper import (cache_lifetime_for_class,
+                             logical_path_from_abspath)
 
 ##########################################################################################
 # Configuration
@@ -409,6 +410,8 @@ def load_volume_info(holdings):
 ##########################################################################################
 
 class PdsFile(object):
+
+    PDS_HOLDINGS = 'holdings'
 
     # Global registry of subclasses
     SUBCLASSES = {}
@@ -812,16 +815,16 @@ class PdsFile(object):
 
                 for c in CATEGORY_LIST:
                     category_abspath = holdings_ + c
-                    if not PdsFile.os_path_exists(category_abspath):
+                    if not cls.os_path_exists(category_abspath):
                         LOGGER.warn('Missing category dir: ' + category_abspath)
                         continue
-                    if not PdsFile.os_path_isdir(category_abspath):
+                    if not cls.os_path_isdir(category_abspath):
                         LOGGER.warn('Not a directory, ignored: ' + category_abspath)
 
                     # This is a physical PdsFile, but from_abspath also adds its
                     # childnames to the list of children for the category-level
                     # merged directory.
-                    pdsdir = PdsFile.from_abspath(category_abspath, fix_case=False,
+                    pdsdir = cls.from_abspath(category_abspath, fix_case=False,
                                                 caching='all', lifetime=0)
                     _preload_dir(pdsdir)
 
@@ -3327,14 +3330,16 @@ class PdsFile(object):
         if self.is_merged:      # merged pdsdir
             return None
 
+        cls = type(self)
+
         # Return the merged parent if there is one
         logical_path = os.path.split(self.logical_path)[0]
         if logical_path in CATEGORIES or not self.abspath:
-            return PdsFile.from_logical_path(logical_path,
+            return cls.from_logical_path(logical_path,
                                              must_exist=must_exist)
         else:
             abspath = os.path.split(self.abspath)[0]
-            return PdsFile.from_abspath(abspath,
+            return cls.from_abspath(abspath,
                                         must_exist=must_exist)
 
     @staticmethod
@@ -3359,8 +3364,8 @@ class PdsFile(object):
                              pdsf.data_set_id)
         return pdsf
 
-    @staticmethod
-    def from_logical_path(path, fix_case=False, must_exist=False,
+    @classmethod
+    def from_logical_path(cls, path, fix_case=False, must_exist=False,
                                 caching='default', lifetime=None):
         """Constructor for a PdsFile from a logical path."""
 
@@ -3409,7 +3414,7 @@ class PdsFile(object):
 
         # If there was no preload, CACHE will be empty but this still might work
         abspath = abspath_for_logical_path(path)
-        return PdsFile.from_abspath(abspath)
+        return cls.from_abspath(abspath)
 
     @classmethod
     def from_abspath(cls, abspath, fix_case=False, must_exist=False,
@@ -3419,7 +3424,7 @@ class PdsFile(object):
         abspath = abspath.rstrip('/')
 
         # Return a value from the cache, if any
-        logical_path = logical_path_from_abspath(abspath)
+        logical_path = logical_path_from_abspath(abspath, cls)
         try:
             pdsf = cfg.CACHE[logical_path.lower()]
             if not pdsf.is_merged:     # don't return a merged directory
@@ -3446,9 +3451,9 @@ class PdsFile(object):
         # Search for "holdings"
         parts_lc = [p.lower() for p in parts]
         try:
-            PDS_HOLDINGS_index = parts_lc.index(cfg.PDS_HOLDINGS) # Change variable name to distinguish from PDS3
+            PDS_HOLDINGS_index = parts_lc.index(cls.PDS_HOLDINGS) # Change variable name to distinguish from PDS3
         except ValueError:
-            raise ValueError('"{}" directory not found in: '.format(cfg.PDS_HOLDINGS) + abspath)
+            raise ValueError('"{}" directory not found in: '.format(cls.PDS_HOLDINGS) + abspath)
         ### Pause the cache
         cfg.CACHE.pause()
         try:
@@ -3457,7 +3462,7 @@ class PdsFile(object):
             # this = PdsFile()
             this = cls()
             this.disk_ = drive_spec + '/'.join(parts[:PDS_HOLDINGS_index]) + '/'
-            this.root_ = this.disk_ + cfg.PDS_HOLDINGS + '/'
+            this.root_ = this.disk_ + cls.PDS_HOLDINGS + '/'
 
             # Get case right if necessary
             if fix_case:
@@ -3473,9 +3478,9 @@ class PdsFile(object):
             # named holdings, holding1, ... holdings9
 
             if len(cfg.LOCAL_PRELOADED) <= 1:   # There's only one holdings dir
-                this.html_root_ = '/' + cfg.PDS_HOLDINGS +'/'
+                this.html_root_ = '/' + cls.PDS_HOLDINGS +'/'
             else:                       # Find this holdings dir among preloaded
-                PDS_HOLDINGS_abspath = this.disk_ + cfg.PDS_HOLDINGS
+                PDS_HOLDINGS_abspath = this.disk_ + cls.PDS_HOLDINGS
                 try:
                     k = cfg.LOCAL_PRELOADED.index(PDS_HOLDINGS_abspath)
                 except ValueError:
@@ -3484,13 +3489,13 @@ class PdsFile(object):
 
                 else:       # "holdings", "holdings1", ... "holdings9"
                     if k:
-                        this.html_root_ = '/' + cfg.PDS_HOLDINGS + str(k) + '/'
+                        this.html_root_ = '/' + cls.PDS_HOLDINGS + str(k) + '/'
                     else:
-                        this.html_root_ = '/' + cfg.PDS_HOLDINGS + '/'
+                        this.html_root_ = '/' + cls.PDS_HOLDINGS + '/'
 
             this.logical_path = ''
-            this.abspath = this.disk_ + cfg.PDS_HOLDINGS
-            this.basename = cfg.PDS_HOLDINGS
+            this.abspath = this.disk_ + cls.PDS_HOLDINGS
+            this.basename = cls.PDS_HOLDINGS
             # Handle the rest of the tree using child()
             for part in parts[PDS_HOLDINGS_index + 1:]:
                 this = this.child(part, fix_case=fix_case, must_exist=must_exist,
@@ -3615,7 +3620,7 @@ class PdsFile(object):
             # (such as a bundleset or bundlename) so proceed to the next step
             else:
                 try:
-                    _ = PdsFile.version_info('_' + part)
+                    _ = cls.version_info('_' + part)
                     this.suffix = '_' + part
                 except ValueError:
                     break
@@ -3651,7 +3656,7 @@ class PdsFile(object):
             # (such as a file path) so proceed to the next step
             else:
                 try:
-                    _ = PdsFile.version_info('_' + part)
+                    _ = cls.version_info('_' + part)
                     this.suffix = '_' + part
                 except ValueError:
                     break
@@ -3753,7 +3758,7 @@ class PdsFile(object):
             # Fill in the rank
             bundlename = this.bundlename.lower()
             if this.suffix:
-                rank = PdsFile.version_info(this.suffix)[0]
+                rank = cls.version_info(this.suffix)[0]
             else:
                 rank = cfg.CACHE['$RANKS-' + this.category_][bundlename][-1]
 
@@ -3767,13 +3772,13 @@ class PdsFile(object):
                 # Fill in alt_ranks, a list of alternative version ranks
 
                 # Allow for change from, e.g., _peer_review to _lien_resolution
-                if rank in PdsFile.LATEST_VERSION_RANKS[:-1]:
-                    k = PdsFile.LATEST_VERSION_RANKS.index(rank)
-                    alt_ranks = PdsFile.LATEST_VERSION_RANKS[k+1:]
+                if rank in cls.LATEST_VERSION_RANKS[:-1]:
+                    k = cls.LATEST_VERSION_RANKS.index(rank)
+                    alt_ranks = cls.LATEST_VERSION_RANKS[k+1:]
 
                 # Without a suffix, use the most recent
-                elif rank == PdsFile.LATEST_VERSION_RANKS[-1]:
-                    alt_ranks = PdsFile.LATEST_VERSION_RANKS[:-1][::-1]
+                elif rank == cls.LATEST_VERSION_RANKS[-1]:
+                    alt_ranks = cls.LATEST_VERSION_RANKS[:-1][::-1]
 
                 else:
                     alt_ranks = []
@@ -3793,7 +3798,7 @@ class PdsFile(object):
                                      (this.suffix, path))
 
             # This is the PdsFile object down to the bundlename
-            this = PdsFile.from_abspath(this_abspath, must_exist=must_exist)
+            this = cls.from_abspath(this_abspath, must_exist=must_exist)
 
         # If a bundleset was found but not a bundlename, try to find the absolute path
         elif this.bundleset:
@@ -3801,7 +3806,7 @@ class PdsFile(object):
             # Fill in the rank
             bundleset = this.bundleset.lower()
             if this.suffix:
-                rank = PdsFile.version_info(this.suffix)[0]
+                rank = cls.version_info(this.suffix)[0]
             else:
                 rank = cfg.CACHE['$RANKS-' + this.category_][bundleset][-1]
 
@@ -3815,13 +3820,13 @@ class PdsFile(object):
                 # Fill in alt_ranks, a list of alternative version ranks
 
                 # Allow for change from, e.g., _peer_review to _lien_resolution
-                if rank in PdsFile.LATEST_VERSION_RANKS[:-1]:
-                    k = PdsFile.LATEST_VERSION_RANKS.index(rank)
-                    alt_ranks = PdsFile.LATEST_VERSION_RANKS[k+1:]
+                if rank in cls.LATEST_VERSION_RANKS[:-1]:
+                    k = cls.LATEST_VERSION_RANKS.index(rank)
+                    alt_ranks = cls.LATEST_VERSION_RANKS[k+1:]
 
                 # Without a suffix, use the most recent
-                elif rank == PdsFile.LATEST_VERSION_RANKS[-1]:
-                    alt_ranks = PdsFile.LATEST_VERSION_RANKS[:-1][::-1]
+                elif rank == cls.LATEST_VERSION_RANKS[-1]:
+                    alt_ranks = cls.LATEST_VERSION_RANKS[:-1][::-1]
 
                 else:
                     alt_ranks = []
@@ -3841,7 +3846,7 @@ class PdsFile(object):
                                      (this.suffix, path))
 
             # This is the PdsFile object down to the bundleset
-            this = PdsFile.from_abspath(this_abspath, must_exist=must_exist)
+            this = cls.from_abspath(this_abspath, must_exist=must_exist)
 
         # Without a bundlename or bundleset, this must be a very high-level directory
         else:
@@ -5139,12 +5144,12 @@ class PdsFile(object):
 
         return pdsfiles
 
-    @staticmethod
-    def logicals_for_abspaths(abspaths, must_exist=False):
+    @classmethod
+    def logicals_for_abspaths(cls, abspaths, must_exist=False):
         if must_exist:
             abspaths = [p for p in abspaths if PdsFile.os_path_exists(p)]
 
-        return [logical_path_from_abspath(p) for p in abspaths]
+        return [logical_path_from_abspath(p, cls) for p in abspaths]
 
     @staticmethod
     def basenames_for_abspaths(abspaths, must_exist=False):
@@ -5617,13 +5622,13 @@ def is_logical_path(path):
 
     return ('/holdings/' not in path)
 
-def logical_path_from_abspath(abspath):
-    """Logical path derived from an absolute path."""
-    parts = abspath.partition('/'+cfg.PDS_HOLDINGS+'/')
-    if parts[1]:
-        return parts[2]
+# def logical_path_from_abspath(abspath, cls):
+#     """Logical path derived from an absolute path."""
+#     parts = abspath.partition('/'+cls.PDS_HOLDINGS+'/')
+#     if parts[1]:
+#         return parts[2]
 
-    raise ValueError('Not compatible with a logical path: ', abspath)
+#     raise ValueError('Not compatible with a logical path: ', abspath)
 
 LOCAL_HOLDINGS_DIRS = None  # Global will contain all the physical holdings
                             # directories on the system.
@@ -5679,7 +5684,7 @@ def abspath_for_logical_path(path):
 
     raise ValueError('No holdings directory for logical path ' + path)
 
-def selected_path_from_path(path, abspaths=True):
+def selected_path_from_path(path, cls, abspaths=True):
     """Logical path or absolute path derived from a logical or an absolute
     path."""
 
@@ -5693,6 +5698,6 @@ def selected_path_from_path(path, abspaths=True):
         if abspaths:
             return path
         else:
-            return logical_path_from_abspath(path)
+            return logical_path_from_abspath(path, cls)
 
 ##########################################################################################

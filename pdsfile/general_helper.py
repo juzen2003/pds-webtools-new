@@ -1,9 +1,24 @@
 ##########################################################################################
+# pdsfile/general_helper.py
 # Helper functions being used in tests, the parent class & both pds3 & pds4 subclasses
 ##########################################################################################
 
 import pdsgroup
 import os
+
+# For tests
+# try:
+#     PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+# except KeyError: # pragma: no cover
+#     PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+
+# try:
+#     PDS4_HOLDINGS_DIR = os.environ['PDS4_HOLDINGS_DIR']
+# except KeyError: # pragma: no cover
+#     # TODO: update this when we know the actual path of pds4 holdings on the webserver
+#     PDS4_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+
+# PDS4_BUNDLES_DIR = f'{PDS4_HOLDINGS_DIR}/bundles'
 
 DEFAULT_FILE_CACHE_LIFETIME =  12 * 60 * 60      # 12 hours
 LONG_FILE_CACHE_LIFETIME = 7 * 24 * 60 * 60      # 7 days
@@ -159,8 +174,14 @@ def translate_all_for_class(trans, path, cls):
     return abspaths
 
 def unmatched_patterns_for_class(trans, path, cls):
-    """List all translated patterns that did not find a matching path in the
-    file system."""
+    """Return a list of all translated patterns that did not find a matching path in the
+    file system.
+
+    Keyword arguments:
+        trans -- a translator instance
+        path  -- a file path
+        cls   -- the class calling the method
+    """
 
     patterns = trans.all(path)
     patterns = [p for p in patterns if p]       # skip empty translations
@@ -173,3 +194,19 @@ def unmatched_patterns_for_class(trans, path, cls):
             unmatched.append(pattern)
 
     return unmatched
+
+def logical_path_from_abspath(abspath, cls):
+    """Return the logical path derived from an absolute path.
+
+    Keyword arguments:
+        abspath -- the abosulte path of a file
+        cls     -- the class calling the method
+    """
+    parts = abspath.partition('/'+cls.PDS_HOLDINGS+'/')
+    print('########')
+    print(cls.PDS_HOLDINGS)
+    print(cls)
+    if parts[1]:
+        return parts[2]
+
+    raise ValueError('Not compatible with a logical path: ', abspath)

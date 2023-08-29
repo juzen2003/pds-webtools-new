@@ -3211,7 +3211,7 @@ class TestPds3FileHelperBlackBox:
     )
     def test_logical_path_from_abspath(self, input_path, expected):
         try:
-            res = pds3file.logical_path_from_abspath(abspath=input_path)
+            res = pds3file.logical_path_from_abspath(input_path, pds3file.Pds3File)
             assert res == expected
         except ValueError as err:
             assert True # Not an absolute path
@@ -3237,5 +3237,5 @@ class TestPds3FileHelperBlackBox:
         ]
     )
     def test_selected_path_from_path(self, input_path, expected):
-        res = pds3file.selected_path_from_path(path=input_path)
+        res = pds3file.selected_path_from_path(input_path, pds3file.Pds3File)
         assert res == expected

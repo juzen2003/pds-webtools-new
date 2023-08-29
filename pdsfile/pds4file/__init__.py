@@ -8,7 +8,7 @@ from . import rules
 
 from pdsfile.general_helper import cache_lifetime_for_class
 
-cfg.PDS_HOLDINGS = 'pds4-holdings'
+# cfg.PDS_HOLDINGS = 'pds4-holdings'
 cfg.SHELVES_ONLY = False
 cfg.BUNDLESET_REGEX = re.compile(r'^(uranus_occs_earthbased|^cassini_iss|^cassini_vims)$')
 cfg.BUNDLESET_PLUS_REGEX   = re.compile(cfg.BUNDLESET_REGEX.pattern[:-1] +
@@ -36,6 +36,8 @@ cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                  logger=LOGGER)
 
 class Pds4File(PdsFile):
+    PDS_HOLDINGS = 'pds4-holdings'
+
     # Override the rules
     DESCRIPTION_AND_ICON = rules.DESCRIPTION_AND_ICON
     ASSOCIATIONS = rules.ASSOCIATIONS

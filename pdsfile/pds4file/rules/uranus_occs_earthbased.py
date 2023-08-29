@@ -401,7 +401,7 @@ opus_id_to_primary_logical_path = translator.TranslatorByRegex([
 # Subclass definition
 ##########################################################################################
 
-class uranus_occs_earthbased(pds4file.PdsFile):
+class uranus_occs_earthbased(pds4file.Pds4File):
 
     pds4file.Pds4File.VOLSET_TRANSLATOR = translator.TranslatorByRegex([('uranus_occs_earthbased', re.I, 'uranus_occs_earthbased')]) + \
                                           pds4file.Pds4File.VOLSET_TRANSLATOR
