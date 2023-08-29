@@ -1,4 +1,5 @@
 ##########################################################################################
+# pdsfile/__init__.py
 # General pdsfile package & PdsFile class
 ##########################################################################################
 
@@ -506,15 +507,15 @@ class PdsFile(object):
         self.archives_    = ''      # Either 'archives-' or ''
         self.voltype_     = ''      # One of 'volumes', 'metadata', etc.
 
-        self.bundleset_      = ''   # Bundleset name + suffix + '/'
-        self.bundleset       = ''   # Bundleset name, suffix stripped
+        self.bundleset_   = ''      # Bundleset name + suffix + '/'
+        self.bundleset    = ''      # Bundleset name, suffix stripped
         self.suffix       = ''      # Bundleset suffix alone
         self.version_message = ''
         self.version_rank = 0       # int; 'v1.2.3' -> 10203; 999999 for latest
         self.version_id   = ''      # E.g., 'v1.2.3'; version number of volume
 
-        self.bundlename_     = ''   # Bundle name + '/'
-        self.bundlename      = ''   # Bundle name alone
+        self.bundlename_  = ''      # Bundle name + '/'
+        self.bundlename   = ''      # Bundle name alone
 
         self.interior     = ''      # Path starting inside volume directory
 
@@ -852,8 +853,6 @@ class PdsFile(object):
                 cfg.FS_IS_CASE_INSENSITIVE = True
                 break
 
-
-    # @staticmethod
     @classmethod
     def new_merged_dir(cls, basename):
         """A merged directory with the given basename. Merged directories
@@ -863,7 +862,6 @@ class PdsFile(object):
         if basename not in CATEGORIES:
             raise ValueError('Invalid category: ' + basename)
 
-        # this = PdsFile()
         this = cls()
 
         this.basename     = basename
@@ -879,15 +877,15 @@ class PdsFile(object):
         this.archives_    = 'archives-'  if 'archives-'  in basename else ''
         this.voltype_     = basename.split('-')[-1].rstrip('/') + '/'
 
-        this.bundleset_      = ''
-        this.bundleset       = ''
+        this.bundleset_   = ''
+        this.bundleset    = ''
         this.suffix       = ''
         this.version_message = ''
         this.version_rank = 0
         this.version_id   = ''
 
-        this.bundlename_     = ''
-        this.bundlename      = ''
+        this.bundlename_  = ''
+        this.bundlename   = ''
 
         this.interior     = ''
 
@@ -3423,7 +3421,6 @@ class PdsFile(object):
         abspath = abspath_for_logical_path(path)
         return PdsFile.from_abspath(abspath)
 
-    # @staticmethod
     @classmethod
     def from_abspath(cls, abspath, fix_case=False, must_exist=False,
                               caching='default', lifetime=None):
@@ -3557,7 +3554,6 @@ class PdsFile(object):
                                              fix_case=False, must_exist=False,
                                              caching='default', lifetime=None)
 
-    # @staticmethod
     @classmethod
     def from_path(cls, path, must_exist=False, caching='default', lifetime=None):
         """Find the PdsFile, if possible based on anything roughly resembling
@@ -4133,7 +4129,6 @@ class PdsFile(object):
     # OPUS support methods
     ############################################################################
 
-    # @staticmethod
     @classmethod
     def from_filespec(cls, filespec, fix_case=False):
         """The PdsFile object based on a bundle name plus file specification
@@ -4514,7 +4509,6 @@ class PdsFile(object):
         else:
             return (abspath, self.interior)
 
-    # @staticmethod
     @classmethod
     def _get_shelf(cls, shelf_path, log_missing_file=True):
         """Internal method to open a shelf/pickle file. A limited number of
