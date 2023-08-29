@@ -1292,7 +1292,7 @@ class TestPds3FileBlackBox:
         else:
             lskip = (len(target_pdsfile.root_) + len('checksums_')
                      + len(target_pdsfile.category_)
-                     + len(target_pdsfile.volset_))
+                     + len(target_pdsfile.bundleset_))
         expected = (expected, lskip)
         assert target_pdsfile.checksum_path_and_lskip() == expected
 
@@ -1344,7 +1344,7 @@ class TestPds3FileBlackBox:
     def test_archive_path_and_lskip(self, input_path, expected):
         target_pdsfile = instantiate_target_pdsfile(input_path)
         lskip = (len(target_pdsfile.root_) + len(target_pdsfile.category_)
-                 + len(target_pdsfile.volset_))
+                 + len(target_pdsfile.bundleset_))
         expected = (expected, lskip)
         assert target_pdsfile.archive_path_and_lskip() == expected
 
@@ -1407,10 +1407,10 @@ class TestPds3FileBlackBox:
         target_pdsfile = instantiate_target_pdsfile(input_path)
         if target_pdsfile.archives_:
             lskip = (len(target_pdsfile.root_) + len(target_pdsfile.category_)
-                     + len(target_pdsfile.volset_))
+                     + len(target_pdsfile.bundleset_))
         else:
             lskip = (len(target_pdsfile.root_) + len(target_pdsfile.category_)
-                     + len(target_pdsfile.volset_) + len(target_pdsfile.volname)
+                     + len(target_pdsfile.bundleset_) + len(target_pdsfile.bundlename)
                      + 1)
         expected = (expected, lskip)
         assert target_pdsfile.shelf_path_and_lskip() == expected
