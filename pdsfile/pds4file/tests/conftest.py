@@ -7,6 +7,7 @@
 import os
 import pdsfile.pds4file as pds4file
 from pdsfile.cfg import PDS4_HOLDINGS_DIR
+from pdsfile.preload_and_cache import (use_shelves_only)
 import pdslogger
 import pytest
 
@@ -24,11 +25,11 @@ def turn_on_logger(filename):
 def setup(request):
     mode = request.config.option.mode
     if mode == 's':
-        pds4file.Pds4File.use_shelves_only(True)
+        use_shelves_only(pds4file.Pds4File, True)
     elif mode == 'ns':
-        pds4file.Pds4File.use_shelves_only(False)
+        use_shelves_only(pds4file.Pds4File, False)
     else: # pragma: no cover
-        pds4file.Pds4File.use_shelves_only(True)
+        use_shelves_only(pds4file.Pds4File, True)
 
     # turn_on_logger("test_log.txt")
     pds4file.Pds4File.preload(PDS4_HOLDINGS_DIR)

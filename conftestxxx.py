@@ -9,6 +9,7 @@ import pdsfile.pds3file as pds3file
 from pdsfile.cfg import PDS_HOLDINGS_DIR
 import pdsfile.pds4file as pds4file
 from pdsfile.cfg import PDS4_HOLDINGS_DIR
+from pdsfile.preload_and_cache import (use_shelves_only)
 import pdslogger
 import pytest
 
@@ -26,15 +27,15 @@ def turn_on_logger(filename):
 @pytest.fixture(scope='session', autouse=True)
 def setup(request):
     mode = request.config.option.mode
-    if mode == '1':
-        pds3file.use_shelves_only(True)
-        pds4file.use_shelves_only(True)
-    elif mode == '2':
-        pds3file.use_shelves_only(False)
-        pds4file.use_shelves_only(False)
+    if mode == 's':
+        use_shelves_only(pds3file.Pds3File, True)
+        use_shelves_only(pds4file.Pds4File, True)
+    elif mode == 'ns':
+        use_shelves_only(pds3file.Pds3File, False)
+        use_shelves_only(pds4file.Pds4File, False)
     else: # pragma: no cover
-        pds3file.use_shelves_only(True)
-        pds4file.use_shelves_only(True)
+        use_shelves_only(pds3file.Pds3File, True)
+        use_shelves_only(pds4file.Pds4File, True)
 
     # turn_on_logger("test_log.txt")
     pds3file.Pds3File.preload(PDS_HOLDINGS_DIR)
