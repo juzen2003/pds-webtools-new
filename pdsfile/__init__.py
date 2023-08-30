@@ -36,8 +36,6 @@ from . import cfg
 from .general_helper import (cache_lifetime_for_class,
                              logical_path_from_abspath)
 
-from .preload_and_cache import (use_shelves_only)
-
 ##########################################################################################
 # Configuration
 ##########################################################################################
@@ -154,17 +152,7 @@ def set_easylogger():
 _GLOB_CACHE_SIZE = 200
 _PATH_EXISTS_CACHE_SIZE = 200
 
-##########################################################################################
-# How to handle missing shelf files
-##########################################################################################
 
-def require_shelves(status=True):
-    """Call before preload(). Status=True to raise exceptions when shelf files
-    are missing or incomplete. Otherwise, missing shelf info is only logged as a
-    warning instead.
-    """
-
-    cfg.SHELVES_REQUIRED = status
 
 ##########################################################################################
 # Memcached and other cache support
@@ -391,8 +379,10 @@ def load_volume_info(holdings):
 
 class PdsFile(object):
 
+    # Class variables
     PDS_HOLDINGS = 'holdings'
     SHELVES_ONLY = False
+    SHELVES_REQUIRED = False
     BUNDLE_DIR_NAME = 'bundles'
 
     # Global registry of subclasses
@@ -824,11 +814,11 @@ class PdsFile(object):
         # Determine if the file system is case-sensitive
         # If any physical bundle is case-insensitive, then we treat the whole file
         # system as case-insensitive.
-        cfg.FS_IS_CASE_INSENSITIVE = False
+        cls.FS_IS_CASE_INSENSITIVE = False
         for holdings_dir in cfg.LOCAL_PRELOADED:
             testfile = holdings_dir.replace('/holdings', '/HoLdInGs')
             if os.path.exists(testfile):
-                cfg.FS_IS_CASE_INSENSITIVE = True
+                cls.FS_IS_CASE_INSENSITIVE = True
                 break
 
     @classmethod
@@ -1082,7 +1072,7 @@ class PdsFile(object):
                 if testpath and cls.os_path_exists(testpath):
                     return True
 
-        if force_case_sensitive and cfg.FS_IS_CASE_INSENSITIVE:
+        if force_case_sensitive and cls.FS_IS_CASE_INSENSITIVE:
             test = os.path.exists(abspath)
             if not test:
                 return False
@@ -1134,7 +1124,7 @@ class PdsFile(object):
 
                 # Checksum files need special handling
                 testpath = PdsFile._non_checksum_abspath(abspath)
-                if testpath and PdsFile.os_path_exists(testpath):
+                if testpath and cls.os_path_exists(testpath):
                     # If the testpath exists, then whether it is a directory or
                     # not depends on the extension
                     return (not abspath.lower().endswith('.txt'))
@@ -1297,7 +1287,7 @@ class PdsFile(object):
                 return []
 
         if not cls.SHELVES_ONLY:
-            return _clean_glob(abspath, force_case_sensitive)
+            return _clean_glob(cls, abspath, force_case_sensitive)
 
         # Find the shelf file(s) if any
         abspath = abspath.rstrip('/')
@@ -1316,7 +1306,7 @@ class PdsFile(object):
         if not pattern:
             shelf_paths = []
         elif _needs_glob(pattern):
-            shelf_paths = _clean_glob(pattern)
+            shelf_paths = _clean_glob(cls, pattern)
         elif os.path.exists(pattern):
             shelf_paths = [pattern]
         else:
@@ -1324,7 +1314,7 @@ class PdsFile(object):
 
         # If there are no exact infoshelf files, revert to the file system
         if not shelf_paths:
-            return _clean_glob(abspath, force_case_sensitive)
+            return _clean_glob(cls, abspath, force_case_sensitive)
 
         # If the check for an exact shelf file failed, just convert the list
         # of shelf/info directories back to holdings directories
@@ -1393,6 +1383,7 @@ class PdsFile(object):
     @property
     def exists(self):
         """True if the file exists."""
+        cls = type(self)
 
         if self._exists_filled is not None:
             return self._exists_filled
@@ -1402,7 +1393,7 @@ class PdsFile(object):
         elif self.abspath is None:
             self._exists_filled = False
         else:
-            self._exists_filled = PdsFile.os_path_exists(self.abspath)
+            self._exists_filled = cls.os_path_exists(self.abspath)
 
         self._recache()
         return self._exists_filled
@@ -1673,6 +1664,8 @@ class PdsFile(object):
         if self._info_filled is not None:
             return self._info_filled
 
+        cls = type(self)
+
         # Missing files get no _info
         if not self.exists:
             self._info_filled = (0, 0, None, '', (0,0))
@@ -1686,7 +1679,7 @@ class PdsFile(object):
                  timestring, checksum, size) = self.shelf_lookup('info')
             except (IOError, KeyError, ValueError):
                 LOGGER.warn('Missing info shelf', self.abspath)
-                if cfg.SHELVES_REQUIRED:
+                if cls.SHELVES_REQUIRED:
                     raise
             else:
                 # Note that timestring will be blank for empty directories and
@@ -2178,6 +2171,8 @@ class PdsFile(object):
         if self._internal_links_filled is not None:
             return self._internal_links_filled
 
+        cls = type(self)
+
         # Some file types never have links
         if self.isdir or self.checksums_ or self.archives_:
             self._internal_links_filled = []
@@ -2206,7 +2201,7 @@ class PdsFile(object):
 
                     LOGGER.warn('Missing link shelf', self.abspath)
 
-                    if cfg.SHELVES_REQUIRED:
+                    if cls.SHELVES_REQUIRED:
                         raise
 
                 else:       # bundleset AAREADME file
@@ -2276,6 +2271,7 @@ class PdsFile(object):
     def label_basename(self):
         """Basename of the label file associated with this data file. If this is
         already a label file, it returns an empty string."""
+        cls = type(self)
 
         # Return cached value if any
         if self._label_basename_filled is not None:
@@ -2299,7 +2295,7 @@ class PdsFile(object):
         # If one of the guessed files exist, it's the label
         for test_basename in test_basenames:
             test_abspath = self.abspath.rpartition('/')[0] + '/' + test_basename
-            if PdsFile.os_path_exists(test_abspath, force_case_sensitive=True):
+            if cls.os_path_exists(test_abspath, force_case_sensitive=True):
                 self._label_basename_filled = test_basename
                 self._recache()
                 return self._label_basename_filled
@@ -2726,13 +2722,14 @@ class PdsFile(object):
     def all_versions(self):
         """A dictionary containing all existing versions of this PdsFile, keyed
         by the version ranks of the volumes on which they reside."""
+        cls = type(self)
 
         # We only cache the abspaths, not the PdsFiles, because the cache cannot
         # properly maintan links between PdsFiles
         if self._all_version_abspaths is not None:
             version_dict = {}
             for rank, abspath in self._all_version_abspaths.items():
-                version_dict[rank] = PdsFile.from_abspath(abspath)
+                version_dict[rank] = cls.from_abspath(abspath)
 
             return version_dict
 
@@ -2745,13 +2742,13 @@ class PdsFile(object):
         abspaths = []
         for pattern in patterns:
             if pattern:
-                abspaths += PdsFile.glob_glob(self.root_ + pattern,
+                abspaths += cls.glob_glob(self.root_ + pattern,
                                               force_case_sensitive=True)
 
         abspaths = set(abspaths)        # remove duplicates
         abspaths = [p for p in abspaths if p != self.abspath]   # remove self
 
-        pdsfiles = PdsFile.pdsfiles_for_abspaths(abspaths, must_exist=True)
+        pdsfiles = cls.pdsfiles_for_abspaths(abspaths, must_exist=True)
 
         # Fill in the dictionaries
         for pdsf in pdsfiles:
@@ -4215,7 +4212,7 @@ class PdsFile(object):
         opus_type_for_abspath = {}
         for (pattern, opus_type) in abs_patterns_and_opus_types:
             these_abspaths = cls.glob_glob(pattern,
-                                               force_case_sensitive=True)
+                                           force_case_sensitive=True)
             if opus_type:
                 for abspath in these_abspaths:
                     opus_type_for_abspath[abspath] = opus_type
@@ -4243,7 +4240,7 @@ class PdsFile(object):
                 fmts = [f for f in links if f.lower().endswith('.fmt')]
                 fmts.sort()
                 fmt_pdsfiles = cls.pdsfiles_for_abspaths(fmts,
-                                                             must_exist=True)
+                                                         must_exist=True)
                 label_pdsfiles[abspath] = [pdsf] + fmt_pdsfiles
             else:
                 data_pdsfiles.append(pdsf)
@@ -5129,7 +5126,7 @@ class PdsFile(object):
     @classmethod
     def logicals_for_abspaths(cls, abspaths, must_exist=False):
         if must_exist:
-            abspaths = [p for p in abspaths if PdsFile.os_path_exists(p)]
+            abspaths = [p for p in abspaths if cls.os_path_exists(p)]
 
         return [logical_path_from_abspath(p, cls) for p in abspaths]
 
@@ -5150,11 +5147,11 @@ class PdsFile(object):
 
         return pdsfiles
 
-    @staticmethod
-    def abspaths_for_logicals(logical_paths, must_exist=False):
+    @classmethod
+    def abspaths_for_logicals(cls, logical_paths, must_exist=False):
         abspaths = [abspath_for_logical_path(p) for p in logical_paths]
         if must_exist:
-            abspaths = [p for p in abspaths if PdsFile.os_path_exists(p)]
+            abspaths = [p for p in abspaths if cls.os_path_exists(p)]
 
         return abspaths
 
@@ -5216,7 +5213,7 @@ class PdsFile(object):
             category        the category of the associated paths.
             must_exist      True to return only paths that exist.
         """
-
+        cls = type(self)
         category = category.strip('/')
 
         # Handle special case of an index row
@@ -5224,8 +5221,8 @@ class PdsFile(object):
         # the parent index file.
         if self.is_index_row:
             test_abspath = self.data_abspath_associated_with_index_row()
-            if test_abspath and PdsFile.os_path_exists(test_abspath):
-                self = PdsFile.from_abspath(test_abspath)
+            if test_abspath and cls.os_path_exists(test_abspath):
+                self = cls.from_abspath(test_abspath)
             else:
                 self = self.parent()
 
@@ -5237,7 +5234,7 @@ class PdsFile(object):
 
             new_abspaths = []
             for abspath in abspaths:
-                pdsf = PdsFile.from_abspath(abspath)
+                pdsf = cls.from_abspath(abspath)
                 try:
                     new_abspaths.append(pdsf.checksum_path_and_lskip()[0])
                 # This can happen for associations to cumulative metadata files.
@@ -5259,7 +5256,7 @@ class PdsFile(object):
 
             new_abspaths = []
             for abspath in abspaths:
-                pdsf = PdsFile.from_abspath(abspath)
+                pdsf = cls.from_abspath(abspath)
                 try:
                     new_abspaths.append(pdsf.archive_path_and_lskip()[0])
                 # This can happen for associations to cumulative metadata files.
@@ -5277,7 +5274,7 @@ class PdsFile(object):
 
         # Check for any associations defined by rules
         logical_paths = self.ASSOCIATIONS[category].all(self.logical_path)
-        patterns = PdsFile.abspaths_for_logicals(logical_paths)
+        patterns = cls.abspaths_for_logicals(logical_paths)
 
         # If no rules apply, search in the parallel directory tree
         if not patterns:
@@ -5300,7 +5297,7 @@ class PdsFile(object):
             if not must_exist and not _needs_glob(pattern):
                 test_abspaths = [pattern]
             else:
-                test_abspaths = PdsFile.glob_glob(pattern,
+                test_abspaths = cls.glob_glob(pattern,
                                                   force_case_sensitive=True)
 
             # With a suffix, make sure it matches a row of the index
@@ -5308,7 +5305,7 @@ class PdsFile(object):
                 filtered_abspaths = []
                 for abspath in test_abspaths:
                     try:
-                        parent = PdsFile.from_abspath(abspath)
+                        parent = cls.from_abspath(abspath)
                         pdsf = parent.child_of_index(suffix)
                         filtered_abspaths.append(pdsf.abspath)
                     except (KeyError, IOError):
@@ -5520,12 +5517,12 @@ def _clean_abspath(path):
     return abspath
 
 @functools.lru_cache(maxsize=_GLOB_CACHE_SIZE)
-def _clean_glob(pattern, force_case_sensitive=False):
+def _clean_glob(cls, pattern, force_case_sensitive=False):
     results = glob.glob(pattern)
     if os.sep == '\\':
         results = [x.replace('\\', '/') for x in matches]
 
-    if force_case_sensitive and cfg.FS_IS_CASE_INSENSITIVE:
+    if force_case_sensitive and cls.FS_IS_CASE_INSENSITIVE:
         filtered_results = []
         for result in results:
             result = repair_case(result)

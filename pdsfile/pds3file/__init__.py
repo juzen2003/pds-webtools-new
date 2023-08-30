@@ -19,9 +19,15 @@ cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                      logger=LOGGER)
 
 class Pds3File(PdsFile):
+
+    # Class variables
     PDS_HOLDINGS = 'holdings'
-    SHELVES_ONLY = False
     BUNDLE_DIR_NAME = 'volumes'
+
+    # Flag
+    SHELVES_ONLY = False
+    SHELVES_REQUIRED = False
+    FS_IS_CASE_INSENSITIVE = True
 
     # Override the rules
     DESCRIPTION_AND_ICON = rules.DESCRIPTION_AND_ICON

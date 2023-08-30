@@ -21,3 +21,15 @@ def use_shelves_only(cls, status=True):
     shelf is missing."""
 
     cls.SHELVES_ONLY = status
+
+##########################################################################################
+# How to handle missing shelf files
+##########################################################################################
+
+def require_shelves(cls, status=True):
+    """Call before preload(). Status=True to raise exceptions when shelf files
+    are missing or incomplete. Otherwise, missing shelf info is only logged as a
+    warning instead.
+    """
+
+    cls.SHELVES_REQUIRED = status

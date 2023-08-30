@@ -8,10 +8,6 @@ import os
 import re
 
 
-# Flag
-SHELVES_REQUIRED = False
-FS_IS_CASE_INSENSITIVE = True
-
 # CACHE
 LOCAL_PRELOADED = []
 CACHE = None
