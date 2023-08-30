@@ -684,7 +684,7 @@ class TestPdsFileBlackBox:
         target_pdsfile = instantiate_target_pdsfile(input_path)
         # When SHELVES_ONLY is True, there is no metadata tree for COUVIS and
         # it will have empty row_dicts in DATA_SET_ID of COUVIS_0xxx.py rules.
-        if not pds3file.cfg.SHELVES_ONLY:
+        if not pds3file.Pds3File.SHELVES_ONLY:
             res1 = target_pdsfile.data_set_id
             res2 = target_pdsfile.data_set_id
             assert res1 == expected

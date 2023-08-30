@@ -149,34 +149,12 @@ def set_easylogger():
     """Log all messages directly to stdout."""
     set_logger(pdslogger.EasyLogger())
 
-##########################################################################################
-# Filesystem vs. shelf files
-##########################################################################################
-
 _GLOB_CACHE_SIZE = 200
 _PATH_EXISTS_CACHE_SIZE = 200
-# SHELVES_ONLY = cfg.SHELVES_ONLY
-
-# FS_IS_CASE_INSENSITIVE = True
-# The above just a guess until preload. Certain unexpected behavior can arise
-# when the file system is case-insensitive, such as glob.glob matching files
-# that it really shouldn't. We only do the extra work to fix this if we know,
-# or believe, that the file system is case-insensitive. Note also that when
-# SHELVES_ONLY is True, the file system is effectively case-sensitive because
-# we only use file names and paths found in the shelf files.
-
-def use_shelves_only(status=True):
-    """Call before preload(). Status=True to identify files based on their
-    presence in the infoshelf files first. Search the file system only if a
-    shelf is missing."""
-
-    cfg.SHELVES_ONLY = status
 
 ##########################################################################################
 # How to handle missing shelf files
 ##########################################################################################
-
-# SHELVES_REQUIRED = False
 
 def require_shelves(status=True):
     """Call before preload(). Status=True to raise exceptions when shelf files
@@ -412,6 +390,8 @@ def load_volume_info(holdings):
 class PdsFile(object):
 
     PDS_HOLDINGS = 'holdings'
+    SHELVES_ONLY = False
+    BUNDLE_DIR_NAME = 'bundles'
 
     # Global registry of subclasses
     SUBCLASSES = {}
@@ -494,8 +474,6 @@ class PdsFile(object):
 
     def __init__(self):
         """Constructor returns a blank PdsFile object. Not for external use."""
-
-        BUNDLE_DIR_NAME = 'bundles'
 
         self.basename     = ''
         self.abspath      = ''
@@ -620,6 +598,24 @@ class PdsFile(object):
             this.interior        = self.interior
 
         return this
+
+##########################################################################################
+# Filesystem vs. shelf files
+##########################################################################################
+
+    # The above just a guess until preload. Certain unexpected behavior can arise
+    # when the file system is case-insensitive, such as glob.glob matching files
+    # that it really shouldn't. We only do the extra work to fix this if we know,
+    # or believe, that the file system is case-insensitive. Note also that when
+    # SHELVES_ONLY is True, the file system is effectively case-sensitive because
+    # we only use file names and paths found in the shelf files.
+    @classmethod
+    def use_shelves_only(cls, status=True):
+        """Call before preload(). Status=True to identify files based on their
+        presence in the infoshelf files first. Search the file system only if a
+        shelf is missing."""
+
+        cls.SHELVES_ONLY = status
 
     @classmethod
     def preload(cls, holdings_list, port=0, clear=False, force_reload=False,
@@ -1038,9 +1034,9 @@ class PdsFile(object):
         else:
             return None
 
-    @staticmethod
+    @classmethod
     @functools.lru_cache(maxsize=_PATH_EXISTS_CACHE_SIZE)
-    def os_path_exists(abspath, force_case_sensitive=False):
+    def os_path_exists(cls, abspath, force_case_sensitive=False):
         """True if the given absolute path points to a file that exists; False
         otherwise. This replaces os.path.exists(path) but might use infoshelf
         files rather than refer to the holdings directory.
@@ -1058,24 +1054,24 @@ class PdsFile(object):
         # Handle index rows
         if '.tab/' in abspath:
             parts = abspath.partition('.tab/')
-            if not PdsFile.os_path_exists(parts[0] + '.tab'):
+            if not cls.os_path_exists(parts[0] + '.tab'):
                 return False
-            pdsf = PdsFile.from_abspath(parts[0] + '.tab')
+            pdsf = cls.from_abspath(parts[0] + '.tab')
             return (pdsf.exists and
                     pdsf.child_of_index(parts[2], flag='').exists)
 
         # If it's for documentation, we don't create shelf files, we will just use the
         # os.path.exists
-        if cfg.SHELVES_ONLY and 'holdings/documents' not in abspath:
+        if cls.SHELVES_ONLY and 'holdings/documents' not in abspath:
             try:
                 (shelf_abspath,
                  key) = PdsFile.shelf_path_and_key_for_abspath(abspath, 'info')
 
                 if key:
-                    shelf = PdsFile._get_shelf(shelf_abspath,
+                    shelf = cls._get_shelf(shelf_abspath,
                                                log_missing_file=False)
                     return (key in shelf)
-                elif PdsFile.os_path_exists(shelf_abspath):
+                elif cls.os_path_exists(shelf_abspath):
                     return True     # Every shelf file has an entry with an
                                     # empty key, so this avoids an unnecessary
                                     # open of the file.
@@ -1090,16 +1086,16 @@ class PdsFile(object):
                 # Maybe there's an associated directory in the infoshelf tree
                 shelf_abspath = abspath.replace('/holdings/',
                                                 '/holdings/_infoshelf-')
-                if PdsFile.os_path_exists(shelf_abspath):
+                if cls.os_path_exists(shelf_abspath):
                     return True
 
                 # Maybe there's an associated shelf file in the infoshelf tree
-                if PdsFile.os_path_exists(shelf_abspath + '_info.pickle'):
+                if cls.os_path_exists(shelf_abspath + '_info.pickle'):
                     return True
 
                 # Checksum files need special handling
                 testpath = PdsFile._non_checksum_abspath(abspath)
-                if testpath and PdsFile.os_path_exists(testpath):
+                if testpath and cls.os_path_exists(testpath):
                     return True
 
         if force_case_sensitive and cfg.FS_IS_CASE_INSENSITIVE:
@@ -1113,24 +1109,24 @@ class PdsFile(object):
 
         return os.path.exists(abspath)
 
-    @staticmethod
-    def os_path_isdir(abspath):
+    @classmethod
+    def os_path_isdir(cls, abspath):
         """True if the given absolute path points to a directory; False
         otherwise. This replaces os.path.isdir() but might use infoshelf files
         rather than refer to the holdings directory.
         """
 
-        if cfg.SHELVES_ONLY:
+        if cls.SHELVES_ONLY:
             try:
                 (shelf_abspath,
                  key) = PdsFile.shelf_path_and_key_for_abspath(abspath, 'info')
 
                 if key:
-                    shelf = PdsFile._get_shelf(shelf_abspath,
+                    shelf = cls._get_shelf(shelf_abspath,
                                                log_missing_file=False)
                     (_, _, _, checksum, _) = shelf[key]
                     return (checksum == '')
-                elif PdsFile.os_path_exists(shelf_abspath):
+                elif cls.os_path_exists(shelf_abspath):
                     return True     # Every shelf file has an entry with an
                                     # empty key, so this avoids an unnecessary
                                     # open of the file.
@@ -1161,8 +1157,8 @@ class PdsFile(object):
 
         return os.path.isdir(abspath)
 
-    @staticmethod
-    def os_listdir(abspath):
+    @classmethod
+    def os_listdir(cls, abspath):
         """Returns a list of the file basenames within a directory, given its
         absolute path. This replaces os.listdir() but might use infoshelf files
         rather than the file system.
@@ -1171,12 +1167,12 @@ class PdsFile(object):
         # Make sure there is no trailing slash
         abspath = abspath.rstrip('/')
 
-        if cfg.SHELVES_ONLY:
+        if cls.SHELVES_ONLY:
             try:
                 (shelf_abspath,
                  key) = PdsFile.shelf_path_and_key_for_abspath(abspath, 'info')
 
-                shelf = PdsFile._get_shelf(shelf_abspath,
+                shelf = cls._get_shelf(shelf_abspath,
                                            log_missing_file=False)
             except (ValueError, IndexError, IOError, OSError):
                 pass
@@ -1297,8 +1293,8 @@ class PdsFile(object):
         return [c for c in childnames
                 if c != '.DS_Store' and not c.startswith('._')]
 
-    @staticmethod
-    def glob_glob(abspath, force_case_sensitive=False):
+    @classmethod
+    def glob_glob(cls, abspath, force_case_sensitive=False):
         """Works the same as glob.glob(), but uses shelf files instead of
         accessing the filesystem directly.
 
@@ -1311,12 +1307,12 @@ class PdsFile(object):
         # We can save a lot of trouble if there's no match pattern
         # This also enables support for index row notation "index.tab/whatever"
         if not _needs_glob(abspath):
-            if PdsFile.os_path_exists(abspath, force_case_sensitive):
+            if cls.os_path_exists(abspath, force_case_sensitive):
                 return [abspath]
             else:
                 return []
 
-        if not cfg.SHELVES_ONLY:
+        if not cls.SHELVES_ONLY:
             return _clean_glob(abspath, force_case_sensitive)
 
         # Find the shelf file(s) if any
@@ -1355,7 +1351,7 @@ class PdsFile(object):
         # Gather the matching entries in each shelf
         abspaths = []
         for shelf_path in shelf_paths:
-            shelf = PdsFile._get_shelf(shelf_path)
+            shelf = cls._get_shelf(shelf_path)
             parts = shelf_path.split('/holdings/_infoshelf-')
             assert len(parts) == 2
 
@@ -4215,6 +4211,8 @@ class PdsFile(object):
         alternative products.
         """
 
+        cls = type(self)
+
         # Get the associated absolute paths
         patterns = self.OPUS_PRODUCTS.all(self.logical_path)
 
@@ -4232,7 +4230,7 @@ class PdsFile(object):
         abspaths = []
         opus_type_for_abspath = {}
         for (pattern, opus_type) in abs_patterns_and_opus_types:
-            these_abspaths = PdsFile.glob_glob(pattern,
+            these_abspaths = cls.glob_glob(pattern,
                                                force_case_sensitive=True)
             if opus_type:
                 for abspath in these_abspaths:
@@ -4246,7 +4244,7 @@ class PdsFile(object):
         label_pdsfiles = {}
         data_pdsfiles = []
         for abspath in abspaths:
-            pdsf = PdsFile.from_abspath(abspath)
+            pdsf = cls.from_abspath(abspath)
             if pdsf.islabel:
                 # Check if the corresponding link info exists. If not, we skip
                 # this label file. That way, the error handled when calling the
@@ -4260,7 +4258,7 @@ class PdsFile(object):
                 links = set(pdsf.linked_abspaths)
                 fmts = [f for f in links if f.lower().endswith('.fmt')]
                 fmts.sort()
-                fmt_pdsfiles = PdsFile.pdsfiles_for_abspaths(fmts,
+                fmt_pdsfiles = cls.pdsfiles_for_abspaths(fmts,
                                                              must_exist=True)
                 label_pdsfiles[abspath] = [pdsf] + fmt_pdsfiles
             else:
@@ -5136,9 +5134,9 @@ class PdsFile(object):
 
     #### ... for abspaths
 
-    @staticmethod
-    def pdsfiles_for_abspaths(abspaths, must_exist=False):
-        pdsfiles = [PdsFile.from_abspath(p) for p in abspaths]
+    @classmethod
+    def pdsfiles_for_abspaths(cls, abspaths, must_exist=False):
+        pdsfiles = [cls.from_abspath(p) for p in abspaths]
         if must_exist:
             pdsfiles = [pdsf for pdsf in pdsfiles if pdsf.exists]
 
@@ -5622,13 +5620,6 @@ def is_logical_path(path):
 
     return ('/holdings/' not in path)
 
-# def logical_path_from_abspath(abspath, cls):
-#     """Logical path derived from an absolute path."""
-#     parts = abspath.partition('/'+cls.PDS_HOLDINGS+'/')
-#     if parts[1]:
-#         return parts[2]
-
-#     raise ValueError('Not compatible with a logical path: ', abspath)
 
 LOCAL_HOLDINGS_DIRS = None  # Global will contain all the physical holdings
                             # directories on the system.

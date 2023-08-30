@@ -203,9 +203,6 @@ def logical_path_from_abspath(abspath, cls):
         cls     -- the class calling the method
     """
     parts = abspath.partition('/'+cls.PDS_HOLDINGS+'/')
-    print('########')
-    print(cls.PDS_HOLDINGS)
-    print(cls)
     if parts[1]:
         return parts[2]
 

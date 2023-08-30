@@ -37,6 +37,8 @@ cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
 
 class Pds4File(PdsFile):
     PDS_HOLDINGS = 'pds4-holdings'
+    SHELVES_ONLY = False
+    BUNDLE_DIR_NAME = 'bundles'
 
     # Override the rules
     DESCRIPTION_AND_ICON = rules.DESCRIPTION_AND_ICON
@@ -61,8 +63,6 @@ class Pds4File(PdsFile):
     OPUS_ID_TO_SUBCLASS = rules.OPUS_ID_TO_SUBCLASS
     FILESPEC_TO_VOLSET = rules.FILESPEC_TO_VOLSET
     FILESPEC_TO_BUNDLESET = FILESPEC_TO_VOLSET
-
-    BUNDLE_DIR_NAME = 'bundles'
 
     def __init__(self):
         super().__init__()

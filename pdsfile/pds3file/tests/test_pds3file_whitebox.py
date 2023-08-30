@@ -414,7 +414,7 @@ class TestPdsFileWhiteBox:
         ]
     )
     def test_from_path3(self, input_path, expected):
-        if pds3file.cfg.SHELVES_ONLY:
+        if pds3file.Pds3File.SHELVES_ONLY:
             res = pds3file.Pds3File.from_path(path=input_path)
             assert isinstance(res, pds3file.Pds3File)
             print(res.logical_path)

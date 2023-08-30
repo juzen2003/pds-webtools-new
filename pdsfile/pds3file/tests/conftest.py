@@ -26,11 +26,11 @@ def turn_on_logger(filename):
 def setup(request):
     mode = request.config.option.mode
     if mode == 's':
-        pds3file.use_shelves_only(True)
+        pds3file.Pds3File.use_shelves_only(True)
     elif mode == 'ns':
-        pds3file.use_shelves_only(False)
+        pds3file.Pds3File.use_shelves_only(False)
     else: # pragma: no cover
-        pds3file.use_shelves_only(True)
+        pds3file.Pds3File.use_shelves_only(True)
 
     # turn_on_logger("test_log.txt")
     pds3file.Pds3File.preload(PDS_HOLDINGS_DIR)

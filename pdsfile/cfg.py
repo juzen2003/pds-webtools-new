@@ -7,10 +7,8 @@
 import os
 import re
 
-# PDS_HOLDINGS = 'holdings'
 
 # Flag
-SHELVES_ONLY = False
 SHELVES_REQUIRED = False
 FS_IS_CASE_INSENSITIVE = True
 
