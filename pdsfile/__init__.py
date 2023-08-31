@@ -33,15 +33,17 @@ import pdsparser
 import translator
 
 from . import cfg
-from .general_helper import (cache_lifetime_for_class,
-                             logical_path_from_abspath)
+from .general_helper import (logical_path_from_abspath,
+                             construct_category_list,
+                             clean_join)
+from .preload_and_cache import (cache_categoriey_merged_dirs,
+                                cache_lifetime_for_class,
+                                get_permanent_values,
+                                load_volume_info)
 
 ##########################################################################################
 # Configuration
 ##########################################################################################
-
-VOLTYPES = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews',
-            'documents', 'bundles']
 VIEWABLE_VOLTYPES = ['previews', 'diagrams']
 
 VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'tif', 'tiff', 'jpeg', 'jpeg_small'])
@@ -106,21 +108,6 @@ DEFAULT_HIGH_LEVEL_ICONS = {
   ('archives-documents/',  False): 'TARBALL',
 }
 
-# CATEGORIES contains the name of every subdirectory of holdings/
-CATEGORY_LIST = []
-for checksums in ('', 'checksums-'):
-    for archives in ('', 'archives-'):
-        for voltype in VOLTYPES:
-            CATEGORY_LIST.append(checksums + archives + voltype)
-
-CATEGORY_LIST.remove('checksums-documents')
-CATEGORY_LIST.remove('archives-documents')
-CATEGORY_LIST.remove('checksums-archives-documents')
-
-CATEGORIES = set(CATEGORY_LIST)
-
-# Extra description files that can appear in bundleset directories
-EXTRA_README_BASENAMES = ('AAREADME.txt', 'AAREADME.pdf')
 
 # Directory prefix and file suffix for shelf files
 SHELF_PATH_INFO = {
@@ -129,77 +116,20 @@ SHELF_PATH_INFO = {
     'link' : ('_linkshelf-', '_links'),
 }
 
+def cache_lifetime(cls, arg):
+        return cache_lifetime_for_class(arg, PdsFile)
+
 ##########################################################################################
 # PdsLogger support
 ##########################################################################################
-
-LOGGER = pdslogger.NullLogger()         # Optional logger
-
-def set_logger(logger=None):
-    """Set the PdsLogger."""
-
-    global LOGGER
-
-    if not logger:
-        logger = pdslogger.NullLogger()
-
-    LOGGER = logger
-
-def set_easylogger():
-    """Log all messages directly to stdout."""
-    set_logger(pdslogger.EasyLogger())
 
 _GLOB_CACHE_SIZE = 200
 _PATH_EXISTS_CACHE_SIZE = 200
 
 
-
-##########################################################################################
-# Memcached and other cache support
-##########################################################################################
-
-# Cache of PdsFile objects:
-#
-# These entries in the cache are permanent:
-#
-# CACHE['$RANKS-<category>/']
-#       This is a dictionary keyed by [bundleset] or [bundlename], which returns a
-#       sorted list of ranks. Ranks are the PdsFile way of tracking versions of
-#       objects. A higher rank (an integer) means a later version. All keys are
-#       lower case. Replace "<category>" above by one of the names of the
-#       holdings/ subdirectories.
-#
-# CACHE['$VOLS-<category>/']
-#       This is a dictionary of dictionaries, keyed by [bundleset][rank] or
-#       [bundlename][rank]. It returns the directory path of the bundleset or bundlename.
-#       Keys are lower case.
-#
-# CACHE['$PRELOADED']
-#       This is a list of holdings abspaths that have been preloaded.
-#
-# CACHE['$VOLINFO-<bundleset>']
-# CACHE['$VOLINFO-<bundleset/bundlename>']
-#       Returns (description, icon_type, version, publication date, list of
-#                data set IDs)
-#       for bundlenames and bundlesets. Keys are lower case.
-#
-# In addition...
-#
-# CACHE[<logical-path-in-lower-case>]
-#       Returns the PdsFile object associated with the given path, if it has
-#       been cached.
-
-def cache_lifetime(arg):
-    return cache_lifetime_for_class(arg, PdsFile)
-
 # Initialize the cache
 MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
-DICTIONARY_CACHE_LIMIT = 200000
 
-# This cache is used if preload() is never called. No filesystem is required.
-cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
-                                     limit=DICTIONARY_CACHE_LIMIT,
-                                     logger=LOGGER)
 
 DEFAULT_CACHING = 'dir'     # 'dir', 'all' or 'none';
                             # use 'dir' for Viewmaster without MemCache;
@@ -207,171 +137,7 @@ DEFAULT_CACHING = 'dir'     # 'dir', 'all' or 'none';
 
 PRELOAD_TRIES = 3
 
-def is_preloading():
-    return cfg.CACHE.get_now('$PRELOADING')
 
-def pause_caching():
-    cfg.CACHE.pause()
-
-def resume_caching():
-    cfg.CACHE.resume()
-
-def get_permanent_values(holdings_list, port, cls):
-    """Load the most obvious set of permanent values from the cache to ensure
-    we have current local copies."""
-
-    try:
-        pause_caching()
-
-        # For each category...
-        for category in CATEGORY_LIST:
-
-            # Get the cached values
-            _ = cfg.CACHE['$RANKS-' + category + '/']
-            _ = cfg.CACHE['$VOLS-'  + category + '/']
-            pdsf0 = cfg.CACHE[category]
-
-            # Also get the bundleset-level PdsFile inside each category
-            for bundleset in pdsf0.childnames:
-                if bundleset.endswith('.txt') or bundleset.endswith('.tar.gz'):
-                    continue
-
-                # Get the entry keyed by the logical path
-                pdsf1 = cfg.CACHE[category + '/' + bundleset.lower()]
-
-                # Also get its bundle-level children
-                for bundlename in pdsf1.childnames:
-                    if bundlename.endswith('.txt') or bundlename.endswith('.tar.gz'):
-                        continue
-
-                    key = (pdsf1.logical_path + '/' + bundlename).lower()
-                    pdsf2 = cfg.CACHE[key]
-
-    except KeyError as e:
-        LOGGER.warn('Permanent value %s missing from Memcache; '
-                    'preloading again' % str(e))
-        cls.preload(holdings_list, port, force_reload=True)
-
-    else:
-        LOGGER.info('Permanent values retrieved from Memcache',
-                    str(len(cfg.CACHE.permanent_values)))
-
-    finally:
-        resume_caching()
-
-def load_volume_info(holdings):
-    """Load bundle info associated with this holdings directory.
-
-    Each record contains a sequence of values separated by "|":
-        key: bundleset, bundleset/bundlename, category/bundleset, or category/bundleset/bundlename
-        description
-        icon_type or blank for default
-        version ID or a string of dashes "-" if not applicable
-        publication date or a string of dashes "-" if not applicable
-        data set ID (if any) or MD5 checksum if this is in the documents/ tree
-        additional data set IDs (if any)
-
-    This creates and caches a dictionary based on the key identified above. Each
-    entry is a tuple with five elements:
-        description,
-        icon_type or blank for default,
-        version ID or None,
-        publication date or None,
-        list of data set IDs,
-        MD5 checksum or ''
-
-    A value only containing a string of dashes "-" is replaced by None.
-    Blank records and those beginning with "#" are ignored.
-    """
-
-    volinfo_path = _clean_join(holdings, '_volinfo')
-
-    volinfo_dict = {}           # the master dictionary of high-level paths vs.
-                                # (description, icon_type, version ID,
-                                #  publication date, optional list of data set
-                                #  IDs, optional checksum)
-
-    keys_without_dsids = []     # internal list of entries without data set IDs
-    dsids_vs_key = {}           # global dictionary of data set IDs for entries
-                                # that have them
-
-    # For each file in the volinfo subdirectory...
-    children = os.listdir(volinfo_path)
-    for child in children:
-
-        # Ignore these
-        if child.startswith('.'): continue
-        if not child.endswith('.txt'):
-            continue
-
-        # Read the file
-        table_path = _clean_join(volinfo_path, child)
-        with open(table_path, 'r', encoding='utf-8') as f:
-            recs = f.readlines()
-
-        # Interpret each record...
-        for rec in recs:
-            if rec[0] == '#':
-                continue                        # ignore comments
-
-            parts = rec.split('|')              # split by "|"
-            parts = [p.strip() for p in parts]  # remove extraneous blanks
-            if parts == ['']:
-                continue                        # ignore blank lines
-
-            # Identify missing info
-            while len(parts) <= 5:
-                parts.append('')
-
-            if parts[2] == '' or set(parts[2]) == {'-'}:
-                parts[2] = None
-            if set(parts[3]) == {'-'}:
-                parts[3] = None
-            if set(parts[4]) == {'-'}:
-                parts[4] = None
-
-            if (parts[0].startswith('documents/') or
-                parts[0].rpartition('/')[2] in EXTRA_README_BASENAMES):
-                    md5 = parts[5]
-                    dsids = []
-            else:
-                    md5 = ''
-                    dsids = list(parts[5:])
-
-            # Update either keys_without_dsids or dsids_vs_key. This is used
-            # to fill in data set IDs for voltypes other than "volumes/".
-            if dsids == ['']:
-                dsids = []
-
-            if dsids:
-                dsids_vs_key[parts[0]] = dsids
-            else:
-                keys_without_dsids.append(parts[0])
-
-            # Fill in the master dictionary
-            volinfo = (parts[1], parts[2], parts[3], parts[4], dsids, md5)
-            volinfo_dict[parts[0]] = volinfo
-
-    # Update the list of data set IDs wherever it's missing
-    for key in keys_without_dsids:
-        (category, _, remainder) = key.partition('/')
-        if category in VOLTYPES:
-            (volset_with_suffix, _, remainder) = remainder.partition('/')
-            bundleset = '_'.join(volset_with_suffix.split('_')[:2])
-            alt_keys = (bundleset + '/' + remainder,
-                        'volumes/' + bundleset + '/' + remainder)
-            for alt_key in alt_keys:
-                if alt_key in dsids_vs_key:
-                    volinfo_dict[key] = (volinfo_dict[key][:4] +
-                                         (dsids_vs_key[alt_key],
-                                          volinfo_dict[key][5]))
-                    break
-
-    # Save the master dictionary in the cache now
-    for key,volinfo in volinfo_dict.items():
-        cfg.CACHE.set('$VOLINFO-' + key.lower(), volinfo, lifetime=0)
-
-    LOGGER.info('Volume info loaded', volinfo_path)
 
 ##########################################################################################
 # PdsFile class
@@ -381,9 +147,33 @@ class PdsFile(object):
 
     # Class variables
     PDS_HOLDINGS = 'holdings'
+    BUNDLE_DIR_NAME = 'bundles'
+
+    # Flag
     SHELVES_ONLY = False
     SHELVES_REQUIRED = False
-    BUNDLE_DIR_NAME = 'bundles'
+    FS_IS_CASE_INSENSITIVE = True
+
+    # Logger
+    LOGGER = pdslogger.NullLogger()
+
+    # CACHE
+    LOCAL_PRELOADED = []
+    # Initialize the cache
+    DICTIONARY_CACHE_LIMIT = 200000
+    # this cache is used if preload() is never called. No filesystem is required.
+    CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
+                                     limit=DICTIONARY_CACHE_LIMIT,
+                                     logger=LOGGER)
+
+    # CATEGORIES contains the name of every subdirectory of holdings/
+    VOLTYPES = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews',
+                'documents', 'bundles']
+    CATEGORY_LIST = construct_category_list(VOLTYPES)
+    CATEGORIES = set(CATEGORY_LIST)
+
+    # Extra description files that can appear in bundleset directories
+    EXTRA_README_BASENAMES = ('AAREADME.txt', 'AAREADME.pdf')
 
     # Global registry of subclasses
     SUBCLASSES = {}
@@ -591,6 +381,10 @@ class PdsFile(object):
 
         return this
 
+    # @classmethod
+    # def cache_lifetime(cls, arg):
+    #     return cache_lifetime_for_class(arg, cls)
+
     @classmethod
     def preload(cls, holdings_list, port=0, clear=False, force_reload=False,
             icon_color='blue'):
@@ -619,38 +413,40 @@ class PdsFile(object):
 
         # Use cache as requested
         if (port == 0 and MEMCACHE_PORT == 0) or not HAS_PYLIBMC:
-            if not isinstance(cfg.CACHE, pdscache.DictionaryCache):
-                cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
-                                                limit=DICTIONARY_CACHE_LIMIT,
-                                                logger=LOGGER)
-            LOGGER.info('Using local dictionary cache')
+            if not isinstance(cls.CACHE, pdscache.DictionaryCache):
+                cls.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
+                                                     limit=cls.DICTIONARY_CACHE_LIMIT,
+                                                     logger=cls.LOGGER)
+            cls.LOGGER.info('Using local dictionary cache')
 
         else:
             MEMCACHE_PORT = MEMCACHE_PORT or port
 
             for k in range(PRELOAD_TRIES):
                 try:
-                    cfg.CACHE = pdscache.MemcachedCache(MEMCACHE_PORT,
+                    cls.CACHE = pdscache.MemcachedCache(MEMCACHE_PORT,
                                                     lifetime=cache_lifetime,
-                                                    logger=LOGGER)
-                    LOGGER.info('Connecting to PdsFile Memcache [%s]' % MEMCACHE_PORT)
+                                                    logger=cls.LOGGER)
+                    cls.LOGGER.info('Connecting to PdsFile Memcache [%s]' % MEMCACHE_PORT)
                     break
 
                 except pylibmc.Error:
                     if k < PRELOAD_TRIES - 1:
-                        LOGGER.warn(('Failed to connect PdsFile Memcache [%s]; ' +
+                        cls.LOGGER.warn(('Failed to connect PdsFile Memcache [%s]; ' +
                                     'trying again in %d sec') % (MEMCACHE_PORT, 2**k))
                         time.sleep(2.**k)       # try then wait 1 sec, then 2 sec
 
                     else:       # give up after three tries
-                        LOGGER.error(('Failed to connect PdsFile Memcache [%s]; '+
+                        cls.LOGGER.error(('Failed to connect PdsFile Memcache [%s]; '+
                                     'using dictionary instead') %  MEMCACHE_PORT)
 
                         MEMCACHE_PORT = 0
-                        if not isinstance(cfg.CACHE, pdscache.DictionaryCache):
-                            cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
-                                                        limit=DICTIONARY_CACHE_LIMIT,
-                                                        logger=LOGGER)
+                        if not isinstance(cls.CACHE, pdscache.DictionaryCache):
+                            cls.CACHE = pdscache.DictionaryCache(
+                                            lifetime=cache_lifetime,
+                                            limit=cls.DICTIONARY_CACHE_LIMIT,
+                                            logger=cls.LOGGER
+                                        )
 
         # Define default caching based on whether MemCache is active
         if MEMCACHE_PORT == 0:
@@ -659,32 +455,32 @@ class PdsFile(object):
             DEFAULT_CACHING = 'all'
 
         # This suppresses long absolute paths in the logs
-        LOGGER.add_root(holdings_list)
+        cls.LOGGER.add_root(holdings_list)
 
         #### Get the current list of preloaded holdings directories and decide how
         #### to proceed
 
         if clear:
-            cfg.CACHE.clear(block=True) # For a MemcachedCache, this will pause for any
+            cls.CACHE.clear(block=True) # For a MemcachedCache, this will pause for any
                                     # other thread's block, then clear, and retain
                                     # the block until the preload is finished.
-            cfg.LOCAL_PRELOADED = []
-            LOGGER.info('Cache cleared')
+            cls.LOCAL_PRELOADED = []
+            cls.LOGGER.info('Cache cleared')
 
         elif force_reload:
-            cfg.LOCAL_PRELOADED = []
-            LOGGER.info('Forcing a complete new preload')
-            cfg.CACHE.wait_and_block()
+            cls.LOCAL_PRELOADED = []
+            cls.LOGGER.info('Forcing a complete new preload')
+            cls.CACHE.wait_and_block()
 
         else:
             while True:
-                cfg.LOCAL_PRELOADED = cfg.CACHE.get_now('$PRELOADED') or []
+                cls.LOCAL_PRELOADED = cls.CACHE.get_now('$PRELOADED') or []
 
                 # Report status
                 something_is_missing = False
                 for holdings in holdings_list:
-                    if holdings in cfg.LOCAL_PRELOADED:
-                        LOGGER.info('Holdings are already cached', holdings)
+                    if holdings in cls.LOCAL_PRELOADED:
+                        cls.LOGGER.info('Holdings are already cached', holdings)
                     else:
                         something_is_missing = True
 
@@ -697,33 +493,33 @@ class PdsFile(object):
 
                     return
 
-                waited = cfg.CACHE.wait_and_block()
+                waited = cls.CACHE.wait_and_block()
                 if not waited:      # A wait suggests the answer might have changed,
                                     # so try again.
                     break
 
-                cfg.CACHE.unblock()
+                cls.CACHE.unblock()
 
         # At this point, the cache is blocked.
 
         # Pause the cache before proceeding--saves I/O
-        cfg.CACHE.pause()       # Paused means no local changes will be flushed to the
+        cls.CACHE.pause()       # Paused means no local changes will be flushed to the
                             # external cache until resume() is called.
 
         ############################################################################
         # Interior function to recursively preload one physical directory
         ############################################################################
 
-        def _preload_dir(pdsdir):
+        def _preload_dir(pdsdir, cls):
             if not pdsdir.isdir: return
 
             # Log category directories as info
             if pdsdir.is_category_dir:
-                LOGGER.info('Pre-loading: ' + pdsdir.abspath)
+                cls.LOGGER.info('Pre-loading: ' + pdsdir.abspath)
 
             # Log bundlesets as debug
             elif pdsdir.is_bundleset:
-                LOGGER.debug('Pre-loading: ' + pdsdir.abspath)
+                cls.LOGGER.debug('Pre-loading: ' + pdsdir.abspath)
 
             # Don't go deeper
             else:
@@ -736,7 +532,7 @@ class PdsFile(object):
             for basename in pdsdir.childnames:
                 try:
                     child = pdsdir.child(basename, fix_case=False, lifetime=0)
-                    _preload_dir(child)
+                    _preload_dir(child, cls)
                 except ValueError:              # Skip out-of-place files
                     pdsdir._childnames_filled.remove(basename)
 
@@ -749,73 +545,73 @@ class PdsFile(object):
             # multiple physical directories. This makes it possible for our data
             # sets to exist on multiple physical drives in a way that is invisible
             # to the user.
-            for category in CATEGORY_LIST:
-                cfg.CACHE.set(category, cls.new_merged_dir(category), lifetime=0)
+            for category in cls.CATEGORY_LIST:
+                cls.CACHE.set(category, cls.new_merged_dir(category), lifetime=0)
 
             # Initialize RANKS, VOLS and category list
-            for category in CATEGORY_LIST:
+            for category in cls.CATEGORY_LIST:
                 category_ = category + '/'
                 key = '$RANKS-' + category_
                 try:
-                    _ = cfg.CACHE[key]
+                    _ = cls.CACHE[key]
                 except KeyError:
-                    cfg.CACHE.set(key, {}, lifetime=0)
+                    cls.CACHE.set(key, {}, lifetime=0)
 
                 key = '$VOLS-'  + category_
                 try:
-                    _ = cfg.CACHE[key]
+                    _ = cls.CACHE[key]
                 except KeyError:
-                    cfg.CACHE.set(key, {}, lifetime=0)
+                    cls.CACHE.set(key, {}, lifetime=0)
 
             # Cache all of the top-level PdsFile directories
             for h,holdings in enumerate(holdings_list):
 
-                if holdings in cfg.LOCAL_PRELOADED:
-                    LOGGER.info('Pre-load not needed for ' + holdings)
+                if holdings in cls.LOCAL_PRELOADED:
+                    cls.LOGGER.info('Pre-load not needed for ' + holdings)
                     continue
 
-                cfg.LOCAL_PRELOADED.append(holdings)
-                LOGGER.info('Pre-loading ' + holdings)
+                cls.LOCAL_PRELOADED.append(holdings)
+                cls.LOGGER.info('Pre-loading ' + holdings)
 
                 # Load volume info
-                load_volume_info(holdings)
+                load_volume_info(holdings, cls)
 
                 # Load directories starting from here
                 holdings_ = holdings.rstrip('/') + '/'
 
-                for c in CATEGORY_LIST:
+                for c in cls.CATEGORY_LIST:
                     category_abspath = holdings_ + c
                     if not cls.os_path_exists(category_abspath):
-                        LOGGER.warn('Missing category dir: ' + category_abspath)
+                        cls.LOGGER.warn('Missing category dir: ' + category_abspath)
                         continue
                     if not cls.os_path_isdir(category_abspath):
-                        LOGGER.warn('Not a directory, ignored: ' + category_abspath)
+                        cls.LOGGER.warn('Not a directory, ignored: ' + category_abspath)
 
                     # This is a physical PdsFile, but from_abspath also adds its
                     # childnames to the list of children for the category-level
                     # merged directory.
                     pdsdir = cls.from_abspath(category_abspath, fix_case=False,
                                                 caching='all', lifetime=0)
-                    _preload_dir(pdsdir)
+                    _preload_dir(pdsdir, cls)
 
                 # Load the icons
-                icon_path = _clean_join(holdings, '_icons')
+                icon_path = clean_join(holdings, '_icons')
                 if os.path.exists(icon_path):
                     icon_url = '/holdings' + (str(h) if h > 0 else '') + '/_icons'
-                    pdsviewable.load_icons(icon_path, icon_url, icon_color, LOGGER)
+                    pdsviewable.load_icons(icon_path, icon_url, icon_color, cls.LOGGER)
 
         finally:
-            cfg.CACHE.set('$PRELOADED', cfg.LOCAL_PRELOADED, lifetime=0)
-            cfg.CACHE.resume()
-            cfg.CACHE.unblock(flush=True)
+            cls.CACHE.set('$PRELOADED', cls.LOCAL_PRELOADED, lifetime=0)
+            cls.CACHE.resume()
+            cls.CACHE.unblock(flush=True)
 
-        LOGGER.info('PdsFile preloading completed')
+        cls.LOGGER.info('PdsFile preloading completed')
 
         # Determine if the file system is case-sensitive
         # If any physical bundle is case-insensitive, then we treat the whole file
         # system as case-insensitive.
         cls.FS_IS_CASE_INSENSITIVE = False
-        for holdings_dir in cfg.LOCAL_PRELOADED:
+        for holdings_dir in cls.LOCAL_PRELOADED:
             testfile = holdings_dir.replace('/holdings', '/HoLdInGs')
             if os.path.exists(testfile):
                 cls.FS_IS_CASE_INSENSITIVE = True
@@ -827,7 +623,7 @@ class PdsFile(object):
         contain children from multiple physical directories. Examples are
         volumes/, archives-volumes/, etc."""
 
-        if basename not in CATEGORIES:
+        if basename not in cls.CATEGORIES:
             raise ValueError('Invalid category: ' + basename)
 
         this = cls()
@@ -990,8 +786,8 @@ class PdsFile(object):
     # Local implementations of basic filesystem operations
     ############################################################################
 
-    @staticmethod
-    def _non_checksum_abspath(abspath):
+    @classmethod
+    def _non_checksum_abspath(cls, abspath):
         """Internal function returns the non-checksum path associated with this
         checksum file. If the given absolute path does not point to a checksum
         file, it returns None."""
@@ -1000,7 +796,7 @@ class PdsFile(object):
         if '/holdings/checksums-' in abspath:
             testpath = abspath.replace('/checksums-', '/')
 
-            for voltype in VOLTYPES:
+            for voltype in cls.VOLTYPES:
                 testpath = testpath.replace('_' + voltype + '_md5.txt', '')
 
             return testpath
@@ -1068,7 +864,7 @@ class PdsFile(object):
                     return True
 
                 # Checksum files need special handling
-                testpath = PdsFile._non_checksum_abspath(abspath)
+                testpath = cls._non_checksum_abspath(abspath)
                 if testpath and cls.os_path_exists(testpath):
                     return True
 
@@ -1123,7 +919,7 @@ class PdsFile(object):
                     return True
 
                 # Checksum files need special handling
-                testpath = PdsFile._non_checksum_abspath(abspath)
+                testpath = cls._non_checksum_abspath(abspath)
                 if testpath and cls.os_path_exists(testpath):
                     # If the testpath exists, then whether it is a directory or
                     # not depends on the extension
@@ -1173,7 +969,7 @@ class PdsFile(object):
                 testpath = abspath.replace('/checksums-','/')
                 results = PdsFile.os_listdir(testpath)
 
-                for voltype in VOLTYPES:
+                for voltype in cls.VOLTYPES:
                   if '-' + voltype in abspath:
                     if voltype == 'volumes':
                         return [r + '_md5.txt' for r in results]
@@ -1257,7 +1053,7 @@ class PdsFile(object):
 
                 # Check the actual file system for a bundleset-level AAREADME
                 aareadmes = []
-                for basename in EXTRA_README_BASENAMES:
+                for basename in cls.EXTRA_README_BASENAMES:
                     if os.path.exists(abspath + '/' + basename):
                         aareadmes.append(basename)
 
@@ -1678,7 +1474,7 @@ class PdsFile(object):
                 (file_bytes, child_count,
                  timestring, checksum, size) = self.shelf_lookup('info')
             except (IOError, KeyError, ValueError):
-                LOGGER.warn('Missing info shelf', self.abspath)
+                cls.LOGGER.warn('Missing info shelf', self.abspath)
                 if cls.SHELVES_REQUIRED:
                     raise
             else:
@@ -1734,7 +1530,7 @@ class PdsFile(object):
             for bundlename in self.childnames:
 
                 # Ignore AAREADME files in this context
-                if bundlename in EXTRA_README_BASENAMES:
+                if bundlename in cls.EXTRA_README_BASENAMES:
                     child_count -= 1
                     continue
 
@@ -1810,10 +1606,11 @@ class PdsFile(object):
 
     def _repair_width_height(self):
         """Internal function to fill in the shape of viewables, if needed."""
+        cls = type(self)
 
         if len(self._info[4]) > 2:      # (0,0,'TBD') means fill in the size now
 
-            LOGGER.warn('Retrieving viewable shape', self.abspath)
+            cls.LOGGER.warn('Retrieving viewable shape', self.abspath)
             try:
                 im = PIL.Image.open(self.abspath)
                 shape = im.size
@@ -1866,6 +1663,8 @@ class PdsFile(object):
         icon_type, volume_date, list of data_set_ids, optional checksum].
         """
 
+        cls = type(self)
+
         if self._volume_info_filled is None:
 
             base_key = self.bundleset + self.suffix
@@ -1880,7 +1679,7 @@ class PdsFile(object):
 
             for key in keys:
                 try:
-                    self._volume_info_filled = cfg.CACHE['$VOLINFO-' + key]
+                    self._volume_info_filled = cls.CACHE['$VOLINFO-' + key]
                     break
                 except (KeyError, TypeError):
                     pass
@@ -1895,6 +1694,8 @@ class PdsFile(object):
     @property
     def description(self):
         """Description text about this file as it appears in Viewmaster."""
+
+        cls = type(self)
 
         if self._description_and_icon_filled is not None:
             return self._description_and_icon_filled[0]
@@ -1925,7 +1726,7 @@ class PdsFile(object):
 
             # Fill in missing icon types
             if (icon_type is None and
-                self.basename not in EXTRA_README_BASENAMES):
+                self.basename not in cls.EXTRA_README_BASENAMES):
                     key = (self.category_, self.is_bundleset)
                     icon_type = DEFAULT_HIGH_LEVEL_ICONS.get(key, None)
 
@@ -1939,7 +1740,7 @@ class PdsFile(object):
         # otherwise, use the rules.
         else:
             try:
-                info = cfg.CACHE['$VOLINFO-' + self.logical_path.lower()]
+                info = cls.CACHE['$VOLINFO-' + self.logical_path.lower()]
                 pair = (info[0], info[1])
             except KeyError:
                 pair = self.DESCRIPTION_AND_ICON.first(self.logical_path)
@@ -2132,6 +1933,8 @@ class PdsFile(object):
         PdsFile object. This could be a file like "VOLDESC.CAT", "CATINFO.TXT",
         or the label file associated with a data product."""
 
+        cls = type(self)
+
         if self._info_basename_filled is not None:
             return self._info_basename_filled
 
@@ -2152,7 +1955,7 @@ class PdsFile(object):
         # Note that this requires a physical check of the bundles tree because
         # these files do not appear in infoshelf files.
         if not self._info_basename_filled and self.is_bundle_dir:
-            for info_name in EXTRA_README_BASENAMES:
+            for info_name in cls.EXTRA_README_BASENAMES:
                 if os.path.exists(self.abspath + '/../' + info_name):
                     self._info_basename_filled = info_name
 
@@ -2191,7 +1994,7 @@ class PdsFile(object):
                 # This can happen for bundleset-level AAREADME files.
                 # Otherwise, it's an error
                 if not (self.parent().is_bundleset_dir and
-                        self.basename in EXTRA_README_BASENAMES):
+                        self.basename in cls.EXTRA_README_BASENAMES):
 
                     self._internal_links_filled = ()
                         # An empty _tuple_ indicates that link info is missing
@@ -2199,7 +2002,7 @@ class PdsFile(object):
                         # object means that the file simply contains no links.
                         # This distinction is there if we ever care.
 
-                    LOGGER.warn('Missing link shelf', self.abspath)
+                    cls.LOGGER.warn('Missing link shelf', self.abspath)
 
                     if cls.SHELVES_REQUIRED:
                         raise
@@ -2228,10 +2031,10 @@ class PdsFile(object):
                     new_list = []
                     for (recno, basename, internal_path) in values:
                       if internal_path.startswith('../../../'):
-                        abspath = abspath_for_logical_path(internal_path[9:])
+                        abspath = abspath_for_logical_path(internal_path[9:], cls)
                       elif internal_path.startswith('../../'):
                         abspath = abspath_for_logical_path(self.category_ +
-                                                           internal_path[6:])
+                                                           internal_path[6:], cls)
                       elif internal_path.startswith('../'):
                         abspath = (self.volset_abspath() + internal_path[2:])
                       else:
@@ -2529,14 +2332,16 @@ class PdsFile(object):
         if self._version_ranks_filled is not None:
             return self._version_ranks_filled
 
+        cls = type(self)
+
         if not self.exists:
             version_ranks_filled = []
         else:
             try:
-                ranks = cfg.CACHE['$RANKS-' + self.category_]
+                ranks = cls.CACHE['$RANKS-' + self.category_]
 
             except KeyError:
-                LOGGER.warn('Missing rank info', self.logical_path)
+                cls.LOGGER.warn('Missing rank info', self.logical_path)
                 self._version_ranks_filled = []
 
             else:
@@ -2754,7 +2559,7 @@ class PdsFile(object):
         for pdsf in pdsfiles:
             key = pdsf.version_rank
             if key in version_dict:
-                LOGGER.warn('Duplicate version of ' +
+                cls.LOGGER.warn('Duplicate version of ' +
                             version_dict[key].logical_path,
                             pdsf.logical_path)
             else:
@@ -3018,11 +2823,13 @@ class PdsFile(object):
     ############################################################################
 
     def _complete(self, must_exist=False, caching='default', lifetime=None):
-        """General procedure to maintain the cfg.CACHE. It returns PdsFiles from the
+        """General procedure to maintain the cls.CACHE. It returns PdsFiles from the
         cache if available; otherwise it caches this PdsFile if appropriate.
 
         If the file exists, then the capitalization must be correct!
         """
+
+        cls = type(self)
 
         # Confirm existence
         if must_exist and not self.exists:
@@ -3036,7 +2843,7 @@ class PdsFile(object):
         # This ensures that a physical "category" directory is not replaced by
         # the merged directory.
         try:
-            pdsf = cfg.CACHE[self.logical_path.lower()]
+            pdsf = cls.CACHE[self.logical_path.lower()]
             if pdsf.is_merged == self.is_merged:
                 return pdsf
         except KeyError:
@@ -3057,7 +2864,7 @@ class PdsFile(object):
 
             # Never overwrite the top-level merged directories
             if '/' in self.logical_path:
-                cfg.CACHE.set(self.logical_path.lower(), self, lifetime=lifetime)
+                cls.CACHE.set(self.logical_path.lower(), self, lifetime=lifetime)
 
             self._update_ranks_and_vols()
 
@@ -3067,13 +2874,13 @@ class PdsFile(object):
         """Maintains the RANKS and VOLS dictionaries. Must be called for all
         PdsFile objects down to the volume name level."""
 
-        # cfg.CACHE['$RANKS-category_'] is keyed by [bundle set or name] and returns
+        # cls.CACHE['$RANKS-category_'] is keyed by [bundle set or name] and returns
         # a sorted list of ranks.
 
-        # cfg.CACHE['$VOLS-category_'] is keyed by [bundle set or name][rank] and
+        # cls.CACHE['$VOLS-category_'] is keyed by [bundle set or name][rank] and
         # returns a bundleset or bundlename PdsFile.
-
-        if not cfg.LOCAL_PRELOADED:     # we don't track ranks without a preload
+        cls = type(self)
+        if not cls.LOCAL_PRELOADED:     # we don't track ranks without a preload
             return
 
         if self.bundleset and not self.bundlename:
@@ -3088,8 +2895,8 @@ class PdsFile(object):
         key = key.lower()
         self.permanent = True       # VOLS entries are permanent!
 
-        rank_dict = cfg.CACHE['$RANKS-' + self.category_]
-        vols_dict = cfg.CACHE['$VOLS-'  + self.category_]
+        rank_dict = cls.CACHE['$RANKS-' + self.category_]
+        vols_dict = cls.CACHE['$VOLS-'  + self.category_]
 
         changed = False
         if key not in rank_dict:
@@ -3105,17 +2912,19 @@ class PdsFile(object):
 
         if changed:
             vols_dict[key][self.version_rank] = self.abspath
-            cfg.CACHE.set('$RANKS-' + self.category_, rank_dict, lifetime=0)
-            cfg.CACHE.set('$VOLS-'  + self.category_, vols_dict, lifetime=0)
+            cls.CACHE.set('$RANKS-' + self.category_, rank_dict, lifetime=0)
+            cls.CACHE.set('$VOLS-'  + self.category_, vols_dict, lifetime=0)
 
     def _recache(self):
         """Update the cache after this object has been modified, e.g., by having
         a previously empty field filled in."""
 
+        cls = type(self)
+
         logical_lc = self.logical_path.lower()
-        if logical_lc in cfg.CACHE and (self.is_merged ==
-                                    cfg.CACHE[logical_lc].is_merged):
-            cfg.CACHE.set(logical_lc, self)
+        if logical_lc in cls.CACHE and (self.is_merged ==
+                                    cls.CACHE[logical_lc].is_merged):
+            cls.CACHE.set(logical_lc, self)
 
     ############################################################################
     # Alternative constructors
@@ -3144,8 +2953,9 @@ class PdsFile(object):
             flag = '=' if must_exist else ''
             return self.child_of_index(basename, flag=flag)
 
+        cls = type(self)
         ### Pause cache
-        cfg.CACHE.pause()
+        cls.CACHE.pause()
         try:
             # Fix the case if necessary
             if fix_case:
@@ -3158,9 +2968,9 @@ class PdsFile(object):
                         basename = self.childnames[k]
 
             # Create the logical path and return from cache if available
-            child_logical_path = _clean_join(self.logical_path, basename)
+            child_logical_path = clean_join(self.logical_path, basename)
             try:
-                pdsf = cfg.CACHE[child_logical_path.lower()]
+                pdsf = cls.CACHE[child_logical_path.lower()]
             except KeyError:
                 pass
 
@@ -3172,7 +2982,7 @@ class PdsFile(object):
             # Fill in the absolute path if possible. This will fail for children
             # of category-level directories; we address that case later
             if self.abspath:
-                child_abspath = _clean_join(self.abspath, basename)
+                child_abspath = clean_join(self.abspath, basename)
             else:
                 child_abspath = None
 
@@ -3198,7 +3008,7 @@ class PdsFile(object):
             this.basename = basename
 
             if self.interior:               # if parent is inside a bundle
-                this.interior = _clean_join(self.interior, basename)
+                this.interior = clean_join(self.interior, basename)
                 return this._complete(must_exist, caching, lifetime)
 
             if self.bundlename_:               # if parent is a bundle
@@ -3257,7 +3067,7 @@ class PdsFile(object):
 
                 if self.abspath:
                     try:
-                        merged_parent = cfg.CACHE[self.logical_path.lower()]
+                        merged_parent = cls.CACHE[self.logical_path.lower()]
                     except KeyError:
                         pass
                     else:
@@ -3265,7 +3075,7 @@ class PdsFile(object):
                         if basename not in childnames:
                             merged_parent._childnames_filled.append(basename)
                             merged_parent._childnames_filled.sort()
-                            cfg.CACHE.set(self.logical_path.lower(), merged_parent,
+                            cls.CACHE.set(self.logical_path.lower(), merged_parent,
                                                                  lifetime=0)
 
                 return this._complete(must_exist, caching, lifetime)
@@ -3288,7 +3098,7 @@ class PdsFile(object):
                     this.archives_  = matchobj.group(2)
                     this.voltype_   = matchobj.group(3) + '/'
 
-                if this.voltype_[:-1] not in VOLTYPES:
+                if this.voltype_[:-1] not in cls.VOLTYPES:
                     raise ValueError('Unrecognized volume type "%s": %s' %
                                      (this.voltype_[:-1], this.logical_path))
 
@@ -3299,7 +3109,7 @@ class PdsFile(object):
 
         ### Resume caching no matter what
         finally:
-            cfg.CACHE.resume()
+            cls.CACHE.resume()
 
     def parent(self, must_exist=False, caching='default', lifetime=None):
         """Constructor for the parent PdsFile of this PdsFile."""
@@ -3311,7 +3121,7 @@ class PdsFile(object):
 
         # Return the merged parent if there is one
         logical_path = os.path.split(self.logical_path)[0]
-        if logical_path in CATEGORIES or not self.abspath:
+        if logical_path in cls.CATEGORIES or not self.abspath:
             return cls.from_logical_path(logical_path,
                                              must_exist=must_exist)
         else:
@@ -3319,8 +3129,8 @@ class PdsFile(object):
             return cls.from_abspath(abspath,
                                         must_exist=must_exist)
 
-    @staticmethod
-    def from_lid(lid_str):
+    @classmethod
+    def from_lid(cls, lid_str):
         """Constructor for a PdsFile from a LID.
         lid_str format: dataset_id:volume_id:directory_path:file_name
         """
@@ -3333,7 +3143,7 @@ class PdsFile(object):
         volume_id = lid_component[1]
         logical_path_wo_volset = 'volumes/' + '/'.join(lid_component[1:])
 
-        pdsf = PdsFile.from_path(logical_path_wo_volset)
+        pdsf = cls.from_path(logical_path_wo_volset)
 
         if pdsf.data_set_id != data_set_id:
             raise ValueError('Data set id from lid_str: ' + data_set_id +
@@ -3353,7 +3163,7 @@ class PdsFile(object):
         # If the PdsFile with this logical path is in the cache, return it
         path_lc = path.lower()
         try:
-            return cfg.CACHE[path_lc]
+            return cls.CACHE[path_lc]
         except KeyError:
             pass
 
@@ -3365,13 +3175,13 @@ class PdsFile(object):
             ancestor_path = '/'.join(parts_lc[:lparts])
 
             try:
-                ancestor = cfg.CACHE[ancestor_path]
+                ancestor = cls.CACHE[ancestor_path]
                 break
             except KeyError:
                 pass
 
         ### Pause the cache
-        cfg.CACHE.pause()
+        cls.CACHE.pause()
         try:
 
             # Ancestor found. Handle the rest of the tree using child()
@@ -3387,10 +3197,10 @@ class PdsFile(object):
 
         ### Resume caching no matter what
         finally:
-            cfg.CACHE.resume()
+            cls.CACHE.resume()
 
         # If there was no preload, CACHE will be empty but this still might work
-        abspath = abspath_for_logical_path(path)
+        abspath = abspath_for_logical_path(path, cls)
         return cls.from_abspath(abspath)
 
     @classmethod
@@ -3403,7 +3213,7 @@ class PdsFile(object):
         # Return a value from the cache, if any
         logical_path = logical_path_from_abspath(abspath, cls)
         try:
-            pdsf = cfg.CACHE[logical_path.lower()]
+            pdsf = cls.CACHE[logical_path.lower()]
             if not pdsf.is_merged:     # don't return a merged directory
                 return pdsf
         except KeyError:
@@ -3432,7 +3242,7 @@ class PdsFile(object):
         except ValueError:
             raise ValueError('"{}" directory not found in: '.format(cls.PDS_HOLDINGS) + abspath)
         ### Pause the cache
-        cfg.CACHE.pause()
+        cls.CACHE.pause()
         try:
             # Fill in this.disk_, the absolute path to the directory containing
             # subdirectory "holdings"
@@ -3454,14 +3264,14 @@ class PdsFile(object):
             # Viewmaster creates symlinks inside /Library/WebServer/Documents
             # named holdings, holding1, ... holdings9
 
-            if len(cfg.LOCAL_PRELOADED) <= 1:   # There's only one holdings dir
+            if len(cls.LOCAL_PRELOADED) <= 1:   # There's only one holdings dir
                 this.html_root_ = '/' + cls.PDS_HOLDINGS +'/'
             else:                       # Find this holdings dir among preloaded
                 PDS_HOLDINGS_abspath = this.disk_ + cls.PDS_HOLDINGS
                 try:
-                    k = cfg.LOCAL_PRELOADED.index(PDS_HOLDINGS_abspath)
+                    k = cls.LOCAL_PRELOADED.index(PDS_HOLDINGS_abspath)
                 except ValueError:
-                    LOGGER.warn('No URL: ' + PDS_HOLDINGS_abspath)
+                    cls.LOGGER.warn('No URL: ' + PDS_HOLDINGS_abspath)
                     this.html_root_ = '/'
 
                 else:       # "holdings", "holdings1", ... "holdings9"
@@ -3483,7 +3293,7 @@ class PdsFile(object):
 
         ### Resume the cache no matter what
         finally:
-            cfg.CACHE.resume()
+            cls.CACHE.resume()
 
         return this
 
@@ -3497,8 +3307,10 @@ class PdsFile(object):
         if len(parts) == 0:
             return self._complete(must_exist, caching, lifetime)
 
+        cls = type(self)
+
         ### Pause the cache
-        cfg.CACHE.pause()
+        cls.CACHE.pause()
         try:
             this = self
             for part in parts:
@@ -3508,7 +3320,7 @@ class PdsFile(object):
 
         ### Resume caching no matter what
         finally:
-            cfg.CACHE.resume()
+            cls.CACHE.resume()
 
         return this
 
@@ -3541,7 +3353,7 @@ class PdsFile(object):
           COISS_0xxx/v1 -> COISS_0xxx_v1
         """
 
-        if not cfg.LOCAL_PRELOADED:
+        if not cls.LOCAL_PRELOADED:
             raise IOError('from_path is not supported without a preload')
 
         path = str(path)    # make sure it's a string
@@ -3551,7 +3363,7 @@ class PdsFile(object):
         # Make a quick return if possible
         path_lc = path.lower()
         try:
-            return cfg.CACHE[path_lc]
+            return cls.CACHE[path_lc]
         except KeyError:
             pass
 
@@ -3589,7 +3401,7 @@ class PdsFile(object):
 
             # If the pseudo-path starts with "volumes/", "diagrams/", etc., this
             # is the volume type
-            elif part in VOLTYPES:
+            elif part in cls.VOLTYPES:
                 this.voltype_ = part + '/'
 
             # If the pseudo-path starts with "v1", "v1.1", "peer_review", etc.,
@@ -3625,7 +3437,7 @@ class PdsFile(object):
 
             # If the pseudo-path starts with "volumes/", "diagrams/", etc., this
             # is the volume type
-            elif part in VOLTYPES:
+            elif part in cls.VOLTYPES:
                 this.voltype_ = part + '/'
 
             # If the pseudo-path starts with "v1", "v1.1", "peer_review", etc.,
@@ -3662,7 +3474,7 @@ class PdsFile(object):
                     this.checksums_ = 'checksums-'
 
                 # <bundleset>_diagrams... must be in the diagrams tree, etc.
-                for test_type in VOLTYPES:
+                for test_type in cls.VOLTYPES:
                     if extension[1:].startswith(test_type):
                         this.voltype_ = test_type + '/'
                         break
@@ -3699,7 +3511,7 @@ class PdsFile(object):
                         this.checksums_ = 'checksums-'
 
                     # <bundlename>_diagrams... must be in the diagrams tree, etc.
-                    for test_type in VOLTYPES:
+                    for test_type in cls.VOLTYPES:
                         if extension[1:].startswith(test_type):
                             this.voltype_ = test_type + '/'
                             break
@@ -3737,11 +3549,11 @@ class PdsFile(object):
             if this.suffix:
                 rank = cls.version_info(this.suffix)[0]
             else:
-                rank = cfg.CACHE['$RANKS-' + this.category_][bundlename][-1]
+                rank = cls.CACHE['$RANKS-' + this.category_][bundlename][-1]
 
             # Try to get the absolute path
             try:
-                this_abspath = cfg.CACHE['$VOLS-' + this.category_][bundlename][rank]
+                this_abspath = cls.CACHE['$VOLS-' + this.category_][bundlename][rank]
 
             # On failure, see if an updated suffix will help
             except KeyError:
@@ -3764,7 +3576,7 @@ class PdsFile(object):
                 this_abspath = None
                 for alt_rank in alt_ranks:
                   try:
-                    this_abspath = cfg.CACHE['$VOLS-' + this.category_][bundlename]\
+                    this_abspath = cls.CACHE['$VOLS-' + this.category_][bundlename]\
                                                                    [alt_rank]
                     break
                   except KeyError:
@@ -3785,11 +3597,11 @@ class PdsFile(object):
             if this.suffix:
                 rank = cls.version_info(this.suffix)[0]
             else:
-                rank = cfg.CACHE['$RANKS-' + this.category_][bundleset][-1]
+                rank = cls.CACHE['$RANKS-' + this.category_][bundleset][-1]
 
             # Try to get the absolute path
             try:
-                this_abspath = cfg.CACHE['$VOLS-' + this.category_][bundleset][rank]
+                this_abspath = cls.CACHE['$VOLS-' + this.category_][bundleset][rank]
 
             # On failure, see if an updated suffix will help
             except KeyError:
@@ -3812,7 +3624,7 @@ class PdsFile(object):
                 this_abspath = None
                 for alt_rank in alt_ranks:
                   try:
-                    this_abspath = cfg.CACHE['$VOLS-' + this.category_][bundleset]\
+                    this_abspath = cls.CACHE['$VOLS-' + this.category_][bundleset]\
                                                                    [alt_rank]
                     break
                   except KeyError:
@@ -3827,7 +3639,7 @@ class PdsFile(object):
 
         # Without a bundlename or bundleset, this must be a very high-level directory
         else:
-            this = cfg.CACHE[this.category_[:-1]]
+            this = cls.CACHE[this.category_[:-1]]
 
         # If there is nothing left in the pseudo-path, return this
         if len(parts) == 0:
@@ -3857,10 +3669,11 @@ class PdsFile(object):
         an index.
         """
 
+        cls = type(self)
+
         # Return the answer quickly if it exists
         try:
-            return PdsFile._get_shelf(self.indexshelf_abspath,
-                                      log_missing_file=False)
+            return cls._get_shelf(self.indexshelf_abspath, log_missing_file=False)
         except Exception as e:
             saved_e = e
 
@@ -3974,13 +3787,15 @@ class PdsFile(object):
         if flag is '',  return the selected object even if it doesn't exist.
         """
 
+        cls = type(self)
+
         # Get the selection key for the object
         key = self.find_selected_row_key(selection, flag=flag)
 
         # If we already have a PdsFile keyed by this absolute path, return it
-        new_abspath = _clean_join(self.abspath, key)
+        new_abspath = clean_join(self.abspath, key)
         try:
-            return cfg.CACHE[new_abspath.lower()]
+            return cls.CACHE[new_abspath.lower()]
         except KeyError:
             pass
 
@@ -4128,7 +3943,7 @@ class PdsFile(object):
             return pdsfile_class.OPUS_ID_TO_PRIMARY_LOGICAL_PATH(opus_id)
 
         paths = pdsfile_class.OPUS_ID_TO_PRIMARY_LOGICAL_PATH.all(opus_id)
-        patterns = [abspath_for_logical_path(p) for p in paths]
+        patterns = [abspath_for_logical_path(p, cls) for p in paths]
         matches = []
         for pattern in patterns:
             if _needs_glob(pattern):
@@ -4157,7 +3972,7 @@ class PdsFile(object):
             return fake_product_dict[fake_opus_key][0][0]
 
         for k, pdsf in enumerate(pdsfiles):
-            LOGGER.warn('Ambiguous primary product for OPUS ID ' + opus_id,
+            cls.LOGGER.warn('Ambiguous primary product for OPUS ID ' + opus_id,
                         pdsf.abspath + (' (selected)' if k == 0 else ''))
 
         return pdsfiles[0]
@@ -4233,7 +4048,7 @@ class PdsFile(object):
                 try:
                     pdsf.shelf_lookup('link')
                 except (OSError, KeyError, ValueError):
-                    LOGGER.warn('Missing links info',
+                    cls.LOGGER.warn('Missing links info',
                                 pdsf.logical_path)
                     continue
                 links = set(pdsf.linked_abspaths)
@@ -4500,7 +4315,7 @@ class PdsFile(object):
             return cls.SHELF_CACHE[shelf_path]
 
         if log_missing_file or os.path.exists(shelf_path):
-            LOGGER.debug('Opening pickle file', shelf_path)
+            cls.LOGGER.debug('Opening pickle file', shelf_path)
 
         if not os.path.exists(shelf_path):
             raise IOError('Pickle file not found: %s' % shelf_path)
@@ -4547,7 +4362,7 @@ class PdsFile(object):
 
         # If the shelf is not already open, return
         if shelf_path not in cls.SHELF_CACHE:
-            LOGGER.error('Cannot close pickle file; not currently open',
+            cls.LOGGER.error('Cannot close pickle file; not currently open',
                          shelf_path)
             return
 
@@ -4555,7 +4370,7 @@ class PdsFile(object):
         del cls.SHELF_CACHE[shelf_path]
         del cls.SHELF_ACCESS[shelf_path]
 
-        LOGGER.debug('Pickle file closed', shelf_path)
+        cls.LOGGER.debug('Pickle file closed', shelf_path)
 
     @classmethod
     def close_all_shelves(cls):
@@ -4590,7 +4405,7 @@ class PdsFile(object):
             # to open every info shelf file during preload.
             if shelf_type == 'info':
                 py_path = shelf_path.replace('.pickle', '.py')
-                LOGGER.debug('Retrieving key "%s"' % py_path)
+                cls.LOGGER.debug('Retrieving key "%s"' % py_path)
 
                 with open(py_path) as f:
                     rec = f.readline()
@@ -4894,7 +4709,7 @@ class PdsFile(object):
                 parts[3:] = [self.basename_is_label(basename)] + parts[3:]
 
             if dirs_first or dirs_last:
-                isdir = PdsFile.os_path_isdir(_clean_join(self.abspath,
+                isdir = PdsFile.os_path_isdir(clean_join(self.abspath,
                                                           basename))
                 if dirs_first:
                     # If this is a directory, put False in front of the sort key
@@ -4987,8 +4802,8 @@ class PdsFile(object):
         # Return the PdsFiles in the newly sorted order
         return [basename_dict[basename] for basename in sibnames]
 
-    @staticmethod
-    def sort_logical_paths(logical_paths):
+    @classmethod
+    def sort_logical_paths(cls, logical_paths):
         """Sort a list of logical paths, using the sort order at each level in
         the directory tree. The logical paths must all have the same number of
         directory levels."""
@@ -5043,18 +4858,16 @@ class PdsFile(object):
                 extras_in_sort.append(path)
                 sorted_paths.remove(path)
 
-        if extras_in_sort and LOGGER:
+        if extras_in_sort and cls.LOGGER:
             for extra in extras_in_sort:
-                LOGGER.warn('Extra item removed by sort_logical_paths: ' +
-                            extra)
+                cls.LOGGER.warn('Extra item removed by sort_logical_paths: ' + extra)
 
         logical_paths = list(logical_paths)
         logical_paths.sort()
         sorted_paths += logical_paths
-        if logical_paths and LOGGER:
+        if logical_paths and cls.LOGGER:
             for path in logical_paths:
-                LOGGER.warn('Overlooked item added by sort_logical_paths: ' +
-                            path)
+                cls.LOGGER.warn('Overlooked item added by sort_logical_paths: ' + path)
 
         return sorted_paths
 
@@ -5149,7 +4962,7 @@ class PdsFile(object):
 
     @classmethod
     def abspaths_for_logicals(cls, logical_paths, must_exist=False):
-        abspaths = [abspath_for_logical_path(p) for p in logical_paths]
+        abspaths = [abspath_for_logical_path(p, cls) for p in logical_paths]
         if must_exist:
             abspaths = [p for p in abspaths if cls.os_path_exists(p)]
 
@@ -5178,7 +4991,7 @@ class PdsFile(object):
     def abspaths_for_basenames(self, basenames, must_exist=False):
         # shortcut
         if self.abspath and not must_exist:
-            return [_clean_join(self.abspath, b) for b in basenames]
+            return [clean_join(self.abspath, b) for b in basenames]
 
         pdsfiles = self.pdsfiles_for_basenames(basenames, must_exist=must_exist)
         return [pdsf.abspath for pdsf in pdsfiles]
@@ -5186,7 +4999,7 @@ class PdsFile(object):
     def logicals_for_basenames(self, basenames, must_exist=False):
         # shortcut
         if not must_exist:
-            return [_clean_join(self.logical_path, b) for b in basenames]
+            return [clean_join(self.logical_path, b) for b in basenames]
 
         pdsfiles = self.pdsfiles_for_basenames(basenames, must_exist=must_exist)
         return [pdsf.logical_path for pdsf in pdsfiles]
@@ -5384,7 +5197,8 @@ class PdsFile(object):
             category = category.rstrip('/')
             voltype = category.rpartition('-')[-1]
 
-        if category not in CATEGORIES:
+        cls = type(self)
+        if category not in cls.CATEGORIES:
             return None
 
         # Handle category-level parallel
@@ -5495,20 +5309,21 @@ PdsFile.SUBCLASSES['default'] = PdsFile
 # preload() replaces these.
 ##########################################################################################
 
-for category in CATEGORY_LIST:
-    if category not in cfg.CACHE:
-        cfg.CACHE.set(category, PdsFile.new_merged_dir(category), lifetime=0)
+# for category in CATEGORY_LIST:
+#     if category not in cls.CACHE:
+#         cls.CACHE.set(category, PdsFile.new_merged_dir(category), lifetime=0)
+cache_categoriey_merged_dirs(PdsFile)
 
 ##########################################################################################
 # Support functions
 ##########################################################################################
 
-def _clean_join(a, b):
-#     joined = os.path.join(a,b).replace('\\', '/')
-    if a:
-        return a + '/' + b
-    else:
-        return b
+# def _clean_join(a, b):
+# #     joined = os.path.join(a,b).replace('\\', '/')
+#     if a:
+#         return a + '/' + b
+#     else:
+#         return b
 
 def _clean_abspath(path):
     abspath = os.path.abspath(path)
@@ -5605,7 +5420,7 @@ def is_logical_path(path):
 LOCAL_HOLDINGS_DIRS = None  # Global will contain all the physical holdings
                             # directories on the system.
 
-def abspath_for_logical_path(path):
+def abspath_for_logical_path(path, cls):
     """Absolute path derived from a logical path.
 
     The logical path starts at the category, below the holdings/ directory. To
@@ -5617,12 +5432,12 @@ def abspath_for_logical_path(path):
 
     # Check for a valid logical path
     parts = path.split('/')
-    if parts[0] not in CATEGORIES:
+    if parts[0] not in cls.CATEGORIES:
         raise ValueError('Not a logical path: ' + path)
 
     # Use the list of preloaded holdings directories if it is not empty
-    if cfg.LOCAL_PRELOADED:
-        holdings_list = cfg.LOCAL_PRELOADED
+    if cls.LOCAL_PRELOADED:
+        holdings_list = cls.LOCAL_PRELOADED
 
     elif LOCAL_HOLDINGS_DIRS:
         holdings_list = LOCAL_HOLDINGS_DIRS
@@ -5662,7 +5477,7 @@ def selected_path_from_path(path, cls, abspaths=True):
 
     if is_logical_path(path):
         if abspaths:
-            return abspath_for_logical_path(path)
+            return abspath_for_logical_path(path, cls)
         else:
             return path
 

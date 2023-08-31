@@ -9,6 +9,7 @@ import pdsfile.pds3file as pds3file
 from pdsfile.cfg import PDS_HOLDINGS_DIR
 import pdsfile.pds4file as pds4file
 from pdsfile.cfg import PDS4_HOLDINGS_DIR
+from pdsfile.general_helper import set_logger
 from pdsfile.preload_and_cache import (use_shelves_only)
 import pdslogger
 import pytest
@@ -21,8 +22,8 @@ def pytest_addoption(parser):
 
 def turn_on_logger(filename):
     LOGGER = pdslogger.PdsLogger(filename)
-    pds3file.set_logger(LOGGER)
-    pds4file.set_logger(LOGGER)
+    set_logger(pds3file.Pds3File, LOGGER)
+    set_logger(pds4file.Pds4File, LOGGER)
 
 @pytest.fixture(scope='session', autouse=True)
 def setup(request):

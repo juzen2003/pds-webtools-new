@@ -6,10 +6,8 @@
 from pdsfile import *
 from . import rules
 
-from pdsfile.general_helper import cache_lifetime_for_class
+from pdsfile.preload_and_cache import cache_lifetime_for_class
 
-# cfg.PDS_HOLDINGS = 'pds4-holdings'
-cfg.SHELVES_ONLY = False
 cfg.BUNDLESET_REGEX = re.compile(r'^(uranus_occs_earthbased|^cassini_iss|^cassini_vims)$')
 cfg.BUNDLESET_PLUS_REGEX   = re.compile(cfg.BUNDLESET_REGEX.pattern[:-1] +
                         r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
@@ -30,10 +28,7 @@ def cache_lifetime(arg):
 
 # Initialize the cache
 MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
-DICTIONARY_CACHE_LIMIT = 200000
-cfg.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
-                                 limit=DICTIONARY_CACHE_LIMIT,
-                                 logger=LOGGER)
+
 
 class Pds4File(PdsFile):
 
@@ -41,10 +36,14 @@ class Pds4File(PdsFile):
     PDS_HOLDINGS = 'pds4-holdings'
     BUNDLE_DIR_NAME = 'bundles'
 
-    # Flag
-    SHELVES_ONLY = False
-    SHELVES_REQUIRED = False
-    FS_IS_CASE_INSENSITIVE = True
+    # Logger
+    LOGGER = pdslogger.NullLogger()
+
+    # CACHE
+    DICTIONARY_CACHE_LIMIT = 200000
+    CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
+                                     limit=DICTIONARY_CACHE_LIMIT,
+                                     logger=LOGGER)
 
     # Override the rules
     DESCRIPTION_AND_ICON = rules.DESCRIPTION_AND_ICON

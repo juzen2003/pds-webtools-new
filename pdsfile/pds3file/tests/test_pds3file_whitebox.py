@@ -881,8 +881,8 @@ class TestPdsFileWhiteBox:
         ]
     )
     def test_from_abspath(self, input_path, expected):
-        if input_path in pds3file.cfg.CACHE:
-            del pds3file.cfg.CACHE[input_path]
+        if input_path in pds3file.Pds3File.CACHE:
+            del pds3file.Pds3File.CACHE[input_path]
         res = pds3file.Pds3File.from_abspath(abspath=input_path,
                                            fix_case=True)
         assert isinstance(res, pds3file.Pds3File)

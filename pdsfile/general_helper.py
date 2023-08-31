@@ -3,6 +3,7 @@
 # Helper functions being used in tests, the parent class & both pds3 & pds4 subclasses
 ##########################################################################################
 
+import pdslogger
 import pdsgroup
 import os
 
@@ -19,39 +20,6 @@ import os
 #     PDS4_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 # PDS4_BUNDLES_DIR = f'{PDS4_HOLDINGS_DIR}/bundles'
-
-DEFAULT_FILE_CACHE_LIFETIME =  12 * 60 * 60      # 12 hours
-LONG_FILE_CACHE_LIFETIME = 7 * 24 * 60 * 60      # 7 days
-SHORT_FILE_CACHE_LIFETIME = 2 * 24 * 60 * 60     # 2 days
-FOEVER_FILE_CACHE_LIFETIME = 0                   # forever
-
-def cache_lifetime_for_class(arg, cls):
-    """Return the default cache lifetime in seconds with a given object. A returned
-    lifetime of zero means keep forever.
-
-    Keyword arguments:
-        arg -- an object
-        cls -- the class calling the method
-    """
-
-    # Keep Viewmaster HTML for 12 hours
-    if isinstance(arg, str):
-        return DEFAULT_FILE_CACHE_LIFETIME
-
-    # Keep RANKS, VOLS, etc. forever
-    elif not isinstance(arg, cls):
-        return FOEVER_FILE_CACHE_LIFETIME
-
-    # Cache PdsFile bundlesets/bundles for a long time, but not necessarily forever
-    elif not arg.interior:
-        return LONG_FILE_CACHE_LIFETIME
-
-    elif arg.isdir and arg.interior.lower().endswith('data'):
-        return LONG_FILE_CACHE_LIFETIME     # .../bundlename/*data for a long time
-    elif arg.isdir:
-        return SHORT_FILE_CACHE_LIFETIME            # Other directories for two days
-    else:
-        return DEFAULT_FILE_CACHE_LIFETIME
 
 # For tests under /tests
 def instantiate_target_pdsfile_for_class(path, cls, holdings_dir, is_abspath=True):
@@ -207,3 +175,38 @@ def logical_path_from_abspath(abspath, cls):
         return parts[2]
 
     raise ValueError('Not compatible with a logical path: ', abspath)
+
+def construct_category_list(voltypes):
+    category_list = []
+    for checksums in ('', 'checksums-'):
+        for archives in ('', 'archives-'):
+            for voltype in voltypes:
+                category_list.append(checksums + archives + voltype)
+
+    category_list.remove('checksums-documents')
+    category_list.remove('archives-documents')
+    category_list.remove('checksums-archives-documents')
+
+    return category_list
+
+def clean_join(a, b):
+#     joined = os.path.join(a,b).replace('\\', '/')
+    if a:
+        return a + '/' + b
+    else:
+        return b
+
+
+##########################################################################################
+# PdsLogger support
+##########################################################################################
+def set_logger(cls, logger=None):
+    """Set the PdsLogger."""
+    if not logger:
+        logger = pdslogger.NullLogger()
+
+    cls.LOGGER = logger
+
+def set_easylogger(cls):
+    """Log all messages directly to stdout."""
+    set_logger(cls, pdslogger.EasyLogger())

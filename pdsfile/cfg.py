@@ -7,11 +7,6 @@
 import os
 import re
 
-
-# CACHE
-LOCAL_PRELOADED = []
-CACHE = None
-
 # REGEX
 BUNDLESET_REGEX        = re.compile(r'^([A-Z][A-Z0-9x]{1,5}_[0-9x]{3}x)$')
 BUNDLESET_REGEX_I      = re.compile(BUNDLESET_REGEX.pattern, re.I)
