@@ -116,7 +116,7 @@ SHELF_PATH_INFO = {
     'link' : ('_linkshelf-', '_links'),
 }
 
-def cache_lifetime(cls, arg):
+def cache_lifetime(arg):
         return cache_lifetime_for_class(arg, PdsFile)
 
 ##########################################################################################
@@ -128,14 +128,14 @@ _PATH_EXISTS_CACHE_SIZE = 200
 
 
 # Initialize the cache
-MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
+# cls.MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
 
 
-DEFAULT_CACHING = 'dir'     # 'dir', 'all' or 'none';
+# DEFAULT_CACHING = 'dir'     # 'dir', 'all' or 'none';
                             # use 'dir' for Viewmaster without MemCache;
                             # use 'all' for Viewmaster with MemCache;
 
-PRELOAD_TRIES = 3
+# PRELOAD_TRIES = 3
 
 
 
@@ -159,12 +159,20 @@ class PdsFile(object):
 
     # CACHE
     LOCAL_PRELOADED = []
+
     # Initialize the cache
+    MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
     DICTIONARY_CACHE_LIMIT = 200000
+
     # this cache is used if preload() is never called. No filesystem is required.
     CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                      limit=DICTIONARY_CACHE_LIMIT,
                                      logger=LOGGER)
+
+    DEFAULT_CACHING = 'dir'     # 'dir', 'all' or 'none';
+                                # use 'dir' for Viewmaster without MemCache;
+                                # use 'all' for Viewmaster with MemCache;
+    PRELOAD_TRIES = 3
 
     # CATEGORIES contains the name of every subdirectory of holdings/
     VOLTYPES = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews',
@@ -403,8 +411,6 @@ class PdsFile(object):
                                 directory; default "blue".
         """
 
-        global MEMCACHE_PORT, DEFAULT_CACHING, PRELOAD_TRIES
-
         # Convert holdings to a list of absolute paths
         if not isinstance(holdings_list, (list,tuple)):
             holdings_list = [holdings_list]
@@ -412,7 +418,7 @@ class PdsFile(object):
         holdings_list = [_clean_abspath(h) for h in holdings_list]
 
         # Use cache as requested
-        if (port == 0 and MEMCACHE_PORT == 0) or not HAS_PYLIBMC:
+        if (port == 0 and cls.MEMCACHE_PORT == 0) or not HAS_PYLIBMC:
             if not isinstance(cls.CACHE, pdscache.DictionaryCache):
                 cls.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                                      limit=cls.DICTIONARY_CACHE_LIMIT,
@@ -420,27 +426,28 @@ class PdsFile(object):
             cls.LOGGER.info('Using local dictionary cache')
 
         else:
-            MEMCACHE_PORT = MEMCACHE_PORT or port
+            cls.MEMCACHE_PORT = cls.MEMCACHE_PORT or port
 
-            for k in range(PRELOAD_TRIES):
+            for k in range(cls.PRELOAD_TRIES):
                 try:
-                    cls.CACHE = pdscache.MemcachedCache(MEMCACHE_PORT,
-                                                    lifetime=cache_lifetime,
-                                                    logger=cls.LOGGER)
-                    cls.LOGGER.info('Connecting to PdsFile Memcache [%s]' % MEMCACHE_PORT)
+                    cls.CACHE = pdscache.MemcachedCache(cls.MEMCACHE_PORT,
+                                                        lifetime=cache_lifetime,
+                                                        logger=cls.LOGGER)
+                    cls.LOGGER.info('Connecting to PdsFile Memcache [%s]' %
+                                    cls.MEMCACHE_PORT)
                     break
 
                 except pylibmc.Error:
-                    if k < PRELOAD_TRIES - 1:
+                    if k < cls.PRELOAD_TRIES - 1:
                         cls.LOGGER.warn(('Failed to connect PdsFile Memcache [%s]; ' +
-                                    'trying again in %d sec') % (MEMCACHE_PORT, 2**k))
+                                    'trying again in %d sec') % (cls.MEMCACHE_PORT, 2**k))
                         time.sleep(2.**k)       # try then wait 1 sec, then 2 sec
 
                     else:       # give up after three tries
                         cls.LOGGER.error(('Failed to connect PdsFile Memcache [%s]; '+
-                                    'using dictionary instead') %  MEMCACHE_PORT)
+                                    'using dictionary instead') %  cls.MEMCACHE_PORT)
 
-                        MEMCACHE_PORT = 0
+                        cls.MEMCACHE_PORT = 0
                         if not isinstance(cls.CACHE, pdscache.DictionaryCache):
                             cls.CACHE = pdscache.DictionaryCache(
                                             lifetime=cache_lifetime,
@@ -449,10 +456,10 @@ class PdsFile(object):
                                         )
 
         # Define default caching based on whether MemCache is active
-        if MEMCACHE_PORT == 0:
-            DEFAULT_CACHING = 'dir'
+        if cls.MEMCACHE_PORT == 0:
+            cls.DEFAULT_CACHING = 'dir'
         else:
-            DEFAULT_CACHING = 'all'
+            cls.DEFAULT_CACHING = 'all'
 
         # This suppresses long absolute paths in the logs
         cls.LOGGER.add_root(holdings_list)
@@ -485,8 +492,8 @@ class PdsFile(object):
                         something_is_missing = True
 
                 if not something_is_missing:
-                    if MEMCACHE_PORT:
-                        get_permanent_values(holdings_list, MEMCACHE_PORT, cls)
+                    if cls.MEMCACHE_PORT:
+                        get_permanent_values(holdings_list, cls.MEMCACHE_PORT, cls)
                         # Note that if any permanently cached values are missing,
                         # this call will recursively clear the cache and preload
                         # again. This reduces the chance of a corrupted cache.
@@ -2857,7 +2864,7 @@ class PdsFile(object):
 
         # Otherwise, cache if necessary
         if caching == 'default':
-            caching = DEFAULT_CACHING
+            caching = cls.DEFAULT_CACHING
 
         if caching == 'all' or (caching == 'dir' and
                                 (self.isdir or self.is_index)):
@@ -5317,13 +5324,6 @@ cache_categoriey_merged_dirs(PdsFile)
 ##########################################################################################
 # Support functions
 ##########################################################################################
-
-# def _clean_join(a, b):
-# #     joined = os.path.join(a,b).replace('\\', '/')
-#     if a:
-#         return a + '/' + b
-#     else:
-#         return b
 
 def _clean_abspath(path):
     abspath = os.path.abspath(path)
