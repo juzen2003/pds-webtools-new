@@ -5,6 +5,9 @@ import pdsgroup
 import pdsgrouptable
 import pdsviewable
 import pdsfile.pds3file.rules as rules
+from pdsfile.general_helper import (is_logical_path,
+                                    repair_case,
+                                    selected_path_from_path)
 import pytest
 import re
 import sys
@@ -3197,7 +3200,7 @@ class TestPds3FileHelperBlackBox:
         ]
     )
     def test_is_logical_path(self, input_path, expected):
-        res = pds3file.is_logical_path(path=input_path)
+        res = is_logical_path(path=input_path)
         assert res == expected
 
     @pytest.mark.parametrize(
@@ -3224,7 +3227,7 @@ class TestPds3FileHelperBlackBox:
         ]
     )
     def test_repair_case(self, input_path, expected):
-        res = pds3file.repair_case(abspath=input_path)
+        res = repair_case(input_path, pds3file.Pds3File)
         assert res.lower() == expected.lower()
 
     @pytest.mark.parametrize(
@@ -3237,5 +3240,5 @@ class TestPds3FileHelperBlackBox:
         ]
     )
     def test_selected_path_from_path(self, input_path, expected):
-        res = pds3file.selected_path_from_path(input_path, pds3file.Pds3File)
+        res = selected_path_from_path(input_path, pds3file.Pds3File)
         assert res == expected

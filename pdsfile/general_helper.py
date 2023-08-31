@@ -5,7 +5,17 @@
 
 import pdslogger
 import pdsgroup
+
+import fnmatch
+import functools
+import glob
+import math
 import os
+
+
+_GLOB_CACHE_SIZE = 200
+PATH_EXISTS_CACHE_SIZE = 200
+FILE_BYTE_UNITS = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
 # For tests
 # try:
@@ -196,6 +206,159 @@ def clean_join(a, b):
     else:
         return b
 
+def clean_abspath(path):
+    abspath = os.path.abspath(path)
+    if os.sep == '\\':
+        abspath = abspath.replace('\\', '/')
+    return abspath
+
+@functools.lru_cache(maxsize=_GLOB_CACHE_SIZE)
+def clean_glob(cls, pattern, force_case_sensitive=False):
+    results = glob.glob(pattern)
+    if os.sep == '\\':
+        results = [x.replace('\\', '/') for x in matches]
+
+    if force_case_sensitive and cls.FS_IS_CASE_INSENSITIVE:
+        filtered_results = []
+        for result in results:
+            result = repair_case(result, cls)
+            if fnmatch.fnmatchcase(result, pattern):
+                filtered_results.append(result)
+
+        return filtered_results
+
+    else:
+        return results
+
+def needs_glob(pattern):
+    """True if this expression contains wildcards"""
+    return '*' in pattern or '?' in pattern or '[' in pattern
+
+def repair_case(abspath, cls):
+    """Return a file's absolute path with capitalization exactly as it appears
+    in the file system. Raises IOError if the file is not found.
+    """
+
+    trailing_slash = abspath.endswith('/')  # must preserve a trailing slash!
+    abspath = clean_abspath(abspath)
+
+    # Fields are separated by slashes
+    parts = abspath.split('/')
+    if parts[-1] == '':
+        parts = parts[:-1]      # Remove trailing slash
+
+    # On Unix, parts[0] is always '' so no need to check case
+    # On Windows, this skips over the name of the drive
+
+    # For each subsequent field (between slashes)...
+    for k in range(1, len(parts)):
+
+        # Convert it to lower case for matching
+        part_lower = parts[k].lower()
+
+        # Construct the name of the parent directory and list its contents.
+        # This will raise an IOError if the file does not exist or is not a
+        # directory.
+        if k == 1:
+            basenames = os.listdir('/')
+        else:
+            basenames = cls.os_listdir('/'.join(parts[:k]))
+
+        # Find the first name that matches when ignoring case
+        found = False
+        for name in basenames:
+            if name.lower() == part_lower:
+
+                # Replace the field with the properly capitalized name
+                parts[k] = name
+                found = True
+                break
+
+    # Reconstruct the full path
+    if trailing_slash: parts.append('')
+    abspath = '/'.join(parts)
+
+    # Raise an IOError if last field was not found
+    if not found:
+        with open(abspath, 'rb') as f:
+            pass
+
+    return abspath
+
+def formatted_file_size(size):
+    order = int(math.log10(size) // 3) if size else 0
+    return '{:.3g} {}'.format(size / 1000.**order, FILE_BYTE_UNITS[order])
+
+def is_logical_path(path):
+    """Quick test returns True if this appears to be a logical path; False
+    otherwise."""
+
+    return ('/holdings/' not in path)
+
+def abspath_for_logical_path(path, cls):
+    """Absolute path derived from a logical path.
+
+    The logical path starts at the category, below the holdings/ directory. To
+    get the absolute path, we need to figure out where the holdings directory is
+    located. Note that there can be multiple drives hosting multiple holdings
+    directories."""
+
+    # Check for a valid logical path
+    parts = path.split('/')
+    if parts[0] not in cls.CATEGORIES:
+        raise ValueError('Not a logical path: ' + path)
+
+    # Use the list of preloaded holdings directories if it is not empty
+    if cls.LOCAL_PRELOADED:
+        holdings_list = cls.LOCAL_PRELOADED
+
+    elif cls.LOCAL_HOLDINGS_DIRS:
+        holdings_list = cls.LOCAL_HOLDINGS_DIRS
+
+    elif 'PDS_HOLDINGS_DIR' in os.environ:
+        holdings_list = [os.environ['PDS_HOLDINGS_DIR']]
+        cls.LOCAL_HOLDINGS_DIRS = holdings_list
+
+    # Without a preload or an environment variable, check the
+    # /Library/WebSever/Documents directory for a symlink. This only works for
+    # MacOS with the website installed, but that's OK.
+    else:
+        holdings_dirs = glob.glob('/Library/WebServer/Documents/holdings*')
+        holdings_dirs.sort()
+        holdings_list = [os.path.realpath(h) for h in holdings_dirs]
+        cls.LOCAL_HOLDINGS_DIRS = holdings_list
+
+    # With exactly one holdings/ directory, the answer is easy
+    if len(holdings_list) == 1:
+        return os.path.join(holdings_list[0], path)
+
+    # Otherwise search among the available holdings directories in order
+    for root in holdings_list:
+        abspath = os.path.join(root, path)
+        matches = cls.glob_glob(abspath)
+        if matches: return matches[0]
+
+    # File doesn't exist. Just pick one.
+    if holdings_list:
+        return os.path.join(holdings_list[0], path)
+
+    raise ValueError('No holdings directory for logical path ' + path)
+
+def selected_path_from_path(path, cls, abspaths=True):
+    """Logical path or absolute path derived from a logical or an absolute
+    path."""
+
+    if is_logical_path(path):
+        if abspaths:
+            return abspath_for_logical_path(path, cls)
+        else:
+            return path
+
+    else:
+        if abspaths:
+            return path
+        else:
+            return logical_path_from_abspath(path, cls)
 
 ##########################################################################################
 # PdsLogger support
