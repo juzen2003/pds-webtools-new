@@ -31,7 +31,6 @@ import translator
 from .general_helper import (PATH_EXISTS_CACHE_SIZE,
                              abspath_for_logical_path,
                              construct_category_list,
-                             clean_abspath,
                              clean_glob,
                              clean_join,
                              formatted_file_size,
@@ -40,12 +39,7 @@ from .general_helper import (PATH_EXISTS_CACHE_SIZE,
                              repair_case)
 from .preload_and_cache import (cache_categoriey_merged_dirs,
                                 cache_lifetime_for_class,
-                                get_permanent_values,
-                                load_volume_info)
-
-
-def cache_lifetime(arg):
-    return cache_lifetime_for_class(arg, PdsFile)
+                                preload_for_class)
 
 ##########################################################################################
 # PdsFile class
@@ -171,7 +165,7 @@ class PdsFile(object):
     DICTIONARY_CACHE_LIMIT = 200000
 
     # this cache is used if preload() is never called. No filesystem is required.
-    CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
+    CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime_for_class,
                                      limit=DICTIONARY_CACHE_LIMIT,
                                      logger=LOGGER)
 
@@ -397,236 +391,12 @@ class PdsFile(object):
         return this
 
     @classmethod
-    def preload(cls, holdings_list, port=0, clear=False, force_reload=False,
-                icon_color='blue'):
-        """Cache the top-level directories, starting from the given holdings
-        directories.
+    def preload(cls, path):
+        return preload_for_class(cls, path)
 
-        Input:
-            holdings_list       a single abslute path to a holdings directory, or
-                                else a list of absolute paths.
-            port                port to use for memcached; zero to prevent use of
-                                memcached.
-            clear               True to clear the cache before preloading.
-            force_reload        Re-load the cache regardless of whether the cache
-                                appears to contain the needed holdings.
-            icon_color          color of the icons to load from each holdings
-                                directory; default "blue".
-        """
-
-        # Convert holdings to a list of absolute paths
-        if not isinstance(holdings_list, (list,tuple)):
-            holdings_list = [holdings_list]
-
-        holdings_list = [clean_abspath(h) for h in holdings_list]
-
-        # Use cache as requested
-        if (port == 0 and cls.MEMCACHE_PORT == 0) or not HAS_PYLIBMC:
-            if not isinstance(cls.CACHE, pdscache.DictionaryCache):
-                cls.CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
-                                                     limit=cls.DICTIONARY_CACHE_LIMIT,
-                                                     logger=cls.LOGGER)
-            cls.LOGGER.info('Using local dictionary cache')
-
-        else:
-            cls.MEMCACHE_PORT = cls.MEMCACHE_PORT or port
-
-            for k in range(cls.PRELOAD_TRIES):
-                try:
-                    cls.CACHE = pdscache.MemcachedCache(cls.MEMCACHE_PORT,
-                                                        lifetime=cache_lifetime,
-                                                        logger=cls.LOGGER)
-                    cls.LOGGER.info('Connecting to PdsFile Memcache [%s]' %
-                                    cls.MEMCACHE_PORT)
-                    break
-
-                except pylibmc.Error:
-                    if k < cls.PRELOAD_TRIES - 1:
-                        cls.LOGGER.warn(('Failed to connect PdsFile Memcache [%s]; ' +
-                                        'trying again in %d sec') %
-                                        (cls.MEMCACHE_PORT, 2**k))
-                        time.sleep(2.**k)       # try then wait 1 sec, then 2 sec
-
-                    else:       # give up after three tries
-                        cls.LOGGER.error(('Failed to connect PdsFile Memcache [%s]; '+
-                                         'using dictionary instead') %  cls.MEMCACHE_PORT)
-
-                        cls.MEMCACHE_PORT = 0
-                        if not isinstance(cls.CACHE, pdscache.DictionaryCache):
-                            cls.CACHE = pdscache.DictionaryCache(
-                                            lifetime=cache_lifetime,
-                                            limit=cls.DICTIONARY_CACHE_LIMIT,
-                                            logger=cls.LOGGER
-                                        )
-
-        # Define default caching based on whether MemCache is active
-        if cls.MEMCACHE_PORT == 0:
-            cls.DEFAULT_CACHING = 'dir'
-        else:
-            cls.DEFAULT_CACHING = 'all'
-
-        # This suppresses long absolute paths in the logs
-        cls.LOGGER.add_root(holdings_list)
-
-        #### Get the current list of preloaded holdings directories and decide how
-        #### to proceed
-
-        if clear:
-            cls.CACHE.clear(block=True) # For a MemcachedCache, this will pause for any
-                                    # other thread's block, then clear, and retain
-                                    # the block until the preload is finished.
-            cls.LOCAL_PRELOADED = []
-            cls.LOGGER.info('Cache cleared')
-
-        elif force_reload:
-            cls.LOCAL_PRELOADED = []
-            cls.LOGGER.info('Forcing a complete new preload')
-            cls.CACHE.wait_and_block()
-
-        else:
-            while True:
-                cls.LOCAL_PRELOADED = cls.CACHE.get_now('$PRELOADED') or []
-
-                # Report status
-                something_is_missing = False
-                for holdings in holdings_list:
-                    if holdings in cls.LOCAL_PRELOADED:
-                        cls.LOGGER.info('Holdings are already cached', holdings)
-                    else:
-                        something_is_missing = True
-
-                if not something_is_missing:
-                    if cls.MEMCACHE_PORT:
-                        get_permanent_values(holdings_list, cls.MEMCACHE_PORT, cls)
-                        # Note that if any permanently cached values are missing,
-                        # this call will recursively clear the cache and preload
-                        # again. This reduces the chance of a corrupted cache.
-
-                    return
-
-                waited = cls.CACHE.wait_and_block()
-                if not waited:      # A wait suggests the answer might have changed,
-                                    # so try again.
-                    break
-
-                cls.CACHE.unblock()
-
-        # At this point, the cache is blocked.
-
-        # Pause the cache before proceeding--saves I/O
-        cls.CACHE.pause()       # Paused means no local changes will be flushed to the
-                            # external cache until resume() is called.
-
-        ############################################################################
-        # Interior function to recursively preload one physical directory
-        ############################################################################
-
-        def _preload_dir(pdsdir, cls):
-            if not pdsdir.isdir: return
-
-            # Log category directories as info
-            if pdsdir.is_category_dir:
-                cls.LOGGER.info('Pre-loading: ' + pdsdir.abspath)
-
-            # Log bundlesets as debug
-            elif pdsdir.is_bundleset:
-                cls.LOGGER.debug('Pre-loading: ' + pdsdir.abspath)
-
-            # Don't go deeper
-            else:
-                return
-
-            # Preloaded dirs are permanent
-            pdsdir.permanent = True
-
-            # Make recursive calls and cache
-            for basename in pdsdir.childnames:
-                try:
-                    child = pdsdir.child(basename, fix_case=False, lifetime=0)
-                    _preload_dir(child, cls)
-                except ValueError:              # Skip out-of-place files
-                    pdsdir._childnames_filled.remove(basename)
-
-        #### Fill CACHE
-
-        try:    # we will undo the pause and block in the "finally" clause below
-
-            # Create and cache permanent, category-level merged directories. These
-            # are roots of the cache tree and their list of children is merged from
-            # multiple physical directories. This makes it possible for our data
-            # sets to exist on multiple physical drives in a way that is invisible
-            # to the user.
-            for category in cls.CATEGORY_LIST:
-                cls.CACHE.set(category, cls.new_merged_dir(category), lifetime=0)
-
-            # Initialize RANKS, VOLS and category list
-            for category in cls.CATEGORY_LIST:
-                category_ = category + '/'
-                key = '$RANKS-' + category_
-                try:
-                    _ = cls.CACHE[key]
-                except KeyError:
-                    cls.CACHE.set(key, {}, lifetime=0)
-
-                key = '$VOLS-'  + category_
-                try:
-                    _ = cls.CACHE[key]
-                except KeyError:
-                    cls.CACHE.set(key, {}, lifetime=0)
-
-            # Cache all of the top-level PdsFile directories
-            for h,holdings in enumerate(holdings_list):
-
-                if holdings in cls.LOCAL_PRELOADED:
-                    cls.LOGGER.info('Pre-load not needed for ' + holdings)
-                    continue
-
-                cls.LOCAL_PRELOADED.append(holdings)
-                cls.LOGGER.info('Pre-loading ' + holdings)
-
-                # Load volume info
-                load_volume_info(holdings, cls)
-
-                # Load directories starting from here
-                holdings_ = holdings.rstrip('/') + '/'
-
-                for c in cls.CATEGORY_LIST:
-                    category_abspath = holdings_ + c
-                    if not cls.os_path_exists(category_abspath):
-                        cls.LOGGER.warn('Missing category dir: ' + category_abspath)
-                        continue
-                    if not cls.os_path_isdir(category_abspath):
-                        cls.LOGGER.warn('Not a directory, ignored: ' + category_abspath)
-
-                    # This is a physical PdsFile, but from_abspath also adds its
-                    # childnames to the list of children for the category-level
-                    # merged directory.
-                    pdsdir = cls.from_abspath(category_abspath, fix_case=False,
-                                                caching='all', lifetime=0)
-                    _preload_dir(pdsdir, cls)
-
-                # Load the icons
-                icon_path = clean_join(holdings, '_icons')
-                if os.path.exists(icon_path):
-                    icon_url = '/holdings' + (str(h) if h > 0 else '') + '/_icons'
-                    pdsviewable.load_icons(icon_path, icon_url, icon_color, cls.LOGGER)
-
-        finally:
-            cls.CACHE.set('$PRELOADED', cls.LOCAL_PRELOADED, lifetime=0)
-            cls.CACHE.resume()
-            cls.CACHE.unblock(flush=True)
-
-        cls.LOGGER.info('PdsFile preloading completed')
-
-        # Determine if the file system is case-sensitive
-        # If any physical bundle is case-insensitive, then we treat the whole file
-        # system as case-insensitive.
-        cls.FS_IS_CASE_INSENSITIVE = False
-        for holdings_dir in cls.LOCAL_PRELOADED:
-            testfile = holdings_dir.replace('/holdings', '/HoLdInGs')
-            if os.path.exists(testfile):
-                cls.FS_IS_CASE_INSENSITIVE = True
-                break
+    @classmethod
+    def cache_lifetime(cls, arg):
+        return cache_lifetime_for_class(arg, cls)
 
     @classmethod
     def new_merged_dir(cls, basename):

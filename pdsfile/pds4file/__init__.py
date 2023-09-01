@@ -3,6 +3,8 @@
 # pds4file subpackage & Pds4File subclass with PdsFile as the parent class
 ##########################################################################################
 
+import re
+
 import pdslogger
 import pdscache
 
@@ -10,10 +12,6 @@ from pdsfile import PdsFile
 from . import rules
 from pdsfile.preload_and_cache import (cache_categoriey_merged_dirs,
                                        cache_lifetime_for_class)
-import re
-
-def cache_lifetime(arg):
-    return cache_lifetime_for_class(arg, Pds4File)
 
 class Pds4File(PdsFile):
 
@@ -41,7 +39,7 @@ class Pds4File(PdsFile):
 
     # CACHE
     DICTIONARY_CACHE_LIMIT = 200000
-    CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
+    CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime_for_class,
                                      limit=DICTIONARY_CACHE_LIMIT,
                                      logger=LOGGER)
 
