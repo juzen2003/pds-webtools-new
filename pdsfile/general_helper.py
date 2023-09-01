@@ -113,7 +113,7 @@ def translate_first_for_class(trans, path, cls):
     Keyword arguments:
         trans -- a translator instance
         path  -- a file path
-        cls   -- the class calling the method
+        cls   -- the class calling the other methods inside the function
     """
 
     patterns = trans.first(path)
@@ -138,7 +138,7 @@ def translate_all_for_class(trans, path, cls):
     Keyword arguments:
         trans -- a translator instance
         path  -- a file path
-        cls   -- the class calling the method
+        cls   -- the class calling the other methods inside the function
     """
 
     patterns = trans.all(path)
@@ -167,7 +167,7 @@ def unmatched_patterns_for_class(trans, path, cls):
     Keyword arguments:
         trans -- a translator instance
         path  -- a file path
-        cls   -- the class calling the method
+        cls   -- the class calling the other methods inside the function
     """
 
     patterns = trans.all(path)
@@ -187,7 +187,7 @@ def logical_path_from_abspath(abspath, cls):
 
     Keyword arguments:
         abspath -- the abosulte path of a file
-        cls     -- the class calling the method
+        cls     -- the class calling the other methods inside the function
     """
     parts = abspath.partition('/'+cls.PDS_HOLDINGS+'/')
     if parts[1]:
@@ -240,12 +240,20 @@ def clean_glob(cls, pattern, force_case_sensitive=False):
         return results
 
 def needs_glob(pattern):
-    """True if this expression contains wildcards"""
+    """Return True if the given expression contains wildcards
+
+    Keyword arguments:
+        pattern -- expression pattern
+    """
     return '*' in pattern or '?' in pattern or '[' in pattern
 
 def repair_case(abspath, cls):
     """Return a file's absolute path with capitalization exactly as it appears
     in the file system. Raises IOError if the file is not found.
+
+    Keyword arguments:
+        abspath -- an absolute path of a file
+        cls     -- the class calling the other methods inside the function
     """
 
     trailing_slash = abspath.endswith('/')  # must preserve a trailing slash!
@@ -299,18 +307,27 @@ def formatted_file_size(size):
     return '{:.3g} {}'.format(size / 1000.**order, FILE_BYTE_UNITS[order])
 
 def is_logical_path(path):
-    """Quick test returns True if this appears to be a logical path; False
-    otherwise."""
+    """Return True if the given path appears to be a logical path; False
+    otherwise.
+
+    Keyword arguments:
+        path -- the path of a file
+    """
 
     return ('/holdings/' not in path)
 
 def abspath_for_logical_path(path, cls):
-    """Absolute path derived from a logical path.
+    """Return the absolute path derived from the given logical path.
 
     The logical path starts at the category, below the holdings/ directory. To
     get the absolute path, we need to figure out where the holdings directory is
     located. Note that there can be multiple drives hosting multiple holdings
-    directories."""
+    directories.
+
+    Keyword arguments:
+        path -- the path of a file
+        cls  -- the class calling the other methods inside the function
+    """
 
     # Check for a valid logical path
     parts = path.split('/')
@@ -354,8 +371,14 @@ def abspath_for_logical_path(path, cls):
     raise ValueError('No holdings directory for logical path ' + path)
 
 def selected_path_from_path(path, cls, abspaths=True):
-    """Logical path or absolute path derived from a logical or an absolute
-    path."""
+    """Return the logical path or absolute path derived from a logical or
+    an absolute path.
+
+    Keyword arguments:
+        path     -- the path of a file
+        cls      -- the class calling the other methods inside the function
+        abspaths -- the flag to determine if the return value is an absolute path
+    """
 
     if is_logical_path(path):
         if abspaths:
@@ -373,12 +396,21 @@ def selected_path_from_path(path, cls, abspaths=True):
 # PdsLogger support
 ##########################################################################################
 def set_logger(cls, logger=None):
-    """Set the PdsLogger."""
+    """Set the PdsLogger.
+
+    Keyword arguments:
+        logger -- the pdslogger
+        cls    -- the class with its attribute being updated
+    """
     if not logger:
         logger = pdslogger.NullLogger()
 
     cls.LOGGER = logger
 
 def set_easylogger(cls):
-    """Log all messages directly to stdout."""
+    """Log all messages directly to stdout.
+
+    Keyword arguments:
+        cls -- the class calling the other methods inside the function
+    """
     set_logger(cls, pdslogger.EasyLogger())
