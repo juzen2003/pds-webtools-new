@@ -5,7 +5,8 @@ import pdsgroup
 import pdsgrouptable
 import pdsviewable
 import pdsfile.pds3file.rules as rules
-from pdsfile.general_helper import (is_logical_path,
+from pdsfile.general_helper import (PDS_HOLDINGS_DIR,
+                                    is_logical_path,
                                     logical_path_from_abspath,
                                     repair_case,
                                     selected_path_from_path)
@@ -13,12 +14,9 @@ import pytest
 import re
 import sys
 
-from .helper import *
-
-try:
-    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
-except KeyError: # pragma: no cover
-    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+from .helper import (instantiate_target_pdsfile,
+                     get_pdsfiles,
+                     get_pdsgroups)
 
 PDS_PDSDATA_PATH = PDS_HOLDINGS_DIR[:PDS_HOLDINGS_DIR.index('holdings')]
 

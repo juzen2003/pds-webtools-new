@@ -6,18 +6,14 @@
 import datetime
 import os
 import pdsfile.pds3file as pds3file
+from pdsfile.general_helper import PDS_HOLDINGS_DIR
 import pdsgroup
 import pdsgrouptable
 import pdsviewable
 import pytest
 
-from .helper import instantiate_target_pdsfile, get_pdsfiles
-
-# Check environment variables or else look in the default places
-try:
-    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
-except KeyError: # pragma: no cover
-    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+from .helper import (instantiate_target_pdsfile,
+                     get_pdsfiles)
 
 try:
     PDS_TESTING_ROOT = PDS_HOLDINGS_DIR[:PDS_HOLDINGS_DIR.rindex('pdsdata')]

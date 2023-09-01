@@ -11,15 +11,6 @@ import pytest
 
 from .helper import *
 
-# Check environment variables or else look in the default places
-# try:
-#     PDS4_HOLDINGS_DIR = os.environ['PDS4_HOLDINGS_DIR']
-# except KeyError: # pragma: no cover
-#     # TODO: update this when we know the actual path of pds4 holdings on the webserver
-#     PDS4_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
-
-# PDS4_BUNDLES_DIR = f'{PDS4_HOLDINGS_DIR}/bundles'
-
 ##########################################################################################
 # Blackbox tests for pds4file.py
 ##########################################################################################

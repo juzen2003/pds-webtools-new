@@ -5,15 +5,11 @@
 
 import os
 import pdsfile.pds3file as pds3file
+from pdsfile.general_helper import PDS_HOLDINGS_DIR
 import pdsviewable
 import pytest
 
 from .helper import instantiate_target_pdsfile
-
-try:
-    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
-except KeyError: # pragma: no cover
-    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 ##########################################################################################
 # Blackbox test for functions & properties in PdsViewSet class

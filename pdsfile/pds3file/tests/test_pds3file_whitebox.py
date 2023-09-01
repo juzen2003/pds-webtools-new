@@ -5,17 +5,14 @@
 
 import os
 import pdsfile.pds3file as pds3file
+from pdsfile.general_helper import PDS_HOLDINGS_DIR
 import pdsviewable
 import pdsgroup
 import pytest
 import re
 
-from .helper import *
-
-try:
-    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
-except KeyError: # pragma: no cover
-    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+from .helper import (instantiate_target_pdsfile,
+                     get_pdsfiles)
 
 PDS_PDSDATA_PATH = PDS_HOLDINGS_DIR[:PDS_HOLDINGS_DIR.index('holdings')]
 
