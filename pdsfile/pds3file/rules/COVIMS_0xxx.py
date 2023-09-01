@@ -3,6 +3,7 @@
 ##########################################################################################
 
 import pdsfile.pds3file as pds3file
+from pdsfile.general_helper import abspath_for_logical_path
 import translator
 import re
 
@@ -328,7 +329,7 @@ class COVIMS_0xxx(pds3file.Pds3File):
 
         # Search using patterns
         paths = opus_id_to_primary_logical_path.all(opus_id)
-        patterns = [pds3file.abspath_for_logical_path(p, pds3file.Pds3File) for p in paths]
+        patterns = [abspath_for_logical_path(p, pds3file.Pds3File) for p in paths]
         matches = []
         for pattern in patterns:
             abspaths = pds3file.Pds3File.glob_glob(pattern, force_case_sensitive=True)

@@ -3,9 +3,13 @@
 # pds3file subpackage & Pds3File subclass with PdsFile as the parent class
 ##########################################################################################
 
-from pdsfile import *
+import pdslogger
+import pdscache
+
+from pdsfile import PdsFile
 from . import rules
-from pdsfile.preload_and_cache import cache_lifetime_for_class
+from pdsfile.preload_and_cache import (cache_categoriey_merged_dirs,
+                                       cache_lifetime_for_class)
 
 def cache_lifetime(arg):
     return cache_lifetime_for_class(arg, Pds3File)
@@ -23,6 +27,9 @@ class Pds3File(PdsFile):
     CACHE = pdscache.DictionaryCache(lifetime=cache_lifetime,
                                      limit=DICTIONARY_CACHE_LIMIT,
                                      logger=LOGGER)
+
+    LOCAL_PRELOADED = []
+    SUBCLASSES = {}
 
     # Override the rules
     DESCRIPTION_AND_ICON = rules.DESCRIPTION_AND_ICON
@@ -102,7 +109,6 @@ class Pds3File(PdsFile):
 ##########################################################################################
 # Initialize the global registry of subclasses
 ##########################################################################################
-
 Pds3File.SUBCLASSES['default'] = Pds3File
 
 ##########################################################################################
@@ -141,3 +147,5 @@ except AttributeError:
     pass                    # This occurs when running pytests on individual
                             # rule subclasses, where pdsfile can be imported
                             # recursively.
+
+cache_categoriey_merged_dirs(Pds3File)

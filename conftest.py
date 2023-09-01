@@ -10,7 +10,7 @@ import pdsfile.pds4file as pds4file
 from pdsfile.general_helper import (PDS4_HOLDINGS_DIR,
                                     PDS_HOLDINGS_DIR,
                                     set_logger)
-from pdsfile.preload_and_cache import (use_shelves_only)
+from pdsfile.preload_and_cache import use_shelves_only
 import pdslogger
 import pytest
 

@@ -6,6 +6,7 @@ import pdsgrouptable
 import pdsviewable
 import pdsfile.pds3file.rules as rules
 from pdsfile.general_helper import (is_logical_path,
+                                    logical_path_from_abspath,
                                     repair_case,
                                     selected_path_from_path)
 import pytest
@@ -62,6 +63,7 @@ class TestPds3FileBlackBox:
     )
     def test_subclasses_dict(self, expected):
         res_dict = pds3file.Pds3File.SUBCLASSES
+        print(res_dict.keys())
         assert len(res_dict) == len(expected), "Mismatch on the list of SUBCLASSES"
         for key in res_dict:
             current_class = res_dict[key]
@@ -3214,7 +3216,7 @@ class TestPds3FileHelperBlackBox:
     )
     def test_logical_path_from_abspath(self, input_path, expected):
         try:
-            res = pds3file.logical_path_from_abspath(input_path, pds3file.Pds3File)
+            res = logical_path_from_abspath(input_path, pds3file.Pds3File)
             assert res == expected
         except ValueError as err:
             assert True # Not an absolute path

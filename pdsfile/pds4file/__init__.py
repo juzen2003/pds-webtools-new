@@ -3,9 +3,14 @@
 # pds4file subpackage & Pds4File subclass with PdsFile as the parent class
 ##########################################################################################
 
-from pdsfile import *
+import pdslogger
+import pdscache
+
+from pdsfile import PdsFile
 from . import rules
-from pdsfile.preload_and_cache import cache_lifetime_for_class
+from pdsfile.preload_and_cache import (cache_categoriey_merged_dirs,
+                                       cache_lifetime_for_class)
+import re
 
 def cache_lifetime(arg):
     return cache_lifetime_for_class(arg, Pds4File)
@@ -64,6 +69,9 @@ class Pds4File(PdsFile):
     FILESPEC_TO_VOLSET = rules.FILESPEC_TO_VOLSET
     FILESPEC_TO_BUNDLESET = FILESPEC_TO_VOLSET
 
+    LOCAL_PRELOADED = []
+    SUBCLASSES = {}
+
     def __init__(self):
         super().__init__()
 
@@ -81,7 +89,6 @@ class Pds4File(PdsFile):
 ##########################################################################################
 # Initialize the global registry of subclasses
 ##########################################################################################
-
 Pds4File.SUBCLASSES['default'] = Pds4File
 
 ##########################################################################################
@@ -99,3 +106,6 @@ except AttributeError:
     pass                    # This occurs when running pytests on individual
                             # rule subclasses, where pdsfile can be imported
                             # recursively.
+
+
+cache_categoriey_merged_dirs(Pds4File)
