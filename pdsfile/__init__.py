@@ -7,15 +7,11 @@ import bisect
 import datetime
 import fnmatch
 import functools
-import glob
-import math
 import numbers
 import os
 import pickle
 import PIL
-import random
 import re
-import sys
 import time
 
 # Import module for memcached if possible, otherwise flag
@@ -32,7 +28,6 @@ import pdstable
 import pdsparser
 import translator
 
-from . import cfg
 from .general_helper import (PATH_EXISTS_CACHE_SIZE,
                              abspath_for_logical_path,
                              construct_category_list,
@@ -48,91 +43,9 @@ from .preload_and_cache import (cache_categoriey_merged_dirs,
                                 get_permanent_values,
                                 load_volume_info)
 
-##########################################################################################
-# Configuration
-##########################################################################################
-VIEWABLE_VOLTYPES = ['previews', 'diagrams']
-
-VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'tif', 'tiff', 'jpeg', 'jpeg_small'])
-DATAFILE_EXTS = set(['dat', 'img', 'cub', 'qub', 'fit', 'fits'])
-
-CATEGORY_REGEX      = re.compile(r'^(|checksums\-)(|archives\-)(\w+)$')
-CATEGORY_REGEX_I    = re.compile(CATEGORY_REGEX.pattern, re.I)
-
-VIEWABLE_ANCHOR_REGEX = re.compile(r'(.*/\w+)_[a-z]+\.(jpg|png)')
-# path/A1234566_thumb.jpg -> path/A1234566
-
-LOGFILE_TIME_FMT = '%Y-%m-%dT%H-%M-%S'
-
-PLAIN_TEXT_EXTS = set(['lbl', 'txt', 'asc', 'tab', 'cat', 'fmt', 'f', 'c',
-                       'cpp', 'pro', 'for', 'f77', 'py', 'inc', 'h', 'sh',
-                       'idl', 'csh', 'tf', 'ti', 'tls', 'lsk', 'tsc'])
-
-MIME_TYPES_VS_EXT = {
-    'fit'       : 'image/fits',
-    'fits'      : 'image/fits',
-    'jpg'       : 'image/jpg',
-    'jpeg'      : 'image/jpg',
-    'jpeg_small': 'image/jpg',
-    'tif'       : 'image/tiff',
-    'tiff'      : 'image/tiff',
-    'png'       : 'image/png',
-    'bmp'       : 'image/bmp',
-    'gif'       : 'image/*',
-    'csv'       : 'text/csv',
-    'pdf'       : 'application/pdf',
-    'xml'       : 'text/xml',
-    'rtf'       : 'text/rtf',
-    'htm'       : 'text/html',
-    'html'      : 'text/html',
-}
-
-# Key is (voltype, is_bundleset). Return is default icon_type.
-DEFAULT_HIGH_LEVEL_ICONS = {
-  ('volumes/',    True ): 'VOLDIR',
-  ('volumes/',    False): 'VOLUME',
-  ('calibrated/', True ): 'DATADIR',
-  ('calibrated/', False): 'DATADIR',
-  ('metadata/',   True ): 'INDEXDIR',
-  ('metadata/',   False): 'INDEXDIR',
-  ('previews/',   True ): 'BROWDIR',
-  ('previews/',   False): 'BROWDIR',
-  ('diagrams/',   True ): 'DIAGDIR',
-  ('diagrams/',   False): 'DIAGDIR',
-  ('documents/',  True ): 'INFODIR',
-  ('documents/',  False): 'INFO',
-  ('archives-volumes/',    True ): 'TARDIR',
-  ('archives-volumes/',    False): 'TARBALL',
-  ('archives-calibrated/', True ): 'TARDIR',
-  ('archives-calibrated/', False): 'TARBALL',
-  ('archives-metadata/',   True ): 'TARDIR',
-  ('archives-metadata/',   False): 'TARBALL',
-  ('archives-previews/',   True ): 'TARDIR',
-  ('archives-previews/',   False): 'TARBALL',
-  ('archives-diagrams/',   True ): 'TARDIR',
-  ('archives-diagrams/',   False): 'TARBALL',
-  ('archives-documents/',  True ): 'TARDIR',
-  ('archives-documents/',  False): 'TARBALL',
-}
-
-
-# Directory prefix and file suffix for shelf files
-SHELF_PATH_INFO = {
-    'index': ('_indexshelf-', '_index'),
-    'info' : ('_infoshelf-', '_info'),
-    'link' : ('_linkshelf-', '_links'),
-}
 
 def cache_lifetime(arg):
         return cache_lifetime_for_class(arg, PdsFile)
-
-##########################################################################################
-# PdsLogger support
-##########################################################################################
-
-
-
-
 
 ##########################################################################################
 # PdsFile class
@@ -140,7 +53,105 @@ def cache_lifetime(arg):
 
 class PdsFile(object):
 
-    # Class variables
+    # Configuration
+    VOLTYPES = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews',
+                'documents', 'bundles']
+    VIEWABLE_VOLTYPES = ['previews', 'diagrams']
+
+    VIEWABLE_EXTS = set(['jpg', 'png', 'gif', 'tif', 'tiff', 'jpeg', 'jpeg_small'])
+    DATAFILE_EXTS = set(['dat', 'img', 'cub', 'qub', 'fit', 'fits'])
+
+    # REGEX
+    BUNDLESET_REGEX        = re.compile(r'^([A-Z][A-Z0-9x]{1,5}_[0-9x]{3}x)$')
+    BUNDLESET_REGEX_I      = re.compile(BUNDLESET_REGEX.pattern, re.I)
+    BUNDLESET_PLUS_REGEX   = re.compile(BUNDLESET_REGEX.pattern[:-1] +
+                                        r'(_v[0-9]+\.[0-9]+\.[0-9]+|'+
+                                        r'_v[0-9]+\.[0-9]+|_v[0-9]+|'+
+                                        r'_in_prep|_prelim|_peer_review|'+
+                                        r'_lien_resolution|)' +
+                                        r'((|_calibrated|_diagrams|_metadata|_previews)' +
+                                        r'(|_md5\.txt|\.tar\.gz))$')
+    BUNDLESET_PLUS_REGEX_I = re.compile(BUNDLESET_PLUS_REGEX.pattern, re.I)
+
+    BUNDLENAME_REGEX       = re.compile(r'^([A-Z][A-Z0-9]{1,5}_(?:[0-9]{4}))$')
+    BUNDLENAME_REGEX_I     = re.compile(BUNDLENAME_REGEX.pattern, re.I)
+    BUNDLENAME_PLUS_REGEX  = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
+                                        r'(|_[a-z]+)(|_md5\.txt|\.tar\.gz)$')
+    BUNDLENAME_PLUS_REGEX_I = re.compile(BUNDLENAME_PLUS_REGEX.pattern, re.I)
+    BUNDLENAME_VERSION     = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
+                                        r'(_v[0-9]+\.[0-9]+\.[0-9]+|'+
+                                        r'_v[0-9]+\.[0-9]+|_v[0-9]+|'+
+                                        r'_in_prep|_prelim|_peer_review|'+
+                                        r'_lien_resolution)$')
+    BUNDLENAME_VERSION_I   = re.compile(BUNDLENAME_VERSION.pattern, re.I)
+
+    CATEGORY_REGEX      = re.compile(r'^(|checksums\-)(|archives\-)(\w+)$')
+    CATEGORY_REGEX_I    = re.compile(CATEGORY_REGEX.pattern, re.I)
+
+    VIEWABLE_ANCHOR_REGEX = re.compile(r'(.*/\w+)_[a-z]+\.(jpg|png)')
+    # path/A1234566_thumb.jpg -> path/A1234566
+
+    LOGFILE_TIME_FMT = '%Y-%m-%dT%H-%M-%S'
+
+    PLAIN_TEXT_EXTS = set(['lbl', 'txt', 'asc', 'tab', 'cat', 'fmt', 'f', 'c',
+                        'cpp', 'pro', 'for', 'f77', 'py', 'inc', 'h', 'sh',
+                        'idl', 'csh', 'tf', 'ti', 'tls', 'lsk', 'tsc'])
+
+    MIME_TYPES_VS_EXT = {
+        'fit'       : 'image/fits',
+        'fits'      : 'image/fits',
+        'jpg'       : 'image/jpg',
+        'jpeg'      : 'image/jpg',
+        'jpeg_small': 'image/jpg',
+        'tif'       : 'image/tiff',
+        'tiff'      : 'image/tiff',
+        'png'       : 'image/png',
+        'bmp'       : 'image/bmp',
+        'gif'       : 'image/*',
+        'csv'       : 'text/csv',
+        'pdf'       : 'application/pdf',
+        'xml'       : 'text/xml',
+        'rtf'       : 'text/rtf',
+        'htm'       : 'text/html',
+        'html'      : 'text/html',
+    }
+
+    # Key is (voltype, is_bundleset). Return is default icon_type.
+    DEFAULT_HIGH_LEVEL_ICONS = {
+    ('volumes/',    True ): 'VOLDIR',
+    ('volumes/',    False): 'VOLUME',
+    ('calibrated/', True ): 'DATADIR',
+    ('calibrated/', False): 'DATADIR',
+    ('metadata/',   True ): 'INDEXDIR',
+    ('metadata/',   False): 'INDEXDIR',
+    ('previews/',   True ): 'BROWDIR',
+    ('previews/',   False): 'BROWDIR',
+    ('diagrams/',   True ): 'DIAGDIR',
+    ('diagrams/',   False): 'DIAGDIR',
+    ('documents/',  True ): 'INFODIR',
+    ('documents/',  False): 'INFO',
+    ('archives-volumes/',    True ): 'TARDIR',
+    ('archives-volumes/',    False): 'TARBALL',
+    ('archives-calibrated/', True ): 'TARDIR',
+    ('archives-calibrated/', False): 'TARBALL',
+    ('archives-metadata/',   True ): 'TARDIR',
+    ('archives-metadata/',   False): 'TARBALL',
+    ('archives-previews/',   True ): 'TARDIR',
+    ('archives-previews/',   False): 'TARBALL',
+    ('archives-diagrams/',   True ): 'TARDIR',
+    ('archives-diagrams/',   False): 'TARBALL',
+    ('archives-documents/',  True ): 'TARDIR',
+    ('archives-documents/',  False): 'TARBALL',
+    }
+
+
+    # Directory prefix and file suffix for shelf files
+    SHELF_PATH_INFO = {
+        'index': ('_indexshelf-', '_index'),
+        'info' : ('_infoshelf-', '_info'),
+        'link' : ('_linkshelf-', '_links'),
+    }
+
     PDS_HOLDINGS = 'holdings'
     BUNDLE_DIR_NAME = 'bundles'
 
@@ -170,8 +181,6 @@ class PdsFile(object):
     PRELOAD_TRIES = 3
 
     # CATEGORIES contains the name of every subdirectory of holdings/
-    VOLTYPES = ['volumes', 'calibrated', 'diagrams', 'metadata', 'previews',
-                'documents', 'bundles']
     CATEGORY_LIST = construct_category_list(VOLTYPES)
     CATEGORIES = set(CATEGORY_LIST)
 
@@ -386,10 +395,6 @@ class PdsFile(object):
             this.interior        = self.interior
 
         return this
-
-    # @classmethod
-    # def cache_lifetime(cls, arg):
-    #     return cache_lifetime_for_class(arg, cls)
 
     @classmethod
     def preload(cls, holdings_list, port=0, clear=False, force_reload=False,
@@ -841,7 +846,7 @@ class PdsFile(object):
         if cls.SHELVES_ONLY and 'holdings/documents' not in abspath:
             try:
                 (shelf_abspath,
-                 key) = PdsFile.shelf_path_and_key_for_abspath(abspath, 'info')
+                 key) = cls.shelf_path_and_key_for_abspath(abspath, 'info')
 
                 if key:
                     shelf = cls._get_shelf(shelf_abspath,
@@ -895,7 +900,7 @@ class PdsFile(object):
         if cls.SHELVES_ONLY:
             try:
                 (shelf_abspath,
-                 key) = PdsFile.shelf_path_and_key_for_abspath(abspath, 'info')
+                 key) = cls.shelf_path_and_key_for_abspath(abspath, 'info')
 
                 if key:
                     shelf = cls._get_shelf(shelf_abspath,
@@ -946,7 +951,7 @@ class PdsFile(object):
         if cls.SHELVES_ONLY:
             try:
                 (shelf_abspath,
-                 key) = PdsFile.shelf_path_and_key_for_abspath(abspath, 'info')
+                 key) = cls.shelf_path_and_key_for_abspath(abspath, 'info')
 
                 shelf = cls._get_shelf(shelf_abspath,
                                            log_missing_file=False)
@@ -1094,8 +1099,7 @@ class PdsFile(object):
         # Find the shelf file(s) if any
         abspath = abspath.rstrip('/')
         try:
-            (pattern,
-             key) = PdsFile.shelf_path_and_key_for_abspath(abspath, 'info')
+            (pattern, key) = cls.shelf_path_and_key_for_abspath(abspath, 'info')
         except ValueError:
             # For a category-level holdings dir, this might still work
             if '/holdings/' in abspath:
@@ -1204,6 +1208,8 @@ class PdsFile(object):
     def isdir(self):
         """True if the file is a directory."""
 
+        cls = type(self)
+
         if self._isdir_filled is not None:
             return self._isdir_filled
 
@@ -1212,7 +1218,7 @@ class PdsFile(object):
         elif self.abspath is None:
             self._isdir_filled = False
         else:
-            self._isdir_filled = PdsFile.os_path_isdir(self.abspath)
+            self._isdir_filled = cls.os_path_isdir(self.abspath)
 
         self._recache()
         return self._isdir_filled
@@ -1736,7 +1742,7 @@ class PdsFile(object):
             if (icon_type is None and
                 self.basename not in cls.EXTRA_README_BASENAMES):
                     key = (self.category_, self.is_bundleset)
-                    icon_type = DEFAULT_HIGH_LEVEL_ICONS.get(key, None)
+                    icon_type = cls.DEFAULT_HIGH_LEVEL_ICONS.get(key, None)
 
             if icon_type is None:
                 pair = self.DESCRIPTION_AND_ICON.first(self.logical_path)
@@ -1773,14 +1779,16 @@ class PdsFile(object):
         if self._mime_type_filled is not None:
             return self._mime_type_filled
 
+        cls = type(self)
+
         ext = self.extension[1:].lower()
 
         if self.isdir:
             self._mime_type_filled = ''
-        elif ext in PLAIN_TEXT_EXTS:
+        elif ext in cls.PLAIN_TEXT_EXTS:
             self._mime_type_filled = 'text/plain'
-        elif ext in MIME_TYPES_VS_EXT:
-            self._mime_type_filled = MIME_TYPES_VS_EXT[ext]
+        elif ext in cls.MIME_TYPES_VS_EXT:
+            self._mime_type_filled = cls.MIME_TYPES_VS_EXT[ext]
         else:
             self._mime_type_filled = ''
 
@@ -2474,10 +2482,12 @@ class PdsFile(object):
         key to use within that file. If the shelf info does not exist, return a
         pair of empty strings."""
 
+        cls = type(self)
+
         if self._infoshelf_path_and_key is None:
             try:
                 self._infoshelf_path_and_key = \
-                    PdsFile.shelf_path_and_key_for_abspath(self.abspath, 'info')
+                    cls.shelf_path_and_key_for_abspath(self.abspath, 'info')
             except:
                 self._infoshelf_path_and_key = ('', '')
 
@@ -2598,6 +2608,8 @@ class PdsFile(object):
         PdsViewSets are available, they can be selected by name; "default" is
         assumed."""
 
+        cls = type(self)
+
         if not self.exists: return None
 
         if (self._all_viewsets_filled is not None and
@@ -2623,7 +2635,7 @@ class PdsFile(object):
 
             # Just use the first set of abspaths if there is more than one
             if abspaths:
-                match = VIEWABLE_ANCHOR_REGEX.fullmatch(abspaths[0])
+                match = cls.VIEWABLE_ANCHOR_REGEX.fullmatch(abspaths[0])
                 if match:
                     anchor = match.group(1)
                     abspaths = [p for p in abspaths if p.startswith(anchor)]
@@ -2638,7 +2650,7 @@ class PdsFile(object):
         if self.isdir:
             basenames = [b for b in self.childnames
                          if os.path.splitext(b)[1][1:].lower() in
-                            (VIEWABLE_EXTS | DATAFILE_EXTS)]
+                            (cls.VIEWABLE_EXTS | cls.DATAFILE_EXTS)]
             if len(basenames) > 20:     # Stop after 20 files max
                 basenames = basenames[:20]
 
@@ -2998,7 +3010,7 @@ class PdsFile(object):
             if self.bundleset:
                 class_key = self.bundleset
             elif self.category_:
-                matchobj = cfg.BUNDLESET_PLUS_REGEX_I.match(basename)
+                matchobj = cls.BUNDLESET_PLUS_REGEX_I.match(basename)
                 if matchobj is None:
                     raise ValueError('Illegal bundle set directory "%s": %s' %
                                      (basename, self.logical_path))
@@ -3032,7 +3044,7 @@ class PdsFile(object):
                     return this._complete(must_exist, caching, lifetime)
 
                 # Handle bundle name
-                matchobj = cfg.BUNDLENAME_PLUS_REGEX_I.match(basename)
+                matchobj = cls.BUNDLENAME_PLUS_REGEX_I.match(basename)
                 if matchobj:
                     this.bundlename_ = basename + '/'
                     this.bundlename  = matchobj.group(1)
@@ -3050,7 +3062,7 @@ class PdsFile(object):
             if self.category_:
 
                 # Handle bundle set and suffix
-                matchobj = cfg.BUNDLESET_PLUS_REGEX_I.match(basename)
+                matchobj = cls.BUNDLESET_PLUS_REGEX_I.match(basename)
                 if matchobj is None:
                     raise ValueError('Illegal bundle set directory "%s": %s' %
                                      (basename, this.logical_path))
@@ -3092,7 +3104,7 @@ class PdsFile(object):
 
                 # Handle voltype and category
                 this.category_ = basename + '/'
-                matchobj = CATEGORY_REGEX_I.match(basename)
+                matchobj = cls.CATEGORY_REGEX_I.match(basename)
                 if matchobj is None:
                     raise ValueError('Invalid category "%s": %s' %
                                      (basename, this.logical_path))
@@ -3466,7 +3478,7 @@ class PdsFile(object):
             # Parse the next part of the pseudo-path as if it is a bundleset
             # Parts are (bundleset, version_suffix, other_suffix, extension)
             # Example: COISS_0xxx_v1_md5.txt -> (COISS_0xxx, v1, _md5, .txt)
-            matchobj = cfg.BUNDLESET_PLUS_REGEX_I.match(parts[0])
+            matchobj = cls.BUNDLESET_PLUS_REGEX_I.match(parts[0])
             if matchobj:
                 subparts = matchobj.group(1).partition('_')
                 this.bundleset = subparts[0].upper() + '_' + subparts[2].lower()
@@ -3502,7 +3514,7 @@ class PdsFile(object):
             # Parts are (bundlename, suffix, extension)
             # Example: COISS_2001_previews_md5.txt -> (COISS_2001,
             #                                          _previews_md5, .txt)
-            matchobj = cfg.BUNDLENAME_PLUS_REGEX_I.match(parts[0])
+            matchobj = cls.BUNDLENAME_PLUS_REGEX_I.match(parts[0])
             if matchobj:
                 this.bundlename = matchobj.group(1).upper()
 
@@ -3533,7 +3545,7 @@ class PdsFile(object):
             # Parse the next part of the pseudo-path as if it is a bundlename
             # Parts are (bundlename, version)
             # Example: "VGISS_5101_peer_review" -> (VGISS_5101, _peer_review)
-            matchobj = cfg.BUNDLENAME_VERSION_I.match(parts[0])
+            matchobj = cls.BUNDLENAME_VERSION_I.match(parts[0])
             if matchobj:
                 this.bundlename = matchobj.group(1).upper()
                 this.suffix = matchobj.group(2).lower()
@@ -4266,7 +4278,9 @@ class PdsFile(object):
             raise ValueError('No shelf files for checksums: ' +
                              self.logical_path)
 
-        (dir_prefix, file_suffix) = SHELF_PATH_INFO[shelf_type]
+        cls = type(self)
+
+        (dir_prefix, file_suffix) = cls.SHELF_PATH_INFO[shelf_type]
 
         if self.archives_:
             if not self.bundleset_:
@@ -4428,8 +4442,8 @@ class PdsFile(object):
         shelf = cls._get_shelf(shelf_path)
         return shelf[key]
 
-    @staticmethod
-    def shelf_path_and_key_for_abspath(abspath, shelf_type='info'):
+    @classmethod
+    def shelf_path_and_key_for_abspath(cls, abspath, shelf_type='info'):
         """The absolute path to the shelf file associated with this file path.
         Also return the key for indexing into the shelf.
 
@@ -4442,7 +4456,7 @@ class PdsFile(object):
         if logical_path.startswith('checksums'):
             raise ValueError('No shelf files for checksums: ' + logical_path)
 
-        (dir_prefix, file_suffix) = SHELF_PATH_INFO[shelf_type]
+        (dir_prefix, file_suffix) = cls.SHELF_PATH_INFO[shelf_type]
 
         # For archive files, the shelf is associated with the bundleset
         if logical_path.startswith('archives'):
@@ -4534,6 +4548,8 @@ class PdsFile(object):
         The file name is [dir/]category/bundleset/bundlename_suffix_time[_task].log
         """
 
+        cls = type(self)
+
         # This option provides for a temporary override of the default log root
         if place == 'default':
             temporary_log_root = PdsFile.LOG_ROOT_
@@ -4555,7 +4571,7 @@ class PdsFile(object):
         if suffix:
             parts += ['_', suffix.lstrip('_')]  # exactly one "_" before suffix
 
-        timetag = datetime.datetime.now().strftime(LOGFILE_TIME_FMT)
+        timetag = datetime.datetime.now().strftime(cls.LOGFILE_TIME_FMT)
         parts += ['_', timetag]
 
         if task:
@@ -4570,6 +4586,8 @@ class PdsFile(object):
 
         The file name is [dir/]category/bundleset_suffix_time[_task].log.
         """
+
+        cls = type(self)
 
         # This option provides for a temporary override of the default log root
         if place == 'default':
@@ -4592,7 +4610,7 @@ class PdsFile(object):
         if suffix:
             parts += ['_', suffix.lstrip('_')]  # exactly one "_" before suffix
 
-        timetag = datetime.datetime.now().strftime(LOGFILE_TIME_FMT)
+        timetag = datetime.datetime.now().strftime(cls.LOGFILE_TIME_FMT)
         parts += ['_', timetag]
 
         if task:
@@ -4610,6 +4628,8 @@ class PdsFile(object):
 
         if not self.is_index:
             raise ValueError('Not an index file: ' + self.logical_path)
+
+        cls = type(self)
 
         # This option provides for a temporary override of the default log root
         if place == 'default':
@@ -4629,7 +4649,7 @@ class PdsFile(object):
 
         parts += [self.logical_path.rpartition('.')[0]]
 
-        timetag = datetime.datetime.now().strftime(LOGFILE_TIME_FMT)
+        timetag = datetime.datetime.now().strftime(cls.LOGFILE_TIME_FMT)
         parts += ['_', timetag]
 
         if task:
@@ -4649,19 +4669,21 @@ class PdsFile(object):
         Default behavior is to split a file at first period; split a bundle
         set name before the suffix. Can be overridden."""
 
+        cls = type(self)
+
         if basename == '':
             basename = self.basename
 
         if self.SPLIT_RULES is None:
             return basename
         # Special case: bundleset[_...], bundleset[_...]_md5.txt, bundleset[_...].tar.gz
-        matchobj = cfg.BUNDLESET_PLUS_REGEX.match(basename)
+        matchobj = cls.BUNDLESET_PLUS_REGEX.match(basename)
         if matchobj is not None:
             return (matchobj.group(1), matchobj.group(2) + matchobj.group(3),
                     matchobj.group(4))
 
         # Special case: bundlename[_...]_md5.txt, bundlename[_...].tar.gz
-        matchobj = cfg.BUNDLENAME_PLUS_REGEX.match(basename)
+        matchobj = cls.BUNDLENAME_PLUS_REGEX.match(basename)
         if matchobj is not None:
             test = self.SPLIT_RULES.first(basename) # a split rule overrides
                                                     # the default behavior
@@ -4682,27 +4704,31 @@ class PdsFile(object):
         """True if this basename is viewable. Override if viewable files can
         have extensions other than the usual set (.png, .jpg, etc.)."""
 
+        cls = type(self)
+
         if basename is None:
             basename = self.basename
 
         parts = basename.rpartition('.')
         if parts[1] != '.': return False
 
-        return (parts[2].lower() in VIEWABLE_EXTS)
+        return (parts[2].lower() in cls.VIEWABLE_EXTS)
 
     def sort_basenames(self, basenames, labels_after=None, dirs_first=None,
                              dirs_last=None, info_first=None):
         """Sort basenames, including additional options. Input None for
         defaults."""
 
+        cls = type(self)
+
         def modified_sort_key(basename):
 
             # Volumes of the same name sort by decreasing version number
-            matchobj = cfg.BUNDLESET_PLUS_REGEX_I.match(basename)
+            matchobj = cls.BUNDLESET_PLUS_REGEX_I.match(basename)
             if matchobj is not None:
                 splits = matchobj.groups()
                 parts = [splits[0],
-                         -PdsFile.version_info(splits[1])[0],
+                         -cls.version_info(splits[1])[0],
                          matchobj.group(2),
                          matchobj.group(3)]
             else:
@@ -4717,7 +4743,7 @@ class PdsFile(object):
                 parts[3:] = [self.basename_is_label(basename)] + parts[3:]
 
             if dirs_first or dirs_last:
-                isdir = PdsFile.os_path_isdir(clean_join(self.abspath,
+                isdir = cls.os_path_isdir(clean_join(self.abspath,
                                                           basename))
                 if dirs_first:
                     # If this is a directory, put False in front of the sort key
@@ -5321,171 +5347,3 @@ PdsFile.SUBCLASSES['default'] = PdsFile
 #     if category not in cls.CACHE:
 #         cls.CACHE.set(category, PdsFile.new_merged_dir(category), lifetime=0)
 cache_categoriey_merged_dirs(PdsFile)
-
-##########################################################################################
-# Support functions
-##########################################################################################
-
-# def _clean_abspath(path):
-#     abspath = os.path.abspath(path)
-#     if os.sep == '\\':
-#         abspath = abspath.replace('\\', '/')
-#     return abspath
-
-# @functools.lru_cache(maxsize=_GLOB_CACHE_SIZE)
-# def _clean_glob(cls, pattern, force_case_sensitive=False):
-#     results = glob.glob(pattern)
-#     if os.sep == '\\':
-#         results = [x.replace('\\', '/') for x in matches]
-
-#     if force_case_sensitive and cls.FS_IS_CASE_INSENSITIVE:
-#         filtered_results = []
-#         for result in results:
-#             result = repair_case(result)
-#             if fnmatch.fnmatchcase(result, pattern):
-#                 filtered_results.append(result)
-
-#         return filtered_results
-
-#     else:
-#         return results
-
-# def needs_glob(pattern):
-#     """True if this expression contains wildcards"""
-#     return '*' in pattern or '?' in pattern or '[' in pattern
-
-# def repair_case(abspath):
-#     """Return a file's absolute path with capitalization exactly as it appears
-#     in the file system. Raises IOError if the file is not found.
-#     """
-
-#     trailing_slash = abspath.endswith('/')  # must preserve a trailing slash!
-#     abspath = _clean_abspath(abspath)
-
-#     # Fields are separated by slashes
-#     parts = abspath.split('/')
-#     if parts[-1] == '':
-#         parts = parts[:-1]      # Remove trailing slash
-
-#     # On Unix, parts[0] is always '' so no need to check case
-#     # On Windows, this skips over the name of the drive
-
-#     # For each subsequent field (between slashes)...
-#     for k in range(1, len(parts)):
-
-#         # Convert it to lower case for matching
-#         part_lower = parts[k].lower()
-
-#         # Construct the name of the parent directory and list its contents.
-#         # This will raise an IOError if the file does not exist or is not a
-#         # directory.
-#         if k == 1:
-#             basenames = os.listdir('/')
-#         else:
-#             basenames = PdsFile.os_listdir('/'.join(parts[:k]))
-
-#         # Find the first name that matches when ignoring case
-#         found = False
-#         for name in basenames:
-#             if name.lower() == part_lower:
-
-#                 # Replace the field with the properly capitalized name
-#                 parts[k] = name
-#                 found = True
-#                 break
-
-#     # Reconstruct the full path
-#     if trailing_slash: parts.append('')
-#     abspath = '/'.join(parts)
-
-#     # Raise an IOError if last field was not found
-#     if not found:
-#         with open(abspath, 'rb') as f:
-#             pass
-
-#     return abspath
-
-# FILE_BYTE_UNITS = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-
-# def formatted_file_size(size):
-#     order = int(math.log10(size) // 3) if size else 0
-#     return '{:.3g} {}'.format(size / 1000.**order, FILE_BYTE_UNITS[order])
-
-# def is_logical_path(path):
-#     """Quick test returns True if this appears to be a logical path; False
-#     otherwise."""
-
-#     return ('/holdings/' not in path)
-
-
-# LOCAL_HOLDINGS_DIRS = None  # Global will contain all the physical holdings
-#                             # directories on the system.
-
-# def abspath_for_logical_path(path, cls):
-#     """Absolute path derived from a logical path.
-
-#     The logical path starts at the category, below the holdings/ directory. To
-#     get the absolute path, we need to figure out where the holdings directory is
-#     located. Note that there can be multiple drives hosting multiple holdings
-#     directories."""
-
-#     global LOCAL_HOLDINGS_DIRS
-
-#     # Check for a valid logical path
-#     parts = path.split('/')
-#     if parts[0] not in cls.CATEGORIES:
-#         raise ValueError('Not a logical path: ' + path)
-
-#     # Use the list of preloaded holdings directories if it is not empty
-#     if cls.LOCAL_PRELOADED:
-#         holdings_list = cls.LOCAL_PRELOADED
-
-#     elif LOCAL_HOLDINGS_DIRS:
-#         holdings_list = LOCAL_HOLDINGS_DIRS
-
-#     elif 'PDS_HOLDINGS_DIR' in os.environ:
-#         holdings_list = [os.environ['PDS_HOLDINGS_DIR']]
-#         LOCAL_HOLDINGS_DIRS = holdings_list
-
-#     # Without a preload or an environment variable, check the
-#     # /Library/WebSever/Documents directory for a symlink. This only works for
-#     # MacOS with the website installed, but that's OK.
-#     else:
-#         holdings_dirs = glob.glob('/Library/WebServer/Documents/holdings*')
-#         holdings_dirs.sort()
-#         holdings_list = [os.path.realpath(h) for h in holdings_dirs]
-#         LOCAL_HOLDINGS_DIRS = holdings_list
-
-#     # With exactly one holdings/ directory, the answer is easy
-#     if len(holdings_list) == 1:
-#         return os.path.join(holdings_list[0], path)
-
-#     # Otherwise search among the available holdings directories in order
-#     for root in holdings_list:
-#         abspath = os.path.join(root, path)
-#         matches = PdsFile.glob_glob(abspath)
-#         if matches: return matches[0]
-
-#     # File doesn't exist. Just pick one.
-#     if holdings_list:
-#         return os.path.join(holdings_list[0], path)
-
-#     raise ValueError('No holdings directory for logical path ' + path)
-
-# def selected_path_from_path(path, cls, abspaths=True):
-#     """Logical path or absolute path derived from a logical or an absolute
-#     path."""
-
-#     if is_logical_path(path):
-#         if abspaths:
-#             return abspath_for_logical_path(path, cls)
-#         else:
-#             return path
-
-#     else:
-#         if abspaths:
-#             return path
-#         else:
-#             return logical_path_from_abspath(path, cls)
-
-##########################################################################################

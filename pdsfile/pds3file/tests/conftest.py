@@ -6,8 +6,8 @@
 
 import os
 import pdsfile.pds3file as pds3file
-from pdsfile.cfg import PDS_HOLDINGS_DIR
-from pdsfile.general_helper import set_logger
+from pdsfile.general_helper import (PDS_HOLDINGS_DIR,
+                                    set_logger)
 from pdsfile.preload_and_cache import (use_shelves_only)
 import pdslogger
 import pytest

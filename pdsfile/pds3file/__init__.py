@@ -5,19 +5,13 @@
 
 from pdsfile import *
 from . import rules
-
 from pdsfile.preload_and_cache import cache_lifetime_for_class
 
 def cache_lifetime(arg):
     return cache_lifetime_for_class(arg, Pds3File)
 
-# Initialize the cache
-MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
-
-
 class Pds3File(PdsFile):
 
-    # Class variables
     PDS_HOLDINGS = 'holdings'
     BUNDLE_DIR_NAME = 'volumes'
 

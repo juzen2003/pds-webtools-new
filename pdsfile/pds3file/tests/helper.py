@@ -6,9 +6,8 @@
 
 import os
 import pdsfile.pds3file as pds3file
-
-from pdsfile.cfg import PDS_HOLDINGS_DIR
-from pdsfile.general_helper import (instantiate_target_pdsfile_for_class,
+from pdsfile.general_helper import (PDS_HOLDINGS_DIR,
+                                    instantiate_target_pdsfile_for_class,
                                     get_pdsfiles_for_class,
                                     get_pdsgroups_for_class,
                                     opus_products_test_for_class)

@@ -5,34 +5,29 @@
 
 from pdsfile import *
 from . import rules
-
 from pdsfile.preload_and_cache import cache_lifetime_for_class
-
-cfg.BUNDLESET_REGEX = re.compile(r'^(uranus_occs_earthbased|^cassini_iss|^cassini_vims)$')
-cfg.BUNDLESET_PLUS_REGEX   = re.compile(cfg.BUNDLESET_REGEX.pattern[:-1] +
-                        r'(_v[0-9]+\.[0-9]+\.[0-9]+|_v[0-9]+\.[0-9]+|_v[0-9]+|'+
-                        r'_in_prep|_prelim|_peer_review|_lien_resolution|)' +
-                        r'((|_calibrated|_diagrams|_metadata|_previews)' +
-                        r'(|_md5\.txt|\.tar\.gz))$')
-cfg.BUNDLESET_PLUS_REGEX_I = re.compile(cfg.BUNDLESET_PLUS_REGEX.pattern, re.I)
-
-cfg.BUNDLENAME_REGEX = re.compile(r'((^uranus_occ_u\d{0,4}._[a-z]*_(fos|\d{2,3}cm))'+
-                                  r'|(^cassini\_[a-z]{3,4}\_cruise))$')
-cfg.BUNDLENAME_PLUS_REGEX  = re.compile(cfg.BUNDLENAME_REGEX.pattern[:-1] +
-                                  r'(|_[a-z]+)(|_md5\.txt|\.tar\.gz)$')
-cfg.BUNDLENAME_PLUS_REGEX_I = re.compile(cfg.BUNDLENAME_PLUS_REGEX.pattern, re.I)
-
 
 def cache_lifetime(arg):
     return cache_lifetime_for_class(arg, Pds4File)
 
-# Initialize the cache
-MEMCACHE_PORT = 0           # default is to use a DictionaryCache instead
-
-
 class Pds4File(PdsFile):
 
-    # Class variables
+    BUNDLESET_REGEX = re.compile(r'^(uranus_occs_earthbased|^cassini_iss|^cassini_vims)$')
+    BUNDLESET_PLUS_REGEX   = re.compile(BUNDLESET_REGEX.pattern[:-1] +
+                                        r'(_v[0-9]+\.[0-9]+\.[0-9]+|' +
+                                        r'_v[0-9]+\.[0-9]+|_v[0-9]+|' +
+                                        r'_in_prep|_prelim|_peer_review|' +
+                                        r'_lien_resolution|)' +
+                                        r'((|_calibrated|_diagrams|_metadata|_previews)' +
+                                        r'(|_md5\.txt|\.tar\.gz))$')
+    BUNDLESET_PLUS_REGEX_I = re.compile(BUNDLESET_PLUS_REGEX.pattern, re.I)
+
+    BUNDLENAME_REGEX = re.compile(r'((^uranus_occ_u\d{0,4}._[a-z]*_(fos|\d{2,3}cm))'+
+                                  r'|(^cassini\_[a-z]{3,4}\_cruise))$')
+    BUNDLENAME_PLUS_REGEX  = re.compile(BUNDLENAME_REGEX.pattern[:-1] +
+                                        r'(|_[a-z]+)(|_md5\.txt|\.tar\.gz)$')
+    BUNDLENAME_PLUS_REGEX_I = re.compile(BUNDLENAME_PLUS_REGEX.pattern, re.I)
+
     PDS_HOLDINGS = 'pds4-holdings'
     BUNDLE_DIR_NAME = 'bundles'
 

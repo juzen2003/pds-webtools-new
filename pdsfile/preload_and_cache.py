@@ -94,6 +94,7 @@ def cache_lifetime_for_class(arg, cls):
         return DEFAULT_FILE_CACHE_LIFETIME
 
     # Keep RANKS, VOLS, etc. forever
+    # isinstance(thing, pdsfile.PdsFile) or issubclass(thing, pdsfile.PdsFile)
     elif not isinstance(arg, cls):
         return FOEVER_FILE_CACHE_LIFETIME
 

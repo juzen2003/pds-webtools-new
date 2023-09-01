@@ -13,25 +13,29 @@ import math
 import os
 
 
+##########################################################################################
+# Configurations
+##########################################################################################
 _GLOB_CACHE_SIZE = 200
 PATH_EXISTS_CACHE_SIZE = 200
 FILE_BYTE_UNITS = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
-# For tests
-# try:
-#     PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
-# except KeyError: # pragma: no cover
-#     PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+try:
+    PDS_HOLDINGS_DIR = os.environ['PDS_HOLDINGS_DIR']
+except KeyError: # pragma: no cover
+    PDS_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
-# try:
-#     PDS4_HOLDINGS_DIR = os.environ['PDS4_HOLDINGS_DIR']
-# except KeyError: # pragma: no cover
-#     # TODO: update this when we know the actual path of pds4 holdings on the webserver
-#     PDS4_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
+try:
+    PDS4_HOLDINGS_DIR = os.environ['PDS4_HOLDINGS_DIR']
+except KeyError: # pragma: no cover
+    # TODO: update this when we know the actual path of pds4 holdings on the webserver
+    PDS4_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
-# PDS4_BUNDLES_DIR = f'{PDS4_HOLDINGS_DIR}/bundles'
+PDS4_BUNDLES_DIR = f'{PDS4_HOLDINGS_DIR}/bundles'
 
+##########################################################################################
 # For tests under /tests
+##########################################################################################
 def instantiate_target_pdsfile_for_class(path, cls, holdings_dir, is_abspath=True):
     if is_abspath:
         TESTFILE_PATH = holdings_dir + '/' + path
@@ -100,7 +104,9 @@ def versions_test_for_class(input_path, cls, holdings_dir, expected, is_abspath=
     for key in keys:
         assert key in res, f'"{key}" missing'
 
+##########################################################################################
 # For tests under rules
+##########################################################################################
 def translate_first_for_class(trans, path, cls):
     """Return the logical paths of "first" files found using given translator on path.
 
@@ -151,6 +157,9 @@ def translate_all_for_class(trans, path, cls):
 
     return abspaths
 
+##########################################################################################
+# Support functions for pdsfile/__init__.py
+##########################################################################################
 def unmatched_patterns_for_class(trans, path, cls):
     """Return a list of all translated patterns that did not find a matching path in the
     file system.
@@ -216,7 +225,7 @@ def clean_abspath(path):
 def clean_glob(cls, pattern, force_case_sensitive=False):
     results = glob.glob(pattern)
     if os.sep == '\\':
-        results = [x.replace('\\', '/') for x in matches]
+        results = [x.replace('\\', '/') for x in results]
 
     if force_case_sensitive and cls.FS_IS_CASE_INSENSITIVE:
         filtered_results = []
