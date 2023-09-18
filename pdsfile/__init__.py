@@ -12,14 +12,6 @@ import os
 import pickle
 import PIL
 import re
-import time
-
-# Import module for memcached if possible, otherwise flag
-try: # pragma: no cover
-    import pylibmc
-    HAS_PYLIBMC = True
-except ImportError: # pragma: no cover
-    HAS_PYLIBMC = False
 
 import pdscache
 import pdslogger
@@ -39,7 +31,9 @@ from .general_helper import (PATH_EXISTS_CACHE_SIZE,
                              repair_case)
 from .preload_and_cache import (cache_categoriey_merged_dirs,
                                 cache_lifetime_for_class,
-                                preload_for_class)
+                                preload_for_class,
+                                require_shelves_for_class,
+                                use_shelves_only_for_class)
 
 ##########################################################################################
 # PdsFile class
@@ -389,6 +383,14 @@ class PdsFile(object):
             this.interior        = self.interior
 
         return this
+
+    @classmethod
+    def use_shelves_only(cls, status=True):
+        return use_shelves_only_for_class(cls, status)
+
+    @classmethod
+    def require_shelves(cls, status=True):
+        return require_shelves_for_class(cls, status)
 
     @classmethod
     def preload(cls, path):
