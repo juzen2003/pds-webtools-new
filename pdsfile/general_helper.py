@@ -377,7 +377,8 @@ def selected_path_from_path(path, cls, abspaths=True):
     Keyword arguments:
         path     -- the path of a file
         cls      -- the class calling the other methods inside the function
-        abspaths -- the flag to determine if the return value is an absolute path
+        abspaths -- the flag to determine if the return value is an absolute path (default
+                    True)
     """
 
     if is_logical_path(path):
@@ -399,7 +400,7 @@ def set_logger(cls, logger=None):
     """Set the PdsLogger.
 
     Keyword arguments:
-        logger -- the pdslogger
+        logger -- the pdslogger (default None)
         cls    -- the class with its attribute being updated
     """
     if not logger:

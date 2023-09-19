@@ -36,7 +36,7 @@ def use_shelves_only_for_class(cls, status=True):
 
     Keyword arguments:
         cls    -- the class with its attribute being updated
-        status -- value for the class attribute
+        status -- value for the class attribute (default True)
     """
 
     cls.SHELVES_ONLY = status
@@ -52,7 +52,7 @@ def require_shelves_for_class(cls, status=True):
 
     Keyword arguments:
         cls    -- the class with its attribute being updated
-        status -- value for the class attribute
+        status -- value for the class attribute (default True)
     """
 
     cls.SHELVES_REQUIRED = status
@@ -104,7 +104,7 @@ def cache_lifetime_for_class(arg, cls=None):
 
     Keyword arguments:
         arg -- an object
-        cls -- the class calling the method
+        cls -- the class calling the method (default True)
     """
 
     # Keep Viewmaster HTML for 12 hours
@@ -147,7 +147,7 @@ def get_permanent_values(holdings_list, port, cls):
         holdings_list -- the path of holdings dir that we will preload if the permanent
                          value from cache is missing
         port          -- value for the class attribute
-        cls           -- value for the class attribute
+        cls           -- the class calling the method
     """
 
     try:
@@ -212,6 +212,10 @@ def load_volume_info(holdings, cls):
 
     A value only containing a string of dashes "-" is replaced by None.
     Blank records and those beginning with "#" are ignored.
+
+    Keyword arguments:
+        holdings -- the path of the holdings directory
+        cls      -- the class calling the method
     """
 
     volinfo_path = clean_join(holdings, '_volinfo')
@@ -313,16 +317,15 @@ def preload_for_class(cls, holdings_list, port=0, clear=False, force_reload=Fals
     """Cache the top-level directories, starting from the given holdings
     directories.
 
-    Input:
-        holdings_list       a single abslute path to a holdings directory, or
-                            else a list of absolute paths.
-        port                port to use for memcached; zero to prevent use of
-                            memcached.
-        clear               True to clear the cache before preloading.
-        force_reload        Re-load the cache regardless of whether the cache
-                            appears to contain the needed holdings.
-        icon_color          color of the icons to load from each holdings
-                            directory; default "blue".
+    Keyword arguments:
+        holdings_list -- a single abslute path to a holdings directory, or else a list
+                         of absolute paths
+        port          -- port to use for memcached; zero to prevent use of memcached
+        clear         -- True to clear the cache before preloading
+        force_reload  -- Re-load the cache regardless of whether the cache appears to
+                         contain the needed holdings
+        icon_color    -- color of the icons to load from each holdings directory (default
+                         'blue')
     """
 
     # Convert holdings to a list of absolute paths

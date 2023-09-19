@@ -225,13 +225,22 @@ class PdsFile(object):
 
     def sort_labels_after(self, labels_after):
         """If True, all label files will appear after their associated data
-        files when sorted."""
+        files when sorted.
+
+        Keyword arguments:
+            labels_after -- a flag used to determine if all label files should appear
+                            after the associated data files when sorted.
+        """
 
         self.SORT_ORDER = self.SORT_ORDER.copy()
         self.SORT_ORDER['labels_after'] = labels_after
 
     def sort_dirs_first(self, dirs_first):
         """If True, directories will appear before all files in a sorted list.
+
+        Keyword arguments:
+            dirs_first -- a flag used to determine if directories should appear before
+                          all files when sorted.
         """
 
         self.SORT_ORDER = self.SORT_ORDER.copy()
@@ -239,6 +248,10 @@ class PdsFile(object):
 
     def sort_dirs_last(self, dirs_last):
         """If True, directories will appear after all files in a sorted list.
+
+        Keyword arguments:
+            dirs_last -- a flag used to determine if directories should appear after all
+                         files when sorted.
         """
 
         self.SORT_ORDER = self.SORT_ORDER.copy()
@@ -248,7 +261,12 @@ class PdsFile(object):
         """If True or 1, info files will be listed first in all sorted lists;
         if False or 0, info files will appear alphabetically;
         if an integer bigger than 1, put the info file first only if there are
-        at least this many files in the directory."""
+        at least this many files in the directory.
+
+        Keyword arguments:
+            info_first -- a flag used to determine info files will be listed first in all
+                          sorted lists.
+        """
 
         self.SORT_ORDER = self.SORT_ORDER.copy()
         self.SORT_ORDER['info_first'] = info_first
@@ -344,7 +362,16 @@ class PdsFile(object):
         self._index_pdslabel                 = None
 
     def new_pdsfile(self, key=None, copypath=False):
-        """Empty PdsFile of the same subclass or a specified subclass."""
+        """Return an empty PdsFile of the same subclass or a specified subclass.
+
+        Keyword arguments:
+            key      -- the name of a bundleset that exists in the SUBCLASSES dictionary
+                        or a bundleset pattern that could be matched by VOLSET_TRANSLATOR.
+                        (default None)
+            copypath -- a flag to determine if the returned pdsfile instance should copy
+                        all the attributes from the instance calling the method. (default
+                        False)
+        """
         cls = type(self)
         if key is None:
             cls = type(self)
@@ -356,7 +383,6 @@ class PdsFile(object):
 
         this = cls.__new__(cls)
 
-        # source = PdsFile()
         source = cls()
         for (key, value) in source.__dict__.items():
             this.__dict__[key] = value
@@ -402,9 +428,13 @@ class PdsFile(object):
 
     @classmethod
     def new_merged_dir(cls, basename):
-        """A merged directory with the given basename. Merged directories
-        contain children from multiple physical directories. Examples are
-        volumes/, archives-volumes/, etc."""
+        """Return a merged directory with the given basename. Merged directories contain
+        children from multiple physical directories. Examples are volumes/,
+        archives-volumes/, etc.
+
+        Keyword arguments:
+            basename -- the basename of the merged directory.
+        """
 
         if basename not in cls.CATEGORIES:
             raise ValueError('Invalid category: ' + basename)
@@ -482,8 +512,12 @@ class PdsFile(object):
         return this
 
     def new_index_row_pdsfile(self, filename_key, row_dicts):
-        """A PdsFile representing the content of one or more rows of this index
+        """Return a PdsFile representing the content of one or more rows of this index
         file. Used to enable views of individual rows within large index files.
+
+        Keyword arguments:
+            filename_key -- the basename of the PdsFile.
+            row_dicts    -- a dictionary contans the row info of the index file.
         """
 
         this = self.copy()
@@ -571,9 +605,12 @@ class PdsFile(object):
 
     @classmethod
     def _non_checksum_abspath(cls, abspath):
-        """Internal function returns the non-checksum path associated with this
-        checksum file. If the given absolute path does not point to a checksum
-        file, it returns None."""
+        """Return the non-checksum path associated with this checksum file. If the given
+        absolute path does not point to a checksum file, it returns None.
+
+        Keyword arguments:
+            abspath -- the absolute path of the checksum file.
+        """
 
         # Checksum files need special handling
         if '/holdings/checksums-' in abspath:
@@ -590,8 +627,8 @@ class PdsFile(object):
     @classmethod
     @functools.lru_cache(maxsize=PATH_EXISTS_CACHE_SIZE)
     def os_path_exists(cls, abspath, force_case_sensitive=False):
-        """True if the given absolute path points to a file that exists; False
-        otherwise. This replaces os.path.exists(path) but might use infoshelf
+        """Return True if the given absolute path points to a file that exists; Return
+        False otherwise. This replaces os.path.exists(path) but might use infoshelf
         files rather than refer to the holdings directory.
 
         Note: This function is case-insensitive under SHELVES_ONLY. Otherwise,
@@ -599,6 +636,11 @@ class PdsFile(object):
         means that it is case insensitive. If force_case_sensitive=True, then
         the check of the basename will be case-sensitive regardless of the file
         system.
+
+        Keyword arguments:
+            abspath              -- the absolute path of the file.
+            force_case_sensitive -- a flag to determine if the basename will be case
+                                    sensitive (default False)
         """
 
         if 'holdings/_infoshelf' in abspath:
@@ -664,9 +706,12 @@ class PdsFile(object):
 
     @classmethod
     def os_path_isdir(cls, abspath):
-        """True if the given absolute path points to a directory; False
-        otherwise. This replaces os.path.isdir() but might use infoshelf files
-        rather than refer to the holdings directory.
+        """Return True if the given absolute path points to a directory; Return False
+        otherwise. This replaces os.path.isdir() but might use infoshelf files rather
+        than refer to the holdings directory.
+
+        Keyword arguments:
+            abspath -- the absolute path of a file or a directory.
         """
 
         if cls.SHELVES_ONLY:
@@ -712,9 +757,12 @@ class PdsFile(object):
 
     @classmethod
     def os_listdir(cls, abspath):
-        """Returns a list of the file basenames within a directory, given its
-        absolute path. This replaces os.listdir() but might use infoshelf files
-        rather than the file system.
+        """Return a list of the file basenames within a directory, given its absolute
+        path. This replaces os.listdir() but might use infoshelf files rather than the
+        file system.
+
+        Keyword arguments:
+            abspath -- the given absolute path.
         """
 
         # Make sure there is no trailing slash
@@ -848,13 +896,18 @@ class PdsFile(object):
 
     @classmethod
     def glob_glob(cls, abspath, force_case_sensitive=False):
-        """Works the same as glob.glob(), but uses shelf files instead of
-        accessing the filesystem directly.
+        """Return a list of the existing absolute paths. Works the same as glob.glob(),
+        but uses shelf files instead of accessing the filesystem directly.
 
         Note: This function is case-insensitive under SHELVES_ONLY. Otherwise,
         its behavior matches that of the file system. For Macs, this usually
         means that it is case insensitive. If force_case_sensitive=True, then
         file paths will only match if the case is exact.
+
+        Keyword arguments:
+            abspath              -- the given absolute path
+            force_case_sensitive -- a flag to determine if the filepath will be case
+                                    sensitive (default False)
         """
 
         # We can save a lot of trouble if there's no match pattern
@@ -960,7 +1013,7 @@ class PdsFile(object):
 
     @property
     def exists(self):
-        """True if the file exists."""
+        """Return True if the file exists."""
         cls = type(self)
 
         if self._exists_filled is not None:
@@ -978,7 +1031,7 @@ class PdsFile(object):
 
     @property
     def isdir(self):
-        """True if the file is a directory."""
+        """Return True if the file is a directory."""
 
         cls = type(self)
 
@@ -997,13 +1050,13 @@ class PdsFile(object):
 
     @property
     def is_documents(self):
-        """True if the file is under documents directory."""
+        """Return True if the file is under documents directory."""
 
         return self.voltype_ == 'documents/'
 
     @property
     def filespec(self):
-        """bundlename or bundlename/interior."""
+        """Return bundlename or bundlename/interior."""
 
         if self.interior:
             return self.bundlename_ + self.interior
@@ -1012,7 +1065,7 @@ class PdsFile(object):
 
     @property
     def absolute_or_logical_path(self):
-        """The absolute path if this has one; otherwise the logical path."""
+        """Return the absolute path if this has one; otherwise the logical path."""
 
         if self.abspath:
             return self.abspath
@@ -1021,7 +1074,7 @@ class PdsFile(object):
 
     @property
     def islabel(self):
-        """True if the file is a PDS3 label; deprecated name."""
+        """Return True if the file is a PDS3 label; deprecated name."""
 
         if self._islabel_filled is not None:
             return self._islabel_filled
@@ -1033,14 +1086,15 @@ class PdsFile(object):
 
     @property
     def is_label(self):
-        """True if the file is a PDS3 label; alternative name for islabel."""
+        """Return True if the file is a PDS3 label; alternative name for islabel."""
 
         return self.islabel
 
     @property
     def is_viewable(self):
-        """True if the file is viewable. Examples of viewable files are JPEGs,
-        TIFFs, PNGs, etc."""
+        """Return True if the file is viewable. Examples of viewable files are JPEGs,
+        TIFFs, PNGs, etc.
+        """
 
         if self._is_viewable_filled is not None:
             return self._is_viewable_filled
@@ -1052,7 +1106,7 @@ class PdsFile(object):
 
     @property
     def html_path(self):
-        """URL to this file after the domain name, starting with "/holdings";
+        """Return the URL to this file after the domain name, starting with "/holdings";
         alias for property "url".
         """
 
@@ -1080,13 +1134,14 @@ class PdsFile(object):
 
     @property
     def url(self):
-        """URL to this file after the domain name, starting with "/holdings"."""
+        """Return the URL to this file after the domain name, starting with "/holdings".
+        """
 
         return self.html_path
 
     @property
     def split(self):
-        """Returns (anchor, suffix, extension)"""
+        """Return (anchor, suffix, extension)"""
 
         if self._split_filled is not None:
             return self._split_filled
@@ -1098,8 +1153,9 @@ class PdsFile(object):
 
     @property
     def anchor(self):
-        """The anchor for this object. Objects with the same anchor are grouped
-        together in the same row of a Viewmaster table."""
+        """Return the anchor for this object. Objects with the same anchor are grouped
+        together in the same row of a Viewmaster table.
+        """
 
         # We need a better anchor for index row PdsFiles
         if self.is_index_row:
@@ -1109,8 +1165,9 @@ class PdsFile(object):
 
     @property
     def global_anchor(self):
-        """The global anchor is a unique string across all data products and
-        is suitable for use in HTML pages."""
+        """Return the global anchor is a unique string across all data products and
+        is suitable for use in HTML pages.
+        """
 
         if self._global_anchor_filled is not None:
             return self._global_anchor_filled
@@ -1123,14 +1180,15 @@ class PdsFile(object):
 
     @property
     def extension(self):
-        """The extension of this file, after the first dot."""
+        """Return the extension of this file, after the first dot."""
 
         return self.split[2]
 
     @property
     def indexshelf_abspath(self):
-        """The absolute path to the indexshelf file if this is an index file;
-        blank otherwise."""
+        """Return the absolute path to the indexshelf file if this is an index file;
+        blank otherwise.
+        """
 
         if self._indexshelf_abspath is None:
             if self.extension not in ('.tab', '.TAB'):
@@ -1149,8 +1207,9 @@ class PdsFile(object):
 
     @property
     def is_index(self):
-        """True if this is an index file. An index file is recognized by the
-        presence of the corresponding indexshelf file."""
+        """Return True if this is an index file. An index file is recognized by the
+        presence of the corresponding indexshelf file.
+        """
 
         if self._is_index is None:
             abspath = self.indexshelf_abspath
@@ -1165,7 +1224,7 @@ class PdsFile(object):
 
     @property
     def index_pdslabel(self):
-        """The parsed PdsLabel associated with the label of an index."""
+        """Return the parsed PdsLabel associated with the label of an index."""
 
         if not self.is_index:
             return None
@@ -1187,8 +1246,9 @@ class PdsFile(object):
 
     @property
     def childnames(self):
-        """A list of all the child names if this is a directory or an index.
-        Names are kept in sorted order."""
+        """Return a list of all the child names if this is a directory or an index.
+        Names are kept in sorted order.
+        """
 
         cls = type(self)
 
@@ -1217,9 +1277,9 @@ class PdsFile(object):
 
     @property
     def childnames_lc(self):
-        """A list of all the child names if this is a directory or an index.
-        Names are kept in sorted order. In this version all names are lower
-        case."""
+        """Return a list of all the child names if this is a directory or an index.
+        Names are kept in sorted order. In this version all names are lower case.
+        """
 
         if self._childnames_lc_filled is None:
             self._childnames_lc_filled = [c.lower() for c in self.childnames]
@@ -1229,8 +1289,9 @@ class PdsFile(object):
 
     @property
     def parent_logical_path(self):
-        """A safe way to get the logical_path of the parent; works for merged
-        directories when parent is None:"""
+        """Return a safe way to get the logical_path of the parent; works for merged
+        directories when parent is None.
+        """
 
         parent = self.parent()
 
@@ -1241,7 +1302,7 @@ class PdsFile(object):
 
     @property
     def _info(self):
-        """Internal method to retrieve info from the info shelf file."""
+        """Return the info from the info shelf file."""
 
         if self._info_filled is not None:
             return self._info_filled
@@ -1360,32 +1421,32 @@ class PdsFile(object):
 
     @property
     def size_bytes(self):
-        """Size in bytes represented as an int."""
+        """Return the size in bytes represented as an int."""
 
         return self._info[0]
 
     @property
     def modtime(self):
-        """Datetime object representing this file's modification date."""
+        """Return Datetime object representing this file's modification date."""
 
         return self._info[2]
 
     @property
     def checksum(self):
-        """MD5 checksum of this file."""
+        """Return MD5 checksum of this file."""
 
         return self._volume_info[5] or self._info[3]
 
     @property
     def width(self):
-        """Width of this image in pixels if it is viewable."""
+        """Return the width of this image in pixels if it is viewable."""
 
         self._repair_width_height()
         return self._info[4][0]
 
     @property
     def height(self):
-        """Height of this image in pixels if it is viewable."""
+        """Return the height of this image in pixels if it is viewable."""
 
         self._repair_width_height()
         return self._info[4][1]
@@ -1409,14 +1470,15 @@ class PdsFile(object):
 
     @property
     def alt(self):
-        """Webpage alt tag to use if this is a viewable object."""
+        """Return the webpage alt tag to use if this is a viewable object."""
 
         return self.basename
 
     @property
     def date(self):
-        """Modification date/time of this file as a well-formatted string;
-        otherwise blank."""
+        """Return the modification date/time of this file as a well-formatted string;
+        otherwise blank.
+        """
 
         if self._date_filled is None:
             if self.modtime:
@@ -1430,7 +1492,7 @@ class PdsFile(object):
 
     @property
     def formatted_size(self):
-        """Size of this file as a formatted string, e.g., "2.16 MB"."""
+        """Return the size of this file as a formatted string, e.g., "2.16 MB"."""
 
         if self._formatted_size_filled is None:
           if self.size_bytes:
@@ -1444,9 +1506,9 @@ class PdsFile(object):
 
     @property
     def _volume_info(self):
-        """Information about this volume, volset, or product as retrieved from
-        a table in the volinfo/ directory. Returned tuple is (description,
-        icon_type, volume_date, list of data_set_ids, optional checksum].
+        """Return the information about this volume, volset, or product as retrieved from
+        a table in the volinfo/ directory. Returned tuple is (description, icon_type,
+        volume_date, list of data_set_ids, optional checksum].
         """
 
         cls = type(self)
@@ -1479,7 +1541,7 @@ class PdsFile(object):
 
     @property
     def description(self):
-        """Description text about this file as it appears in Viewmaster."""
+        """Return the description text about this file as it appears in Viewmaster."""
 
         cls = type(self)
 
@@ -1538,15 +1600,16 @@ class PdsFile(object):
 
     @property
     def icon_type(self):
-        """Icon type for this file."""
+        """Return the icon type for this file."""
 
         _ = self.description
         return self._description_and_icon_filled[1]
 
     @property
     def mime_type(self):
-        """A best guess at the MIME type for this file. Blank for not
-        displayable in a browser."""
+        """Return a best guess at the MIME type for this file. Blank for not displayable
+        in a browser.
+        """
 
         if self._mime_type_filled is not None:
             return self._mime_type_filled
@@ -1569,7 +1632,7 @@ class PdsFile(object):
 
     @property
     def opus_id(self):
-        """The OPUS ID of this product if it has one; otherwise an empty string.
+        """Return the OPUS ID of this product if it has one; otherwise an empty string.
         """
 
         if self._opus_id_filled is None:
@@ -1580,8 +1643,9 @@ class PdsFile(object):
 
     @property
     def opus_format(self):
-        """The OPUS format of this product, e.g., ('ASCII', 'Table') or
-        ('Binary', 'FITS')."""
+        """Return the OPUS format of this product, e.g., ('ASCII', 'Table') or
+        ('Binary', 'FITS').
+        """
 
         if self._opus_format_filled is None:
             self._opus_format_filled = self.OPUS_FORMAT.first(self.logical_path)
@@ -1591,15 +1655,13 @@ class PdsFile(object):
 
     @property
     def opus_type(self):
-        """The OPUS type of this product, returned as a tuple:
-            (dataset name, priority (where lower comes first), type ID,
-                description)
+        """Return the OPUS type of this product, returned as a tuple: (dataset name,
+        priority (where lower comes first), type ID, description)
         If no OPUS type exists, it returns ''
 
         Examples:
             ('Cassini ISS',   0, 'coiss_raw',  'Raw Image')
             ('Cassini ISS', 130, 'coiss_full', 'Extra preview (full-size)')
-
         """
 
         if self._opus_type_filled is None:
@@ -1611,7 +1673,7 @@ class PdsFile(object):
 
     @property
     def data_set_id(self):
-        """PDS3 DATA_SET_ID for the file, if it has one; otherwise, blank."""
+        """Return the PDS3 DATA_SET_ID for the file, if it has one; otherwise, blank."""
 
         if self._data_set_id_filled is not None:
             return self._data_set_id_filled
@@ -1717,9 +1779,10 @@ class PdsFile(object):
 
     @property
     def info_basename(self):
-        """Returns the basename of an informational file associated with this
-        PdsFile object. This could be a file like "VOLDESC.CAT", "CATINFO.TXT",
-        or the label file associated with a data product."""
+        """Return the basename of an informational file associated with this PdsFile
+        object. This could be a file like "VOLDESC.CAT", "CATINFO.TXT", or the label file
+        associated with a data product.
+        """
 
         cls = type(self)
 
@@ -1756,8 +1819,9 @@ class PdsFile(object):
 
     @property
     def internal_link_info(self):
-        """Returns a list of tuples [(recno, basename, abspath), ...], or else
-        the abspath of the label for this file."""
+        """Return a list of tuples [(recno, basename, abspath), ...], or else the abspath
+        of the label for this file.
+        """
 
         if self._internal_links_filled is not None:
             return self._internal_links_filled
@@ -1835,9 +1899,10 @@ class PdsFile(object):
 
     @property
     def linked_abspaths(self):
-        """Returns a list of absolute paths linked to this PdsFile. Linked files
-        are those whose name appears somewhere in the file, e.g., by being
-        referenced in a label or cited in a documentation file."""
+        """Return a list of absolute paths linked to this PdsFile. Linked files are those
+        whose name appears somewhere in the file, e.g., by being referenced in a label or
+        cited in a documentation file.
+        """
 
         cls = type(self)
 
@@ -1862,8 +1927,9 @@ class PdsFile(object):
 
     @property
     def label_basename(self):
-        """Basename of the label file associated with this data file. If this is
-        already a label file, it returns an empty string."""
+        """Return the basename of the label file associated with this data file. If this
+        is already a label file, it returns an empty string.
+        """
         cls = type(self)
 
         # Return cached value if any
@@ -1915,7 +1981,7 @@ class PdsFile(object):
 
     @property
     def label_abspath(self):
-        """Absolute path to the label if it exists; blank otherwise."""
+        """Return the absolute path to the label if it exists; blank otherwise."""
 
         if self.label_basename:
             parent_path = os.path.split(self.abspath)[0]
@@ -1925,7 +1991,7 @@ class PdsFile(object):
 
     @property
     def data_abspaths(self):
-        """A list of the targets of a label file; otherwise []."""
+        """Return a list of the targets of a label file; otherwise []."""
 
         if not self.islabel: return []
         cls = type(self)
@@ -1943,7 +2009,7 @@ class PdsFile(object):
 
     @property
     def viewset(self):
-        """PdsViewSet to use for this object."""
+        """Return PdsViewSet to use for this object."""
 
         if self._viewset_filled is not None:
             return self._viewset_filled
@@ -1961,7 +2027,7 @@ class PdsFile(object):
 
     @property
     def local_viewset(self):
-        """PdsViewSet for this object if it is itself viewable; otherwise False.
+        """Return PdsViewSet for this object if it is itself viewable; otherwise False.
         """
 
         if self._local_viewset_filled is not None:
@@ -1978,8 +2044,7 @@ class PdsFile(object):
 
     @property
     def all_viewsets(self):
-        """A dictionary of every available PdsViewSet for this object.
-        """
+        """Return a dictionary of every available PdsViewSet for this object."""
 
         if self._all_viewsets_filled is None:
 
@@ -2027,8 +2092,9 @@ class PdsFile(object):
 
     @property
     def _iconset(self):
-        """Internal method to return the PdsViewSet for this object's icon
-        whether it is to be displayed in a closed or open state."""
+        """Return the PdsViewSet for this object's icon whether it is to be displayed
+        in a closed or open state.
+        """
 
         if self._iconset_filled is not None:
             return self._iconset_filled[0]
@@ -2042,21 +2108,21 @@ class PdsFile(object):
 
     @property
     def iconset_open(self):
-        """PdsViewSet for this object's icon if displayed in an open state."""
+        """Return PdsViewSet for this object's icon if displayed in an open state."""
 
         _ = self._iconset
         return self._iconset_filled[1]
 
     @property
     def iconset_closed(self):
-        """PdsViewSet for this object's icon if displayed in a closed state."""
+        """Return PdsViewSet for this object's icon if displayed in a closed state."""
 
         _ = self._iconset
         return self._iconset_filled[0]
 
     @property
     def volume_publication_date(self):
-        """Publication date for this volume as a formatted string."""
+        """Return the publication date for this volume as a formatted string."""
 
         if self._volume_publication_date_filled is not None:
             return self._volume_publication_date_filled
@@ -2090,7 +2156,7 @@ class PdsFile(object):
 
     @property
     def volume_version_id(self):
-        """Version ID of this volume."""
+        """Return version ID of this volume."""
 
         if self._volume_version_id_filled is None:
             if self._volume_info[2] is None:
@@ -2104,7 +2170,7 @@ class PdsFile(object):
 
     @property
     def volume_data_set_ids(self):
-        """A list of the dataset IDs found in this volume."""
+        """Return a list of the dataset IDs found in this volume."""
 
         if self._volume_data_set_ids_filled is None:
             self._volume_data_set_ids_filled = self._volume_info[4]
@@ -2114,10 +2180,11 @@ class PdsFile(object):
 
     @property
     def version_ranks(self):
-        """A list of the numeric version ranks associated with the volume on
+        """Return a list of the numeric version ranks associated with the volume on
         which this file resides.
 
-        This is an integer that always sorts versions from oldest to newest."""
+        This is an integer that always sorts versions from oldest to newest.
+        """
 
         if self._version_ranks_filled is not None:
             return self._version_ranks_filled
@@ -2151,8 +2218,9 @@ class PdsFile(object):
 
     @property
     def exact_archive_url(self):
-        """If an archive file contains the exact contents of this directory
-        tree, return the URL of that archive. Otherwise return blank."""
+        """Return the URL of an archive file if that archive contains the exact contents
+        of this directory tree. Otherwise return blank.
+        """
 
         cls = type(self)
 
@@ -2175,8 +2243,9 @@ class PdsFile(object):
 
     @property
     def exact_checksum_url(self):
-        """If a checksum file contains the exact contents of this directory
-        tree, return the URL of that file. Otherwise return blank."""
+        """Return the URL of a checksum file if that checksum contains the exact contents
+        of this directory tree. Otherwise return blank.
+        """
 
         if self._exact_checksum_url_filled is not None:
             return self._exact_checksum_url_filled
@@ -2199,7 +2268,7 @@ class PdsFile(object):
 
     @property
     def grid_view_allowed(self):
-        """True if this directory can be viewed as a grid inside Viewmaster."""
+        """Return True if this directory can be viewed as a grid inside Viewmaster."""
 
         if self._view_options_filled is not None:
             return self._view_options_filled[0]
@@ -2218,8 +2287,9 @@ class PdsFile(object):
 
     @property
     def multipage_view_allowed(self):
-        """True if a multipage view starting from this directory is allowed
-        inside Viewmaster."""
+        """Return True if a multipage view starting from this directory is allowed
+        inside Viewmaster.
+        """
 
         _ = self.grid_view_allowed
 
@@ -2227,8 +2297,9 @@ class PdsFile(object):
 
     @property
     def continuous_view_allowed(self):
-        """True if a continuous view of multiple directories starting from this
-        one is allowed inside Viewmaster."""
+        """Return True if a continuous view of multiple directories starting from this
+        one is allowed inside Viewmaster.
+        """
 
         _ = self.grid_view_allowed
 
@@ -2236,15 +2307,16 @@ class PdsFile(object):
 
     @property
     def has_neighbor_rule(self):
-        """True if a neighbor rule is available to go to the object just before
-        or just after this one."""
+        """Return True if a neighbor rule is available to go to the object just before
+        or just after this one.
+        """
 
         parent = self.parent()
         return bool(parent and self.NEIGHBORS.first(parent.logical_path))
 
     @property
     def filename_keylen(self):
-        """Length of the keys used to select the rows of an index file."""
+        """Return the length of the keys used to select the rows of an index file."""
 
         if self._filename_keylen_filled is None:
             if isinstance(self.FILENAME_KEYLEN, int):
@@ -2256,9 +2328,10 @@ class PdsFile(object):
 
     @property
     def infoshelf_path_and_key(self):
-        """The absolute path to the associated info shelf file, if any, and the
-        key to use within that file. If the shelf info does not exist, return a
-        pair of empty strings."""
+        """Return The absolute path to the associated info shelf file, if any, and the
+        key to use within that file. If the shelf info does not exist, return a pair of
+        empty strings.
+        """
 
         cls = type(self)
 
@@ -2277,7 +2350,12 @@ class PdsFile(object):
 
     @staticmethod
     def version_info(suffix):
-        """Procedure to associate a volset suffix with a version rank value."""
+        """Return a tuple of version info (version rank, version message, version id).
+        This is the Procedure to associate a volset suffix with a version rank value.
+
+        Keyword arguments:
+            suffix -- a volset suffix
+        """
 
         version_id = ''
         if suffix == '':
@@ -2321,8 +2399,10 @@ class PdsFile(object):
         return (version_rank, version_message, version_id)
 
     def all_versions(self):
-        """A dictionary containing all existing versions of this PdsFile, keyed
-        by the version ranks of the volumes on which they reside."""
+        """Return a dictionary containing all existing versions of this PdsFile, keyed
+        by the version ranks of the volumes on which they reside.
+        """
+
         cls = type(self)
 
         # We only cache the abspaths, not the PdsFiles, because the cache cannot
@@ -2371,9 +2451,9 @@ class PdsFile(object):
 
     @property
     def all_version_abspaths(self):
-        """A dictionary containing the abspaths for all existing versions of
-        this PdsFile, keyed by the version ranks of the volumes on which they
-        reside."""
+        """Return a dictionary containing the abspaths for all existing versions of
+        this PdsFile, keyed by the version ranks of the volumes on which they reside.
+        """
 
         if self._all_version_abspaths is None:
             _ = self.all_versions()     # This has the side-effect of filling
@@ -2384,7 +2464,11 @@ class PdsFile(object):
     def viewset_lookup(self, name='default'):
         """Return the PdsViewSet associated with this file. If multiple
         PdsViewSets are available, they can be selected by name; "default" is
-        assumed."""
+        assumed.
+
+        Keyword arguments:
+            name -- a volset name (default 'default')
+        """
 
         cls = type(self)
 
@@ -2462,9 +2546,13 @@ class PdsFile(object):
     ############################################################################
 
     def volume_pdsfile(self, category=None, rank=None):
-        """PdsFile object for the root volume file or directory associated with
-        this or another category and this or another version. It returns None
-        if the file does not exist.
+        """Return PdsFile object for the root volume file or directory associated with
+        this or another category and this or another version. It returns None if the file
+        does not exist.
+
+        Keyword arguments:
+            category -- the category of the bundle (default None)
+            rank     -- the version rank of the bundle (default None)
         """
 
         cls = type(self)
@@ -2484,8 +2572,12 @@ class PdsFile(object):
         return pdsf
 
     def volset_pdsfile(self, category=None, rank=None):
-        """PdsFile object for the root volume set for this or another category
+        """Return PdsFile object for the root volume set for this or another category
         and this or another version. It returns None if the file does not exist.
+
+        Keyword arguments:
+            category -- the category of the bundleset (default None)
+            rank     -- the version rank of the bundleset (default None)
         """
 
         cls = type(self)
@@ -2509,48 +2601,51 @@ class PdsFile(object):
 
     @property
     def is_bundle_dir(self):
-        """True if this is the root level directory of a bundle."""
+        """Return True if this is the root level directory of a bundle."""
         return (self.bundlename_ and not self.interior) # Note that a bundle set will return an empty string '' rather than False
         #return (self.volname_ and not self.interior or False) # MJTM: 'or False' account for bundle sets
 
     @property
     def is_bundle_file(self):
-        """True if this is a bundle-level checksum or archive file."""
+        """Return True if this is a bundle-level checksum or archive file."""
         return (self.bundlename and not self.bundlename_) # Note that a bundle set will return an empty string '' rather than False
         #return (self.volname and not self.volname_ or False) # MJTM: 'or False' account for bundle sets
 
     @property
     def is_bundle(self):
-        """True if this is a bundle-level file, be it a directory or a
+        """Return True if this is a bundle-level file, be it a directory or a
         checksum or archive file."""
         return self.is_bundle_dir or self.is_bundle_file
 
     @property
     def is_bundleset_dir(self):
-        """True if this is the root level directory of a bundleset."""
+        """Return True if this is the root level directory of a bundleset."""
         return (self.bundleset and not self.bundlename and self.isdir)
 
     @property
     def is_bundleset_file(self):
-        """True if this is a bundleset-level checksum or AAREADME file."""
+        """Return True if this is a bundleset-level checksum or AAREADME file."""
         return (self.bundleset and not self.bundlename and not self.isdir)
 
     @property
     def is_bundleset(self):
-        """True if this is a bundleset-level directory or file."""
+        """Return True if this is a bundleset-level directory or file."""
         return (self.bundleset and not self.bundlename)
 
     @property
     def is_category_dir(self):
-        """True if this is a category-level directory (i.e., above bundleset)."""
+        """Return True if this is a category-level directory (i.e., above bundleset)."""
         return (self.bundleset == '')
 
     def volume_abspath(self, category=None):
-        """The absolute path to the volume file or directory associated with
-        this object. It can be in this category or another. If the category's
-        voltype is the same as that of self, the returned abspath will have the
-        same version rank; otherwise, it will be the abspath of the latest
-        version. The specified file is not required to exist.
+        """Return the absolute path to the volume file or directory associated with this
+        object. It can be in this category or another. If the category's voltype is the
+        same as that of self, the returned abspath will have the same version rank;
+        otherwise, it will be the abspath of the latest version. The specified file is
+        not required to exist.
+
+        Keyword arguments:
+            category -- the category of the bundle (default None)
         """
 
         if not self.bundlename:
@@ -2588,11 +2683,14 @@ class PdsFile(object):
                 self.bundlename + insert + ext)
 
     def volset_abspath(self, category=None):
-        """The absolute path to a volset file or directory associated with this
-        object. It can be in this category or another. If the category's voltype
-        is the same as that of self, the returned abspath will have the same
-        version rank; otherwise, it will be the abspath of the latest version.
-        The specified file is not required to exist.
+        """Return the absolute path to a volset file or directory associated with this
+        object. It can be in this category or another. If the category's voltype is the
+        same as that of self, the returned abspath will have the same version rank;
+        otherwise, it will be the abspath of the latest version. The specified file is
+        not required to exist.
+
+        Keyword arguments:
+            category -- the category of the bundleset (default None)
         """
 
         if not self.bundleset:
@@ -2625,10 +2723,16 @@ class PdsFile(object):
     ############################################################################
 
     def _complete(self, must_exist=False, caching='default', lifetime=None):
-        """General procedure to maintain the cls.CACHE. It returns PdsFiles from the
-        cache if available; otherwise it caches this PdsFile if appropriate.
+        """Return PdsFiles from the cache if available; otherwise it caches this PdsFile
+        if appropriate. This is the general procedure to maintain the cls.CACHE.
 
         If the file exists, then the capitalization must be correct!
+
+        Keyword arguments:
+            must_exist -- a flag to determine if the file should exist in file system
+                          (default False)
+            caching    -- the caching type, 'dir', 'all' or 'none' (default 'default')
+            lifetime   -- the cache lifetime in seconds (default None)
         """
 
         cls = type(self)
@@ -2673,8 +2777,9 @@ class PdsFile(object):
         return self
 
     def _update_ranks_and_vols(self):
-        """Maintains the RANKS and VOLS dictionaries. Must be called for all
-        PdsFile objects down to the volume name level."""
+        """Maintains the RANKS and VOLS dictionaries. Must be called for all PdsFile
+        objects down to the volume name level.
+        """
 
         # cls.CACHE['$RANKS-category_'] is keyed by [bundle set or name] and returns
         # a sorted list of ranks.
@@ -2718,8 +2823,9 @@ class PdsFile(object):
             cls.CACHE.set('$VOLS-'  + self.category_, vols_dict, lifetime=0)
 
     def _recache(self):
-        """Update the cache after this object has been modified, e.g., by having
-        a previously empty field filled in."""
+        """Update the cache after this object has been modified, e.g., by having a
+        previously empty field filled in.
+        """
 
         cls = type(self)
 
@@ -2734,18 +2840,18 @@ class PdsFile(object):
 
     def child(self, basename, fix_case=True, must_exist=False,
               caching='default', lifetime=None, allow_index_row=True):
-        """Constructor for a PdsFile of the proper subclass in this directory.
+        """Return a PdsFile of the sproper subclass in this directory.
 
-        Inputs:
-            basename        name of the child.
-            fix_case        True to fix the case of the child. (If False, it is
-                            permissible but not necessary to fix the case
-                            anyway.)
-            must_exist      True to raise an exception if the parent or child
-                            does not exist.
-            caching         Type of caching to use.
-            lifetime        Lifetime parameter for cache.
-            allow_index_row True to allow the child to be an index row.
+        Keyword arguments:
+            basename        -- name of the child
+            fix_case        -- True to fix the case of the child. (If False, it is
+                               permissible but not necessary to fix the case
+                               anyway) (default True)
+            must_exist      -- True to raise an exception if the parent or child
+                               does not exist (default False)
+            caching         -- Type of caching to use (default 'default')
+            lifetime        -- Lifetime parameter for cache (default None)
+            allow_index_row -- True to allow the child to be an index row (default True)
         """
 
         basename = basename.rstrip('/')
@@ -2914,7 +3020,14 @@ class PdsFile(object):
             cls.CACHE.resume()
 
     def parent(self, must_exist=False, caching='default', lifetime=None):
-        """Constructor for the parent PdsFile of this PdsFile."""
+        """Return the parent PdsFile of this PdsFile.
+
+        Keyword arguments:
+            must_exist -- True to raise an exception if the parent or child
+                          does not exist (default False)
+            caching    -- Type of caching to use (default 'default')
+            lifetime   -- Lifetime parameter for cache (default None)
+        """
 
         if self.is_merged:      # merged pdsdir
             return None
@@ -2933,8 +3046,11 @@ class PdsFile(object):
 
     @classmethod
     def from_lid(cls, lid_str):
-        """Constructor for a PdsFile from a LID.
+        """Return the PdsFile from a given LID.
         lid_str format: dataset_id:volume_id:directory_path:file_name
+
+        Keyword arguments:
+            lid_str -- the lid string
         """
 
         lid_component = lid_str.split(':')
@@ -2955,8 +3071,19 @@ class PdsFile(object):
 
     @classmethod
     def from_logical_path(cls, path, fix_case=False, must_exist=False,
-                                caching='default', lifetime=None):
-        """Constructor for a PdsFile from a logical path."""
+                          caching='default', lifetime=None):
+        """Return a PdsFile from a logical path.
+
+        Keyword arguments:
+            path       -- the logical path
+            fix_case   -- True to fix the case of the child. (If False, it is permissible
+                          but not necessary to fix the case anyway) (default False)
+            must_exist -- True to raise an exception if the parent or child does not
+                          exist (default False)
+            caching    -- Type of caching to use (default 'default')
+            lifetime   -- Lifetime parameter for cache (default None)
+
+        """
 
         path = path.rstrip('/')
         if not path:
@@ -3007,8 +3134,18 @@ class PdsFile(object):
 
     @classmethod
     def from_abspath(cls, abspath, fix_case=False, must_exist=False,
-                              caching='default', lifetime=None):
-        """Constructor from an absolute path."""
+                     caching='default', lifetime=None):
+        """Return a PdsFile from an absolute path.
+
+        Keyword arguments:
+            abspath    -- the absolute path
+            fix_case   -- True to fix the case of the child. (If False, it is permissible
+                          but not necessary to fix the case anyway) (default False)
+            must_exist -- True to raise an exception if the parent or child does not
+                          exist (default False)
+            caching    -- Type of caching to use (default 'default')
+            lifetime   -- Lifetime parameter for cache (default None)
+        """
 
         abspath = abspath.rstrip('/')
 
@@ -3100,8 +3237,18 @@ class PdsFile(object):
         return this
 
     def from_relative_path(self, path, fix_case=False, must_exist=False,
-                                       caching='default', lifetime=None):
-        """Constructor for a PdsFile given a path relative to this one."""
+                           caching='default', lifetime=None):
+        """Return a PdsFile given a path relative to this one.
+
+        Keyword arguments:
+            path       -- the relative path
+            fix_case   -- True to fix the case of the child. (If False, it is permissible
+                          but not necessary to fix the case anyway) (default False)
+            must_exist -- True to raise an exception if the parent or child does not
+                          exist (default False)
+            caching    -- Type of caching to use (default 'default')
+            lifetime   -- Lifetime parameter for cache (default None)
+        """
 
         path = path.rstrip('/')
         parts = path.split('/')
@@ -3142,9 +3289,8 @@ class PdsFile(object):
 
     @classmethod
     def from_path(cls, path, must_exist=False, caching='default', lifetime=None):
-        """Find the PdsFile, if possible based on anything roughly resembling
-        an actual path in the filesystem, using sensible defaults for missing
-        components.
+        """Return the PdsFile, if possible based on anything roughly resembling an
+        actual path in the filesystem, using sensible defaults for missing components.
 
         Examples:
           diagrams/checksums/whatever -> checksums-diagrams/whatever
@@ -3153,6 +3299,13 @@ class PdsFile(object):
           COISS_2001_previews.targz ->
                     archives-previews/COISS_2xxx/COISS_2001_previews.tar.gz
           COISS_0xxx/v1 -> COISS_0xxx_v1
+
+        Keyword arguments:
+            path       -- the given path
+            must_exist -- True to raise an exception if the parent or child does not
+                          exist (default False)
+            caching    -- Type of caching to use (default 'default')
+            lifetime   -- Lifetime parameter for cache (default None)
         """
 
         if not cls.LOCAL_PRELOADED:
@@ -3467,8 +3620,7 @@ class PdsFile(object):
     ############################################################################
 
     def get_indexshelf(self):
-        """Return the shelf dictionary that identifies keys and row numbers in
-        an index.
+        """Return the shelf dictionary that identifies keys and row numbers in an index.
         """
 
         cls = type(self)
@@ -3500,6 +3652,13 @@ class PdsFile(object):
         if flag is '<', return the key before, or first, if the selection
                         doesn't exist.
         if flag is '',  return the selected key even if it doesn't exist.
+
+        Keyword arguments:
+            selection   -- the selection key
+            flag        -- a flag used to determine which key would be returned (default
+                           '=')
+            exact_match -- a flag to determine if the given selection should be exactly
+                           matched to a key of the index file (default False)
         """
 
         if flag not in ('', '=', '>', '<'):
@@ -3578,7 +3737,7 @@ class PdsFile(object):
             return childnames[k+1] if k < len(childnames)-1 else childnames[-2]
 
     def child_of_index(self, selection, flag='='):
-        """Constructor for the PdsFile associated with the selected rows of this
+        """Return the PdsFile associated with the selected rows of this
         index. Note that the rows might not exist.
 
         if flag is '=', raise an error if the selection doesn't exist.
@@ -3587,6 +3746,11 @@ class PdsFile(object):
         if flag is '<', return the child before, or first if the selection
                         doesn't exist.
         if flag is '',  return the selected object even if it doesn't exist.
+
+        Keyword arguments:
+            selection -- the selection key
+            flag      -- a flag used to determine which key would be returned (default
+                         '=')
         """
 
         cls = type(self)
@@ -3633,8 +3797,8 @@ class PdsFile(object):
         return pdsf
 
     def data_abspath_associated_with_index_row(self):
-        """Attempt to infer the data PdsFile object associated with this index
-        row PdsFile. Empty string on failure.
+        """Attempt to infer and return the data PdsFile object associated with this index
+        row PdsFile. It will return an empty string on failure.
 
         If the selected row is missing, the associated data file might still
         exist. In this case, it conducts a search for a data file assuming it
@@ -3707,8 +3871,9 @@ class PdsFile(object):
         return ''
 
     def data_pdsfile_for_index_row(self):
-        """Attempt to infer the volume PdsFile object associated with an index
-        row PdsFile. None on failure"""
+        """Attempt to infer and return the volume PdsFile object associated with an index
+        row PdsFile. It will return None on failure.
+        """
 
         cls = type(self)
 
@@ -3724,8 +3889,13 @@ class PdsFile(object):
 
     @classmethod
     def from_filespec(cls, filespec, fix_case=False):
-        """The PdsFile object based on a bundle name plus file specification
+        """Return the PdsFile object based on a bundle name plus file specification
         path, without the category or prefix specified.
+
+        Keyword arguments:
+            filespec -- the file specification
+            fix_case -- True to fix the case of the child. (If False, it is permissible
+                        but not necessary to fix the case anyway) (default False)
         """
 
         bundleset = cls.FILESPEC_TO_BUNDLESET.first(filespec)
@@ -3737,7 +3907,10 @@ class PdsFile(object):
 
     @classmethod
     def from_opus_id(cls, opus_id):
-        """The PdsFile of the primary data file associated with this OPUS ID.
+        """Return the PdsFile of the primary data file associated with this OPUS ID.
+
+        Keyword arguments:
+            opus_id -- the given opus id
         """
 
         pdsfile_class = cls.OPUS_ID_TO_SUBCLASS.first(opus_id)
@@ -3896,9 +4069,10 @@ class PdsFile(object):
     ############################################################################
 
     def checksum_path_and_lskip(self):
-        """The absolute path to the checksum file associated with this PdsFile.
-        Also return the number of characters to skip over in that absolute
-        path to obtain the basename of the checksum file."""
+        """Return the absolute path to the checksum file associated with this PdsFile.
+        Also return the number of characters to skip over in that absolute path to obtain
+        the basename of the checksum file.
+        """
 
         if self.checksums_:
             raise ValueError('No checksums of checksum files: ' +
@@ -3927,9 +4101,10 @@ class PdsFile(object):
         return (abspath, lskip)
 
     def checksum_path_if_exact(self):
-        """Absolute path to the checksum file with the exact same contents as
-        this directory; otherwise blank. Determines whether Viewmaster shows a
-        link to a checksum file."""
+        """Return the absolute path to the checksum file with the exact same contents as
+        this directory; otherwise blank. Determines whether Viewmaster shows a link to a
+        checksum file.
+        """
 
         if self.checksums_:
             return ''
@@ -3949,9 +4124,8 @@ class PdsFile(object):
         return ''
 
     def dirpath_and_prefix_for_checksum(self):
-        """Tuple (absolute path to the directory associated with this checksum
-        path, prefix suppressed from the file path that appears in each row of
-        the file).
+        """Return tuple (absolute path to the directory associated with this checksum
+        path, prefix suppressed from the file path that appears in each row of the file).
         """
 
         if self.archives_:
@@ -3971,9 +4145,10 @@ class PdsFile(object):
     ############################################################################
 
     def archive_path_and_lskip(self):
-        """The absolute path to the archive file associated with this PdsFile.
-        Also return the number of characters to skip over in that absolute
-        path to obtain the basename of the archive file."""
+        """Return the absolute path to the archive file associated with this PdsFile.
+        Also return the number of characters to skip over in that absolute path to obtain
+        the basename of the archive file.
+        """
 
         if self.checksums_:
             raise ValueError('No archives for checksum files: ' +
@@ -3999,8 +4174,9 @@ class PdsFile(object):
         return (abspath, lskip)
 
     def archive_path_if_exact(self):
-        """Absolute path to the archive file with the exact same contents as
-        this directory; otherwise blank."""
+        """Return the absolute path to the archive file with the exact same contents as
+        this directory; otherwise blank.
+        """
 
         if self.checksums_ or self.archives_:
             return ''
@@ -4021,7 +4197,7 @@ class PdsFile(object):
         return ''
 
     def dirpath_and_prefix_for_archive(self):
-        """Absolute path to the directory associated with this archive path."""
+        """Return the absolute path to the directory associated with this archive path."""
 
         dirpath = ''.join([self.root_, self.voltype_,
                            self.bundleset_, self.bundlename])
@@ -4031,7 +4207,11 @@ class PdsFile(object):
         return (dirpath, parent)
 
     def archive_logpath(self, task):
-        """Absolute path to the log file associated with this archive file."""
+        """Return the absolute path to the log file associated with this archive file.
+
+        Keyword arguments:
+            task -- part of the log file basename that describes the task
+        """
 
         this = self.copy()
         this.checksums_ = ''
@@ -4039,7 +4219,7 @@ class PdsFile(object):
             this.archives_ = ''
             this.category_ = this.voltype_
 
-        return this.log_path_for_volume('_targz', task=task, dir='archives')
+        return this.log_path_for_bundle('_targz', task=task, dir='archives')
 
     ############################################################################
     # Shelf support
@@ -4054,14 +4234,14 @@ class PdsFile(object):
     SHELF_NULL_KEY_VALUES = {}
 
     def shelf_path_and_lskip(self, shelf_type='info', bundlename=''):
-        """The absolute path to the shelf file associated with this PdsFile.
-        Also return the number of characters to skip over in that absolute
-        path to obtain the key into the shelf.
+        """Return the absolute path to the shelf file associated with this PdsFile.
+        Also return the number of characters to skip over in that absolute path to obtain
+        the key into the shelf.
 
-        Inputs:
-            shelf_type  shelf type ID: 'index', 'info', or 'link'.
-            bundlename     an optional bundle name to append to the end of a this
-                        path, which can be used if this is a bundleset.
+        Keyword arguments:
+            shelf_type -- shelf type ID: 'index', 'info', or 'link' (default 'info')
+            bundlename -- an optional bundle name to append to the end of a this path,
+                          which can be used if this is a bundleset (default '')
         """
 
         if self.checksums_:
@@ -4102,7 +4282,13 @@ class PdsFile(object):
         return (abspath, lskip)
 
     def shelf_path_and_key(self, shelf_id='info', bundlename=''):
-        """Absolute path to a shelf file, plus the key for this item."""
+        """Return the absolute path to a shelf file, plus the key for this item.
+
+        Keyword arguments:
+            shelf_id   -- shelf type ID: 'index', 'info', or 'link' (default 'info')
+            bundlename -- an optional bundle name to append to the end of a this path,
+                          which can be used if this is a bundleset (default '')
+        """
 
         (abspath, lskip) = self.shelf_path_and_lskip(shelf_id, bundlename)
         if bundlename:
@@ -4112,11 +4298,16 @@ class PdsFile(object):
 
     @classmethod
     def _get_shelf(cls, shelf_path, log_missing_file=True):
-        """Internal method to open a shelf/pickle file. A limited number of
+        """Internal method to open and return a shelf/pickle file. A limited number of
         shelf files are kept open at all times to reduce file IO.
 
         Use log_missing_file = False to suppress log entries when a nonexistent
         shelf file is requested but the exception is handled externally.
+
+        Keyword arguments:
+            shelf_path       -- the path of the shelf file
+            log_missing_file -- a flag used to determine if we would like to log the path
+                                of the opening pickle file (default True)
         """
 
         # If the shelf is already open, update the access count and return it
@@ -4170,7 +4361,11 @@ class PdsFile(object):
     @classmethod
     def _close_shelf(cls, shelf_path):
         """Internal method to close a shelf file. A limited number of shelf
-        files are kept open at all times to reduce file IO."""
+        files are kept open at all times to reduce file IO.
+
+        Keyword arguments:
+            shelf_path -- the path of the shelf file
+        """
 
         # If the shelf is not already open, return
         if shelf_path not in cls.SHELF_CACHE:
@@ -4195,10 +4390,11 @@ class PdsFile(object):
     def shelf_lookup(self, shelf_type='info', bundlename=''):
         """Return the contents of a shelf file associated with this object.
 
-        shelf_type      indicates the type of the shelf file: 'info', 'link', or
-                        'index'.
-        bundlename         can be used to get info about a bundle when the method
-                        is applied to its enclosing bundleset.
+        Keyword arguments:
+            shelf_type -- indicates the type of the shelf file: 'info', 'link', or
+                          'index' (default 'info')
+            bundlename -- can be used to get info about a bundle when the method
+                          is applied to its enclosing bundleset (default '')
         """
 
         cls = type(self)
@@ -4234,11 +4430,12 @@ class PdsFile(object):
 
     @classmethod
     def shelf_path_and_key_for_abspath(cls, abspath, shelf_type='info'):
-        """The absolute path to the shelf file associated with this file path.
+        """Return the absolute path to the shelf file associated with this file path.
         Also return the key for indexing into the shelf.
 
-        Inputs:
-            shelf_type      shelf type, e.g., 'info' or 'link'.
+        Keyword arguments:
+            abspath    -- the absolute path of the file
+            shelf_type -- shelf type, e.g., 'info' or 'link' (default 'info')
         """
 
         # No checksum shelf files allowed
@@ -4276,8 +4473,9 @@ class PdsFile(object):
 
     @property
     def info_shelf_expected(self):
-        """True if this object should be associated with an entry in an info
-        shelf file."""
+        """Return True if this object should be associated with an entry in an info
+        shelf file.
+        """
 
         # Checksum files have no info shelves
         if self.checksums_:
@@ -4303,8 +4501,9 @@ class PdsFile(object):
         return False
 
     def shelf_exists_if_expected(self):
-        """True if shelf exists for a pdsfile instance expected to have the shelf file.
-        False if shelf doesn't exist for a pdsfile instance expected to have one."""
+        """Return True if shelf exists for a pdsfile instance expected to have the shelf
+        file. False if shelf doesn't exist for a pdsfile instance expected to have one.
+        """
 
         if self.info_shelf_expected:
             try:
@@ -4324,8 +4523,12 @@ class PdsFile(object):
 
     @classmethod
     def set_log_root(cls, root=None):
-        """Define the default root directory for logs. If None, use the "logs"
-        directory parallel to "holdings"."""
+        """Define the default root directory for logs. If None, use the "logs" directory
+        parallel to "holdings".
+
+        Keyword arguments:
+            root -- the root of the log file path (default None)
+        """
 
         if root is None:
             cls.LOG_ROOT_ = None
@@ -4336,6 +4539,13 @@ class PdsFile(object):
         """Return a complete log file path for this bundle.
 
         The file name is [dir/]category/bundleset/bundlename_suffix_time[_task].log
+
+         Keyword arguments:
+            suffix -- the suffix of the log file (default '')
+            task   -- part of the log basename (default '')
+            dir    -- the directory of the log file (default '')
+            place  -- 'default' or 'parallel', the option provides for a temporary
+                      override of the default log root (default 'default')
         """
 
         cls = type(self)
@@ -4375,6 +4585,13 @@ class PdsFile(object):
         """Return a complete log file path for this bundle set.
 
         The file name is [dir/]category/bundleset_suffix_time[_task].log.
+
+        Keyword arguments:
+            suffix -- the suffix of the log file (default '')
+            task   -- part of the log basename (default '')
+            dir    -- the directory of the log file (default '')
+            place  -- 'default' or 'parallel', the option provides for a temporary
+                      override of the default log root (default 'default')
         """
 
         cls = type(self)
@@ -4414,6 +4631,12 @@ class PdsFile(object):
         """Return a complete log file path for this bundle.
 
         The file name is [dir/]<logical_path_wo_ext>_timetag[_task].log.
+
+        Keyword arguments:
+            task   -- part of the log basename (default '')
+            dir    -- the directory of the log file (default 'index')
+            place  -- 'default' or 'parallel', the option provides for a temporary
+                      override of the default log root (default 'default')
         """
 
         if not self.is_index:
@@ -4454,10 +4677,14 @@ class PdsFile(object):
     ############################################################################
 
     def split_basename(self, basename=''):
-        """Split into (anchor, suffix, extension).
+        """Return the tuple with basename info: (anchor, suffix, extension).
 
-        Default behavior is to split a file at first period; split a bundle
-        set name before the suffix. Can be overridden."""
+        Default behavior is to split a file at first period; split a bundle set name
+        before the suffix. Can be overridden.
+
+        Keyword arguments:
+            basename -- basename of a file (default '')
+        """
 
         cls = type(self)
 
@@ -4485,14 +4712,22 @@ class PdsFile(object):
         return self.SPLIT_RULES.first(basename)
 
     def basename_is_label(self, basename):
-        """True if this basename is a label. Override if label identification
-        ever depends on the data set."""
+        """Return True if this basename is a label. Override if label identification
+        ever depends on the data set.
+
+        Keyword arguments:
+            basename -- basename of a file
+        """
 
         return (len(basename) > 4) and (basename[-4:].lower() == '.lbl')
 
     def basename_is_viewable(self, basename=None):
-        """True if this basename is viewable. Override if viewable files can
-        have extensions other than the usual set (.png, .jpg, etc.)."""
+        """Return True if this basename is viewable. Override if viewable files can
+        have extensions other than the usual set (.png, .jpg, etc.).
+
+        Keyword arguments:
+            basename -- basename of a file
+        """
 
         cls = type(self)
 
@@ -4505,9 +4740,21 @@ class PdsFile(object):
         return (parts[2].lower() in cls.VIEWABLE_EXTS)
 
     def sort_basenames(self, basenames, labels_after=None, dirs_first=None,
-                             dirs_last=None, info_first=None):
-        """Sort basenames, including additional options. Input None for
-        defaults."""
+                       dirs_last=None, info_first=None):
+        """Return Sorted basenames, including additional options. Input None for
+        defaults.
+
+        Keyword arguments:
+            basenames    -- a list of file basenames
+            labels_after -- a flag used to determine if all label files should appear
+                            after the associated data files when sorted (default None)
+            dirs_first   -- a flag used to determine if directories should appear before
+                            all files when sorted (default None)
+            dirs_last    -- a flag used to determine if directories should appear after
+                            all files when sorted (default None)
+            info_first   -- a flag used to determine info files will be listed first in
+                            all sorted lists (default None)
+        """
 
         cls = type(self)
 
@@ -4577,13 +4824,24 @@ class PdsFile(object):
         return basenames
 
     def sort_sibnames(self, basenames, labels_after=None, dirs_first=None,
-                            dirs_last=None, info_first=None):
-        """Sort basenames that represent siblings of this object. In the
+                      dirs_last=None, info_first=None):
+        """Return sorted basenames that represent siblings of this object. In the
         returned list of basenames, the name of this object will be first and
         matching file names will always be adjacent.
 
         When a selected file and its label and/or targets are displayed in
         Viewmaster, this is the order in which they appear.
+
+        Keyword arguments:
+            basenames    -- a list of file basenames
+            labels_after -- a flag used to determine if all label files should appear
+                            after the associated data files when sorted (default None)
+            dirs_first   -- a flag used to determine if directories should appear before
+                            all files when sorted (default None)
+            dirs_last    -- a flag used to determine if directories should appear after
+                            all files when sorted (default None)
+            info_first   -- a flag used to determine info files will be listed first in
+                            all sorted lists (default None)
         """
 
         # First, sort the names the usual way
@@ -4611,8 +4869,20 @@ class PdsFile(object):
         return new_basenames + basenames
 
     def sort_siblings(self, siblings, labels_after=None, dirs_first=None,
-                            dirs_last=None, info_first=None):
-        """Sort siblings of this object, keeping this object first."""
+                      dirs_last=None, info_first=None):
+        """Return sorted siblings of this object, keeping this object first.
+
+        Keyword arguments:
+            siblings     -- a list of file siblings
+            labels_after -- a flag used to determine if all label files should appear
+                            after the associated data files when sorted (default None)
+            dirs_first   -- a flag used to determine if directories should appear before
+                            all files when sorted (default None)
+            dirs_last    -- a flag used to determine if directories should appear after
+                            all files when sorted (default None)
+            info_first   -- a flag used to determine info files will be listed first in
+                            all sorted lists (default None)
+        """
 
         # Create a dictionary by basename; remove duplicates too
         basename_dict = {pdsf.basename:pdsf for pdsf in siblings}
@@ -4628,9 +4898,13 @@ class PdsFile(object):
 
     @classmethod
     def sort_logical_paths(cls, logical_paths):
-        """Sort a list of logical paths, using the sort order at each level in
-        the directory tree. The logical paths must all have the same number of
-        directory levels."""
+        """Retrun sorted list of logical paths. Sort a list of logical paths, using the
+        sort order at each level in the directory tree. The logical paths must all have
+        the same number of directory levels.
+
+        Keyword arguments:
+            logical_paths -- a list of logical paths
+        """
 
         # Create a dictionary of PdsFile objects keyed by logical path/subpath.
         # Also create a dictionary with the same key, containing a list of
@@ -4696,17 +4970,28 @@ class PdsFile(object):
         return sorted_paths
 
     def sort_childnames(self, labels_after=None, dirs_first=None):
-        """A sorted list of the contents of this directory."""
+        """Return a sorted list of the contents of this directory.
+
+        Keyword arguments:
+            labels_after -- a flag used to determine if all label files should appear
+                            after the associated data files when sorted (default None)
+            dirs_first   -- a flag used to determine if directories should appear before
+                            all files when sorted (default None)
+        """
 
         return self.sort_basenames(self.childnames, labels_after, dirs_first)
 
     def viewable_childnames(self):
-        """A sorted list of the files in this directory that are viewable."""
+        """Return A sorted list of the files in this directory that are viewable."""
 
         return [b for b in self.childnames if self.basename_is_viewable(b)]
 
     def childnames_by_anchor(self, anchor):
-        """A list of child basenames having the given anchor."""
+        """Return a list of child basenames having the given anchor.
+
+        Keyword arguments:
+            anchor -- anchor of a basename
+        """
 
         matches = []
         for basename in self.childnames:
@@ -4717,7 +5002,11 @@ class PdsFile(object):
         return matches
 
     def viewable_childnames_by_anchor(self, anchor):
-        """A list of viewable child names having the given anchor."""
+        """Return a list of viewable child names having the given anchor.
+
+        Keyword arguments:
+            anchor -- anchor of a basename
+        """
 
         matches = self.childnames_by_anchor(anchor)
         return [m for m in matches if self.basename_is_viewable(m)]
@@ -4846,9 +5135,9 @@ class PdsFile(object):
         """A list of logical or absolute paths to associated files in the
         specified category.
 
-        Inputs:
-            category        the category of the associated paths.
-            must_exist      True to return only paths that exist.
+        Keyword arguments:
+            category   -- the category of the associated paths
+            must_exist -- True to return only paths that exist (default True)
         """
         cls = type(self)
         category = category.strip('/')
@@ -4968,23 +5257,29 @@ class PdsFile(object):
         return abspaths
 
     def associated_parallel(self, category=None, rank=None):
-        """The "most similar" absolute path in a parallel directory tree,
-        specified by category and/or version rank. If the rank is unspecified,
-        it will match the version of self when the voltype of the new category
-        matches the voltype of self; otherwise, it will return the latest
-        version.
+        """Return a PdsFile of the "most similar" absolute path in a parallel directory
+        tree, specified by category and/or version rank. If the rank is unspecified, it
+        will match the version of self when the voltype of the new category matches the
+        voltype of self; otherwise, it will return the latest version.
 
-        In addition to numeric values for the rank, values of "next",
-        "previous", and "latest" can also be used when the voltype of the
-        returned object matches that of this object.
+        In addition to numeric values for the rank, values of "next", "previous", and
+        "latest" can also be used when the voltype of the returned object matches that
+        of this object.
+
+        Keyword arguments:
+            category -- the category of the associated paths (default None)
+            rank     -- the version rank (default None)
         """
 
         cls = type(self)
 
         def _cache_and_return(pdsf):
-            """For internal use. Convert to PdsFile if necessary, cache under
-            one or two ranks (rank and rankstr), return. Also, if pdsf matches
-            self, cache and return None instead.
+            """Return a PdsFile. For internal use. Convert to PdsFile if necessary, cache
+            under one or two ranks (rank and rankstr), return. Also, if pdsf matches self,
+            cache and return None instead.
+
+            Keyword arguments:
+                pdsf -- a PdsFile instance
             """
 
             # Interpret the pdsf and get the abspath (both might be None)
