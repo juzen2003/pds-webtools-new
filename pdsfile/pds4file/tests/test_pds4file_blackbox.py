@@ -5,8 +5,9 @@
 
 import os
 import pdsfile.pds4file as pds4file
-from pdsfile.general_helper import (PDS4_HOLDINGS_DIR,
-                                    PDS4_BUNDLES_DIR)
+from pdsfile.general_helper import (PDS4_BUNDLES_DIR,
+                                    PDS4_PREVIEWS_DIR)
+import pdsviewable
 import pytest
 
 from .helper import *
@@ -410,3 +411,45 @@ class TestPds4FileBlackBox:
         print(res)
         assert isinstance(res, pds4file.PdsFile)
         assert res.abspath == expected
+
+
+    # For now we fake all the images files under previews dir
+    @pytest.mark.parametrize(
+        'input_path,expected',
+        [
+            ('cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n.xml',
+             [
+                 f'{PDS4_PREVIEWS_DIR}/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n-full.png'
+             ]
+            ),
+            ('cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947273n.img',
+             [
+                 f'{PDS4_PREVIEWS_DIR}/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947273n-full.png'
+             ]
+            ),
+            ('cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947223.xml',
+             [
+                 f'{PDS4_PREVIEWS_DIR}/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947223-full.png'
+             ]
+            ),
+            ('cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947079_xxx/1308947079_003.qub',
+             [
+                 f'{PDS4_PREVIEWS_DIR}/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947079_xxx/1308947079_003-full.png'
+             ]
+            ),
+            ('uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml', False
+            ),
+
+        ]
+    )
+    def test_viewset(self, input_path, expected):
+        target_pdsfile = instantiate_target_pdsfile(input_path)
+        res = target_pdsfile.viewset
+        if res != False:
+            assert isinstance(res, pdsviewable.PdsViewSet)
+            viewables = res.to_dict()['viewables']
+            for viewable in viewables:
+                assert viewable['url'] in expected
+        else:
+            # For the case when viewset is None, the function will return False
+            assert res == expected
