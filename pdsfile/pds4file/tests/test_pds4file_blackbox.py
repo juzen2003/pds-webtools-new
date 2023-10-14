@@ -5,12 +5,13 @@
 
 import os
 import pdsfile.pds4file as pds4file
-from pdsfile.general_helper import (PDS4_BUNDLES_DIR,
-                                    PDS4_PREVIEWS_DIR)
+from pdsfile.general_helper import PDS4_BUNDLES_DIR
 import pdsviewable
 import pytest
 
 from .helper import *
+
+PDS4_HOLDINGS_NAME = 'pds4-holdings'
 
 ##########################################################################################
 # Blackbox tests for pds4file.py
@@ -419,25 +420,43 @@ class TestPds4FileBlackBox:
         [
             ('cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n.xml',
              [
-                 f'{PDS4_PREVIEWS_DIR}/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n_full.png'
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n_full.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n_med.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n_small.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947228n_thumb.png',
              ]
             ),
             ('cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947273n.img',
              [
-                 f'{PDS4_PREVIEWS_DIR}/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947273n_full.png'
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947273n_full.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947273n_med.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947273n_small.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_iss/cassini_iss_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947273n_thumb.png',
              ]
             ),
             ('cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947223.xml',
              [
-                 f'{PDS4_PREVIEWS_DIR}/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947223_full.png'
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947223_full.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947223_med.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947223_small.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947223_thumb.png',
              ]
             ),
             ('cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947079_xxx/1308947079_003.qub',
              [
-                 f'{PDS4_PREVIEWS_DIR}/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947079_xxx/1308947079_003_full.png'
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947079_xxx/1308947079_003_full.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947079_xxx/1308947079_003_med.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947079_xxx/1308947079_003_small.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/cassini_vims/cassini_vims_cruise/data_raw/130xxxxxxx/13089xxxxx/1308947079_xxx/1308947079_003_thumb.png',
              ]
             ),
-            ('uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml', False
+            ('uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress.xml',
+             [
+                 f'/{PDS4_HOLDINGS_NAME}/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_full.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_med.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_small.png',
+                 f'/{PDS4_HOLDINGS_NAME}/previews/uranus_occs_earthbased/uranus_occ_u0_kao_91cm/data/atmosphere/u0_kao_91cm_734nm_counts-v-time_atmos_egress_thumb.png',
+             ]
             ),
 
         ]

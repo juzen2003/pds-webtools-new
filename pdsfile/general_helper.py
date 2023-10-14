@@ -32,7 +32,6 @@ except KeyError: # pragma: no cover
     PDS4_HOLDINGS_DIR = os.path.realpath('/Library/WebServer/Documents/holdings')
 
 PDS4_BUNDLES_DIR = f'{PDS4_HOLDINGS_DIR}/bundles'
-PDS4_PREVIEWS_DIR = f'{PDS4_HOLDINGS_DIR}/previews'
 
 ##########################################################################################
 # For tests under /tests
