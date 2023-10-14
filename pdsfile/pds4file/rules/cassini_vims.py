@@ -40,22 +40,12 @@ description_and_icon_by_regex = translator.TranslatorByRegex([
 ##########################################################################################
 
 default_viewables = translator.TranslatorByRegex([
-    (r'.*/(COISS_[12]xxx)(|_v[0-9\.]+)/(COISS_[12].../data/\w+/[NW][0-9]{10}_[0-9]+).*', 0,
-            [r'previews/\1/\3_full.png',
-             r'previews/\1/\3_med.jpg',
-             r'previews/\1/\3_small.jpg',
-             r'previews/\1/\3_thumb.jpg',
-            ]),
-    (r'.*/(COISS_3xxx.*/COISS_3.../data)/(images|maps)/(\w+)\..*', 0,
-            [r'previews/\1/\2/\3_full.png',
-             r'previews/\1/\2/\3_med.png',
-             r'previews/\1/\2/\3_small.png',
-             r'previews/\1/\2/\3_thumb.png',
-             r'previews/\1/\2/\3_full.jpg',
-             r'previews/\1/\2/\3_med.jpg',
-             r'previews/\1/\2/\3_small.jpg',
-             r'previews/\1/\2/\3_thumb.jpg',
-            ]),
+    (r'.*/(cassini_vims/cassini_vims\w*/data(.*|_[a-z]*])/.*)\.[a-z]{3}', 0,
+        [r'previews/\1_full.png',
+         r'previews/\1_med.png',
+         r'previews/\1_small.png',
+         r'previews/\1_thumb.png',
+        ]),
 ])
 
 ##########################################################################################
